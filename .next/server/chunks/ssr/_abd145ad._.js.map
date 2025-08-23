@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 5, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/User/Desktop/Work/glossy-design/glossy-design/src/app/home/page.tsx"],"sourcesContent":["'use client';\r\n\r\nimport * as React from 'react';\r\nimport { Box, Typography, Paper } from '@mui/material';\r\n\r\nexport default function Page() {\r\n  return (\r\n    <Box sx={{ display: 'grid', gap: 2 }}>\r\n\r\n\r\n      <Paper variant=\"outlined\" sx={{ p: 2 }}>\r\n        <Typography variant=\"body1\">\r\n          นี่คือคอนเทนต์ตัวอย่าง คุณสามารถแทนที่ด้วยหน้า Dashboard จริงของคุณได้เลย\r\n        </Typography>\r\n      </Paper>\r\n    </Box>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;AAGA;AAAA;AAAA;AAHA;;;AAKe,SAAS;IACtB,qBACE,8OAAC,wLAAA,CAAA,MAAG;QAAC,IAAI;YAAE,SAAS;YAAQ,KAAK;QAAE;kBAGjC,cAAA,8OAAC,8LAAA,CAAA,QAAK;YAAC,SAAQ;YAAW,IAAI;gBAAE,GAAG;YAAE;sBACnC,cAAA,8OAAC,6MAAA,CAAA,aAAU;gBAAC,SAAQ;0BAAQ;;;;;;;;;;;;;;;;AAMpC","debugId":null}}]
+}

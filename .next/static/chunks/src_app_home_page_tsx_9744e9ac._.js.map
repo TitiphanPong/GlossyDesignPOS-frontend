@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/User/Desktop/Work/glossy-design/glossy-design/src/app/home/page.tsx"],"sourcesContent":["'use client';\r\n\r\nimport * as React from 'react';\r\nimport { Box, Typography, Paper } from '@mui/material';\r\n\r\nexport default function Page() {\r\n  return (\r\n    <Box>\r\n      SSS\r\n    </Box>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;AAGA;AAHA;;;AAKe,SAAS;IACtB,qBACE,6LAAC,2LAAA,CAAA,MAAG;kBAAC;;;;;;AAIT;KANwB","debugId":null}}]
+}

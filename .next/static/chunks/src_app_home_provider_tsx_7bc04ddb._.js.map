@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 7, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/User/Desktop/Work/glossy-design/glossy-design/src/app/home/provider.tsx"],"sourcesContent":["// app/providers.tsx\r\n'use client';\r\n\r\nimport * as React from 'react';\r\nimport { ThemeProvider, CssBaseline, createTheme } from '@mui/material';\r\n\r\nexport default function MuiProviders({ children }: { children: React.ReactNode }) {\r\n  const theme = React.useMemo(() => createTheme({}), []);\r\n  return (\r\n    <ThemeProvider theme={theme}>\r\n      <CssBaseline />\r\n      {children}\r\n    </ThemeProvider>\r\n  );\r\n}\r\n"],"names":[],"mappings":"AAAA,oBAAoB;;;;;AAGpB;AACA;AAAA;AAAA;;;AAHA;;;AAKe,SAAS,aAAa,KAA2C;QAA3C,EAAE,QAAQ,EAAiC,GAA3C;;IACnC,MAAM,QAAQ,6JAAA,CAAA,UAAa;uCAAC,IAAM,CAAA,GAAA,8MAAA,CAAA,cAAW,AAAD,EAAE,CAAC;sCAAI,EAAE;IACrD,qBACE,6LAAC,kNAAA,CAAA,gBAAa;QAAC,OAAO;;0BACpB,6LAAC,mNAAA,CAAA,cAAW;;;;;YACX;;;;;;;AAGP;GARwB;KAAA","debugId":null}}]
+}

@@ -1,0 +1,6 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 13, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/User/Desktop/Work/glossy-design/glossy-design/src/app/home/components/Footer.tsx"],"sourcesContent":["'use client';\r\n\r\nimport { Box, Typography } from '@mui/material';\r\n\r\nexport default function AppFooter() {\r\n  return (\r\n    <Box\r\n      component=\"footer\"\r\n      sx={{\r\n        mt: 'auto',\r\n        py: 2,\r\n        px: 2,\r\n        textAlign: 'center',\r\n        color: 'text.secondary',\r\n        fontSize: 14,\r\n        borderTop: '1px solid #e0e0e0',\r\n        backgroundColor: 'background.paper',\r\n      }}\r\n    >\r\n      <Typography>\r\n        © {new Date().getFullYear()} Glossy Design | All rights reserved.\r\n      </Typography>\r\n    </Box>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;AAEA;AAAA;AAFA;;;AAIe,SAAS;IACtB,qBACE,8OAAC,wLAAA,CAAA,MAAG;QACF,WAAU;QACV,IAAI;YACF,IAAI;YACJ,IAAI;YACJ,IAAI;YACJ,WAAW;YACX,OAAO;YACP,UAAU;YACV,WAAW;YACX,iBAAiB;QACnB;kBAEA,cAAA,8OAAC,6MAAA,CAAA,aAAU;;gBAAC;gBACP,IAAI,OAAO,WAAW;gBAAG;;;;;;;;;;;;AAIpC","debugId":null}}]
+}

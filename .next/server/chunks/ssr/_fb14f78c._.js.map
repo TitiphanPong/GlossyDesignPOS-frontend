@@ -1,0 +1,7 @@
+{
+  "version": 3,
+  "sources": [],
+  "sections": [
+    {"offset": {"line": 5, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/User/Desktop/Work/glossy-design/glossy-design/src/app/home/page.tsx"],"sourcesContent":["'use client';\r\n\r\nimport * as React from 'react';\r\nimport { Box, Typography, Paper } from '@mui/material';\r\n\r\nexport default function Page() {\r\n  return (\r\n    <Box>\r\n      SSS\r\n    </Box>\r\n  );\r\n}\r\n"],"names":[],"mappings":";;;;AAGA;AAHA;;;AAKe,SAAS;IACtB,qBACE,8OAAC,wLAAA,CAAA,MAAG;kBAAC;;;;;;AAIT","debugId":null}},
+    {"offset": {"line": 28, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/User/Desktop/Work/glossy-design/glossy-design/node_modules/next/src/server/route-modules/app-page/vendored/ssr/react-jsx-dev-runtime.ts"],"sourcesContent":["module.exports = (\n  require('../../module.compiled') as typeof import('../../module.compiled')\n).vendored['react-ssr']!.ReactJsxDevRuntime\n"],"names":["module","exports","require","vendored","ReactJsxDevRuntime"],"mappings":"AAAAA,OAAOC,OAAO,GACZC,QAAQ,4HACRC,QAAQ,CAAC,YAAY,CAAEC,kBAAkB","ignoreList":[0],"debugId":null}}]
+}
