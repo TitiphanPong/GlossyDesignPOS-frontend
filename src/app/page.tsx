@@ -83,7 +83,8 @@ export default function LandingPage() {
             ระบบหน้าร้านงานพิมพ์ <Box component="span" sx={{ color: 'primary.main' }}>ครบจบในที่เดียว</Box>
           </Typography>
           <Typography color="text.secondary" sx={{ maxWidth: 780 }}>
-            แบนเนอร์ & งานป้าย ,
+            บริการสื่อสิ่งพิมพ์ทุกชนิด สติกเกอร์
+            นามบัตรการ์ด ฉลากสินค้า ป้ายไวนิล ฯลฯ
           </Typography>
         </Stack>
 
