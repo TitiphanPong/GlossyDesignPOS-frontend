@@ -107,9 +107,9 @@ export default function SellPage() {
   }, [cart]);
 
   React.useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_BASE ?? '';
+    const base = process.env.NEXT_PUBLIC_API_URL ?? '';
     if (!base) {
-      setErrorMsg('ยังไม่ได้ตั้งค่า NEXT_PUBLIC_API_BASE ใน .env');
+      setErrorMsg('ยังไม่ได้ตั้งค่า NEXT_PUBLIC_API_URL ใน .env');
       setLoading(false);
       return;
     }
