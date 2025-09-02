@@ -34,6 +34,7 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import Brightness4RoundedIcon from '@mui/icons-material/Brightness4Rounded';
 import Brightness7RoundedIcon from '@mui/icons-material/Brightness7Rounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 
 export type NavItem = {
   label: string;
@@ -69,8 +70,26 @@ export interface SideMenuProps {
 const DEFAULT_ITEMS: NavItem[] = [
   { section: 'Overview', label: 'หน้าหลัก', href: '/', icon: <HomeRoundedIcon /> },
   // { section: 'Overview', label: 'Analytics', href: '/analytics', icon: <AnalyticsRoundedIcon />, badge: 'NEW' },
-  { section: 'Work', label: 'เมนูชำระสินค้า', href: '/home/tasks', icon: <AssignmentRoundedIcon />, badge: 7 },
-  // { section: 'System', label: 'Settings', href: '/settings', icon: <SettingsRoundedIcon /> },
+  {
+    section: 'Work',
+    label: 'เมนูชำระสินค้า',
+    href: '/home/posseller',
+    icon: <AssignmentRoundedIcon />,
+    badge: 7,
+  },
+  // { section: 'Work', label: 'Task', href: '/home/tasks', icon: <SettingsRoundedIcon /> },
+  {
+    section: 'Order',
+    label: 'ใบรายการขาย',
+    href: '/home/saleListPage',
+    icon: <AssignmentRoundedIcon />,
+  },
+  {
+    section: 'Order',
+    label: 'ไฟล์ลูกค้า',
+    href: '/home/storage',
+    icon: <InsertDriveFileIcon />,
+  }
   // { section: 'System', label: 'About', href: '/about', icon: <InfoRoundedIcon /> },
   // { section: 'System', label: 'Feedback', href: '/feedback', icon: <HelpOutlineRoundedIcon /> },
 ];
@@ -87,7 +106,7 @@ const float = keyframes`
 `;
 
 const StyledDrawer = styled(Drawer, {
-  shouldForwardProp: (prop) => prop !== 'data-collapsed',
+  shouldForwardProp: prop => prop !== 'data-collapsed',
 })<{ 'data-collapsed'?: boolean }>(({ theme, ['data-collapsed']: collapsed }) => ({
   [`& .${drawerClasses.paper}`]: {
     borderRight: `1px solid ${theme.palette.divider}`,
@@ -110,19 +129,20 @@ const Brand = ({ collapsed }: { collapsed: boolean }) => {
   return (
     <Stack
       direction="row"
-      alignItems="center"         // ให้แถวเดียวกันขนานกัน
-      sx={{ p: 2, pb: 1.5 }}
-    >
+      alignItems="center" // ให้แถวเดียวกันขนานกัน
+      sx={{ p: 2, pb: 1.5 }}>
       {/* กล่องไอคอน */}
       <Box
         sx={{
-          width: 36, height: 36, borderRadius: 2,
-          display: 'grid', placeItems: 'center',
+          width: 36,
+          height: 36,
+          borderRadius: 2,
+          display: 'grid',
+          placeItems: 'center',
           bgcolor: alpha(theme.palette.primary.main, 0.15),
           boxShadow: `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.25)}`,
           mr: collapsed ? 0 : 1.25,
-        }}
-      >
+        }}>
         <StarRoundedIcon fontSize="small" />
       </Box>
 
@@ -131,28 +151,24 @@ const Brand = ({ collapsed }: { collapsed: boolean }) => {
         <Box
           sx={{
             minWidth: 0,
-            minHeight: 36,                 // สูงเท่าไอคอน
+            minHeight: 36, // สูงเท่าไอคอน
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'center',      // จัดกลางแนวตั้งภายใน 36px
+            justifyContent: 'center', // จัดกลางแนวตั้งภายใน 36px
             lineHeight: 1.1,
-          }}
-        >
+          }}>
           <Typography
-            variant="body1"                // ลดความหนาแน่น
+            variant="body1" // ลดความหนาแน่น
             fontWeight={600}
             noWrap
-            sx={{ letterSpacing: 0.1  }}
-          >
-            GLOSSY <Box component="span" sx={{ color: 'primary.main' }}>DESIGN</Box>
+            sx={{ letterSpacing: 0.1 }}>
+            GLOSSY{' '}
+            <Box component="span" sx={{ color: 'primary.main' }}>
+              DESIGN
+            </Box>
           </Typography>
 
-          <Typography
-            variant="caption"
-            color="text.secondary"
-            noWrap
-            sx={{ mt: 0.25 }}
-          >
+          <Typography variant="caption" color="text.secondary" noWrap sx={{ mt: 0.25 }}>
             Print & Cashier System
           </Typography>
         </Box>
@@ -166,8 +182,7 @@ const SectionHeader = ({ text, collapsed }: { text: string; collapsed: boolean }
     <ListSubheader
       component="div"
       disableSticky
-      sx={{ px: 2.5, py: 1.5, typography: 'overline', color: 'text.secondary' }}
-    >
+      sx={{ px: 2.5, py: 1.5, typography: 'overline', color: 'text.secondary' }}>
       {text}
     </ListSubheader>
   );
@@ -191,7 +206,7 @@ export default function SideMenu({
       const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
       if ((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'b') {
         e.preventDefault();
-        setCollapsed((c) => {
+        setCollapsed(c => {
           const next = !c;
           onCollapsedChange?.(next);
           return next;
@@ -204,7 +219,7 @@ export default function SideMenu({
 
   const grouped = React.useMemo(() => {
     const map = new Map<string, NavItem[]>();
-    items.forEach((it) => {
+    items.forEach(it => {
       const sec = it.section ?? 'Main';
       if (!map.has(sec)) map.set(sec, []);
       map.get(sec)!.push(it);
@@ -227,14 +242,15 @@ export default function SideMenu({
           mb: 0.5,
           py: 0.5,
           position: 'relative',
-          transition: theme.transitions.create(['background-color', 'transform'], { duration: 150 }),
+          transition: theme.transitions.create(['background-color', 'transform'], {
+            duration: 150,
+          }),
           ...(active && {
             bgcolor: alpha(theme.palette.primary.main, 0.14),
             '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.18) },
           }),
           '&:hover': { transform: 'translateY(-1px)' },
-        }}
-      >
+        }}>
         {/* active indicator pill (ซ้าย) */}
         <Box
           sx={{
@@ -257,9 +273,7 @@ export default function SideMenu({
           <ListItemText
             primary={
               <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography fontWeight={active ? 400 : 300}>
-                  {item.label}
-                </Typography>
+                <Typography fontWeight={active ? 400 : 300}>{item.label}</Typography>
                 {item.badge !== undefined && (
                   <Chip
                     size="small"
@@ -301,8 +315,7 @@ export default function SideMenu({
           boxSizing: 'border-box',
           bgcolor: 'background.paper',
         },
-      }}
-    >
+      }}>
       {/* ส่วนหัวโลโก้ + ปุ่มควบคุม */}
       <Stack direction="row" alignItems="center" sx={{ px: 1, pt: 1.5 }}>
         <Brand collapsed={collapsed} />
@@ -314,8 +327,7 @@ export default function SideMenu({
                 const next = !collapsed;
                 setCollapsed(next);
                 onCollapsedChange?.(next);
-              }}
-            >
+              }}>
               {collapsed ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />}
             </IconButton>
           </Tooltip>
@@ -331,16 +343,14 @@ export default function SideMenu({
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
-        }}
-      >
+        }}>
         <Box sx={{ overflowY: 'auto', pb: 2 }}>
           {grouped.map(([section, list]) => (
             <List
               key={section}
               subheader={<SectionHeader text={section} collapsed={collapsed} />}
-              sx={{ px: 0.5 }}
-            >
-              {list.map((item) => (
+              sx={{ px: 0.5 }}>
+              {list.map(item => (
                 <ItemRow key={item.href} item={item} />
               ))}
             </List>
@@ -385,7 +395,6 @@ export default function SideMenu({
             </>
           )}
         </Stack> */}
-        
 
         {/* โปรไฟล์ผู้ใช้ */}
         <Stack
@@ -397,8 +406,7 @@ export default function SideMenu({
             gap: 1.5,
             borderTop: '1px solid',
             borderColor: 'divider',
-          }}
-        >
+          }}>
           <Avatar alt="G" src="/static/images/avatar/7.jpg" sx={{ width: 36, height: 36 }} />
           {!collapsed && (
             <Box sx={{ minWidth: 0 }}>

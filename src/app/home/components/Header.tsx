@@ -46,8 +46,7 @@ export default function HeaderBreadcrumb({
         color: 'text.primary',
         borderBottom: '1px solid',
         borderColor: 'divider',
-      }}
-    >
+      }}>
       <Toolbar sx={{ gap: 1 }}>
         {onMenuClick && (
           <IconButton edge="start" onClick={onMenuClick} aria-label="menu">
@@ -59,8 +58,7 @@ export default function HeaderBreadcrumb({
         <Breadcrumbs
           separator={<NavigateNextIcon fontSize="small" />}
           aria-label="breadcrumb"
-          sx={{ fontSize: 14, fontWeight: 500 }}
-        >
+          sx={{ fontSize: 14, fontWeight: 500 }}>
           {items.map((item, index) => {
             const last = index === items.length - 1;
             return last ? (
@@ -71,8 +69,7 @@ export default function HeaderBreadcrumb({
               <Link key={index} href={item.href ?? '#'} passHref>
                 <Typography
                   component="span"
-                  sx={{ color: 'text.secondary', '&:hover': { textDecoration: 'underline' } }}
-                >
+                  sx={{ color: 'text.secondary', '&:hover': { textDecoration: 'underline' } }}>
                   {item.label}
                 </Typography>
               </Link>
