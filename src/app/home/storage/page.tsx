@@ -56,7 +56,7 @@ export default function UploadedFilesPage() {
   const fetchUploads = async () => {
     try {
       setLoading(true);
-      const res = await axios.get<UploadRecord[]>('http://localhost:3001/upload');
+      const res = await axios.get<UploadRecord[]>(`${process.env.NEXT_PUBLIC_API_URL}/upload`);
       setUploads(res.data);
       setLoading(false);
     } catch (err) {
@@ -88,7 +88,7 @@ export default function UploadedFilesPage() {
   const handleConfirmComplete = async () => {
     if (!selectedId) return;
     try {
-      await axios.patch(`http://localhost:3001/upload/${selectedId}/complete`);
+      await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/upload/${selectedId}/complete`);
       fetchUploads();
       setConfirmOpen(false);
       setSelectedId(null);
