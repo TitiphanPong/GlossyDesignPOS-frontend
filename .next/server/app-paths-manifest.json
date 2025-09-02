@@ -1,12 +1,9 @@
 {
-  "/favicon.ico/route": "app/favicon.ico/route.js",
   "/_not-found/page": "app/_not-found/page.js",
-  "/pay/page": "app/pay/page.js",
-  "/page": "app/page.js",
-  "/uploadFileGlossyDesign/page": "app/uploadFileGlossyDesign/page.js",
-  "/pos/page": "app/pos/page.js",
   "/home/page": "app/home/page.js",
   "/home/posseller/page": "app/home/posseller/page.js",
   "/home/saleListPage/page": "app/home/saleListPage/page.js",
-  "/home/storage/page": "app/home/storage/page.js"
+  "/home/storage/page": "app/home/storage/page.js",
+  "/page": "app/page.js",
+  "/uploadFileGlossyDesign/page": "app/uploadFileGlossyDesign/page.js"
 }

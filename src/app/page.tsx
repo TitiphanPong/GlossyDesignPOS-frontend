@@ -164,7 +164,7 @@ export default function LandingPage() {
                     </Typography>
                   </Stack>
                   <Typography color="text.secondary" sx={{ mb: 2 }} marginTop={1} marginLeft={2}>
-                    จัดการงานหน้าร้าน ขายไว คิวชัด รายงานครบ
+                    จัดการงานหน้าร้าน ขายไว รายงานครบ
                   </Typography>
                   <Divider sx={{ mb: 1 }} />
                   <List>
@@ -183,12 +183,12 @@ export default function LandingPage() {
                       </ListItemIcon>
                       <ListItemText
                         primary="ขายหน้าร้าน (POS)"
-                        secondary="คิดราคา/ส่วนลด ภาษี ชำระเงิน"
+                        secondary="คิดราคา / ส่วนลด พร้อมชำระเงิน"
                       />
                       <ArrowForwardIcon fontSize="small" />
                     </ListItemButton>
 
-                    <ListItemButton
+                    {/* <ListItemButton
                       component={Link}
                       href="/jobs"
                       sx={{
@@ -206,7 +206,7 @@ export default function LandingPage() {
                         secondary="ตรวจไฟล์/กำลังพิมพ์/เสร็จสิ้น"
                       />
                       <ArrowForwardIcon fontSize="small" />
-                    </ListItemButton>
+                    </ListItemButton> */}
 
                     <ListItemButton
                       component={Link}
@@ -369,7 +369,7 @@ export default function LandingPage() {
                 <CardActions sx={{ px: 4, pb: 4 }}>
                   <Button
                     component={Link}
-                    href="/upload"
+                    href="/uploadFileGlossyDesign"
                     variant="contained"
                     startIcon={<UploadFileIcon />}>
                     เริ่มส่งไฟล์

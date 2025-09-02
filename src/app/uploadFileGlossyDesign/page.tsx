@@ -47,26 +47,26 @@ export default function UploadPage() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
-  const handleNext = () => setActiveStep((prev) => prev + 1);
-  const handleBack = () => setActiveStep((prev) => prev - 1);
+  const handleNext = () => setActiveStep(prev => prev + 1);
+  const handleBack = () => setActiveStep(prev => prev - 1);
 
   // ✅ เลือกไฟล์หลายไฟล์และ append
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     if (event.target.files) {
       const newFiles = Array.from(event.target.files);
-      setFiles((prev) => [...prev, ...newFiles]); // เพิ่มไฟล์ใหม่เข้า list เดิม
+      setFiles(prev => [...prev, ...newFiles]); // เพิ่มไฟล์ใหม่เข้า list เดิม
     }
   };
 
   // ✅ ลบไฟล์ออกจาก list
   const handleRemoveFile = (index: number) => {
-    setFiles((prev) => prev.filter((_, i) => i !== index));
+    setFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleUpload = async () => {
     if (files.length === 0) return;
     const formData = new FormData();
-    files.forEach((file) => formData.append('files', file));
+    files.forEach(file => formData.append('files', file));
     formData.append('category', category);
     formData.append('customerName', customerName);
     formData.append('phone', phone);
@@ -76,9 +76,9 @@ export default function UploadPage() {
       setUploading(true);
       setProgress(0);
 
-      await axios.post('http://localhost:3001/upload', formData, {
+      await axios.post(`${process.env.NEXT_PUBLIC_API_URL}/upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
-        onUploadProgress: (e) => {
+        onUploadProgress: e => {
           if (e.total) setProgress(Math.round((e.loaded * 100) / e.total));
         },
       });
@@ -100,8 +100,7 @@ export default function UploadPage() {
         justifyContent: 'center',
         alignItems: 'center',
         p: isMobile ? 1 : 3,
-      }}
-    >
+      }}>
       <Card
         sx={{
           width: '100%',
@@ -109,11 +108,9 @@ export default function UploadPage() {
           borderRadius: '24px',
           boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
           background: 'linear-gradient(180deg, #ffffff 0%, #f9f9ff 100%)',
-        }}
-      >
+        }}>
         <CardContent sx={{ p: isMobile ? 2 : 4 }}>
-
-        {/* Card Header */}
+          {/* Card Header */}
           <Box textAlign="center" mt={3} mb={4}>
             <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold">
               อัพโหลดไฟล์งานพิมพ์
@@ -122,16 +119,14 @@ export default function UploadPage() {
               กรุณาอัพโหลดไฟล์ที่ต้องการ พร้อมกรอกข้อมูลลูกค้าให้ครบถ้วนก่อนส่ง
             </Typography>
           </Box>
-        {/* Stepper */}
+          {/* Stepper */}
           <Stepper activeStep={activeStep} alternativeLabel>
-            {steps.map((label) => (
+            {steps.map(label => (
               <Step key={label}>
                 <StepLabel>{label}</StepLabel>
               </Step>
             ))}
           </Stepper>
-
-
 
           {/* Step Content */}
           <Box mt={2}>
@@ -152,18 +147,12 @@ export default function UploadPage() {
                     alignItems: 'center',
                     gap: 1,
                     '&:hover': { bgcolor: '#f5f5f5', borderColor: '#6c63ff' },
-                  }}
-                >
+                  }}>
                   <CloudUploadIcon sx={{ fontSize: 36, color: '#666' }} />
                   <Typography variant="body1">
                     คลิกเพื่อเลือกไฟล์ (สามารถเลือกได้หลายไฟล์)
                   </Typography>
-                  <input
-                    type="file"
-                    hidden
-                    multiple
-                    onChange={handleFileChange}
-                  />
+                  <input type="file" hidden multiple onChange={handleFileChange} />
                 </Button>
 
                 {/* ✅ รายการไฟล์ที่เลือก */}
@@ -176,8 +165,7 @@ export default function UploadPage() {
                           <IconButton edge="end" onClick={() => handleRemoveFile(index)}>
                             <DeleteIcon color="error" />
                           </IconButton>
-                        }
-                      >
+                        }>
                         <ListItemIcon>
                           <InsertDriveFileIcon color="primary" />
                         </ListItemIcon>
@@ -197,10 +185,9 @@ export default function UploadPage() {
                   <Select
                     labelId="category-label"
                     value={category}
-                    onChange={(e) => setCategory(e.target.value)}
-                    label="ประเภทงาน"
-                  >
-                    {categories.map((cat) => (
+                    onChange={e => setCategory(e.target.value)}
+                    label="ประเภทงาน">
+                    {categories.map(cat => (
                       <MenuItem key={cat} value={cat}>
                         {cat}
                       </MenuItem>
@@ -210,19 +197,19 @@ export default function UploadPage() {
                 <TextField
                   label="ชื่อลูกค้า"
                   value={customerName}
-                  onChange={(e) => setCustomerName(e.target.value)}
+                  onChange={e => setCustomerName(e.target.value)}
                   fullWidth
                 />
                 <TextField
                   label="เบอร์โทรศัพท์"
                   value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
+                  onChange={e => setPhone(e.target.value)}
                   fullWidth
                 />
                 <TextField
                   label="Note"
                   value={note}
-                  onChange={(e) => setNote(e.target.value)}
+                  onChange={e => setNote(e.target.value)}
                   fullWidth
                   multiline
                   rows={2}
@@ -259,12 +246,7 @@ export default function UploadPage() {
                       value={progress}
                       sx={{ height: 10, borderRadius: 5 }}
                     />
-                    <Typography
-                      variant="body2"
-                      textAlign="center"
-                      mt={1}
-                      color="text.secondary"
-                    >
+                    <Typography variant="body2" textAlign="center" mt={1} color="text.secondary">
                       กำลังอัพโหลด... {progress}%
                     </Typography>
                   </Box>
@@ -282,16 +264,16 @@ export default function UploadPage() {
               <Button
                 variant="contained"
                 onClick={handleUpload}
-                disabled={files.length === 0 || !customerName || !phone || uploading}
-              >
+                disabled={files.length === 0 || !customerName || !phone || uploading}>
                 {uploading ? `Uploading... ${progress}%` : 'อัพโหลด'}
               </Button>
             ) : (
               <Button
                 variant="contained"
                 onClick={handleNext}
-                disabled={(activeStep === 0 && files.length === 0) || (activeStep === 1 && !customerName)}
-              >
+                disabled={
+                  (activeStep === 0 && files.length === 0) || (activeStep === 1 && !customerName)
+                }>
                 ถัดไป
               </Button>
             )}
