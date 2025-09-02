@@ -24,8 +24,14 @@ export default function PayPage({ searchParams }: any) {
       <div className="text-center space-y-3">
         <h1 className="text-2xl font-semibold">สแกนจ่ายด้วยพร้อมเพย์</h1>
         <p>จำนวนเงิน: {amount.toFixed(2)} THB</p>
-        {qr ? <img src={qr} alt="PromptPay QR" className="w-64 h-64 mx-auto"/> : <div>กำลังสร้าง QR...</div>}
-        <p className="text-sm text-gray-500">* ตัวอย่างง่ายๆ ยังไม่ได้ผูก webhook/ยืนยันอัตโนมัติ</p>
+        {qr ? (
+          <img src={qr} alt="PromptPay QR" className="w-64 h-64 mx-auto" />
+        ) : (
+          <div>กำลังสร้าง QR...</div>
+        )}
+        <p className="text-sm text-gray-500">
+          * ตัวอย่างง่ายๆ ยังไม่ได้ผูก webhook/ยืนยันอัตโนมัติ
+        </p>
       </div>
     </div>
   );

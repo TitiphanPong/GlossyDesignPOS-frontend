@@ -48,8 +48,8 @@ function HomeLayout({ children }) {
         children: children
     }, void 0, false, {
         fileName: "[project]/src/app/home/layout.tsx",
-        lineNumber: 7,
-        columnNumber: 5
+        lineNumber: 6,
+        columnNumber: 10
     }, this);
 }
 }),

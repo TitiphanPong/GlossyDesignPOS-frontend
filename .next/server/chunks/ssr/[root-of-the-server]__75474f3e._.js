@@ -89,12 +89,12 @@ function HeaderBreadcrumb({ onMenuClick, hideOnDesktop = true, items = [
                     "aria-label": "menu",
                     children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$MenuRounded$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                         fileName: "[project]/src/app/home/components/Header.tsx",
-                        lineNumber: 54,
+                        lineNumber: 53,
                         columnNumber: 13
                     }, this)
                 }, void 0, false, {
                     fileName: "[project]/src/app/home/components/Header.tsx",
-                    lineNumber: 53,
+                    lineNumber: 52,
                     columnNumber: 11
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Breadcrumbs$2f$Breadcrumbs$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -102,7 +102,7 @@ function HeaderBreadcrumb({ onMenuClick, hideOnDesktop = true, items = [
                         fontSize: "small"
                     }, void 0, false, {
                         fileName: "[project]/src/app/home/components/Header.tsx",
-                        lineNumber: 60,
+                        lineNumber: 59,
                         columnNumber: 22
                     }, void 0),
                     "aria-label": "breadcrumb",
@@ -118,7 +118,7 @@ function HeaderBreadcrumb({ onMenuClick, hideOnDesktop = true, items = [
                             children: item.label
                         }, index, false, {
                             fileName: "[project]/src/app/home/components/Header.tsx",
-                            lineNumber: 67,
+                            lineNumber: 65,
                             columnNumber: 15
                         }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$client$2f$app$2d$dir$2f$link$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
                             href: item.href ?? '#',
@@ -134,18 +134,18 @@ function HeaderBreadcrumb({ onMenuClick, hideOnDesktop = true, items = [
                                 children: item.label
                             }, void 0, false, {
                                 fileName: "[project]/src/app/home/components/Header.tsx",
-                                lineNumber: 72,
+                                lineNumber: 70,
                                 columnNumber: 17
                             }, this)
                         }, index, false, {
                             fileName: "[project]/src/app/home/components/Header.tsx",
-                            lineNumber: 71,
+                            lineNumber: 69,
                             columnNumber: 15
                         }, this);
                     })
                 }, void 0, false, {
                     fileName: "[project]/src/app/home/components/Header.tsx",
-                    lineNumber: 59,
+                    lineNumber: 58,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -155,13 +155,13 @@ function HeaderBreadcrumb({ onMenuClick, hideOnDesktop = true, items = [
                     children: rightSlot
                 }, void 0, false, {
                     fileName: "[project]/src/app/home/components/Header.tsx",
-                    lineNumber: 83,
+                    lineNumber: 80,
                     columnNumber: 9
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/home/components/Header.tsx",
-            lineNumber: 51,
+            lineNumber: 50,
             columnNumber: 7
         }, this)
     }, void 0, false, {
@@ -204,7 +204,9 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$ico
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$ChevronLeftRounded$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@mui/icons-material/esm/ChevronLeftRounded.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$ChevronRightRounded$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@mui/icons-material/esm/ChevronRightRounded.js [app-ssr] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$StarRounded$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@mui/icons-material/esm/StarRounded.js [app-ssr] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$InsertDriveFile$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@mui/icons-material/esm/InsertDriveFile.js [app-ssr] (ecmascript)");
 'use client';
+;
 ;
 ;
 ;
@@ -235,7 +237,7 @@ const DEFAULT_ITEMS = [
         href: '/',
         icon: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$HomeRounded$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
             fileName: "[project]/src/app/home/components/SideMenu.tsx",
-            lineNumber: 70,
+            lineNumber: 71,
             columnNumber: 62
         }, ("TURBOPACK compile-time value", void 0))
     },
@@ -243,13 +245,34 @@ const DEFAULT_ITEMS = [
     {
         section: 'Work',
         label: 'เมนูชำระสินค้า',
-        href: '/home/tasks',
+        href: '/home/posseller',
         icon: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$AssignmentRounded$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
             fileName: "[project]/src/app/home/components/SideMenu.tsx",
-            lineNumber: 72,
-            columnNumber: 74
+            lineNumber: 77,
+            columnNumber: 11
         }, ("TURBOPACK compile-time value", void 0)),
         badge: 7
+    },
+    // { section: 'Work', label: 'Task', href: '/home/tasks', icon: <SettingsRoundedIcon /> },
+    {
+        section: 'Order',
+        label: 'ใบรายการขาย',
+        href: '/home/saleListPage',
+        icon: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$AssignmentRounded$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
+            fileName: "[project]/src/app/home/components/SideMenu.tsx",
+            lineNumber: 85,
+            columnNumber: 11
+        }, ("TURBOPACK compile-time value", void 0))
+    },
+    {
+        section: 'Order',
+        label: 'ไฟล์ลูกค้า',
+        href: '/home/storage',
+        icon: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$InsertDriveFile$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
+            fileName: "[project]/src/app/home/components/SideMenu.tsx",
+            lineNumber: 91,
+            columnNumber: 11
+        }, ("TURBOPACK compile-time value", void 0))
     }
 ];
 const shimmer = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$emotion$2f$react$2f$dist$2f$emotion$2d$react$2e$development$2e$esm$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$locals$3e$__["keyframes"]`
@@ -308,12 +331,12 @@ const Brand = ({ collapsed })=>{
                     fontSize: "small"
                 }, void 0, false, {
                     fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                    lineNumber: 126,
+                    lineNumber: 146,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0))
             }, void 0, false, {
                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                lineNumber: 117,
+                lineNumber: 135,
                 columnNumber: 7
             }, ("TURBOPACK compile-time value", void 0)),
             !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -334,7 +357,8 @@ const Brand = ({ collapsed })=>{
                             letterSpacing: 0.1
                         },
                         children: [
-                            "GLOSSY ",
+                            "GLOSSY",
+                            ' ',
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
                                 component: "span",
                                 sx: {
@@ -343,13 +367,13 @@ const Brand = ({ collapsed })=>{
                                 children: "DESIGN"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                lineNumber: 147,
-                                columnNumber: 20
+                                lineNumber: 166,
+                                columnNumber: 13
                             }, ("TURBOPACK compile-time value", void 0))
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                        lineNumber: 141,
+                        lineNumber: 160,
                         columnNumber: 11
                     }, ("TURBOPACK compile-time value", void 0)),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -362,19 +386,19 @@ const Brand = ({ collapsed })=>{
                         children: "Print & Cashier System"
                     }, void 0, false, {
                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                        lineNumber: 150,
+                        lineNumber: 171,
                         columnNumber: 11
                     }, ("TURBOPACK compile-time value", void 0))
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                lineNumber: 131,
+                lineNumber: 151,
                 columnNumber: 9
             }, ("TURBOPACK compile-time value", void 0))
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-        lineNumber: 111,
+        lineNumber: 130,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 };
@@ -390,7 +414,7 @@ const SectionHeader = ({ text, collapsed })=>collapsed ? null : /*#__PURE__*/ (0
         children: text
     }, void 0, false, {
         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-        lineNumber: 166,
+        lineNumber: 182,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFAULT_ITEMS, defaultCollapsed = false, onCollapsedChange, onToggleTheme, themeMode = 'light' }) {
@@ -475,7 +499,7 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                     }
                 }, void 0, false, {
                     fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                    lineNumber: 239,
+                    lineNumber: 255,
                     columnNumber: 9
                 }, this),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$ListItemIcon$2f$ListItemIcon$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -486,7 +510,7 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                     children: item.icon
                 }, void 0, false, {
                     fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                    lineNumber: 253,
+                    lineNumber: 269,
                     columnNumber: 9
                 }, this),
                 !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$ListItemText$2f$ListItemText$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -500,7 +524,7 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                                 children: item.label
                             }, void 0, false, {
                                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                lineNumber: 260,
+                                lineNumber: 276,
                                 columnNumber: 17
                             }, void 0),
                             item.badge !== undefined && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Chip$2f$Chip$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -518,24 +542,24 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                                 variant: "filled"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                lineNumber: 264,
+                                lineNumber: 278,
                                 columnNumber: 19
                             }, void 0)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                        lineNumber: 259,
+                        lineNumber: 275,
                         columnNumber: 15
                     }, void 0)
                 }, void 0, false, {
                     fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                    lineNumber: 257,
+                    lineNumber: 273,
                     columnNumber: 11
                 }, this)
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/home/components/SideMenu.tsx",
-            lineNumber: 220,
+            lineNumber: 235,
             columnNumber: 7
         }, this);
         return collapsed ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Tooltip$2f$Tooltip$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -546,12 +570,12 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                 children: content
             }, void 0, false, {
                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                lineNumber: 284,
+                lineNumber: 298,
                 columnNumber: 9
             }, this)
         }, void 0, false, {
             fileName: "[project]/src/app/home/components/SideMenu.tsx",
-            lineNumber: 283,
+            lineNumber: 297,
             columnNumber: 7
         }, this) : content;
     };
@@ -584,7 +608,7 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                         collapsed: collapsed
                     }, void 0, false, {
                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                        lineNumber: 308,
+                        lineNumber: 321,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -604,32 +628,32 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                                 },
                                 children: collapsed ? /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$ChevronRightRounded$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                     fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                    lineNumber: 319,
+                                    lineNumber: 331,
                                     columnNumber: 28
                                 }, this) : /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$ChevronLeftRounded$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                     fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                    lineNumber: 319,
+                                    lineNumber: 331,
                                     columnNumber: 58
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                lineNumber: 311,
+                                lineNumber: 324,
                                 columnNumber: 13
                             }, this)
                         }, void 0, false, {
                             fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                            lineNumber: 310,
+                            lineNumber: 323,
                             columnNumber: 11
                         }, this)
                     }, void 0, false, {
                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                        lineNumber: 309,
+                        lineNumber: 322,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                lineNumber: 307,
+                lineNumber: 320,
                 columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -651,7 +675,7 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                                     collapsed: collapsed
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                    lineNumber: 340,
+                                    lineNumber: 351,
                                     columnNumber: 26
                                 }, void 0),
                                 sx: {
@@ -661,17 +685,17 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                                         item: item
                                     }, item.href, false, {
                                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                        lineNumber: 344,
+                                        lineNumber: 354,
                                         columnNumber: 17
                                     }, this))
                             }, section, false, {
                                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                lineNumber: 338,
+                                lineNumber: 349,
                                 columnNumber: 13
                             }, this))
                     }, void 0, false, {
                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                        lineNumber: 336,
+                        lineNumber: 347,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Stack$2f$Stack$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -694,7 +718,7 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                                 }
                             }, void 0, false, {
                                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                lineNumber: 402,
+                                lineNumber: 410,
                                 columnNumber: 11
                             }, this),
                             !collapsed && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -709,7 +733,7 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                                         children: "Glossy Design"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                        lineNumber: 405,
+                                        lineNumber: 413,
                                         columnNumber: 15
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -721,13 +745,13 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                                         children: "glossy2929@gmail.com"
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                        lineNumber: 408,
+                                        lineNumber: 416,
                                         columnNumber: 15
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                lineNumber: 404,
+                                lineNumber: 412,
                                 columnNumber: 13
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
@@ -744,40 +768,40 @@ function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFA
                                             fontSize: "small"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                            lineNumber: 416,
+                                            lineNumber: 424,
                                             columnNumber: 17
                                         }, this)
                                     }, void 0, false, {
                                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                        lineNumber: 415,
+                                        lineNumber: 423,
                                         columnNumber: 15
                                     }, this)
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                    lineNumber: 414,
+                                    lineNumber: 422,
                                     columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                                lineNumber: 413,
+                                lineNumber: 421,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                        lineNumber: 391,
+                        lineNumber: 400,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/home/components/SideMenu.tsx",
-                lineNumber: 328,
+                lineNumber: 340,
                 columnNumber: 7
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/home/components/SideMenu.tsx",
-        lineNumber: 292,
+        lineNumber: 306,
         columnNumber: 5
     }, this);
 }
@@ -832,7 +856,7 @@ function AppBreadCrumb() {
                             fontSize: "inherit"
                         }, void 0, false, {
                             fileName: "[project]/src/app/home/components/AppBreadCrumb.tsx",
-                            lineNumber: 12,
+                            lineNumber: 16,
                             columnNumber: 11
                         }, this),
                         "Home"
@@ -847,7 +871,7 @@ function AppBreadCrumb() {
                     children: "Dashboard"
                 }, void 0, false, {
                     fileName: "[project]/src/app/home/components/AppBreadCrumb.tsx",
-                    lineNumber: 15,
+                    lineNumber: 19,
                     columnNumber: 9
                 }, this)
             ]
@@ -877,7 +901,7 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$navi
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$home$2f$components$2f$Header$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/home/components/Header.tsx [app-ssr] (ecmascript)"); // Breadcrumb/หรือ Header ที่คุณทำไว้
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$home$2f$components$2f$SideMenu$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/home/components/SideMenu.tsx [app-ssr] (ecmascript)"); // เวอร์ชันคอมแพ็คที่ปรับไว้
 var __TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$home$2f$components$2f$AppBreadCrumb$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/src/app/home/components/AppBreadCrumb.tsx [app-ssr] (ecmascript)");
-"use client";
+'use client';
 ;
 ;
 ;
@@ -895,21 +919,21 @@ function AppShell({ children }) {
             }, void 0, false, {
                 fileName: "[project]/src/app/home/shell.tsx",
                 lineNumber: 18,
-                columnNumber: 4
+                columnNumber: 7
             }, this),
             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
                 sx: {
-                    display: "flex",
-                    minHeight: "100dvh",
-                    bgcolor: "background.default"
+                    display: 'flex',
+                    minHeight: '100dvh',
+                    bgcolor: 'background.default'
                 },
                 children: [
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$home$2f$components$2f$SideMenu$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {
-                        currentPath: pathname ?? "/"
+                        currentPath: pathname ?? '/'
                     }, void 0, false, {
                         fileName: "[project]/src/app/home/shell.tsx",
-                        lineNumber: 26,
-                        columnNumber: 5
+                        lineNumber: 25,
+                        columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
                         component: "main",
@@ -924,8 +948,8 @@ function AppShell({ children }) {
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$home$2f$components$2f$AppBreadCrumb$2e$tsx__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                 fileName: "[project]/src/app/home/shell.tsx",
-                                lineNumber: 32,
-                                columnNumber: 6
+                                lineNumber: 28,
+                                columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$server$2f$route$2d$modules$2f$app$2d$page$2f$vendored$2f$ssr$2f$react$2d$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
                                 sx: {
@@ -937,25 +961,25 @@ function AppShell({ children }) {
                                     }
                                 },
                                 children: [
-                                    "  ",
+                                    ' ',
                                     children
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/home/shell.tsx",
-                                lineNumber: 35,
-                                columnNumber: 6
+                                lineNumber: 31,
+                                columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/home/shell.tsx",
-                        lineNumber: 27,
-                        columnNumber: 5
+                        lineNumber: 26,
+                        columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/home/shell.tsx",
                 lineNumber: 19,
-                columnNumber: 4
+                columnNumber: 7
             }, this)
         ]
     }, void 0, true);

@@ -16,8 +16,8 @@ function Page() {
         children: "SSS"
     }, void 0, false, {
         fileName: "[project]/src/app/home/page.tsx",
-        lineNumber: 8,
-        columnNumber: 5
+        lineNumber: 7,
+        columnNumber: 10
     }, this);
 }
 }),

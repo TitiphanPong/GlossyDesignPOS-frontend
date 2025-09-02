@@ -12,8 +12,7 @@ export default function AppFooter() {
         textAlign: 'center',
         fontSize: 14,
         color: 'text.secondary',
-      }}
-    >
+      }}>
       <Typography>Copyright © Glossy Design 2025.</Typography>
     </Box>
   );
