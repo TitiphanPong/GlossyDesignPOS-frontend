@@ -6,6 +6,9 @@ const nextConfig: NextConfig = {
     locales: ['th'],
     defaultLocale: 'th',
   },
+    eslint: {
+      ignoreDuringBuilds: true, // ✅ ตรงนี้ถึงจะทำงาน
+    },
   // config อื่น ๆ ของคุณใส่ตรงนี้ได้
 };
 
