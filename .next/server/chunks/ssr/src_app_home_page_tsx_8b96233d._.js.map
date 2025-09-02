@@ -1,6 +1,0 @@
-{
-  "version": 3,
-  "sources": [],
-  "sections": [
-    {"offset": {"line": 5, "column": 0}, "map": {"version":3,"sources":["file:///C:/Users/User/Desktop/Work/glossy-design/GlossyPOS-Frontend/src/app/home/page.tsx"],"sourcesContent":["'use client';\n\nimport * as React from 'react';\nimport { Box, Typography, Paper } from '@mui/material';\n\nexport default function Page() {\n  return <Box>SSS</Box>;\n}\n"],"names":[],"mappings":";;;;AAGA;AAHA;;;AAKe,SAAS;IACtB,qBAAO,8OAAC,wLAAA,CAAA,MAAG;kBAAC;;;;;;AACd","debugId":null}}]
-}
