@@ -1,74 +1,215 @@
-'use client'
+'use client';
 
-import React from 'react';
-import styled from 'styled-components';
+import {
+  Box,
+  Card,
+  CardContent,
+  Typography,
+  Chip,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableRow,
+  Paper,
+} from '@mui/material';
+import { motion } from 'framer-motion';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+} from 'recharts';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
+import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 
-const StyledWrapper = styled.div`
-  /* Add your styles here or leave empty for now */
-`;
+// Mock data
+const salesData = [
+  { month: 'ม.ค.', sales: 1200 },
+  { month: 'ก.พ.', sales: 1800 },
+  { month: 'มี.ค.', sales: 2200 },
+  { month: 'เม.ย.', sales: 900 },
+  { month: 'พ.ค.', sales: 2400 },
+  { month: 'มิ.ย.', sales: 3100 },
+];
 
-const Form = () => {
+const recentOrders = [
+  { id: 1, customer: 'คุณเอ', category: 'นามบัตร', status: 'completed', paid: '350฿' },
+  { id: 2, customer: 'คุณบี', category: 'ตรายาง', status: 'pending', paid: '250฿' },
+  { id: 3, customer: 'คุณซี', category: 'ถ่ายเอกสาร', status: 'completed', paid: '1250฿' },
+  { id: 4, customer: 'คุณดี', category: 'สติ๊กเกอร์', status: 'pending', paid: '500฿' },
+  { id: 5, customer: 'คุณอี', category: 'โปสเตอร์', status: 'completed', paid: '100฿' },
+];
+
+export default function DashboardPage() {
+  const summaryCards = [
+    { label: 'ยอดขายวันนี้', value: '฿ 12,500', icon: <MonetizationOnIcon sx={{ fontSize: 40, color: '#4caf50' }} /> },
+    { label: 'งานค้าง', value: '8', icon: <HourglassEmptyIcon sx={{ fontSize: 40, color: '#ff9800' }} /> },
+    { label: 'งานเสร็จสิ้น', value: '15', icon: <CheckCircleIcon sx={{ fontSize: 40, color: '#2196f3' }} /> },
+    { label: 'ลูกค้าใหม่', value: '3', icon: <PeopleAltIcon sx={{ fontSize: 40, color: '#9c27b0' }} /> },
+  ];
+
   return (
-    <StyledWrapper>
-      <div className="master-container">
-        <div className="card cart">
-          <label className="title">Your cart</label>
-          <div className="products">
-            <div className="product">
-              <svg fill="none" viewBox="0 0 60 60" height={60} width={60} xmlns="http://www.w3.org/2000/svg">
-                <rect fill="#FFF6EE" rx="8.25" height={60} width={60} />
-                <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="2.25" stroke="#FF8413" fill="#FFB672" d="M34.2812 18H25.7189C21.9755 18 18.7931 20.5252 17.6294 24.0434C17.2463 25.2017 17.0547 25.7808 17.536 26.3904C18.0172 27 18.8007 27 20.3675 27H39.6325C41.1993 27 41.9827 27 42.4639 26.3904C42.9453 25.7808 42.7538 25.2017 42.3707 24.0434C41.207 20.5252 38.0246 18 34.2812 18Z" />
-                <path fill="#FFB672" d="M18 36H17.25C16.0074 36 15 34.9926 15 33.75C15 32.5074 16.0074 31.5 17.25 31.5H29.0916C29.6839 31.5 30.263 31.6754 30.7557 32.0039L33.668 33.9453C34.1718 34.2812 34.8282 34.2812 35.332 33.9453L38.2443 32.0039C38.7371 31.6754 39.3161 31.5 39.9084 31.5H42.75C43.9926 31.5 45 32.5074 45 33.75C45 34.9926 43.9926 36 42.75 36H42M18 36L18.6479 38.5914C19.1487 40.5947 20.9486 42 23.0135 42H36.9865C39.0514 42 40.8513 40.5947 41.3521 38.5914L42 36M18 36H28.5ZM42 36H39.75Z" />
-                <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="2.25" stroke="#FF8413" d="M18 36H17.25C16.0074 36 15 34.9926 15 33.75C15 32.5074 16.0074 31.5 17.25 31.5H29.0916C29.6839 31.5 30.263 31.6754 30.7557 32.0039L33.668 33.9453C34.1718 34.2812 34.8282 34.2812 35.332 33.9453L38.2443 32.0039C38.7371 31.6754 39.3161 31.5 39.9084 31.5H42.75C43.9926 31.5 45 32.5074 45 33.75C45 34.9926 43.9926 36 42.75 36H42M18 36L18.6479 38.5914C19.1487 40.5947 20.9486 42 23.0135 42H36.9865C39.0514 42 40.8513 40.5947 41.3521 38.5914L42 36M18 36H28.5M42 36H39.75" />
-                <path strokeLinejoin="round" strokeLinecap="round" strokeWidth={3} stroke="#FF8413" d="M34.512 22.5H34.4982" />
-                <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="2.25" stroke="#FF8413" d="M27.75 21.75L26.25 23.25" />
-              </svg>
-              <div>
-                <span>Cheese Burger</span>
-                <p>Extra Spicy</p>
-                <p>No mayo</p>
-              </div>
-              <div className="quantity">
-                <button>
-                  <svg fill="none" viewBox="0 0 24 24" height={14} width={14} xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="2.5" stroke="#47484b" d="M20 12L4 12" />
-                  </svg>
-                </button>
-                <label>2</label>
-                <button>
-                  <svg fill="none" viewBox="0 0 24 24" height={14} width={14} xmlns="http://www.w3.org/2000/svg">
-                    <path strokeLinejoin="round" strokeLinecap="round" strokeWidth="2.5" stroke="#47484b" d="M12 4V20M20 12H4" />
-                  </svg>
-                </button>
-              </div>
-              <label className="price small">$23.99</label>
-            </div>
-          </div>
-        </div>
-        <div className="card coupons">
-          <label className="title">Apply coupons</label>
-          <form className="form">
-            <input type="text" placeholder="Apply your coupons here" className="input_field" />
-            <button>Apply</button>
-          </form>
-        </div>
-        <div className="card checkout">
-          <label className="title">Checkout</label>
-          <div className="details">
-            <span>Your cart subtotal:</span>
-            <span>47.99$</span>
-            <span>Discount through applied coupons:</span>
-            <span>3.99$</span>
-            <span>Shipping fees:</span>
-            <span>4.99$</span>
-          </div>
-          <div className="checkout--footer">
-            <label className="price"><sup>$</sup>57.99</label>
-            <button className="checkout-btn">Checkout</button>
-          </div>
-        </div>
-      </div>
-    </StyledWrapper>
+    <Box
+      sx={{
+        p: 4,
+        minHeight: '100vh',
+
+      }}
+    >
+      <Typography
+        variant="h4"
+        fontWeight="bold"
+        gutterBottom
+        sx={{
+          textAlign: 'center',
+          mb: 4,
+          background: 'linear-gradient(90deg, #4a90e2, #9013fe)',
+          WebkitBackgroundClip: 'text',
+          WebkitTextFillColor: 'transparent',
+        }}
+      >
+        ✨ Dashboard Glossy Design ✨
+      </Typography>
+
+      {/* Summary Cards */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+          gap: 3,
+          mb: 4,
+        }}
+      >
+        {summaryCards.map((card, index) => (
+          <motion.div
+            key={index}
+            initial={{ opacity: 0, y: 30 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: index * 0.2 }}
+          >
+            <Card
+              sx={{
+                borderRadius: 4,
+                backdropFilter: 'blur(12px)',
+                background: 'rgba(255, 255, 255, 0.7)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+                p: 2,
+                textAlign: 'center',
+                transition: '0.3s',
+                '&:hover': {
+                  transform: 'translateY(-6px)',
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                },
+              }}
+            >
+              <CardContent>
+                <Box>{card.icon}</Box>
+                <Typography variant="h6" mt={1} color="text.secondary">
+                  {card.label}
+                </Typography>
+                <Typography variant="h5" fontWeight="bold">
+                  {card.value}
+                </Typography>
+              </CardContent>
+            </Card>
+          </motion.div>
+        ))}
+      </Box>
+
+      {/* Content Section */}
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
+          gap: 3,
+        }}
+      >
+        {/* Sales Chart */}
+        <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
+          <Card
+            sx={{
+              borderRadius: 4,
+              backdropFilter: 'blur(12px)',
+              background: 'rgba(255, 255, 255, 0.8)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              p: 3,
+              height: 360,
+            }}
+          >
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              📈 กราฟยอดขายรายเดือน
+            </Typography>
+            <ResponsiveContainer width="100%" height="90%">
+              <BarChart data={salesData}>
+                <CartesianGrid strokeDasharray="3 3" />
+                <XAxis dataKey="month" />
+                <YAxis />
+                <Tooltip />
+                <Bar dataKey="sales" fill="url(#colorSales)" radius={[8, 8, 0, 0]} />
+                <defs>
+                  <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#42a5f5" stopOpacity={0.9} />
+                    <stop offset="95%" stopColor="#1976d2" stopOpacity={0.8} />
+                  </linearGradient>
+                </defs>
+              </BarChart>
+            </ResponsiveContainer>
+          </Card>
+        </motion.div>
+
+        {/* Recent Orders */}
+        <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}>
+          <Card
+            sx={{
+              borderRadius: 4,
+              backdropFilter: 'blur(12px)',
+              background: 'rgba(255, 255, 255, 0.8)',
+              boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
+              p: 3,
+              height: 360,
+              overflow: 'auto',
+            }}
+          >
+            <Typography variant="h6" fontWeight="bold" gutterBottom>
+              📋 งานล่าสุด
+            </Typography>
+            <Paper sx={{ width: '100%', overflow: 'hidden', background: 'transparent' }} elevation={0}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>ลูกค้า</TableCell>
+                    <TableCell>ประเภทงาน</TableCell>
+                    <TableCell>สถานะ</TableCell>
+                    <TableCell>ยอดชำระ</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {recentOrders.map((row) => (
+                    <TableRow key={row.id} hover>
+                      <TableCell>{row.customer}</TableCell>
+                      <TableCell>{row.category}</TableCell>
+                      <TableCell>
+                        {row.status === 'completed' ? (
+                          <Chip label="เสร็จสิ้น" color="success" size="small" />
+                        ) : (
+                          <Chip label="รอดำเนินการ" color="warning" size="small" />
+                        )}
+                      </TableCell>
+                      <TableCell>{row.paid}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Paper>
+          </Card>
+        </motion.div>
+      </Box>
+    </Box>
   );
-};
-export default Form;
+}

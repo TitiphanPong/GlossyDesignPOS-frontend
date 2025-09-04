@@ -1415,7 +1415,7 @@ function SellPage() {
                 productName: fancyDlgProduct?.name || '',
                 onSelect: (order)=>{
                     if (fancyDlgProduct) {
-                        add(fancyDlgProduct, order.variant.name, order.quantity, order.variant.price, {
+                        add(fancyDlgProduct, order.variant.name, order.quantity, order.totalPrice / order.quantity, {
                             customerName: order.customerName,
                             companyName: order.companyName,
                             note: order.note,

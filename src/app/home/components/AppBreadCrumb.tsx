@@ -3,11 +3,19 @@
 import { Breadcrumbs, Link, Typography, Box } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { usePathname } from 'next/navigation';
+import { usePathname,useRouter } from 'next/navigation';
+import ButtonLogout from './LogoutOutline';
 
 export default function AppBreadCrumb() {
+
+  const router = useRouter(); // ✅ ถูกต้อง: อยู่ใน function component
   const pathname = usePathname(); // เช่น "/home/storage"
-  let pathnames = pathname.split('/').filter((x) => x);
+  let pathnames = pathname.split('/').filter(x => x);
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    router.push('/');
+  };
 
   // ✅ ตัด home ออกไปเลย
   if (pathnames[0] === 'home') {
@@ -22,8 +30,7 @@ export default function AppBreadCrumb() {
           color="inherit"
           href="/"
           underline="hover"
-          sx={{ display: 'flex', alignItems: 'center' }}
-        >
+          sx={{ display: 'flex', alignItems: 'center' }}>
           <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
           หน้าหลัก
         </Link>
@@ -44,13 +51,16 @@ export default function AppBreadCrumb() {
           );
         })}
       </Breadcrumbs>
+      <Box sx={{ position: 'absolute', top: 20, right: 20 }}>
+        <ButtonLogout onLogout={handleLogout} />
+      </Box>
     </Box>
   );
 }
 
 // ✅ Map slug → label ภาษาไทย
 const labelMap: Record<string, string> = {
-  'saleListPage': 'ใบรายการขาย',
+  saleListPage: 'ใบรายการขาย',
   storage: 'ไฟล์ลูกค้า',
   posseller: 'เมนูชำระสินค้า',
   checkout: 'ชำระเงิน',
@@ -65,6 +75,6 @@ function formatLabel(value: string) {
   return value
     .replace(/-/g, ' ')
     .replace(/([A-Z])/g, ' $1')
-    .replace(/^./, (str) => str.toUpperCase())
+    .replace(/^./, str => str.toUpperCase())
     .trim();
 }

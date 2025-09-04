@@ -240,7 +240,7 @@ function LoginPage() {
     const [snackbarOpen, setSnackbarOpen] = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"])(false);
     const handleLogin = (e)=>{
         e.preventDefault();
-        if (username === 'admin' && password === '1234') {
+        if (username === 'glossydesign' && password === 'glossygmail') {
             localStorage.setItem('auth_token', 'glossy-secret');
             router.push('/home'); // เปลี่ยน path ตามที่ต้องการ
         } else {

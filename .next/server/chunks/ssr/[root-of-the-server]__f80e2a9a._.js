@@ -1223,8 +1223,8 @@ function ModernUploadPage() {
         files.forEach((file)=>formData.append('files', file));
         formData.append('category', category);
         formData.append('customerName', customerName);
-        formData.append('phone', phone);
-        formData.append('note', note);
+        formData.append('phone', phone || '-');
+        formData.append('note', note || '-');
         try {
             setUploading(true);
             setProgress(0);
@@ -1509,7 +1509,7 @@ function ModernUploadPage() {
                                 borderRadius: '12px'
                             },
                             onClick: handleUpload,
-                            disabled: files.length === 0 || !customerName || !phone || uploading,
+                            disabled: files.length === 0 || !customerName,
                             children: uploading ? `Uploading... ${progress}%` : '🚀 อัพโหลดไฟล์'
                         }, void 0, false, {
                             fileName: "[project]/src/app/uploadFileGlossyDesign/page.tsx",
