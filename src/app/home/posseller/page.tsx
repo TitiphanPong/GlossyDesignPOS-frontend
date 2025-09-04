@@ -35,6 +35,8 @@ import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
 import StickyNote2RoundedIcon from '@mui/icons-material/StickyNote2Rounded';
 import NamecardModal from './components/NamecardModal';
+import CheckOutRight from './components/checkoutRight';
+
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -341,6 +343,7 @@ export default function SellPage() {
           </Box>
 
           {/* RIGHT */}
+          
           <Box
             sx={{
               width: { xs: 320, md: 380 },
@@ -365,6 +368,7 @@ export default function SellPage() {
               <Chip label={`${totalQty} รายการ`} size="small" sx={{ ml: 'auto' }} />
             </Stack>
             <Divider sx={{ mb: 1 }} />
+            
 
             <Box sx={{ overflowY: 'auto', flex: 1, pr: 0.5 }}>
               <List dense>
@@ -455,6 +459,7 @@ export default function SellPage() {
             flexDirection: 'column',
             height: '100%',
           }}>
+
           <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>
             สรุปรายการ
           </Typography>
