@@ -15,7 +15,7 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (username === 'admin' && password === '1234') {
+    if (username === 'glossydesign' && password === 'glossygmail') {
       localStorage.setItem('auth_token', 'glossy-secret');
       router.push('/home'); // เปลี่ยน path ตามที่ต้องการ
     } else {
