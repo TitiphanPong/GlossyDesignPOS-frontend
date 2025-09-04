@@ -21,11 +21,7 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import {
-  DataGrid,
-  GridColDef,
-  GridToolbarContainer,
-} from '@mui/x-data-grid';
+import { DataGrid, GridColDef, GridToolbarContainer } from '@mui/x-data-grid';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -135,36 +131,46 @@ export default function UploadedFilesPage() {
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'นามบัตร': return 'primary';
-      case 'ตรายาง': return 'secondary';
-      case 'ถ่ายเอกสาร & ปริ้นงาน': return 'success';
-      case 'สติ๊กเกอร์': return 'warning';
-      default: return 'default';
+      case 'นามบัตร':
+        return 'primary';
+      case 'ตรายาง':
+        return 'secondary';
+      case 'ถ่ายเอกสาร & ปริ้นงาน':
+        return 'success';
+      case 'สติ๊กเกอร์':
+        return 'warning';
+      default:
+        return 'default';
     }
   };
 
   const getCategoryIcon = (category: string) => {
-  switch (category) {
-    case 'นามบัตร':
-      return <span style={{ fontSize: '2rem' }}>🃏</span>;
-    case 'ตรายาง':
-      return <span style={{ fontSize: '2rem' }}>🕹️</span>;
-    case 'ถ่ายเอกสาร & ปริ้นงาน':
-      return <span style={{ fontSize: '2rem' }}>🖨️</span>;
-    case 'สติ๊กเกอร์':
-      return <span style={{ fontSize: '2rem' }}>🌠</span>;
-    default:
-      return <span style={{ fontSize: '2rem' }}>🗂️</span>;
-  }
-};
+    switch (category) {
+      case 'นามบัตร':
+        return <span style={{ fontSize: '2rem' }}>🃏</span>;
+      case 'ตรายาง':
+        return <span style={{ fontSize: '2rem' }}>🕹️</span>;
+      case 'ถ่ายเอกสาร & ปริ้นงาน':
+        return <span style={{ fontSize: '2rem' }}>🖨️</span>;
+      case 'สติ๊กเกอร์':
+        return <span style={{ fontSize: '2rem' }}>🌠</span>;
+      default:
+        return <span style={{ fontSize: '2rem' }}>🗂️</span>;
+    }
+  };
 
   const columns: GridColDef[] = [
     {
-      field: 'customerName', headerName: 'ลูกค้า', width: 250,
+      field: 'customerName',
+      headerName: 'ชื่อลูกค้า',
+      width: 250,
       renderCell: params => <Typography fontWeight={500}>{params.value}</Typography>,
     },
+
     {
-      field: 'phone', headerName: 'เบอร์โทร', width: 160,
+      field: 'phone',
+      headerName: 'เบอร์โทร',
+      width: 160,
       renderCell: params => (
         <Stack direction="row" alignItems="center" spacing={1}>
           <PhoneIcon fontSize="small" color="action" />
@@ -173,97 +179,123 @@ export default function UploadedFilesPage() {
       ),
     },
     {
-      field: 'category', headerName: 'ประเภทงาน', width: 200,
+      field: 'category',
+      headerName: 'ประเภทงาน',
+      width: 200,
       renderCell: params => (
-        <Chip size="small" icon={getCategoryIcon(params.value)} label={params.value} color={getCategoryColor(params.value)} />
+        <Chip
+          size="small"
+          icon={getCategoryIcon(params.value)}
+          label={params.value}
+          color={getCategoryColor(params.value)}
+        />
       ),
     },
-{
-  field: 'files',
-  headerName: 'ไฟล์',
-  width: 400,
-  renderCell: (params: any) => {
-    const files = params?.value;
-    if (!files || !Array.isArray(files) || files.length === 0) {
-      return <Typography color="text.secondary">ไม่มีไฟล์</Typography>;
-    }
+    {
+      field: 'files',
+      headerName: 'ไฟล์',
+      width: 400,
+      renderCell: (params: any) => {
+        const files = params?.value;
+        if (!files || !Array.isArray(files) || files.length === 0) {
+          return <Typography color="text.secondary">ไม่มีไฟล์</Typography>;
+        }
 
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 1,
-          alignItems: 'center',
-          justifyContent: 'flex-start', // ✅ ชิดซ้าย
-        }}
-      >
-        {files.map((file: any, index: number) => {
-          const fileId = file?.fileId;
-          const name = file?.name || '';
-          if (!fileId) return null;
+        return (
+          <Box
+            sx={{
+              display: 'flex',
+              flexWrap: 'wrap',
+              gap: 1,
+              alignItems: 'center',
+              justifyContent: 'flex-start', // ✅ ชิดซ้าย
+            }}>
+            {files.map((file: any, index: number) => {
+              const fileId = file?.fileId;
+              const name = file?.name || '';
+              if (!fileId) return null;
 
-          const ext = name.split('.').pop() || '';
-          const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}`;
-          const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+              const ext = name.split('.').pop() || '';
+              const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}`;
+              const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
 
-          return (
-            <Box
-              key={index}
-              sx={{
-                display: 'flex',
-                // flex: 1,
-                flexDirection: 'column',
-                alignItems: 'left',
-                width: 60,
-              }}
-            >
-              <Link href={previewUrl} target="_blank" rel="noopener noreferrer" underline="none">
-                <img
-                  src={thumbnailUrl}
-                  alt={name}
-                  title={name}
-                  onError={e => {
-                    (e.currentTarget as HTMLImageElement).src = getIconPathByExtension(ext);
-                  }}
-                  style={{
+              return (
+                <Box
+                  key={index}
+                  sx={{
+                    display: 'flex',
+                    // flex: 1,
+                    flexDirection: 'column',
+                    alignItems: 'left',
                     width: 60,
-                    height: 60,
-                    objectFit: 'cover',
-                    borderRadius: 8,
-                    border: '1px solid #ccc',
-                    backgroundColor: '#f5f5f5',
-                  }}
-                />
-              </Link>
-              <Typography
-                variant="caption"
-                noWrap
-                maxWidth={50}
-                textAlign="center"
-                sx={{ mt: 0.5 }}
-              >
-                {name}
-              </Typography>
-            </Box>
-          );
-        })}
-      </Box>
-    );
-  },
-},
-    {
-      field: 'createdAt', headerName: 'วันที่', width: 180,
-      renderCell: (params: any) => new Date(params.value).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }),
+                  }}>
+                  <Link
+                    href={previewUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    underline="none">
+                    <img
+                      src={thumbnailUrl}
+                      alt={name}
+                      title={name}
+                      onError={e => {
+                        (e.currentTarget as HTMLImageElement).src = getIconPathByExtension(ext);
+                      }}
+                      style={{
+                        width: 60,
+                        height: 60,
+                        objectFit: 'cover',
+                        borderRadius: 8,
+                        border: '1px solid #ccc',
+                        backgroundColor: '#f5f5f5',
+                      }}
+                    />
+                  </Link>
+                  <Typography
+                    variant="caption"
+                    noWrap
+                    maxWidth={50}
+                    textAlign="center"
+                    sx={{ mt: 0.5 }}>
+                    {name}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
+        );
+      },
     },
     {
-      field: 'status', headerName: 'สถานะ', width: 150,
-      renderCell: params => params.value === 'completed'
-        ? <Chip label="เสร็จสิ้น" size="small" color="success" icon={<CheckCircleIcon />} />
-        : <Chip label="รอดำเนินการ" size="small" color="warning" icon={<HourglassEmptyIcon />} />,
+      field: 'createdAt',
+      headerName: 'วันที่',
+      width: 180,
+      renderCell: (params: any) =>
+        new Date(params.value).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }),
     },
     {
-      field: 'actions', headerName: 'Actions', width: 120, sortable: false,
+      field: 'status',
+      headerName: 'สถานะ',
+      width: 150,
+      renderCell: params =>
+        params.value === 'completed' ? (
+          <Chip label="เสร็จสิ้น" size="small" color="success" icon={<CheckCircleIcon />} />
+        ) : (
+          <Chip label="รอดำเนินการ" size="small" color="warning" icon={<HourglassEmptyIcon />} />
+        ),
+    },
+    {
+      field: 'note',
+      headerName: 'หมายเหตุ',
+      width: 150,
+      renderCell: params => <Typography fontWeight={500}>{params.value}</Typography>,
+    },
+
+    {
+      field: 'actions',
+      headerName: 'Actions',
+      width: 120,
+      sortable: false,
       renderCell: params => (
         <Stack direction="row" spacing={1}>
           <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
@@ -289,12 +321,26 @@ export default function UploadedFilesPage() {
   return (
     <Box sx={{ p: 4, height: '100vh' }}>
       <Box display="flex" justifyContent="space-between" mb={2}>
-        <TextField size="small" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} sx={{ width: 250 }} />
-        <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchUploads}>Refresh</Button>
+        <TextField
+          size="small"
+          placeholder="Search..."
+          value={search}
+          onChange={e => setSearch(e.target.value)}
+          sx={{ width: 250 }}
+        />
+        <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchUploads}>
+          Refresh
+        </Button>
       </Box>
 
       <Box sx={{ width: '100%', overflowX: 'auto' }}>
-        <Box sx={{ minWidth: 1000, height: 'calc(100vh - 160px)', backgroundColor: 'white', borderRadius: 2 }}>
+        <Box
+          sx={{
+            minWidth: 1000,
+            height: 'calc(100vh - 160px)',
+            backgroundColor: 'white',
+            borderRadius: 2,
+          }}>
           <DataGrid
             rows={filteredRows}
             rowHeight={100}
@@ -304,79 +350,76 @@ export default function UploadedFilesPage() {
             pageSizeOptions={[10, 20]}
             initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
             disableRowSelectionOnClick
-
-              sx={{
-                '& .MuiDataGrid-columnHeader': {
+            sx={{
+              '& .MuiDataGrid-columnHeader': {
                 justifyContent: 'flex-start', // หัวตารางชิดซ้าย
                 textAlign: 'left',
                 alignItems: 'center',
-                },
-                '& .MuiDataGrid-cell': {
-                justifyContent: 'flex-start',  // เซลล์ข้อมูลชิดซ้าย
+              },
+              '& .MuiDataGrid-cell': {
+                justifyContent: 'flex-start', // เซลล์ข้อมูลชิดซ้าย
                 textAlign: 'left',
                 alignContent: 'center',
-    },
-  }}
+              },
+            }}
           />
         </Box>
       </Box>
 
       {/* ✅ Edit Dialog */}
       <Dialog
-  open={editOpen}
-  onClose={() => setEditOpen(false)}
-  fullWidth
-  maxWidth="xs"
-  PaperProps={{ sx: { borderRadius: 3 } }}
->
-  <DialogTitle sx={{ m: 0, p: 4 }}>
-    <Stack direction="row" alignItems="center" justifyContent="space-between">
-      <Typography variant="h6" fontWeight="bold">
-        ✏️ แก้ไขข้อมูล
-      </Typography>
-      <IconButton onClick={() => setEditOpen(false)}>
-        <CloseIcon />
-      </IconButton>
-    </Stack>
-  </DialogTitle>
-
-  <DialogContent>
-    <Stack spacing={2} mt={1}>
-      <TextField
-        label="ชื่อลูกค้า"
+        open={editOpen}
+        onClose={() => setEditOpen(false)}
         fullWidth
-        value={customerName}
-        onChange={(e) => setCustomerName(e.target.value)}
-      />
-      <TextField
-        label="เบอร์โทร"
-        fullWidth
-        value={phone}
-        onChange={(e) => setPhone(e.target.value)}
-      />
-      <FormControl fullWidth>
-        <InputLabel id="status-label">สถานะ</InputLabel>
-        <Select
-          labelId="status-label"
-          value={status}
-          onChange={(e) =>
-            setStatus(e.target.value as 'completed' | 'pending')
-          }
-        >
-          <MenuItem value="pending">🕒 รอดำเนินการ</MenuItem>
-          <MenuItem value="completed">✅ เสร็จสิ้น</MenuItem>
-        </Select>
-      </FormControl>
-    </Stack>
-  </DialogContent>
+        maxWidth="xs"
+        PaperProps={{ sx: { borderRadius: 3 } }}>
+        <DialogTitle sx={{ m: 0, p: 4 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between">
+            <Typography variant="h6" fontWeight="bold">
+              ✏️ แก้ไขข้อมูล
+            </Typography>
+            <IconButton onClick={() => setEditOpen(false)}>
+              <CloseIcon />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
 
-  <DialogActions>
-    <Button onClick={() => setEditOpen(false)} sx={{mb: 2, mr: 0 }}>ยกเลิก</Button>
-    <Button variant="contained" onClick={handleSave} sx={{mb: 2, mr: 2 }}>
-      บันทึก
-    </Button>
-  </DialogActions>
-</Dialog>
+        <DialogContent>
+          <Stack spacing={2} mt={1}>
+            <TextField
+              label="ชื่อลูกค้า"
+              fullWidth
+              value={customerName}
+              onChange={e => setCustomerName(e.target.value)}
+            />
+            <TextField
+              label="เบอร์โทร"
+              fullWidth
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+            />
+            <FormControl fullWidth>
+              <InputLabel id="status-label">สถานะ</InputLabel>
+              <Select
+                labelId="status-label"
+                value={status}
+                onChange={e => setStatus(e.target.value as 'completed' | 'pending')}>
+                <MenuItem value="pending">🕒 รอดำเนินการ</MenuItem>
+                <MenuItem value="completed">✅ เสร็จสิ้น</MenuItem>
+              </Select>
+            </FormControl>
+          </Stack>
+        </DialogContent>
+
+        <DialogActions>
+          <Button onClick={() => setEditOpen(false)} sx={{ mb: 2, mr: 0 }}>
+            ยกเลิก
+          </Button>
+          <Button variant="contained" onClick={handleSave} sx={{ mb: 2, mr: 2 }}>
+            บันทึก
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

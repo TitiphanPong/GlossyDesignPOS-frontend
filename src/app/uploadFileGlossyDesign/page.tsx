@@ -64,8 +64,8 @@ export default function ModernUploadPage() {
     files.forEach(file => formData.append('files', file));
     formData.append('category', category);
     formData.append('customerName', customerName);
-    formData.append('phone', phone);
-    formData.append('note', note);
+    formData.append('phone', phone || '-');
+    formData.append('note', note || '-');
 
     try {
       setUploading(true);
@@ -217,7 +217,7 @@ export default function ModernUploadPage() {
             fullWidth
             sx={{ mt: 4, py: isMobile ? 1 : 1.5, borderRadius: '12px' }}
             onClick={handleUpload}
-            disabled={files.length === 0 || !customerName || !phone || uploading}>
+            disabled={files.length === 0 || !customerName}>
             {uploading ? `Uploading... ${progress}%` : '🚀 อัพโหลดไฟล์'}
           </Button>
         </CardContent>

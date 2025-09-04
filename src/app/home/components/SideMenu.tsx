@@ -37,6 +37,7 @@ import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
 import { useRouter } from 'next/navigation';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
+import ButtonLogout from './LogoutOutline';
 
 export type NavItem = {
   label: string;
@@ -70,7 +71,7 @@ export interface SideMenuProps {
 }
 
 const DEFAULT_ITEMS: NavItem[] = [
-  { section: 'Overview', label: 'หน้าหลัก', href: '/', icon: <HomeRoundedIcon /> },
+  { section: 'Overview', label: 'หน้าหลัก', href: '/home', icon: <HomeRoundedIcon /> },
   // { section: 'Overview', label: 'Analytics', href: '/analytics', icon: <AnalyticsRoundedIcon />, badge: 'NEW' },
   {
     section: 'Work',
@@ -201,12 +202,6 @@ export default function SideMenu({
 }: SideMenuProps) {
   const theme = useTheme();
   const [collapsed, setCollapsed] = React.useState(defaultCollapsed);
-  const router = useRouter(); // ✅ ถูกต้อง: อยู่ใน function component
-
-  const handleLogout = () => {
-    localStorage.removeItem('auth_token');
-    router.push('/');
-  };
 
   // คีย์ลัด Ctrl/Cmd + B เพื่อพับเมนู
   React.useEffect(() => {
@@ -415,17 +410,21 @@ export default function SideMenu({
             borderTop: '1px solid',
             borderColor: 'divider',
           }}>
-          <Avatar alt="G" src="/static/images/avatar/7.jpg" sx={{ width: 36, height: 36 }} />
+          <Avatar
+            src={`https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`}
+            sx={{ width: 36, height: 36 }}
+          />
           {!collapsed && (
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="body2" fontWeight={700} noWrap>
-                ADMIN Glossy
+                ADMIN GLOSSY
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap>
-                glossy2929@gmail.com
+                Accout : glossydesign
               </Typography>
             </Box>
           )}
+
           <Box sx={{ ml: 'auto' }}>
             <Tooltip title="เมนูโปรไฟล์" arrow placement="top">
               <IconButton size="small">
@@ -433,22 +432,6 @@ export default function SideMenu({
               </IconButton>
             </Tooltip>
           </Box>
-        </Stack>
-        <Divider sx={{ mx: 0, my: 1 }} />
-        <Stack sx={{ px: collapsed ? 1 : 2, pb: 2 }}>
-          <Button
-            fullWidth
-            variant="outlined"
-            color="error"
-            startIcon={<LogoutRoundedIcon />}
-            onClick={handleLogout}
-            sx={{
-              justifyContent: collapsed ? 'center' : 'flex-start',
-              fontWeight: 600,
-              borderRadius: 2,
-            }}>
-            {!collapsed && 'ออกจากระบบ'}
-          </Button>
         </Stack>
       </Box>
     </StyledDrawer>

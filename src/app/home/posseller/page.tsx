@@ -507,7 +507,7 @@ export default function SellPage() {
               fancyDlgProduct,
               order.variant.name, // ใช้ชื่อ variant
               order.quantity, // จำนวน
-              order.variant.price, // ราคาต่อชิ้น
+              order.totalPrice / order.quantity, // ราคาต่อชิ้น
               {
                 customerName: order.customerName,
                 companyName: order.companyName,
