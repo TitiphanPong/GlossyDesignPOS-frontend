@@ -1,32 +1,41 @@
+// ✅ ปรับโค้ดให้ถูกต้องและสมบูรณ์ พร้อมแก้ dialog ให้ทำงานได้จริง
+
 'use client';
 
+import * as React from 'react';
 import {
   Box,
+  Button,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Paper,
-  Link,
-  Chip,
+  IconButton,
   Stack,
+  TextField,
+  Chip,
+  Link,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
-  Button,
+  MenuItem,
+  Select,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
-import { useEffect, useState } from 'react';
-import axios from 'axios';
-import DescriptionIcon from '@mui/icons-material/Description';
+import {
+  DataGrid,
+  GridColDef,
+  GridToolbarContainer,
+} from '@mui/x-data-grid';
+import RefreshIcon from '@mui/icons-material/Refresh';
+import EditIcon from '@mui/icons-material/Edit';
+import DeleteIcon from '@mui/icons-material/Delete';
 import PhoneIcon from '@mui/icons-material/Phone';
 import WorkIcon from '@mui/icons-material/Work';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import CloseIcon from '@mui/icons-material/Close';
+import axios from 'axios';
+import { m } from 'framer-motion';
 
 interface UploadedFile {
   fileId: string;
@@ -42,238 +51,332 @@ interface UploadRecord {
   category: string;
   files: UploadedFile[];
   createdAt: string;
-  status: string; // pending | completed
+  status: string;
 }
 
-export default function UploadedFilesPage() {
-  const [uploads, setUploads] = useState<UploadRecord[]>([]);
-  const [loading, setLoading] = useState(false);
+const getIconPathByExtension = (ext: string) => {
+  const extMap: Record<string, string> = {
+    pdf: '/icons/pdf.png',
+    txt: '/txt.png',
+    png: '/png.png',
+    jpeg: '/png.png',
+    jpg: '/png.png',
+    ai: '/illustrator.png',
+    psd: '/photoshop.png',
+    xls: '/excel.png',
+    xlsx: '/excel.png',
+    xslm: '/excel.png',
+    csv: '/excel.png',
+    doc: '/docxWord.png',
+    docx: '/docxWord.png',
+  };
 
-  // ✅ สำหรับ Modal Confirm
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
+  return extMap[ext.toLowerCase()] || 'https://cdn-icons-png.flaticon.com/512/337/337951.png';
+};
+
+export default function UploadedFilesPage() {
+  const [loading, setLoading] = React.useState(false);
+  const [rows, setRows] = React.useState<UploadRecord[]>([]);
+  const [search, setSearch] = React.useState('');
+  const [editOpen, setEditOpen] = React.useState(false);
+  const [editingRecord, setEditingRecord] = React.useState<UploadRecord | null>(null);
+  const [customerName, setCustomerName] = React.useState('');
+  const [phone, setPhone] = React.useState('');
+  const [status, setStatus] = React.useState<'completed' | 'pending'>('pending');
 
   const fetchUploads = async () => {
     try {
       setLoading(true);
       const res = await axios.get<UploadRecord[]>(`${process.env.NEXT_PUBLIC_API_URL}/upload`);
-      setUploads(res.data);
-      setLoading(false);
+      setRows(res.data);
     } catch (err) {
       console.error('❌ Error fetching uploads', err);
+    } finally {
       setLoading(false);
     }
   };
 
-  useEffect(() => {
+  React.useEffect(() => {
     fetchUploads();
   }, []);
 
+  const handleEdit = (record: UploadRecord) => {
+    setEditingRecord(record);
+    setCustomerName(record.customerName);
+    setPhone(record.phone);
+    setStatus(record.status as 'completed' | 'pending');
+    setEditOpen(true);
+  };
+
+  const handleSave = async () => {
+    try {
+      if (!editingRecord) return;
+      await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/upload/${editingRecord._id}`, {
+        customerName,
+        phone,
+        status,
+      });
+      setEditOpen(false);
+      fetchUploads();
+    } catch (err) {
+      console.error('❌ Error saving update', err);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('ยืนยันการลบรายการนี้?')) return;
+    try {
+      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/upload/${id}`);
+      fetchUploads();
+    } catch (err) {
+      console.error('❌ Error deleting record', err);
+    }
+  };
+
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case 'นามบัตร':
-        return 'primary';
-      case 'ตรายาง':
-        return 'secondary';
-      case 'ถ่ายเอกสาร & ปริ้นงาน':
-        return 'success';
-      case 'สติ๊กเกอร์':
-        return 'warning';
-      default:
-        return 'default';
+      case 'นามบัตร': return 'primary';
+      case 'ตรายาง': return 'secondary';
+      case 'ถ่ายเอกสาร & ปริ้นงาน': return 'success';
+      case 'สติ๊กเกอร์': return 'warning';
+      default: return 'default';
     }
   };
 
-  // ✅ กดยืนยันเสร็จสิ้น
-  const handleConfirmComplete = async () => {
-    if (!selectedId) return;
-    try {
-      await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/upload/${selectedId}/complete`);
-      fetchUploads();
-      setConfirmOpen(false);
-      setSelectedId(null);
-    } catch (err) {
-      console.error('❌ Error updating status', err);
-    }
-  };
+  const getCategoryIcon = (category: string) => {
+  switch (category) {
+    case 'นามบัตร':
+      return <span style={{ fontSize: '2rem' }}>🃏</span>;
+    case 'ตรายาง':
+      return <span style={{ fontSize: '2rem' }}>🕹️</span>;
+    case 'ถ่ายเอกสาร & ปริ้นงาน':
+      return <span style={{ fontSize: '2rem' }}>🖨️</span>;
+    case 'สติ๊กเกอร์':
+      return <span style={{ fontSize: '2rem' }}>🌠</span>;
+    default:
+      return <span style={{ fontSize: '2rem' }}>🗂️</span>;
+  }
+};
 
-  return (
-    <Box sx={{ p: 4, minHeight: '100vh' }}>
-      {/* Header */}
+  const columns: GridColDef[] = [
+    {
+      field: 'customerName', headerName: 'ลูกค้า', width: 250,
+      renderCell: params => <Typography fontWeight={500}>{params.value}</Typography>,
+    },
+    {
+      field: 'phone', headerName: 'เบอร์โทร', width: 160,
+      renderCell: params => (
+        <Stack direction="row" alignItems="center" spacing={1}>
+          <PhoneIcon fontSize="small" color="action" />
+          <Typography>{params.value}</Typography>
+        </Stack>
+      ),
+    },
+    {
+      field: 'category', headerName: 'ประเภทงาน', width: 200,
+      renderCell: params => (
+        <Chip size="small" icon={getCategoryIcon(params.value)} label={params.value} color={getCategoryColor(params.value)} />
+      ),
+    },
+{
+  field: 'files',
+  headerName: 'ไฟล์',
+  width: 400,
+  renderCell: (params: any) => {
+    const files = params?.value;
+    if (!files || !Array.isArray(files) || files.length === 0) {
+      return <Typography color="text.secondary">ไม่มีไฟล์</Typography>;
+    }
+
+    return (
       <Box
         sx={{
-          textAlign: 'center',
-          mb: 4,
-          p: 3,
-          borderRadius: '16px',
-          background: 'linear-gradient(90deg, #6a11cb 0%, #2575fc 100%)',
-          color: 'white',
-          boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+          display: 'flex',
+          flexWrap: 'wrap',
+          gap: 1,
+          alignItems: 'center',
+          justifyContent: 'flex-start', // ✅ ชิดซ้าย
         }}
       >
-        <Typography variant="h4" fontWeight="bold">
-          📂 รายการไฟล์ที่ลูกค้าอัปโหลด
-        </Typography>
-      </Box>
+        {files.map((file: any, index: number) => {
+          const fileId = file?.fileId;
+          const name = file?.name || '';
+          if (!fileId) return null;
 
-      {/* Action Bar */}
-      <Stack direction="row" justifyContent="flex-end" mb={2}>
-        <Button
-          variant="contained"
-          color="primary"
-          startIcon={
-            <RefreshIcon
-              sx={{
-                animation: loading ? 'spin 1s linear infinite' : 'none',
-                '@keyframes spin': {
-                  '0%': { transform: 'rotate(0deg)' },
-                  '100%': { transform: 'rotate(360deg)' },
-                },
-              }}
-            />
-          }
-          onClick={fetchUploads}
-          disabled={loading}
-        >
-          {loading ? 'กำลังโหลด...' : 'รีเฟรชข้อมูล'}
-        </Button>
-      </Stack>
+          const ext = name.split('.').pop() || '';
+          const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}`;
+          const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
 
-      {/* Table */}
-      <TableContainer component={Paper} sx={{ borderRadius: '16px', overflow: 'hidden' }}>
-        <Table>
-          <TableHead>
-            <TableRow
+          return (
+            <Box
+              key={index}
               sx={{
-                background: 'linear-gradient(90deg, #2575fc 0%, #6a11cb 100%)',
+                display: 'flex',
+                // flex: 1,
+                flexDirection: 'column',
+                alignItems: 'left',
+                width: 60,
               }}
             >
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ลูกค้า</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>เบอร์โทร</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ประเภทงาน</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>ไฟล์</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>วันที่</TableCell>
-              <TableCell sx={{ color: 'white', fontWeight: 'bold' }}>การจัดการ</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {uploads.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={6} align="center" sx={{ py: 3, color: 'text.secondary' }}>
-                  ❌ ไม่มีข้อมูลอัปโหลด
-                </TableCell>
-              </TableRow>
-            ) : (
-              uploads.map((upload, idx) => (
-                <TableRow
-                  key={upload._id}
-                  sx={{
-                    backgroundColor: idx % 2 === 0 ? '#f9f9ff' : '#ffffff',
-                    '&:hover': { backgroundColor: '#eef3ff', transition: '0.3s' },
+              <Link href={previewUrl} target="_blank" rel="noopener noreferrer" underline="none">
+                <img
+                  src={thumbnailUrl}
+                  alt={name}
+                  title={name}
+                  onError={e => {
+                    (e.currentTarget as HTMLImageElement).src = getIconPathByExtension(ext);
                   }}
-                >
-                  <TableCell>{upload.customerName}</TableCell>
-                  <TableCell>
-                    <Box display="flex" alignItems="center" gap={1}>
-                      <PhoneIcon fontSize="small" color="action" />
-                      {upload.phone}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      icon={<WorkIcon />}
-                      label={upload.category}
-                      color={getCategoryColor(upload.category)}
-                    />
-                  </TableCell>
-                  <TableCell>
-                    <Box display="flex" flexDirection="column" gap={1}>
-                      {upload.files.map((file) => {
-                        const fileId = file.fileId;
-                        const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-                        const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}`;
+                  style={{
+                    width: 60,
+                    height: 60,
+                    objectFit: 'cover',
+                    borderRadius: 8,
+                    border: '1px solid #ccc',
+                    backgroundColor: '#f5f5f5',
+                  }}
+                />
+              </Link>
+              <Typography
+                variant="caption"
+                noWrap
+                maxWidth={50}
+                textAlign="center"
+                sx={{ mt: 0.5 }}
+              >
+                {name}
+              </Typography>
+            </Box>
+          );
+        })}
+      </Box>
+    );
+  },
+},
+    {
+      field: 'createdAt', headerName: 'วันที่', width: 180,
+      renderCell: (params: any) => new Date(params.value).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }),
+    },
+    {
+      field: 'status', headerName: 'สถานะ', width: 150,
+      renderCell: params => params.value === 'completed'
+        ? <Chip label="เสร็จสิ้น" size="small" color="success" icon={<CheckCircleIcon />} />
+        : <Chip label="รอดำเนินการ" size="small" color="warning" icon={<HourglassEmptyIcon />} />,
+    },
+    {
+      field: 'actions', headerName: 'Actions', width: 120, sortable: false,
+      renderCell: params => (
+        <Stack direction="row" spacing={1}>
+          <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
+            <EditIcon fontSize="small" />
+          </IconButton>
+          <IconButton size="small" color="error" onClick={() => handleDelete(params.row._id)}>
+            <DeleteIcon fontSize="small" />
+          </IconButton>
+        </Stack>
+      ),
+    },
+  ];
 
-                        return (
-                          <Box
-                            key={file.fileId}
-                            display="flex"
-                            alignItems="center"
-                            gap={2}
-                            sx={{
-                              p: 1,
-                              borderRadius: 2,
-                              '&:hover': { backgroundColor: '#f5f5f5' },
-                            }}
-                          >
-                            <Link href={previewUrl} target="_blank" rel="noopener">
-                              <img
-                                src={thumbnailUrl}
-                                alt={file.name}
-                                style={{
-                                  width: 60,
-                                  height: 60,
-                                  objectFit: 'cover',
-                                  borderRadius: 8,
-                                  flexShrink: 0,
-                                }}
-                              />
-                            </Link>
-                            <Typography variant="body2" noWrap>
-                              {file.name}
-                            </Typography>
-                          </Box>
-                        );
-                      })}
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    {new Date(upload.createdAt).toLocaleString('th-TH', {
-                      dateStyle: 'short',
-                      timeStyle: 'short',
-                    })}
-                  </TableCell>
-                  <TableCell>
-                    {upload.status === 'completed' ? (
-                      <Chip
-                        label="เสร็จสิ้น"
-                        color="success"
-                        icon={<CheckCircleIcon />}
-                      />
-                    ) : (
-                      <Chip
-                        label="ยังไม่ดำเนินการ"
-                        color="warning"
-                        icon={<HourglassEmptyIcon />}
-                        onClick={() => {
-                          setSelectedId(upload._id);
-                          setConfirmOpen(true);
-                        }}
-                        sx={{ cursor: 'pointer' }}
-                      />
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+  const filteredRows = rows.filter(row => {
+    const q = search.toLowerCase();
+    return (
+      row.customerName.toLowerCase().includes(q) ||
+      row.category.toLowerCase().includes(q) ||
+      row.phone.includes(q)
+    );
+  });
 
-      {/* Modal Confirm */}
-      <Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
-        <DialogTitle>ยืนยันการดำเนินการ</DialogTitle>
-        <DialogContent>
-          <Typography>คุณต้องการทำเครื่องหมายว่า <b>เสร็จสิ้น</b> ใช่หรือไม่?</Typography>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setConfirmOpen(false)} color="inherit">
-            ยกเลิก
-          </Button>
-          <Button onClick={handleConfirmComplete} color="success" variant="contained">
-            ยืนยัน
-          </Button>
-        </DialogActions>
-      </Dialog>
+  return (
+    <Box sx={{ p: 4, height: '100vh' }}>
+      <Box display="flex" justifyContent="space-between" mb={2}>
+        <TextField size="small" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} sx={{ width: 250 }} />
+        <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchUploads}>Refresh</Button>
+      </Box>
+
+      <Box sx={{ width: '100%', overflowX: 'auto' }}>
+        <Box sx={{ minWidth: 1000, height: 'calc(100vh - 160px)', backgroundColor: 'white', borderRadius: 2 }}>
+          <DataGrid
+            rows={filteredRows}
+            rowHeight={100}
+            columns={columns}
+            getRowId={row => row._id}
+            loading={loading}
+            pageSizeOptions={[10, 20]}
+            initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+            disableRowSelectionOnClick
+
+              sx={{
+                '& .MuiDataGrid-columnHeader': {
+                justifyContent: 'flex-start', // หัวตารางชิดซ้าย
+                textAlign: 'left',
+                alignItems: 'center',
+                },
+                '& .MuiDataGrid-cell': {
+                justifyContent: 'flex-start',  // เซลล์ข้อมูลชิดซ้าย
+                textAlign: 'left',
+                alignContent: 'center',
+    },
+  }}
+          />
+        </Box>
+      </Box>
+
+      {/* ✅ Edit Dialog */}
+      <Dialog
+  open={editOpen}
+  onClose={() => setEditOpen(false)}
+  fullWidth
+  maxWidth="xs"
+  PaperProps={{ sx: { borderRadius: 3 } }}
+>
+  <DialogTitle sx={{ m: 0, p: 4 }}>
+    <Stack direction="row" alignItems="center" justifyContent="space-between">
+      <Typography variant="h6" fontWeight="bold">
+        ✏️ แก้ไขข้อมูล
+      </Typography>
+      <IconButton onClick={() => setEditOpen(false)}>
+        <CloseIcon />
+      </IconButton>
+    </Stack>
+  </DialogTitle>
+
+  <DialogContent>
+    <Stack spacing={2} mt={1}>
+      <TextField
+        label="ชื่อลูกค้า"
+        fullWidth
+        value={customerName}
+        onChange={(e) => setCustomerName(e.target.value)}
+      />
+      <TextField
+        label="เบอร์โทร"
+        fullWidth
+        value={phone}
+        onChange={(e) => setPhone(e.target.value)}
+      />
+      <FormControl fullWidth>
+        <InputLabel id="status-label">สถานะ</InputLabel>
+        <Select
+          labelId="status-label"
+          value={status}
+          onChange={(e) =>
+            setStatus(e.target.value as 'completed' | 'pending')
+          }
+        >
+          <MenuItem value="pending">🕒 รอดำเนินการ</MenuItem>
+          <MenuItem value="completed">✅ เสร็จสิ้น</MenuItem>
+        </Select>
+      </FormControl>
+    </Stack>
+  </DialogContent>
+
+  <DialogActions>
+    <Button onClick={() => setEditOpen(false)} sx={{mb: 2, mr: 0 }}>ยกเลิก</Button>
+    <Button variant="contained" onClick={handleSave} sx={{mb: 2, mr: 2 }}>
+      บันทึก
+    </Button>
+  </DialogActions>
+</Dialog>
     </Box>
   );
 }

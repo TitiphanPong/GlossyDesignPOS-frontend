@@ -1,7 +1,7 @@
+// ModernUploadPage.tsx
 'use client';
 
-import React, { useState } from 'react';
-import axios from 'axios';
+import React, { useState, useCallback } from 'react';
 import {
   Box,
   Button,
@@ -9,28 +9,28 @@ import {
   CardContent,
   Typography,
   TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
   Stack,
-  LinearProgress,
-  useMediaQuery,
-  useTheme,
-  Stepper,
-  Step,
-  StepLabel,
+  IconButton,
   List,
   ListItem,
-  ListItemIcon,
   ListItemText,
-  IconButton,
+  MenuItem,
+  Select,
+  InputLabel,
+  FormControl,
+  useMediaQuery,
+  useTheme,
+  Snackbar,
+  Alert,
 } from '@mui/material';
-import CloudUploadIcon from '@mui/icons-material/CloudUpload';
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import { useDropzone } from 'react-dropzone';
 import DeleteIcon from '@mui/icons-material/Delete';
+import axios from 'axios';
+import LiquidProgress from './components/LiquidProgress';
+import Loader from './components/uploadloader';
+import FilePreview from './components/FilePreview';
 
-export default function UploadPage() {
+export default function ModernUploadPage() {
   const [files, setFiles] = useState<File[]>([]);
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
@@ -38,30 +38,25 @@ export default function UploadPage() {
   const [category, setCategory] = useState<string>('นามบัตร');
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
-  const [activeStep, setActiveStep] = useState(0);
+  const [snackbar, setSnackbar] = useState<{
+    open: boolean;
+    message: string;
+    severity: 'success' | 'error';
+  }>({ open: false, message: '', severity: 'success' });
 
-  const categories = ['นามบัตร', 'ตรายาง', 'ถ่ายเอกสาร & ปริ้นงาน', 'สติ๊กเกอร์'];
-  const steps = ['เลือกไฟล์', 'กรอกข้อมูล', 'ตรวจสอบข้อมูล'];
+  const categories = ['นามบัตร', 'ตรายาง', 'ถ่ายเอกสาร & ปริ้นงาน', 'สติ๊กเกอร์' , 'อื่นๆ'];
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isTablet = useMediaQuery(theme.breakpoints.between('sm', 'md'));
 
-  const handleNext = () => setActiveStep(prev => prev + 1);
-  const handleBack = () => setActiveStep(prev => prev - 1);
+  const onDrop = useCallback((acceptedFiles: File[]) => {
+    setFiles(prev => [...prev, ...acceptedFiles]);
+  }, []);
 
-  // ✅ เลือกไฟล์หลายไฟล์และ append
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      const newFiles = Array.from(event.target.files);
-      setFiles(prev => [...prev, ...newFiles]); // เพิ่มไฟล์ใหม่เข้า list เดิม
-    }
-  };
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({ onDrop });
 
-  // ✅ ลบไฟล์ออกจาก list
-  const handleRemoveFile = (index: number) => {
-    setFiles(prev => prev.filter((_, i) => i !== index));
-  };
+  const handleRemoveFile = (index: number) => setFiles(prev => prev.filter((_, i) => i !== index));
 
   const handleUpload = async () => {
     if (files.length === 0) return;
@@ -83,9 +78,13 @@ export default function UploadPage() {
         },
       });
 
-      alert('Upload Success!');
-    } catch (err) {
-      alert('Upload Failed!');
+      setSnackbar({ open: true, message: 'อัปโหลดสำเร็จ 🎉', severity: 'success' });
+      setFiles([]);
+      setCustomerName('');
+      setPhone('');
+      setNote('');
+    } catch {
+      setSnackbar({ open: true, message: 'อัปโหลดล้มเหลว ❌', severity: 'error' });
     } finally {
       setUploading(false);
     }
@@ -104,182 +103,138 @@ export default function UploadPage() {
       <Card
         sx={{
           width: '100%',
-          maxWidth: isMobile ? '95%' : isTablet ? 600 : 500,
+          maxWidth: isMobile ? '95%' : isTablet ? 600 : 700,
           borderRadius: '24px',
           boxShadow: '0 10px 30px rgba(0,0,0,0.08)',
           background: 'linear-gradient(180deg, #ffffff 0%, #f9f9ff 100%)',
         }}>
-        <CardContent sx={{ p: isMobile ? 2 : 4 }}>
-          {/* Card Header */}
-          <Box textAlign="center" mt={3} mb={4}>
+        <CardContent sx={{ p: isMobile ? 2 : 4, mt: 2 }}>
+          <Box textAlign="center" mb={isMobile ? 2 : 4}>
             <Typography variant={isMobile ? 'h6' : 'h5'} fontWeight="bold">
-              อัพโหลดไฟล์งานพิมพ์
+              📂 อัพโหลดไฟล์งานพิมพ์
             </Typography>
             <Typography variant="body2" color="text.secondary">
-              กรุณาอัพโหลดไฟล์ที่ต้องการ พร้อมกรอกข้อมูลลูกค้าให้ครบถ้วนก่อนส่ง
+              ลากไฟล์มาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์
             </Typography>
           </Box>
-          {/* Stepper */}
-          <Stepper activeStep={activeStep} alternativeLabel>
-            {steps.map(label => (
-              <Step key={label}>
-                <StepLabel>{label}</StepLabel>
-              </Step>
-            ))}
-          </Stepper>
 
-          {/* Step Content */}
-          <Box mt={2}>
-            {activeStep === 0 && (
-              <Stack spacing={2}>
-                <Typography variant="h6">📂 เลือกไฟล์</Typography>
-                <Button
-                  component="label"
-                  fullWidth
-                  sx={{
-                    border: '2px dashed #bbb',
-                    borderRadius: '16px',
-                    py: isMobile ? 2 : 4,
-                    bgcolor: '#fafafa',
-                    textTransform: 'none',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    gap: 1,
-                    '&:hover': { bgcolor: '#f5f5f5', borderColor: '#6c63ff' },
-                  }}>
-                  <CloudUploadIcon sx={{ fontSize: 36, color: '#666' }} />
-                  <Typography variant="body1">
-                    คลิกเพื่อเลือกไฟล์ (สามารถเลือกได้หลายไฟล์)
-                  </Typography>
-                  <input type="file" hidden multiple onChange={handleFileChange} />
-                </Button>
+          {uploading ? (
+            <Box textAlign="center" my={3}>
+              <LiquidProgress progress={progress} />
+              <Typography variant="body2" mt={2}>
+                กำลังอัพโหลด...
+              </Typography>
+            </Box>
+          ) : (
+            <Box
+              {...getRootProps()}
+              sx={{
+                height: 300,
+                borderRadius: '16px',
+                textAlign: 'center',
+                cursor: 'pointer',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+              }}>
+              <input {...getInputProps()} />
+              <Loader />
+              <Typography mt={1}>
+                {isDragActive ? 'ปล่อยไฟล์ได้เลย...' : 'ลากไฟล์มาที่นี่ หรือคลิกเพื่อเลือก'}
+              </Typography>
+            </Box>
+          )}
 
-                {/* ✅ รายการไฟล์ที่เลือก */}
-                {files.length > 0 && (
-                  <List dense>
-                    {files.map((f, index) => (
-                      <ListItem
-                        key={index}
-                        secondaryAction={
-                          <IconButton edge="end" onClick={() => handleRemoveFile(index)}>
-                            <DeleteIcon color="error" />
-                          </IconButton>
-                        }>
-                        <ListItemIcon>
-                          <InsertDriveFileIcon color="primary" />
-                        </ListItemIcon>
-                        <ListItemText primary={f.name} />
-                      </ListItem>
-                    ))}
-                  </List>
-                )}
-              </Stack>
-            )}
+          {files.length > 0 && (
+            <List dense sx={{ mt: 2 }}>
+              {files.map((f, index) => (
+                <ListItem
+                  key={index}
+                  secondaryAction={
+                    <IconButton edge="end" onClick={() => handleRemoveFile(index)}>
+                      <DeleteIcon color="error" />
+                    </IconButton>
+                  }>
+                  {FilePreview(f)}
+                  <ListItemText
+                    sx={{
+                      ml: 2,
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      whiteSpace: 'nowrap',
+                    }}
+                    primary={f.name}
+                    secondary={`${(f.size / 1024).toFixed(1)} KB`}
+                  />
+                </ListItem>
+              ))}
+            </List>
+          )}
 
-            {activeStep === 1 && (
-              <Stack spacing={2}>
-                <Typography variant="h6">📝 กรอกข้อมูลลูกค้า</Typography>
-                <FormControl fullWidth>
-                  <InputLabel id="category-label">ประเภทงาน</InputLabel>
-                  <Select
-                    labelId="category-label"
-                    value={category}
-                    onChange={e => setCategory(e.target.value)}
-                    label="ประเภทงาน">
-                    {categories.map(cat => (
-                      <MenuItem key={cat} value={cat}>
-                        {cat}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
-                <TextField
-                  label="ชื่อลูกค้า"
-                  value={customerName}
-                  onChange={e => setCustomerName(e.target.value)}
-                  fullWidth
-                />
-                <TextField
-                  label="เบอร์โทรศัพท์"
-                  value={phone}
-                  onChange={e => setPhone(e.target.value)}
-                  fullWidth
-                />
-                <TextField
-                  label="Note"
-                  value={note}
-                  onChange={e => setNote(e.target.value)}
-                  fullWidth
-                  multiline
-                  rows={2}
-                />
-              </Stack>
-            )}
+          <Stack spacing={2} mt={3}>
+            <FormControl fullWidth>
+  <InputLabel id="category-label">ประเภทงาน</InputLabel>
+  <Select
+    labelId="category-label"
+    value={category}
+    label="ประเภทงาน" 
+    onChange={e => setCategory(e.target.value)}
+  >
+    {categories.map(cat => (
+      <MenuItem key={cat} value={cat}>{cat}</MenuItem>
+    ))}
+  </Select>
+</FormControl>
+            <TextField
+              label="ชื่อลูกค้า"
+              value={customerName}
+              onChange={e => setCustomerName(e.target.value)}
+              fullWidth
+              size={isMobile ? 'small' : 'medium'}
+            />
+            <TextField
+              label="เบอร์โทรศัพท์"
+              value={phone}
+              onChange={e => setPhone(e.target.value)}
+              fullWidth
+              size={isMobile ? 'small' : 'medium'}
+            />
+            <TextField
+              label="Note"
+              value={note}
+              onChange={e => setNote(e.target.value)}
+              fullWidth
+              multiline
+              rows={isMobile ? 2 : 3}
+              size={isMobile ? 'small' : 'medium'}
+            />
+          </Stack>
 
-            {activeStep === 2 && (
-              <Stack spacing={1}>
-                <Typography variant="h6">✅ ตรวจสอบข้อมูล</Typography>
-                {files.length > 0 ? (
-                  <List dense>
-                    {files.map((f, index) => (
-                      <ListItem key={index}>
-                        <ListItemIcon>
-                          <InsertDriveFileIcon color="action" />
-                        </ListItemIcon>
-                        <ListItemText primary={f.name} />
-                      </ListItem>
-                    ))}
-                  </List>
-                ) : (
-                  <Typography color="text.secondary">ยังไม่ได้เลือกไฟล์</Typography>
-                )}
-                <Typography>ชื่อลูกค้า: {customerName || '-'}</Typography>
-                <Typography>เบอร์โทร: {phone || '-'}</Typography>
-                <Typography>ประเภท: {category}</Typography>
-
-                {/* Progress Bar */}
-                {uploading && (
-                  <Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={progress}
-                      sx={{ height: 10, borderRadius: 5 }}
-                    />
-                    <Typography variant="body2" textAlign="center" mt={1} color="text.secondary">
-                      กำลังอัพโหลด... {progress}%
-                    </Typography>
-                  </Box>
-                )}
-              </Stack>
-            )}
-          </Box>
-
-          {/* Stepper Navigation */}
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 4 }}>
-            <Button disabled={activeStep === 0} onClick={handleBack}>
-              ย้อนกลับ
-            </Button>
-            {activeStep === steps.length - 1 ? (
-              <Button
-                variant="contained"
-                onClick={handleUpload}
-                disabled={files.length === 0 || !customerName || !phone || uploading}>
-                {uploading ? `Uploading... ${progress}%` : 'อัพโหลด'}
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                disabled={
-                  (activeStep === 0 && files.length === 0) || (activeStep === 1 && !customerName)
-                }>
-                ถัดไป
-              </Button>
-            )}
-          </Box>
+          <Button
+            variant="contained"
+            fullWidth
+            sx={{ mt: 4, py: isMobile ? 1 : 1.5, borderRadius: '12px' }}
+            onClick={handleUpload}
+            disabled={files.length === 0 || !customerName || !phone || uploading}>
+            {uploading ? `Uploading... ${progress}%` : '🚀 อัพโหลดไฟล์'}
+          </Button>
         </CardContent>
       </Card>
+
+      <Snackbar
+        open={snackbar.open}
+        autoHideDuration={4000}
+        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        onClose={() => setSnackbar({ ...snackbar, open: false })}>
+        <Alert
+          onClose={() => setSnackbar({ ...snackbar, open: false })}
+          severity={snackbar.severity}
+          sx={{ width: '100%' }}>
+          {snackbar.message}
+        </Alert>
+      </Snackbar>
     </Box>
   );
 }

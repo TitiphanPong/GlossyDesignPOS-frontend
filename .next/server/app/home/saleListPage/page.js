@@ -8,7 +8,7 @@ runtime.loadChunk("server/chunks/ssr/node_modules_next_dist_client_components_1c
 runtime.loadChunk("server/chunks/ssr/node_modules_next_dist_client_components_builtin_forbidden_651c1c6d.js");
 runtime.loadChunk("server/chunks/ssr/node_modules_next_dist_client_components_builtin_unauthorized_a3bc0a28.js");
 runtime.loadChunk("server/chunks/ssr/node_modules_next_dist_client_components_builtin_global-error_af93ecd6.js");
-runtime.loadChunk("server/chunks/ssr/src_app_home_4037be0b._.js");
+runtime.loadChunk("server/chunks/ssr/src_app_home_layout_tsx_385f7446._.js");
 runtime.loadChunk("server/chunks/ssr/node_modules_next_dist_eda9b576._.js");
 runtime.loadChunk("server/chunks/ssr/[root-of-the-server]__19e9433b._.js");
 runtime.getOrInstantiateRuntimeModule("[project]/.next-internal/server/app/home/saleListPage/page/actions.js [app-rsc] (server actions loader, ecmascript)", CHUNK_PUBLIC_PATH);

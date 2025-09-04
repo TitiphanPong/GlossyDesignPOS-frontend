@@ -1,0 +1,167 @@
+/* [project]/src/app/login/components/loginForm.module.css [app-client] (css) */
+.loginForm-module__7cOogG__form {
+  background-color: #fff;
+  border-radius: 12px;
+  flex-direction: column;
+  gap: .8rem;
+  width: 100%;
+  max-width: 400px;
+  padding: 2.5rem;
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif;
+  display: flex;
+  position: relative;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, .1);
+}
+
+.loginForm-module__7cOogG__formContainer {
+  background-color: #fff;
+  border-radius: 12px;
+  width: 100%;
+  max-width: 400px;
+  padding: 2rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, .1);
+}
+
+.loginForm-module__7cOogG__wrapper {
+  background-color: #f5f5f5;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  display: flex;
+}
+
+::placeholder {
+  font-family: -apple-system, BlinkMacSystemFont, Segoe UI, Roboto, Oxygen, Ubuntu, Cantarell, Open Sans, Helvetica Neue, sans-serif;
+}
+
+.loginForm-module__7cOogG__form button {
+  align-self: flex-end;
+}
+
+.loginForm-module__7cOogG__flex-column > label {
+  color: #151717;
+  font-weight: 600;
+}
+
+.loginForm-module__7cOogG__inputForm {
+  color: #000;
+  background-color: #fff;
+  border: 1.5px solid #ecedec;
+  border-radius: 10px;
+  align-items: center;
+  height: 50px;
+  padding-left: 10px;
+  transition: all .2s ease-in-out;
+  display: flex;
+}
+
+.loginForm-module__7cOogG__input {
+  border: none;
+  border-radius: 10px;
+  width: 85%;
+  height: 100%;
+  margin-left: 10px;
+}
+
+.loginForm-module__7cOogG__input:focus {
+  outline: none;
+}
+
+.loginForm-module__7cOogG__inputForm:focus-within {
+  border: 1.5px solid #2d79f3;
+}
+
+.loginForm-module__7cOogG__flex-row {
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  display: flex;
+}
+
+.loginForm-module__7cOogG__flex-row > div > label {
+  color: #000;
+  font-size: 14px;
+  font-weight: 400;
+}
+
+.loginForm-module__7cOogG__span {
+  color: #2d79f3;
+  cursor: pointer;
+  margin-left: 5px;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.loginForm-module__7cOogG__button-submit {
+  color: #fff;
+  cursor: pointer;
+  background-color: #151717;
+  border: none;
+  border-radius: 10px;
+  width: 100%;
+  height: 50px;
+  margin: 20px 0 10px;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.loginForm-module__7cOogG__button-submit:hover {
+  background-color: #252727;
+}
+
+.loginForm-module__7cOogG__p {
+  text-align: center;
+  color: #000;
+  margin: 5px 0;
+  font-size: 14px;
+}
+
+.loginForm-module__7cOogG__btn {
+  cursor: pointer;
+  background-color: #fff;
+  border: 1px solid #ededef;
+  border-radius: 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  height: 50px;
+  margin-top: 10px;
+  font-weight: 500;
+  transition: all .2s ease-in-out;
+  display: flex;
+}
+
+.loginForm-module__7cOogG__btn:hover {
+  border: 1px solid #2d79f3;
+}
+
+@media (max-width: 480px) {
+  .loginForm-module__7cOogG__form {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+}
+
+.loginForm-module__7cOogG__backButton {
+  color: #2d79f3;
+  cursor: pointer;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all .2s ease-in-out;
+  display: flex;
+  position: absolute;
+  top: 20px;
+  left: 10px;
+}
+
+.loginForm-module__7cOogG__backButton:hover {
+  color: #1a5ad7;
+}
+
+/*# sourceMappingURL=src_app_login_components_loginForm_module_b08d8b1e.css.map*/

@@ -35,6 +35,8 @@ import Brightness4RoundedIcon from '@mui/icons-material/Brightness4Rounded';
 import Brightness7RoundedIcon from '@mui/icons-material/Brightness7Rounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import { useRouter } from 'next/navigation';
+import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 
 export type NavItem = {
   label: string;
@@ -89,7 +91,7 @@ const DEFAULT_ITEMS: NavItem[] = [
     label: 'ไฟล์ลูกค้า',
     href: '/home/storage',
     icon: <InsertDriveFileIcon />,
-  }
+  },
   // { section: 'System', label: 'About', href: '/about', icon: <InfoRoundedIcon /> },
   // { section: 'System', label: 'Feedback', href: '/feedback', icon: <HelpOutlineRoundedIcon /> },
 ];
@@ -199,6 +201,12 @@ export default function SideMenu({
 }: SideMenuProps) {
   const theme = useTheme();
   const [collapsed, setCollapsed] = React.useState(defaultCollapsed);
+  const router = useRouter(); // ✅ ถูกต้อง: อยู่ใน function component
+
+  const handleLogout = () => {
+    localStorage.removeItem('auth_token');
+    router.push('/');
+  };
 
   // คีย์ลัด Ctrl/Cmd + B เพื่อพับเมนู
   React.useEffect(() => {
@@ -411,7 +419,7 @@ export default function SideMenu({
           {!collapsed && (
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="body2" fontWeight={700} noWrap>
-                Glossy Design
+                ADMIN Glossy
               </Typography>
               <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap>
                 glossy2929@gmail.com
@@ -425,6 +433,22 @@ export default function SideMenu({
               </IconButton>
             </Tooltip>
           </Box>
+        </Stack>
+        <Divider sx={{ mx: 0, my: 1 }} />
+        <Stack sx={{ px: collapsed ? 1 : 2, pb: 2 }}>
+          <Button
+            fullWidth
+            variant="outlined"
+            color="error"
+            startIcon={<LogoutRoundedIcon />}
+            onClick={handleLogout}
+            sx={{
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              fontWeight: 600,
+              borderRadius: 2,
+            }}>
+            {!collapsed && 'ออกจากระบบ'}
+          </Button>
         </Stack>
       </Box>
     </StyledDrawer>
