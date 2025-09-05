@@ -25,7 +25,7 @@ const Card = () => {
       </div>
     </StyledWrapper>
   );
-}
+};
 
 const StyledWrapper = styled.div`
   .container {
@@ -83,7 +83,7 @@ const StyledWrapper = styled.div`
 
   .new {
     font-size: 23px;
-    font-family: "Lexend Deca", sans-serif;
+    font-family: 'Lexend Deca', sans-serif;
     margin-left: 20px;
   }
 
@@ -128,7 +128,9 @@ const StyledWrapper = styled.div`
     width: 8px;
     height: 8px;
     background-color: #379e1f;
-    box-shadow: 0 -10px 0 0 #26850e, 0 10px 0 0 #56be3e;
+    box-shadow:
+      0 -10px 0 0 #26850e,
+      0 10px 0 0 #56be3e;
     border-radius: 50%;
     margin-top: 5px;
     transform: rotate(90deg);
@@ -188,7 +190,7 @@ const StyledWrapper = styled.div`
   }
 
   .post-line:before {
-    content: "";
+    content: '';
     position: absolute;
     width: 47px;
     height: 9px;
@@ -210,7 +212,9 @@ const StyledWrapper = styled.div`
     width: 12px;
     height: 12px;
     background-color: #838183;
-    box-shadow: 0 -18px 0 0 #838183, 0 18px 0 0 #838183;
+    box-shadow:
+      0 -18px 0 0 #838183,
+      0 18px 0 0 #838183;
     border-radius: 2px;
     position: absolute;
     transform: rotate(90deg);
@@ -222,7 +226,9 @@ const StyledWrapper = styled.div`
     width: 12px;
     height: 12px;
     background-color: #aaa9ab;
-    box-shadow: 0 -18px 0 0 #aaa9ab, 0 18px 0 0 #aaa9ab;
+    box-shadow:
+      0 -18px 0 0 #aaa9ab,
+      0 18px 0 0 #aaa9ab;
     border-radius: 2px;
     position: absolute;
     transform: rotate(90deg);
@@ -245,7 +251,7 @@ const StyledWrapper = styled.div`
   .dollar {
     position: absolute;
     font-size: 16px;
-    font-family: "Lexend Deca", sans-serif;
+    font-family: 'Lexend Deca', sans-serif;
     width: 100%;
     left: 0;
     top: 0;
@@ -267,6 +273,7 @@ const StyledWrapper = styled.div`
       opacity: 1;
       transform: translateY(0);
     }
-  }`;
+  }
+`;
 
 export default Card;

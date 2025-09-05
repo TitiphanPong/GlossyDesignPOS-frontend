@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import Header from './components/Header'; // Header / AppBar
 import SideMenu from './components/SideMenu'; // Side navigation
 import AppBreadCrumb from './components/AppBreadCrumb'; // Breadcrumb
-// import AppFooter from './components/Footer'; // Optional
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [openMobile, setOpenMobile] = React.useState(false);
@@ -25,7 +24,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           bgcolor: 'background.default',
           overflow: 'hidden', // ✅ ป้องกัน scrollbar แนวนอน
         }}>
-        
         {/* ✅ Side Menu */}
         <SideMenu currentPath={pathname ?? '/'} />
 
@@ -42,7 +40,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             display: 'flex',
             flexDirection: 'column',
           }}>
-          
           {/* ✅ Breadcrumb */}
           <AppBreadCrumb />
 

@@ -1,0 +1,117 @@
+/* [project]/src/app/home/posseller/components/checkoutRight.module.css [app-client] (css) */
+.checkoutRight-module__lqnR2a__master-container {
+  flex-direction: column;
+  gap: 1rem;
+  width: 100%;
+  max-width: 420px;
+  font-family: Roboto, Noto Sans Thai, sans-serif;
+  display: flex;
+}
+
+.checkoutRight-module__lqnR2a__card {
+  background: #fff;
+  border-radius: 12px;
+  padding: 1rem;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, .08);
+}
+
+.checkoutRight-module__lqnR2a__title {
+  color: #222;
+  border-bottom: 1px solid #eee;
+  margin-bottom: .75rem;
+  padding-bottom: .5rem;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.checkoutRight-module__lqnR2a__products {
+  flex-direction: column;
+  gap: 1rem;
+  display: flex;
+}
+
+.checkoutRight-module__lqnR2a__product {
+  justify-content: space-between;
+  align-items: flex-start;
+  font-size: .95rem;
+  display: flex;
+}
+
+.checkoutRight-module__lqnR2a__details {
+  color: #444;
+  font-size: .9rem;
+}
+
+.checkoutRight-module__lqnR2a__details .checkoutRight-module__lqnR2a__name {
+  margin-bottom: .25rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.checkoutRight-module__lqnR2a__details .checkoutRight-module__lqnR2a__variant {
+  color: #666;
+  margin-bottom: .5rem;
+  font-size: .85rem;
+}
+
+.checkoutRight-module__lqnR2a__details ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.checkoutRight-module__lqnR2a__details li {
+  color: #555;
+  margin-bottom: 4px;
+  font-size: .85rem;
+}
+
+.checkoutRight-module__lqnR2a__quantity {
+  text-align: right;
+}
+
+.checkoutRight-module__lqnR2a__price {
+  color: #111;
+  margin-top: 4px;
+  font-weight: bold;
+  display: block;
+}
+
+.checkoutRight-module__lqnR2a__coupons form {
+  gap: .5rem;
+  display: flex;
+}
+
+.checkoutRight-module__lqnR2a__input_field {
+  border: 1px solid #000;
+  border-radius: 6px;
+  flex: 1;
+  padding: .4rem .6rem;
+  font-size: .9rem;
+}
+
+.checkoutRight-module__lqnR2a__checkout .checkoutRight-module__lqnR2a__details {
+  color: #444;
+  justify-content: space-between;
+  margin-bottom: .5rem;
+  font-size: .9rem;
+  display: flex;
+}
+
+.checkoutRight-module__lqnR2a__checkout--footer {
+  justify-content: space-between;
+  align-items: center;
+  display: flex;
+}
+
+.checkoutRight-module__lqnR2a__checkout-btn {
+  color: #fff;
+  cursor: pointer;
+  background: linear-gradient(#4480ff 0%, #0550ed 100%);
+  border: none;
+  border-radius: 6px;
+  padding: .5rem 1rem;
+  font-weight: 600;
+}
+
+/*# sourceMappingURL=src_app_home_posseller_components_checkoutRight_module_78abbf3a.css.map*/

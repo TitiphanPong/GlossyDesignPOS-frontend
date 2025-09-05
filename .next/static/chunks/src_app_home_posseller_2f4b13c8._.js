@@ -415,24 +415,11 @@ var { k: __turbopack_refresh__, m: module } = __turbopack_context__;
 __turbopack_context__.s({
     "default": ()=>__TURBOPACK__default__export__
 });
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_tagged_template_literal$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@swc/helpers/esm/_tagged_template_literal.js [app-client] (ecmascript)");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/jsx-dev-runtime.js [app-client] (ecmascript)");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$styled$2d$components$2f$dist$2f$styled$2d$components$2e$browser$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/styled-components/dist/styled-components.browser.esm.js [app-client] (ecmascript)");
+var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/next/dist/compiled/react/index.js [app-client] (ecmascript)");
 'use client';
 ;
-function _templateObject() {
-    const data = (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$swc$2f$helpers$2f$esm$2f$_tagged_template_literal$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["_"])([
-        "\n  .master-container {\n    display: flex;\n    flex-direction: column;\n    gap: 1rem;\n    width: 100%;\n    max-width: 420px;\n  }\n\n  .card {\n    border: 1px solid #ddd;\n    border-radius: 12px;\n    padding: 1rem;\n    background: white;\n  }\n\n  .title {\n    font-weight: bold;\n    font-size: 1.1rem;\n    margin-bottom: 0.5rem;\n  }\n\n  .products {\n    display: flex;\n    flex-direction: column;\n    gap: 1rem;\n  }\n\n  .product {\n    display: flex;\n    align-items: center;\n    gap: 1rem;\n    justify-content: space-between;\n  }\n\n  .quantity {\n    display: flex;\n    align-items: center;\n    gap: 0.3rem;\n  }\n\n  .price {\n    font-weight: bold;\n  }\n\n  .form {\n    display: flex;\n    gap: 0.5rem;\n    margin-top: 0.5rem;\n  }\n\n  .form input {\n    flex: 1;\n    padding: 0.5rem;\n  }\n\n  .checkout--footer {\n    margin-top: 1rem;\n    display: flex;\n    justify-content: space-between;\n    align-items: center;\n  }\n\n  .checkout-btn {\n    background: #ff8413;\n    color: white;\n    border: none;\n    padding: 0.5rem 1rem;\n    border-radius: 6px;\n    font-weight: bold;\n    cursor: pointer;\n  }\n"
-    ]);
-    _templateObject = function() {
-        return data;
-    };
-    return data;
-}
 ;
-;
-const StyledWrapper = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$styled$2d$components$2f$dist$2f$styled$2d$components$2e$browser$2e$esm$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].div(_templateObject());
-_c = StyledWrapper;
 const CheckOutRight = (param)=>{
     let { cart, total, onCheckout } = param;
     return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(StyledWrapper, {
@@ -447,86 +434,182 @@ const CheckOutRight = (param)=>{
                             children: "รายการในตะกร้า"
                         }, void 0, false, {
                             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                            lineNumber: 100,
+                            lineNumber: 30,
                             columnNumber: 11
                         }, ("TURBOPACK compile-time value", void 0)),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "products",
-                            children: cart.map((item)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                    className: "product",
+                            children: cart.map((item, index)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].Fragment, {
                                     children: [
                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                            className: "product",
                                             children: [
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                                    children: item.name
-                                                }, void 0, false, {
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "details",
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                            className: "name",
+                                                            children: item.name
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                            lineNumber: 37,
+                                                            columnNumber: 21
+                                                        }, ("TURBOPACK compile-time value", void 0)),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                            className: "variant",
+                                                            children: item.variant
+                                                        }, void 0, false, {
+                                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                            lineNumber: 38,
+                                                            columnNumber: 21
+                                                        }, ("TURBOPACK compile-time value", void 0)),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("ul", {
+                                                            style: {
+                                                                listStyle: 'none',
+                                                                padding: 0,
+                                                                margin: '6px 0 0 0'
+                                                            },
+                                                            children: [
+                                                                item.customerName && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("li", {
+                                                                    children: [
+                                                                        "👤 ",
+                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
+                                                                            children: "ลูกค้า:"
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                                            lineNumber: 43,
+                                                                            columnNumber: 30
+                                                                        }, ("TURBOPACK compile-time value", void 0)),
+                                                                        " ",
+                                                                        item.customerName
+                                                                    ]
+                                                                }, void 0, true, {
+                                                                    fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                                    lineNumber: 42,
+                                                                    columnNumber: 25
+                                                                }, ("TURBOPACK compile-time value", void 0)),
+                                                                item.companyName && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("li", {
+                                                                    children: [
+                                                                        "🏢 ",
+                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
+                                                                            children: "บริษัท:"
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                                            lineNumber: 48,
+                                                                            columnNumber: 30
+                                                                        }, ("TURBOPACK compile-time value", void 0)),
+                                                                        " ",
+                                                                        item.companyName
+                                                                    ]
+                                                                }, void 0, true, {
+                                                                    fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                                    lineNumber: 47,
+                                                                    columnNumber: 25
+                                                                }, ("TURBOPACK compile-time value", void 0)),
+                                                                item.material && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("li", {
+                                                                    children: [
+                                                                        "📄 ",
+                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
+                                                                            children: "กระดาษ:"
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                                            lineNumber: 53,
+                                                                            columnNumber: 30
+                                                                        }, ("TURBOPACK compile-time value", void 0)),
+                                                                        " ",
+                                                                        item.material
+                                                                    ]
+                                                                }, void 0, true, {
+                                                                    fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                                    lineNumber: 52,
+                                                                    columnNumber: 25
+                                                                }, ("TURBOPACK compile-time value", void 0)),
+                                                                item.note && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("li", {
+                                                                    children: [
+                                                                        "📝 ",
+                                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("strong", {
+                                                                            children: "หมายเหตุ:"
+                                                                        }, void 0, false, {
+                                                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                                            lineNumber: 58,
+                                                                            columnNumber: 30
+                                                                        }, ("TURBOPACK compile-time value", void 0)),
+                                                                        " ",
+                                                                        item.note
+                                                                    ]
+                                                                }, void 0, true, {
+                                                                    fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                                    lineNumber: 57,
+                                                                    columnNumber: 25
+                                                                }, ("TURBOPACK compile-time value", void 0))
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                            lineNumber: 40,
+                                                            columnNumber: 21
+                                                        }, ("TURBOPACK compile-time value", void 0))
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                                    lineNumber: 105,
+                                                    lineNumber: 36,
                                                     columnNumber: 19
                                                 }, ("TURBOPACK compile-time value", void 0)),
-                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                    children: item.variant
-                                                }, void 0, false, {
+                                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                    className: "quantity",
+                                                    children: [
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                                            children: [
+                                                                "x",
+                                                                item.qty
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                            lineNumber: 66,
+                                                            columnNumber: 21
+                                                        }, ("TURBOPACK compile-time value", void 0)),
+                                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                                            className: "price",
+                                                            children: [
+                                                                "฿",
+                                                                (item.unitPrice * item.qty).toFixed(2)
+                                                            ]
+                                                        }, void 0, true, {
+                                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                                            lineNumber: 67,
+                                                            columnNumber: 21
+                                                        }, ("TURBOPACK compile-time value", void 0))
+                                                    ]
+                                                }, void 0, true, {
                                                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                                    lineNumber: 106,
+                                                    lineNumber: 65,
                                                     columnNumber: 19
-                                                }, ("TURBOPACK compile-time value", void 0)),
-                                                item.note && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("p", {
-                                                    children: item.note
-                                                }, void 0, false, {
-                                                    fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                                    lineNumber: 107,
-                                                    columnNumber: 33
                                                 }, ("TURBOPACK compile-time value", void 0))
                                             ]
                                         }, void 0, true, {
                                             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                            lineNumber: 104,
+                                            lineNumber: 34,
                                             columnNumber: 17
                                         }, ("TURBOPACK compile-time value", void 0)),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
-                                            className: "quantity",
-                                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                                children: [
-                                                    "x",
-                                                    item.qty
-                                                ]
-                                            }, void 0, true, {
-                                                fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                                lineNumber: 110,
-                                                columnNumber: 19
-                                            }, ("TURBOPACK compile-time value", void 0))
-                                        }, void 0, false, {
+                                        index < cart.length - 1 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("hr", {}, void 0, false, {
                                             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                            lineNumber: 109,
-                                            columnNumber: 17
-                                        }, ("TURBOPACK compile-time value", void 0)),
-                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("label", {
-                                            className: "price small",
-                                            children: [
-                                                "฿",
-                                                (item.unitPrice * item.qty).toFixed(2)
-                                            ]
-                                        }, void 0, true, {
-                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                            lineNumber: 112,
-                                            columnNumber: 17
+                                            lineNumber: 72,
+                                            columnNumber: 45
                                         }, ("TURBOPACK compile-time value", void 0))
                                     ]
                                 }, item.key, true, {
                                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                    lineNumber: 103,
+                                    lineNumber: 33,
                                     columnNumber: 15
                                 }, ("TURBOPACK compile-time value", void 0)))
                         }, void 0, false, {
                             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                            lineNumber: 101,
+                            lineNumber: 31,
                             columnNumber: 11
                         }, ("TURBOPACK compile-time value", void 0))
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                    lineNumber: 99,
+                    lineNumber: 29,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -537,7 +620,7 @@ const CheckOutRight = (param)=>{
                             children: "โค้ดส่วนลด"
                         }, void 0, false, {
                             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                            lineNumber: 121,
+                            lineNumber: 80,
                             columnNumber: 11
                         }, ("TURBOPACK compile-time value", void 0)),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("form", {
@@ -550,26 +633,26 @@ const CheckOutRight = (param)=>{
                                     className: "input_field"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                    lineNumber: 123,
+                                    lineNumber: 82,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0)),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
                                     children: "Apply"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                    lineNumber: 124,
+                                    lineNumber: 83,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0))
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                            lineNumber: 122,
+                            lineNumber: 81,
                             columnNumber: 11
                         }, ("TURBOPACK compile-time value", void 0))
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                    lineNumber: 120,
+                    lineNumber: 79,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0)),
                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -580,47 +663,63 @@ const CheckOutRight = (param)=>{
                             children: "ชำระเงิน"
                         }, void 0, false, {
                             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                            lineNumber: 129,
+                            lineNumber: 89,
                             columnNumber: 11
                         }, ("TURBOPACK compile-time value", void 0)),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                             className: "details",
                             children: [
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                    children: "ยอดรวม:"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                    lineNumber: 131,
-                                    columnNumber: 13
-                                }, ("TURBOPACK compile-time value", void 0)),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
                                     children: [
-                                        "฿",
-                                        total.toFixed(2)
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                            children: "ยอดรวม: "
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                            lineNumber: 92,
+                                            columnNumber: 15
+                                        }, ("TURBOPACK compile-time value", void 0)),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                            children: [
+                                                "฿",
+                                                total.toFixed(2)
+                                            ]
+                                        }, void 0, true, {
+                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                            lineNumber: 93,
+                                            columnNumber: 15
+                                        }, ("TURBOPACK compile-time value", void 0))
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                    lineNumber: 132,
+                                    lineNumber: 91,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0)),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                    children: "ค่าส่ง:"
-                                }, void 0, false, {
+                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
+                                    children: [
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                            children: "ค่าส่ง: "
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                            lineNumber: 96,
+                                            columnNumber: 15
+                                        }, ("TURBOPACK compile-time value", void 0)),
+                                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
+                                            children: "฿0.00"
+                                        }, void 0, false, {
+                                            fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
+                                            lineNumber: 97,
+                                            columnNumber: 15
+                                        }, ("TURBOPACK compile-time value", void 0))
+                                    ]
+                                }, void 0, true, {
                                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                    lineNumber: 133,
-                                    columnNumber: 13
-                                }, ("TURBOPACK compile-time value", void 0)),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("span", {
-                                    children: "฿0.00"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                    lineNumber: 134,
+                                    lineNumber: 95,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0))
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                            lineNumber: 130,
+                            lineNumber: 90,
                             columnNumber: 11
                         }, ("TURBOPACK compile-time value", void 0)),
                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("div", {
@@ -633,14 +732,14 @@ const CheckOutRight = (param)=>{
                                             children: "฿"
                                         }, void 0, false, {
                                             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                            lineNumber: 138,
+                                            lineNumber: 102,
                                             columnNumber: 15
                                         }, ("TURBOPACK compile-time value", void 0)),
                                         total.toFixed(2)
                                     ]
                                 }, void 0, true, {
                                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                    lineNumber: 137,
+                                    lineNumber: 101,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0)),
                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])("button", {
@@ -649,38 +748,37 @@ const CheckOutRight = (param)=>{
                                     children: "ยืนยัน"
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                                    lineNumber: 140,
+                                    lineNumber: 105,
                                     columnNumber: 13
                                 }, ("TURBOPACK compile-time value", void 0))
                             ]
                         }, void 0, true, {
                             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                            lineNumber: 136,
+                            lineNumber: 100,
                             columnNumber: 11
                         }, ("TURBOPACK compile-time value", void 0))
                     ]
                 }, void 0, true, {
                     fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-                    lineNumber: 128,
+                    lineNumber: 88,
                     columnNumber: 9
                 }, ("TURBOPACK compile-time value", void 0))
             ]
         }, void 0, true, {
             fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-            lineNumber: 98,
+            lineNumber: 27,
             columnNumber: 7
         }, ("TURBOPACK compile-time value", void 0))
     }, void 0, false, {
         fileName: "[project]/src/app/home/posseller/components/checkoutRight.tsx",
-        lineNumber: 97,
+        lineNumber: 26,
         columnNumber: 5
     }, ("TURBOPACK compile-time value", void 0));
 };
-_c1 = CheckOutRight;
+_c = CheckOutRight;
 const __TURBOPACK__default__export__ = CheckOutRight;
-var _c, _c1;
-__turbopack_context__.k.register(_c, "StyledWrapper");
-__turbopack_context__.k.register(_c1, "CheckOutRight");
+var _c;
+__turbopack_context__.k.register(_c, "CheckOutRight");
 if (typeof globalThis.$RefreshHelpers$ === 'object' && globalThis.$RefreshHelpers !== null) {
     __turbopack_context__.k.registerExports(module, globalThis.$RefreshHelpers$);
 }
@@ -709,11 +807,6 @@ var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$mat
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$CardActions$2f$CardActions$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CardActions$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/CardActions/CardActions.js [app-client] (ecmascript) <export default as CardActions>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Button$2f$Button$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Button$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/Button/Button.js [app-client] (ecmascript) <export default as Button>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Chip$2f$Chip$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Chip$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/Chip/Chip.js [app-client] (ecmascript) <export default as Chip>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Divider$2f$Divider$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Divider$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/Divider/Divider.js [app-client] (ecmascript) <export default as Divider>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$List$2f$List$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__List$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/List/List.js [app-client] (ecmascript) <export default as List>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$ListItem$2f$ListItem$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ListItem$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/ListItem/ListItem.js [app-client] (ecmascript) <export default as ListItem>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$ListItemText$2f$ListItemText$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ListItemText$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/ListItemText/ListItemText.js [app-client] (ecmascript) <export default as ListItemText>");
-var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Drawer$2f$Drawer$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Drawer$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/Drawer/Drawer.js [app-client] (ecmascript) <export default as Drawer>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Skeleton$2f$Skeleton$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Skeleton$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/Skeleton/Skeleton.js [app-client] (ecmascript) <export default as Skeleton>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Alert$2f$Alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Alert$3e$__ = __turbopack_context__.i("[project]/node_modules/@mui/material/esm/Alert/Alert.js [app-client] (ecmascript) <export default as Alert>");
 var __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$SearchRounded$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__ = __turbopack_context__.i("[project]/node_modules/@mui/icons-material/esm/SearchRounded.js [app-client] (ecmascript)");
@@ -769,30 +862,14 @@ function SellPage() {
     const [activeCat, setActiveCat] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]('ทั้งหมด');
     const [q, setQ] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]('');
     const qDebounced = useDebouncedValue(q, 200);
-    const [cart, setCart] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]([]);
-    const [drawer, setDrawer] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](false);
     const [products, setProducts] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]([]);
     const [loading, setLoading] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](true);
     const [errorMsg, setErrorMsg] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
-    const [fancyDlgOpen, setFancyDlgOpen] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](false);
-    const [fancyDlgProduct, setFancyDlgProduct] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
-    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
-        "SellPage.useEffect": ()=>{
-            try {
-                const raw = localStorage.getItem('glossy-pos-cart');
-                if (raw) setCart(JSON.parse(raw));
-            } catch (e) {}
-        }
-    }["SellPage.useEffect"], []);
-    __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
-        "SellPage.useEffect": ()=>{
-            try {
-                localStorage.setItem('glossy-pos-cart', JSON.stringify(cart));
-            } catch (e) {}
-        }
-    }["SellPage.useEffect"], [
-        cart
-    ]);
+    // Modal Product
+    const [activeProduct, setActiveProduct] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](null);
+    const [openModal, setOpenModal] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"](false);
+    const [cart, setCart] = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useState"]([]);
+    const total = cart.reduce((sum, item)=>sum + item.unitPrice * item.qty, 0);
     __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useEffect"]({
         "SellPage.useEffect": ()=>{
             var _process_env_NEXT_PUBLIC_API_URL;
@@ -823,15 +900,12 @@ function SellPage() {
             products.forEach({
                 "SellPage.useMemo[categories]": (p)=>set.add(p.category)
             }["SellPage.useMemo[categories]"]);
-            const list = Array.from(set);
             if (activeCat !== 'ทั้งหมด' && !set.has(activeCat)) setActiveCat('ทั้งหมด');
-            return list;
+            return Array.from(set);
         }
     }["SellPage.useMemo[categories]"], [
         products
     ]);
-    const totalQty = cart.reduce((s, i)=>s + i.qty, 0);
-    const totalPrice = cart.reduce((s, i)=>s + i.qty * i.unitPrice, 0);
     const filtered = __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$index$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["useMemo"]({
         "SellPage.useMemo[filtered]": ()=>{
             return products.filter({
@@ -845,67 +919,30 @@ function SellPage() {
         activeCat,
         qDebounced
     ]);
-    const add = function(p, vName) {
-        let qty = arguments.length > 2 && arguments[2] !== void 0 ? arguments[2] : 1, unitPrice = arguments.length > 3 ? arguments[3] : void 0, extra = arguments.length > 4 ? arguments[4] : void 0;
-        const v = p.variants.find((vv)=>vv.name === vName);
-        if (!v) return;
-        const key = "".concat(p.id, "::").concat(encodeURIComponent(v.name), "::").concat((extra === null || extra === void 0 ? void 0 : extra.sides) || '', "::").concat((extra === null || extra === void 0 ? void 0 : extra.material) || '', "::").concat((extra === null || extra === void 0 ? void 0 : extra.note) || '');
-        setCart((prev)=>{
-            const ex = prev.find((i)=>i.key === key);
-            if (ex) {
-                return prev.map((i)=>i.key === key ? {
-                        ...i,
-                        qty: i.qty + qty
-                    } : i);
-            }
-            return [
-                ...prev,
-                {
-                    key,
-                    productId: p.id,
-                    name: p.name,
-                    variant: v.name,
-                    unitPrice: unitPrice !== null && unitPrice !== void 0 ? unitPrice : v.price,
-                    qty,
-                    ...extra
-                }
-            ];
-        });
-    };
-    const removeItem = (key)=>setCart((prev)=>prev.filter((i)=>i.key !== key));
-    const quickAdd = (p)=>{
-        if (p.variants.length === 0) return;
-        if (p.variants.length === 1) {
-            add(p, p.variants[0].name);
-        } else {
-            setFancyDlgProduct(p);
-            setFancyDlgOpen(true);
-        }
-    };
     const catIcon = (cat)=>{
         if (cat === 'นามบัตร') return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$CreditCardRounded$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
             fileName: "[project]/src/app/home/posseller/page.tsx",
-            lineNumber: 200,
+            lineNumber: 109,
             columnNumber: 35
         }, this);
         if (cat === 'Postcard' || cat === 'Photo') return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$ImageRounded$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
             fileName: "[project]/src/app/home/posseller/page.tsx",
-            lineNumber: 201,
+            lineNumber: 110,
             columnNumber: 55
         }, this);
         if (cat === 'Print A3/A4') return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$PrintRounded$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
             fileName: "[project]/src/app/home/posseller/page.tsx",
-            lineNumber: 202,
+            lineNumber: 111,
             columnNumber: 39
         }, this);
         if (cat === 'Sticker Laser') return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$StickyNote2Rounded$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
             fileName: "[project]/src/app/home/posseller/page.tsx",
-            lineNumber: 203,
+            lineNumber: 112,
             columnNumber: 41
         }, this);
         return /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$LayersRounded$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
             fileName: "[project]/src/app/home/posseller/page.tsx",
-            lineNumber: 204,
+            lineNumber: 113,
             columnNumber: 12
         }, this);
     };
@@ -930,7 +967,7 @@ function SellPage() {
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$ReceiptLongRounded$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                                lineNumber: 212,
+                                lineNumber: 121,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
@@ -940,22 +977,13 @@ function SellPage() {
                                 children: "หน้าขาย (POS)"
                             }, void 0, false, {
                                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                                lineNumber: 213,
-                                columnNumber: 11
-                            }, this),
-                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
-                                sx: {
-                                    flex: 1
-                                }
-                            }, void 0, false, {
-                                fileName: "[project]/src/app/home/posseller/page.tsx",
-                                lineNumber: 216,
+                                lineNumber: 122,
                                 columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/home/posseller/page.tsx",
-                        lineNumber: 211,
+                        lineNumber: 120,
                         columnNumber: 9
                     }, this),
                     errorMsg && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Alert$2f$Alert$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Alert$3e$__["Alert"], {
@@ -966,7 +994,7 @@ function SellPage() {
                         children: errorMsg
                     }, void 0, false, {
                         fileName: "[project]/src/app/home/posseller/page.tsx",
-                        lineNumber: 220,
+                        lineNumber: 128,
                         columnNumber: 11
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$TextField$2f$TextField$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__TextField$3e$__["TextField"], {
@@ -979,12 +1007,12 @@ function SellPage() {
                                 position: "start",
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$SearchRounded$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                    lineNumber: 233,
+                                    lineNumber: 141,
                                     columnNumber: 17
                                 }, void 0)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                                lineNumber: 232,
+                                lineNumber: 140,
                                 columnNumber: 15
                             }, void 0)
                         },
@@ -993,20 +1021,21 @@ function SellPage() {
                         }
                     }, void 0, false, {
                         fileName: "[project]/src/app/home/posseller/page.tsx",
-                        lineNumber: 225,
+                        lineNumber: 133,
                         columnNumber: 9
                     }, this),
                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
                         sx: {
-                            display: 'flex',
-                            gap: 2
+                            display: 'grid',
+                            gridTemplateColumns: {
+                                xs: '1fr',
+                                md: '3fr 1fr'
+                            },
+                            gap: 3,
+                            mt: 2
                         },
                         children: [
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
-                                sx: {
-                                    flex: 1,
-                                    minWidth: 0
-                                },
                                 children: [
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Tabs$2f$Tabs$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Tabs$3e$__["Tabs"], {
                                         value: activeCat,
@@ -1024,14 +1053,14 @@ function SellPage() {
                                                 value: "ทั้งหมด",
                                                 icon: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$icons$2d$material$2f$esm$2f$LayersRounded$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {}, void 0, false, {
                                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                    lineNumber: 254,
+                                                    lineNumber: 169,
                                                     columnNumber: 23
                                                 }, void 0),
                                                 iconPosition: "start",
                                                 label: "ทั้งหมด"
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                lineNumber: 252,
+                                                lineNumber: 167,
                                                 columnNumber: 15
                                             }, this),
                                             categories.map((c)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Tab$2f$Tab$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Tab$3e$__["Tab"], {
@@ -1041,20 +1070,27 @@ function SellPage() {
                                                     label: c
                                                 }, c, false, {
                                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                    lineNumber: 259,
+                                                    lineNumber: 174,
                                                     columnNumber: 17
                                                 }, this))
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/home/posseller/page.tsx",
-                                        lineNumber: 243,
+                                        lineNumber: 158,
                                         columnNumber: 13
                                     }, this),
                                     /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
+                                        pr: {
+                                            md: 2
+                                        },
                                         sx: {
-                                            display: 'flex',
-                                            flexWrap: 'wrap',
-                                            gap: 2
+                                            display: 'grid',
+                                            gap: 2,
+                                            gridTemplateColumns: {
+                                                xs: 'repeat(2, minmax(140px, 1fr))',
+                                                sm: 'repeat(3, minmax(160px, 1fr))',
+                                                md: 'repeat(3, minmax(180px, 1fr))'
+                                            }
                                         },
                                         children: [
                                             loading && Array.from({
@@ -1062,11 +1098,6 @@ function SellPage() {
                                             }).map((_, i)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Card$2f$Card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Card$3e$__["Card"], {
                                                     variant: "outlined",
                                                     sx: {
-                                                        width: {
-                                                            xs: 'calc(50% - 8px)',
-                                                            sm: 260,
-                                                            md: 280
-                                                        },
                                                         borderRadius: 3,
                                                         overflow: 'hidden'
                                                     },
@@ -1077,7 +1108,7 @@ function SellPage() {
                                                             height: 120
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                            lineNumber: 274,
+                                                            lineNumber: 194,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$CardContent$2f$CardContent$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CardContent$3e$__["CardContent"], {
@@ -1086,20 +1117,20 @@ function SellPage() {
                                                                     width: "80%"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                                    lineNumber: 276,
+                                                                    lineNumber: 196,
                                                                     columnNumber: 23
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Skeleton$2f$Skeleton$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Skeleton$3e$__["Skeleton"], {
                                                                     width: "40%"
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                                    lineNumber: 277,
+                                                                    lineNumber: 197,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                            lineNumber: 275,
+                                                            lineNumber: 195,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$CardActions$2f$CardActions$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CardActions$3e$__["CardActions"], {
@@ -1113,18 +1144,18 @@ function SellPage() {
                                                                 height: 36
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                                lineNumber: 280,
+                                                                lineNumber: 200,
                                                                 columnNumber: 23
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                            lineNumber: 279,
+                                                            lineNumber: 199,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, "sk-".concat(i), true, {
                                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                    lineNumber: 266,
+                                                    lineNumber: 190,
                                                     columnNumber: 19
                                                 }, this)),
                                             !loading && filtered.length === 0 && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
@@ -1136,22 +1167,17 @@ function SellPage() {
                                                     children: "ไม่พบสินค้าในหมวดนี้ / คำค้นนี้"
                                                 }, void 0, false, {
                                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                    lineNumber: 287,
+                                                    lineNumber: 207,
                                                     columnNumber: 19
                                                 }, this)
                                             }, void 0, false, {
                                                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                lineNumber: 286,
+                                                lineNumber: 206,
                                                 columnNumber: 17
                                             }, this),
                                             !loading && filtered.map((p)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Card$2f$Card$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Card$3e$__["Card"], {
                                                     variant: "outlined",
                                                     sx: {
-                                                        width: {
-                                                            xs: 'calc(50% - 8px)',
-                                                            sm: 260,
-                                                            md: 280
-                                                        },
                                                         borderRadius: 3,
                                                         overflow: 'hidden',
                                                         backdropFilter: 'blur(4px)',
@@ -1174,7 +1200,7 @@ function SellPage() {
                                                             children: p.cover
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                            lineNumber: 308,
+                                                            lineNumber: 227,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$CardContent$2f$CardContent$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CardContent$3e$__["CardContent"], {
@@ -1194,7 +1220,7 @@ function SellPage() {
                                                                             children: p.name
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                                            lineNumber: 320,
+                                                                            lineNumber: 240,
                                                                             columnNumber: 25
                                                                         }, this),
                                                                         p.badge && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Chip$2f$Chip$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Chip$3e$__["Chip"], {
@@ -1203,13 +1229,13 @@ function SellPage() {
                                                                             color: p.badge === 'NEW' ? 'secondary' : 'primary'
                                                                         }, void 0, false, {
                                                                             fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                                            lineNumber: 324,
+                                                                            lineNumber: 244,
                                                                             columnNumber: 27
                                                                         }, this)
                                                                     ]
                                                                 }, void 0, true, {
                                                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                                    lineNumber: 319,
+                                                                    lineNumber: 239,
                                                                     columnNumber: 23
                                                                 }, this),
                                                                 /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
@@ -1218,13 +1244,13 @@ function SellPage() {
                                                                     children: money(p.variants[0].price)
                                                                 }, void 0, false, {
                                                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                                    lineNumber: 331,
+                                                                    lineNumber: 251,
                                                                     columnNumber: 23
                                                                 }, this)
                                                             ]
                                                         }, void 0, true, {
                                                             fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                            lineNumber: 318,
+                                                            lineNumber: 238,
                                                             columnNumber: 21
                                                         }, this),
                                                         /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$CardActions$2f$CardActions$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__CardActions$3e$__["CardActions"], {
@@ -1235,257 +1261,109 @@ function SellPage() {
                                                             children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Button$2f$Button$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Button$3e$__["Button"], {
                                                                 fullWidth: true,
                                                                 variant: "contained",
-                                                                onClick: ()=>quickAdd(p),
-                                                                children: "เพิ่มลงรายการ"
+                                                                onClick: ()=>{
+                                                                    setActiveProduct(p);
+                                                                    setOpenModal(true);
+                                                                },
+                                                                children: "เพิ่มรายการ"
                                                             }, void 0, false, {
                                                                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                                lineNumber: 336,
+                                                                lineNumber: 256,
                                                                 columnNumber: 23
                                                             }, this)
                                                         }, void 0, false, {
                                                             fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                            lineNumber: 335,
+                                                            lineNumber: 255,
                                                             columnNumber: 21
                                                         }, this)
                                                     ]
                                                 }, p.id, true, {
                                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                    lineNumber: 293,
+                                                    lineNumber: 213,
                                                     columnNumber: 19
                                                 }, this))
                                         ]
                                     }, void 0, true, {
                                         fileName: "[project]/src/app/home/posseller/page.tsx",
-                                        lineNumber: 263,
+                                        lineNumber: 178,
                                         columnNumber: 13
                                     }, this)
                                 ]
                             }, void 0, true, {
                                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                                lineNumber: 242,
+                                lineNumber: 157,
                                 columnNumber: 11
                             }, this),
                             /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
                                 sx: {
-                                    width: {
-                                        xs: 320,
-                                        md: 380
-                                    },
-                                    position: 'sticky',
-                                    top: 16,
-                                    alignSelf: 'flex-start',
-                                    borderRadius: 3,
-                                    p: 2,
-                                    background: 'linear-gradient(180deg,rgba(255,255,255,.65),rgba(255,255,255,.9))',
-                                    border: '1px solid',
-                                    borderColor: 'divider',
-                                    boxShadow: '0 8px 36px rgba(0,0,0,.08)',
-                                    maxHeight: 'calc(100dvh - 32px)',
-                                    display: 'flex',
-                                    flexDirection: 'column'
+                                    display: {
+                                        xs: 'none',
+                                        md: 'block'
+                                    }
                                 },
                                 children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$home$2f$posseller$2f$components$2f$checkoutRight$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
                                     cart: cart,
-                                    total: totalPrice,
-                                    onCheckout: ()=>{
-                                        alert('ไปขั้นตอนชำระเงินจริง');
-                                        setDrawer(true);
-                                    }
+                                    total: total,
+                                    onCheckout: ()=>alert('ไปหน้าชำระเงิน')
                                 }, void 0, false, {
                                     fileName: "[project]/src/app/home/posseller/page.tsx",
-                                    lineNumber: 364,
-                                    columnNumber: 1
+                                    lineNumber: 273,
+                                    columnNumber: 13
                                 }, this)
                             }, void 0, false, {
                                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                                lineNumber: 348,
-                                columnNumber: 1
+                                lineNumber: 272,
+                                columnNumber: 11
                             }, this)
                         ]
                     }, void 0, true, {
                         fileName: "[project]/src/app/home/posseller/page.tsx",
-                        lineNumber: 240,
+                        lineNumber: 149,
                         columnNumber: 9
                     }, this)
                 ]
             }, void 0, true, {
                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                lineNumber: 209,
+                lineNumber: 118,
                 columnNumber: 7
             }, this),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Drawer$2f$Drawer$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Drawer$3e$__["Drawer"], {
-                anchor: "right",
-                open: drawer,
-                onClose: ()=>setDrawer(false),
-                children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
-                    sx: {
-                        width: {
-                            xs: 320,
-                            sm: 420
-                        },
-                        p: 2,
-                        display: 'flex',
-                        flexDirection: 'column',
-                        height: '100%'
-                    },
-                    children: [
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                            variant: "h6",
-                            fontWeight: 800,
-                            sx: {
-                                mb: 1
-                            },
-                            children: "สรุปรายการ"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/home/posseller/page.tsx",
-                            lineNumber: 387,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Divider$2f$Divider$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Divider$3e$__["Divider"], {}, void 0, false, {
-                            fileName: "[project]/src/app/home/posseller/page.tsx",
-                            lineNumber: 390,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Box$2f$Box$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Box$3e$__["Box"], {
-                            sx: {
-                                flex: 1,
-                                overflowY: 'auto'
-                            },
-                            children: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$List$2f$List$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__List$3e$__["List"], {
-                                dense: true,
-                                children: cart.map((i)=>/*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$ListItem$2f$ListItem$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ListItem$3e$__["ListItem"], {
-                                        sx: {
-                                            py: 1
-                                        },
-                                        children: [
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$ListItemText$2f$ListItemText$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__ListItemText$3e$__["ListItemText"], {
-                                                primary: /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                                                    fontWeight: 700,
-                                                    noWrap: true,
-                                                    children: i.name
-                                                }, void 0, false, {
-                                                    fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                    lineNumber: 397,
-                                                    columnNumber: 23
-                                                }, void 0),
-                                                secondary: "".concat(money(i.unitPrice), " × ").concat(i.qty)
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                lineNumber: 395,
-                                                columnNumber: 19
-                                            }, this),
-                                            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                                                fontWeight: 700,
-                                                children: money(i.unitPrice * i.qty)
-                                            }, void 0, false, {
-                                                fileName: "[project]/src/app/home/posseller/page.tsx",
-                                                lineNumber: 403,
-                                                columnNumber: 19
-                                            }, this)
-                                        ]
-                                    }, i.key, true, {
-                                        fileName: "[project]/src/app/home/posseller/page.tsx",
-                                        lineNumber: 394,
-                                        columnNumber: 17
-                                    }, this))
-                            }, void 0, false, {
-                                fileName: "[project]/src/app/home/posseller/page.tsx",
-                                lineNumber: 392,
-                                columnNumber: 13
-                            }, this)
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/home/posseller/page.tsx",
-                            lineNumber: 391,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Divider$2f$Divider$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Divider$3e$__["Divider"], {}, void 0, false, {
-                            fileName: "[project]/src/app/home/posseller/page.tsx",
-                            lineNumber: 408,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Stack$2f$Stack$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Stack$3e$__["Stack"], {
-                            direction: "row",
-                            sx: {
-                                mt: 1
-                            },
-                            children: [
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                                    flex: 1,
-                                    children: "ยอดรวม"
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/home/posseller/page.tsx",
-                                    lineNumber: 410,
-                                    columnNumber: 13
-                                }, this),
-                                /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Typography$2f$Typography$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Typography$3e$__["Typography"], {
-                                    fontWeight: 800,
-                                    children: money(totalPrice)
-                                }, void 0, false, {
-                                    fileName: "[project]/src/app/home/posseller/page.tsx",
-                                    lineNumber: 411,
-                                    columnNumber: 13
-                                }, this)
-                            ]
-                        }, void 0, true, {
-                            fileName: "[project]/src/app/home/posseller/page.tsx",
-                            lineNumber: 409,
-                            columnNumber: 11
-                        }, this),
-                        /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f40$mui$2f$material$2f$esm$2f$Button$2f$Button$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__$3c$export__default__as__Button$3e$__["Button"], {
-                            fullWidth: true,
-                            sx: {
-                                mt: 2
-                            },
-                            variant: "contained",
-                            color: "success",
-                            onClick: ()=>alert('ไปขั้นตอนชำระเงิน (demo)'),
-                            children: "ดำเนินการชำระเงิน"
-                        }, void 0, false, {
-                            fileName: "[project]/src/app/home/posseller/page.tsx",
-                            lineNumber: 413,
-                            columnNumber: 11
-                        }, this)
-                    ]
-                }, void 0, true, {
-                    fileName: "[project]/src/app/home/posseller/page.tsx",
-                    lineNumber: 378,
-                    columnNumber: 9
-                }, this)
-            }, void 0, false, {
-                fileName: "[project]/src/app/home/posseller/page.tsx",
-                lineNumber: 377,
-                columnNumber: 7
-            }, this),
-            /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$home$2f$posseller$2f$components$2f$NamecardModal$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
-                open: fancyDlgOpen,
-                onClose: ()=>setFancyDlgOpen(false),
-                productName: (fancyDlgProduct === null || fancyDlgProduct === void 0 ? void 0 : fancyDlgProduct.name) || '',
+            (activeProduct === null || activeProduct === void 0 ? void 0 : activeProduct.category) === 'นามบัตร' && /*#__PURE__*/ (0, __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$next$2f$dist$2f$compiled$2f$react$2f$jsx$2d$dev$2d$runtime$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["jsxDEV"])(__TURBOPACK__imported__module__$5b$project$5d2f$src$2f$app$2f$home$2f$posseller$2f$components$2f$NamecardModal$2e$tsx__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"], {
+                open: openModal,
+                onClose: ()=>setOpenModal(false),
+                productName: (activeProduct === null || activeProduct === void 0 ? void 0 : activeProduct.name) || '',
                 onSelect: (order)=>{
-                    if (fancyDlgProduct) {
-                        add(fancyDlgProduct, order.variant.name, order.quantity, order.variant.price, {
-                            customerName: order.customerName,
-                            companyName: order.companyName,
-                            note: order.note,
-                            sides: order.sides,
-                            material: order.material,
-                            totalPrice: order.totalPrice
-                        });
-                    }
-                    setFancyDlgOpen(false); // ปิด Modal
+                    // push เข้า cart
+                    setCart((prev)=>[
+                            ...prev,
+                            {
+                                key: "".concat(activeProduct === null || activeProduct === void 0 ? void 0 : activeProduct.id, "-").concat(Date.now()),
+                                name: activeProduct === null || activeProduct === void 0 ? void 0 : activeProduct.name,
+                                variant: order.variant.name,
+                                qty: order.quantity,
+                                unitPrice: order.totalPrice / order.quantity,
+                                note: order.note,
+                                customerName: order.customerName,
+                                companyName: order.companyName,
+                                sides: order.sides,
+                                material: order.material,
+                                totalPrice: order.totalPrice
+                            }
+                        ]);
+                    setOpenModal(false);
                 }
             }, void 0, false, {
                 fileName: "[project]/src/app/home/posseller/page.tsx",
-                lineNumber: 424,
-                columnNumber: 7
+                lineNumber: 280,
+                columnNumber: 9
             }, this)
         ]
     }, void 0, true, {
         fileName: "[project]/src/app/home/posseller/page.tsx",
-        lineNumber: 208,
+        lineNumber: 117,
         columnNumber: 5
     }, this);
 }
-_s1(SellPage, "ji4BQYmFCx2phf82exDkGVaP4O8=", false, function() {
+_s1(SellPage, "2/VfqljxBD9FpVP7dBRDM9R2cRU=", false, function() {
     return [
         useDebouncedValue
     ];

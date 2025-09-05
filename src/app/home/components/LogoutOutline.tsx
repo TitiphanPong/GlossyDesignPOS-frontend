@@ -32,7 +32,7 @@ const StyledWrapper = styled.div`
     cursor: pointer;
     position: relative;
     overflow: hidden;
-    transition-duration: .3s;
+    transition-duration: 0.3s;
     box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.199);
     background-color: rgb(255, 65, 65);
   }
@@ -40,7 +40,7 @@ const StyledWrapper = styled.div`
   /* plus sign */
   .sign {
     width: 100%;
-    transition-duration: .3s;
+    transition-duration: 0.3s;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -62,30 +62,31 @@ const StyledWrapper = styled.div`
     color: white;
     font-size: 1em;
     font-weight: 600;
-    transition-duration: .3s;
+    transition-duration: 0.3s;
   }
   /* hover effect on button width */
   .Btn:hover {
     width: 125px;
     border-radius: 40px;
-    transition-duration: .3s;
+    transition-duration: 0.3s;
   }
 
   .Btn:hover .sign {
     width: 30%;
-    transition-duration: .3s;
+    transition-duration: 0.3s;
     padding-left: 20px;
   }
   /* hover effect button's text */
   .Btn:hover .text {
     opacity: 1;
     width: 70%;
-    transition-duration: .3s;
+    transition-duration: 0.3s;
     padding-right: 10px;
   }
   /* button click effect*/
   .Btn:active {
-    transform: translate(2px ,2px);
-  }`;
+    transform: translate(2px, 2px);
+  }
+`;
 
 export default ButtonLogout;

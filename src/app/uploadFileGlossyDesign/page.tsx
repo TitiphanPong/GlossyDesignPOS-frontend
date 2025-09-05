@@ -44,7 +44,7 @@ export default function ModernUploadPage() {
     severity: 'success' | 'error';
   }>({ open: false, message: '', severity: 'success' });
 
-  const categories = ['นามบัตร', 'ตรายาง', 'ถ่ายเอกสาร & ปริ้นงาน', 'สติ๊กเกอร์' , 'อื่นๆ'];
+  const categories = ['นามบัตร', 'ตรายาง', 'ถ่ายเอกสาร & ปริ้นงาน', 'สติ๊กเกอร์', 'อื่นๆ'];
 
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -175,18 +175,19 @@ export default function ModernUploadPage() {
 
           <Stack spacing={2} mt={3}>
             <FormControl fullWidth>
-  <InputLabel id="category-label">ประเภทงาน</InputLabel>
-  <Select
-    labelId="category-label"
-    value={category}
-    label="ประเภทงาน" 
-    onChange={e => setCategory(e.target.value)}
-  >
-    {categories.map(cat => (
-      <MenuItem key={cat} value={cat}>{cat}</MenuItem>
-    ))}
-  </Select>
-</FormControl>
+              <InputLabel id="category-label">ประเภทงาน</InputLabel>
+              <Select
+                labelId="category-label"
+                value={category}
+                label="ประเภทงาน"
+                onChange={e => setCategory(e.target.value)}>
+                {categories.map(cat => (
+                  <MenuItem key={cat} value={cat}>
+                    {cat}
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
             <TextField
               label="ชื่อลูกค้า"
               value={customerName}

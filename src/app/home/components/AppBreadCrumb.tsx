@@ -3,11 +3,10 @@
 import { Breadcrumbs, Link, Typography, Box } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { usePathname,useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import ButtonLogout from './LogoutOutline';
 
 export default function AppBreadCrumb() {
-
   const router = useRouter(); // ✅ ถูกต้อง: อยู่ใน function component
   const pathname = usePathname(); // เช่น "/home/storage"
   let pathnames = pathname.split('/').filter(x => x);
