@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import styled from 'styled-components';
+import React, { useState } from 'react';
+import styles from './checkoutRight.module.css';
 
 type CartItem = {
   key: string;
@@ -10,138 +10,228 @@ type CartItem = {
   qty: number;
   unitPrice: number;
   note?: string;
+  customerName?: string;
+  companyName?: string;
+  material?: string;
+  sides?: string;
 };
 
 type Props = {
   cart: CartItem[];
   total: number;
-  onCheckout: () => void;
+  discount: number;
+  onCheckout: (payment: 'cash' | 'promptpay') => void;
+  onDiscountChange?: (discount: number) => void;
+  onPaymentChange?: (payment: 'cash' | 'promptpay') => void;
 };
 
-const StyledWrapper = styled.div`
-  .master-container {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-    width: 100%;
-    max-width: 420px;
-  }
+const CheckOutRight: React.FC<Props> = ({
+  cart,
+  total,
+  onCheckout,
+  onDiscountChange,
+  onPaymentChange,
+}) => {
+  const [discountInput, setDiscountInput] = useState('');
+  const [discountValue, setDiscountValue] = useState(0);
+  const [discountType, setDiscountType] = useState<'percent' | 'fixed' | null>(null);
+  const [payment, setPayment] = useState<'cash' | 'promptpay'>('cash');
 
-  .card {
-    border: 1px solid #ddd;
-    border-radius: 12px;
-    padding: 1rem;
-    background: white;
-  }
+  // ✅ คำนวณราคาสุทธิ
+  const finalTotal =
+    discountType === 'percent'
+      ? total - (total * discountValue) / 100
+      : discountType === 'fixed'
+        ? Math.max(total - discountValue, 0) // ป้องกันติดลบ
+        : total;
 
-  .title {
-    font-weight: bold;
-    font-size: 1.1rem;
-    margin-bottom: 0.5rem;
-  }
+  const handleApplyDiscount = () => {
+    const value = discountInput.trim();
 
-  .products {
-    display: flex;
-    flex-direction: column;
-    gap: 1rem;
-  }
+    if (!value) {
+      setDiscountValue(0);
+      setDiscountType(null);
+      onDiscountChange?.(0);
+      return;
+    }
 
-  .product {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    justify-content: space-between;
-  }
+    // ✅ case ส่วนลด %
+    if (value.endsWith('%')) {
+      const percent = parseFloat(value.replace('%', ''));
+      if (!isNaN(percent) && percent >= 0 && percent <= 100) {
+        setDiscountValue(percent);
+        setDiscountType('percent');
+        onDiscountChange?.((total * percent) / 100);
+      } else {
+        alert('กรุณากรอกเปอร์เซ็นต์ 0-100%');
+      }
+    }
+    // ✅ case ส่วนลดคงที่ เช่น -20
+    else if (value.startsWith('-')) {
+      const fixed = parseFloat(value.replace('-', ''));
+      if (!isNaN(fixed) && fixed > 0) {
+        setDiscountValue(fixed);
+        setDiscountType('fixed');
+        onDiscountChange?.(fixed);
+      } else {
+        alert('กรุณากรอกจำนวนเงินที่ถูกต้อง เช่น -20');
+      }
+    } else {
+      alert('กรุณากรอกในรูปแบบ เช่น 10% หรือ -20');
+    }
+  };
 
-  .quantity {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
-  }
-
-  .price {
-    font-weight: bold;
-  }
-
-  .form {
-    display: flex;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-  }
-
-  .form input {
-    flex: 1;
-    padding: 0.5rem;
-  }
-
-  .checkout--footer {
-    margin-top: 1rem;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-  }
-
-  .checkout-btn {
-    background: #ff8413;
-    color: white;
-    border: none;
-    padding: 0.5rem 1rem;
-    border-radius: 6px;
-    font-weight: bold;
-    cursor: pointer;
-  }
-`;
-
-const CheckOutRight: React.FC<Props> = ({ cart, total, onCheckout }) => {
   return (
-    <StyledWrapper>
-      <div className="master-container">
-        <div className="card cart">
-          <label className="title">รายการในตะกร้า</label>
-          <div className="products">
-            {cart.map((item) => (
-              <div key={item.key} className="product">
-                <div>
-                  <span>{item.name}</span>
-                  <p>{item.variant}</p>
-                  {item.note && <p>{item.note}</p>}
-                </div>
-                <div className="quantity">
-                  <label>x{item.qty}</label>
-                </div>
-                <label className="price small">
-                  ฿{(item.unitPrice * item.qty).toFixed(2)}
-                </label>
+    <div className={styles['master-container']}>
+      {/* Cart */}
+      <div className={`${styles.card} ${styles.cart}`}>
+        <div className={styles.title}>🛒 รายการในตะกร้า</div>
+        <div className={styles.products}>
+          {cart.map(item => (
+            <div
+              key={item.key}
+              className={styles.product}
+              style={{ alignItems: 'flex-start', paddingLeft: '0.25rem' }}>
+              <div className={styles.details}>
+                <div className={styles.name}>{item.name}</div>
+                <ul
+                  style={{
+                    margin: 0,
+                    paddingLeft: '0.25rem',
+                    fontSize: '0.85rem',
+                    color: '#000',
+                  }}>
+                  <li>👤 ลูกค้า: {item.customerName || 'ไม่ระบุ'}</li>
+                  <li>🏢 บริษัท: {item.companyName || 'ไม่ระบุ'}</li>
+                  <li>📑 การพิมพ์: {item.sides ? `พิมพ์ ${item.sides} ด้าน` : 'ไม่ระบุ'}</li>
+                  <li>📄 กระดาษ: {item.material || 'ไม่ระบุ'}</li>
+                  <li>📝 หมายเหตุ: {item.note || 'ไม่ระบุ'}</li>
+                </ul>
               </div>
-            ))}
-          </div>
+              <div className={styles.quantity}>
+                <div>x{item.qty}</div>
+                <span className={styles.price}>฿{(item.unitPrice * item.qty).toFixed(2)}</span>
+              </div>
+            </div>
+          ))}
         </div>
+      </div>
 
-        <div className="card coupons">
-          <label className="title">โค้ดส่วนลด</label>
-          <form className="form" onSubmit={(e) => e.preventDefault()}>
-            <input type="text" placeholder="ระบุโค้ดที่นี่..." className="input_field" />
-            <button>Apply</button>
-          </form>
-        </div>
+      {/* Coupon */}
+      <div className={`${styles.card} ${styles.coupons}`}>
+        <div className={styles.title}>💸 โค้ดส่วนลด</div>
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleApplyDiscount();
+          }}>
+          <input
+            type="text"
+            placeholder="เช่น 10% หรือ -20"
+            value={discountInput}
+            onChange={e => setDiscountInput(e.target.value)}
+            className={styles.input_field}
+            style={{ color: '#000' }}
+          />
+          <button type="submit" className={styles['checkout-btn']}>
+            ยืนยัน
+          </button>
+        </form>
+        {discountType === 'percent' && (
+          <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginTop: '4px' }}>
+            ใช้ส่วนลด {discountValue}%
+          </p>
+        )}
+        {discountType === 'fixed' && (
+          <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginTop: '4px' }}>
+            ใช้ส่วนลด {discountValue.toFixed(2)} บาท
+          </p>
+        )}
+      </div>
 
-        <div className="card checkout">
-          <label className="title">ชำระเงิน</label>
-          <div className="details">
-            <span>ยอดรวม:</span>
-            <span>฿{total.toFixed(2)}</span>
-            <span>ค่าส่ง:</span>
-            <span>฿0.00</span>
-          </div>
-          <div className="checkout--footer">
-            <label className="price">
-              <sup>฿</sup>{total.toFixed(2)}
+      {/* Payment Method */}
+      <div className={`${styles.card} ${styles.payment}`}>
+        <div className={styles.title}>💳 วิธีการชำระเงิน</div>
+
+        <div className="flex flex-col gap-3 mt-3">
+          <div className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+            <input
+              type="radio"
+              id="cash"
+              name="payment"
+              value="cash"
+              checked={payment === 'cash'}
+              onChange={() => {
+                setPayment('cash');
+                onPaymentChange?.('cash');
+              }}
+              className="w-4 h-4 accent-black"
+            />
+            <label htmlFor="cash" className="flex items-center gap-2 cursor-pointer text-black">
+              <span className="text-xl">💵</span>
+              <span className="font-medium">เงินสด</span>
             </label>
-            <button className="checkout-btn" onClick={onCheckout}>ยืนยัน</button>
+          </div>
+
+          <div className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+            <input
+              type="radio"
+              id="promptpay"
+              name="payment"
+              value="promptpay"
+              checked={payment === 'promptpay'}
+              onChange={() => {
+                setPayment('promptpay');
+                onPaymentChange?.('promptpay');
+              }}
+              className="w-4 h-4 accent-black"
+            />
+            <label
+              htmlFor="promptpay"
+              className="flex items-center gap-2 cursor-pointer text-black">
+              <span className="text-xl">📱</span>
+              <span className="font-medium">PromptPay</span>
+            </label>
           </div>
         </div>
       </div>
-    </StyledWrapper>
+
+      {/* Checkout */}
+      <div className={`${styles.card} ${styles.checkout}`}>
+        <div className={styles.title}>✅ ชำระเงิน</div>
+        <div className={styles.details}>
+          <span>ยอดรวม:</span>
+          <span>฿{total.toFixed(2)}</span>
+        </div>
+        {discountType && (
+          <div className={styles.details}>
+            <span>ส่วนลด:</span>
+            <span>
+              -฿
+              {discountType === 'percent'
+                ? ((total * discountValue) / 100).toFixed(2)
+                : discountValue.toFixed(2)}
+            </span>
+          </div>
+        )}
+        <div className={styles.details}>
+          <span>ค่าส่ง:</span>
+          <span>฿0.00</span>
+        </div>
+        <div className={styles['checkout--footer']}>
+          <label className={styles.price}>
+            <span className="currency">฿</span>
+            {finalTotal.toFixed(2)}
+          </label>
+          <button
+            className={styles['checkout-btn']}
+            onClick={() => onCheckout(payment)}
+            disabled={cart.length === 0}>
+            ชำระเงิน
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 

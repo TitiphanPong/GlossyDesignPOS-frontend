@@ -39,8 +39,6 @@ interface NamecardModalProps {
   productName: string;
 }
 
-
-
 const variantList: VariantOption[] = [
   { name: 'Portrait', width: 55, height: 90, price: 3 },
   { name: 'Landscape', width: 90, height: 55, price: 3 },

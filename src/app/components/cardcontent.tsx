@@ -7,26 +7,19 @@ const Card = () => {
       <div className="card">
         <div className="card-content">
           <p className="card-title">Glossy Design</p>
-          <p className="card-para">
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit.
-          </p>
+          <p className="card-para">Lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
         </div>
       </div>
     </StyledWrapper>
   );
-}
+};
 
 const StyledWrapper = styled.div`
   .card {
     width: 300px;
     height: 200px;
     background-color: #4158d0;
-    background-image: linear-gradient(
-      43deg,
-      #4158d0 0%,
-      #c850c0 46%,
-      #ffcc70 100%
-    );
+    background-image: linear-gradient(43deg, #4158d0 0%, #c850c0 46%, #ffcc70 100%);
     border-radius: 8px;
     color: white;
     overflow: hidden;
@@ -35,8 +28,8 @@ const StyledWrapper = styled.div`
     perspective: 1000px;
     transition: all 0.5s cubic-bezier(0.23, 1, 0.32, 1);
     cursor: pointer;
-    transform: translate3d(7%, -2%, 0px) scale3d(0.9, 0.8, 1) rotateX(15deg)
-      rotateY(-9deg) rotateZ(32deg);
+    transform: translate3d(7%, -2%, 0px) scale3d(0.9, 0.8, 1) rotateX(15deg) rotateY(-9deg)
+      rotateZ(32deg);
   }
 
   .card-content {
@@ -72,7 +65,7 @@ const StyledWrapper = styled.div`
   }
 
   .card:before {
-    content: "";
+    content: '';
     position: absolute;
     top: 0;
     left: 0;
@@ -88,7 +81,7 @@ const StyledWrapper = styled.div`
   }
 
   .card:after {
-    content: "";
+    content: '';
     position: absolute;
     top: 0;
     right: 0;
@@ -101,6 +94,7 @@ const StyledWrapper = styled.div`
 
   .card:hover:after {
     transform: translateX(100%);
-  }`;
+  }
+`;
 
 export default Card;

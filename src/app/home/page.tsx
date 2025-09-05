@@ -14,15 +14,7 @@ import {
   Paper,
 } from '@mui/material';
 import { motion } from 'framer-motion';
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
-  CartesianGrid,
-} from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
@@ -48,10 +40,26 @@ const recentOrders = [
 
 export default function DashboardPage() {
   const summaryCards = [
-    { label: 'ยอดขายวันนี้', value: '฿ 12,500', icon: <MonetizationOnIcon sx={{ fontSize: 40, color: '#4caf50' }} /> },
-    { label: 'งานค้าง', value: '8', icon: <HourglassEmptyIcon sx={{ fontSize: 40, color: '#ff9800' }} /> },
-    { label: 'งานเสร็จสิ้น', value: '15', icon: <CheckCircleIcon sx={{ fontSize: 40, color: '#2196f3' }} /> },
-    { label: 'ลูกค้าใหม่', value: '3', icon: <PeopleAltIcon sx={{ fontSize: 40, color: '#9c27b0' }} /> },
+    {
+      label: 'ยอดขายวันนี้',
+      value: '฿ 12,500',
+      icon: <MonetizationOnIcon sx={{ fontSize: 40, color: '#4caf50' }} />,
+    },
+    {
+      label: 'งานค้าง',
+      value: '8',
+      icon: <HourglassEmptyIcon sx={{ fontSize: 40, color: '#ff9800' }} />,
+    },
+    {
+      label: 'งานเสร็จสิ้น',
+      value: '15',
+      icon: <CheckCircleIcon sx={{ fontSize: 40, color: '#2196f3' }} />,
+    },
+    {
+      label: 'ลูกค้าใหม่',
+      value: '3',
+      icon: <PeopleAltIcon sx={{ fontSize: 40, color: '#9c27b0' }} />,
+    },
   ];
 
   return (
@@ -59,9 +67,7 @@ export default function DashboardPage() {
       sx={{
         p: 4,
         minHeight: '100vh',
-
-      }}
-    >
+      }}>
       <Typography
         variant="h4"
         fontWeight="bold"
@@ -72,8 +78,7 @@ export default function DashboardPage() {
           background: 'linear-gradient(90deg, #4a90e2, #9013fe)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
-        }}
-      >
+        }}>
         ✨ Dashboard Glossy Design ✨
       </Typography>
 
@@ -84,15 +89,13 @@ export default function DashboardPage() {
           gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
           gap: 3,
           mb: 4,
-        }}
-      >
+        }}>
         {summaryCards.map((card, index) => (
           <motion.div
             key={index}
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.2 }}
-          >
+            transition={{ delay: index * 0.2 }}>
             <Card
               sx={{
                 borderRadius: 4,
@@ -106,8 +109,7 @@ export default function DashboardPage() {
                   transform: 'translateY(-6px)',
                   boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
                 },
-              }}
-            >
+              }}>
               <CardContent>
                 <Box>{card.icon}</Box>
                 <Typography variant="h6" mt={1} color="text.secondary">
@@ -128,10 +130,12 @@ export default function DashboardPage() {
           display: 'grid',
           gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' },
           gap: 3,
-        }}
-      >
+        }}>
         {/* Sales Chart */}
-        <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
+        <motion.div
+          initial={{ opacity: 0, x: -50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.6 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -140,8 +144,7 @@ export default function DashboardPage() {
               boxShadow: '0 8px 32px rgba(0,0,0,0.1)',
               p: 3,
               height: 360,
-            }}
-          >
+            }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               📈 กราฟยอดขายรายเดือน
             </Typography>
@@ -164,7 +167,10 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Recent Orders */}
-        <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}>
+        <motion.div
+          initial={{ opacity: 0, x: 50 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.8 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -174,12 +180,13 @@ export default function DashboardPage() {
               p: 3,
               height: 360,
               overflow: 'auto',
-            }}
-          >
+            }}>
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               📋 งานล่าสุด
             </Typography>
-            <Paper sx={{ width: '100%', overflow: 'hidden', background: 'transparent' }} elevation={0}>
+            <Paper
+              sx={{ width: '100%', overflow: 'hidden', background: 'transparent' }}
+              elevation={0}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
@@ -190,7 +197,7 @@ export default function DashboardPage() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {recentOrders.map((row) => (
+                  {recentOrders.map(row => (
                     <TableRow key={row.id} hover>
                       <TableCell>{row.customer}</TableCell>
                       <TableCell>{row.category}</TableCell>

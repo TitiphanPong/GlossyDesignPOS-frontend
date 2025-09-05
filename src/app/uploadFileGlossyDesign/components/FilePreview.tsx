@@ -13,27 +13,52 @@ const FilePreview = (file: File) => {
 
   if (file.type.startsWith('image/')) {
     return (
-      <Avatar variant="rounded" src={URL.createObjectURL(file)} alt={file.name} sx={{ width: 50, height: 50 }} />
+      <Avatar
+        variant="rounded"
+        src={URL.createObjectURL(file)}
+        alt={file.name}
+        sx={{ width: 50, height: 50 }}
+      />
     );
   }
 
   if (ext === 'pdf') {
-    return <Avatar sx={{ bgcolor: '#f44336', width: 50, height: 50 }}><PictureAsPdfIcon /></Avatar>;
+    return (
+      <Avatar sx={{ bgcolor: '#f44336', width: 50, height: 50 }}>
+        <PictureAsPdfIcon />
+      </Avatar>
+    );
   }
 
   if (ext === 'doc' || ext === 'docx') {
-    return <Avatar sx={{ bgcolor: '#1976d2', width: 50, height: 50 }}><DescriptionIcon /></Avatar>;
+    return (
+      <Avatar sx={{ bgcolor: '#1976d2', width: 50, height: 50 }}>
+        <DescriptionIcon />
+      </Avatar>
+    );
   }
 
   if (ext === 'xls' || ext === 'xlsx') {
-    return <Avatar sx={{ bgcolor: '#2e7d32', width: 50, height: 50 }}><TableChartIcon /></Avatar>;
+    return (
+      <Avatar sx={{ bgcolor: '#2e7d32', width: 50, height: 50 }}>
+        <TableChartIcon />
+      </Avatar>
+    );
   }
 
   if (ext === 'txt') {
-    return <Avatar sx={{ bgcolor: '#616161', width: 50, height: 50 }}><TextSnippetIcon /></Avatar>;
+    return (
+      <Avatar sx={{ bgcolor: '#616161', width: 50, height: 50 }}>
+        <TextSnippetIcon />
+      </Avatar>
+    );
   }
 
-  return <Avatar sx={{ bgcolor: '#9e9e9e', width: 50, height: 50 }}><InsertDriveFileIcon /></Avatar>;
+  return (
+    <Avatar sx={{ bgcolor: '#9e9e9e', width: 50, height: 50 }}>
+      <InsertDriveFileIcon />
+    </Avatar>
+  );
 };
 
 export default FilePreview;

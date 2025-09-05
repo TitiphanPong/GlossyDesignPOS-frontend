@@ -18,8 +18,7 @@ const LiquidProgress: React.FC<Props> = ({ progress }) => {
         border: '3px solid #6c63ff',
         position: 'relative',
         margin: '0 auto',
-      }}
-    >
+      }}>
       <motion.div
         style={{
           position: 'absolute',
@@ -39,8 +38,7 @@ const LiquidProgress: React.FC<Props> = ({ progress }) => {
           textAlign: 'center',
           fontWeight: 'bold',
           fontSize: 20,
-        }}
-      >
+        }}>
         {progress}%
       </div>
     </div>
