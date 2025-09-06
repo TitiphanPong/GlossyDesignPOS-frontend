@@ -72,18 +72,52 @@ export default function SellPage() {
 
   const [discount, setDiscount] = React.useState(0); // เก็บเป็นจำนวนเงิน หรือ %
   const [cart, setCart] = React.useState<any[]>([]);
+  const [currentOrderId, setCurrentOrderId] = React.useState<string | null>(null);
+
   const total = cart.reduce((sum, item) => sum + item.unitPrice * item.qty, 0);
 
-  const grandTotal = total - discount;
+  const grandTotal = Math.max(Math.floor(total - discount), 0);
 
   // หลังกดชำระสินค้า
 
   const [successOpen, setSuccessOpen] = React.useState(false);
   const [lastPayment, setLastPayment] = React.useState<'cash' | 'promptpay'>('cash');
 
+  // SellPage.tsx (เฉพาะส่วน handleCheckout)
+
+  const [pendingOrder, setPendingOrder] = React.useState<any | null>(null);
+
   const handleCheckout = (payment: 'cash' | 'promptpay') => {
+    localStorage.removeItem('pendingOrder');
+
+    const order = {
+      orderId: Date.now().toString(), // temp id ไว้ให้ customer screen แสดงก่อน
+      customerName: cart[0]?.customerName ?? '',
+      companyName: cart[0]?.companyName ?? '',
+      note: cart[0]?.note ?? '',
+      category: cart[0]?.category ?? '',
+      payment,
+      total: grandTotal,
+      discount,
+      status: 'pending',
+      cart: cart.map(item => ({
+        name: item.name,
+        unitPrice: item.unitPrice,
+        totalPrice: item.unitPrice * item.qty,
+        extra: {
+          sides: item.sides,
+          material: item.material,
+          variant: item.variant,
+          qty: item.qty,
+        },
+      })),
+    };
+
+    // 👉 เก็บใน localStorage
+    localStorage.setItem('pendingOrder', JSON.stringify(order));
+
     setLastPayment(payment);
-    setSuccessOpen(true); // เปิด Modal
+    setSuccessOpen(true);
   };
 
   React.useEffect(() => {
@@ -301,7 +335,10 @@ export default function SellPage() {
       {activeProduct?.category === 'นามบัตร' && (
         <NamecardModal
           open={openModal}
-          onClose={() => setOpenModal(false)}
+          onClose={() => {
+            setOpenModal(false);
+            localStorage.removeItem('pendingOrder');
+          }}
           productName={activeProduct?.name || ''}
           onSelect={order => {
             // push เข้า cart
@@ -331,60 +368,23 @@ export default function SellPage() {
       <SuccessModal
         open={successOpen}
         total={grandTotal}
-        payment={lastPayment} // หรือผูกกับ state payment ที่เลือกไว้
-        onClose={() => setSuccessOpen(false)}
-        onConfirmPaid={async () => {
-          const order = {
-            // 👉 Base fields
-            customerName: cart[0]?.customerName ?? '',
-            companyName: cart[0]?.companyName ?? '',
-            note: cart[0]?.note ?? '',
-            category: cart[0]?.category ?? '', // 👈 ประเภทงาน
-            total: grandTotal, // ใช้ราคาหลังหักส่วนลด
-            discount: discount, // เพิ่มส่วนลดเข้าไป
-            payment: lastPayment,
-            status: 'paid',
-
-            // 👉 Cart รายการสินค้า
-            cart: cart.map(item => ({
-              name: item.name,
-
-              unitPrice: item.unitPrice,
-              totalPrice: item.totalPrice,
-              extra: {
-                sides: item.sides,
-                material: item.material,
-                variant: item.variant,
-                qty: item.qty,
-              },
-            })),
-          };
-
-          try {
-            const base = process.env.NEXT_PUBLIC_API_URL ?? '';
-            const res = await fetch(`${base}/orders`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(order),
-            });
-
-            if (!res.ok) throw new Error('บันทึกไม่สำเร็จ');
-            const savedOrder = await res.json();
-            console.log('✅ Saved Order:', savedOrder);
-
-            setCart([]); // ล้างตะกร้า
-
-            setTimeout(() => {
-              setSuccessOpen(false);
-            }, 5000);
-          } catch (err) {
-            console.error(err);
-            alert('เกิดข้อผิดพลาดในการบันทึกการชำระเงิน');
-          }
+        payment={lastPayment}
+        currentOrderId={currentOrderId}
+        onClose={() => {
+          setSuccessOpen(false);
+          localStorage.removeItem('pendingOrder'); // ✅ เคลียร์ให้ Customer กลับ Banner
+        }}
+        onPaid={() => {
+          console.log('อัปเดตเป็น paid แล้ว');
+          setCurrentOrderId(null);
+          setCart([]);
+          setDiscount(0);
         }}
         onNewOrder={() => {
-          setCart([]); // ล้างตะกร้า
+          setCart([]);
+          setCurrentOrderId(null);
           setSuccessOpen(false);
+          setDiscount(0);
         }}
       />
     </Box>

@@ -12,62 +12,90 @@ import {
   TableHead,
   TableRow,
   Paper,
+  CircularProgress,
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import { useEffect, useState } from 'react';
+import dayjs from 'dayjs';
 
-// Mock data
-const salesData = [
-  { month: 'ม.ค.', sales: 1200 },
-  { month: 'ก.พ.', sales: 1800 },
-  { month: 'มี.ค.', sales: 2200 },
-  { month: 'เม.ย.', sales: 900 },
-  { month: 'พ.ค.', sales: 2400 },
-  { month: 'มิ.ย.', sales: 3100 },
-];
+type Order = {
+  _id: string;
+  orderId: string;
+  customerName?: string;
+  category: string;
+  status: 'pending' | 'paid' | 'cancelled';
+  total?: number;
+  payment: 'cash' | 'promptpay';
+  createdAt: string;
+};
 
-const recentOrders = [
-  { id: 1, customer: 'คุณเอ', category: 'นามบัตร', status: 'completed', paid: '350฿' },
-  { id: 2, customer: 'คุณบี', category: 'ตรายาง', status: 'pending', paid: '250฿' },
-  { id: 3, customer: 'คุณซี', category: 'ถ่ายเอกสาร', status: 'completed', paid: '1250฿' },
-  { id: 4, customer: 'คุณดี', category: 'สติ๊กเกอร์', status: 'pending', paid: '500฿' },
-  { id: 5, customer: 'คุณอี', category: 'โปสเตอร์', status: 'completed', paid: '100฿' },
-];
+type Summary = {
+  salesToday?: number;
+  cashToday?: number;
+  promptPayToday?: number;
+  completed?: number;
+};
+
+// ✅ ฟังก์ชันช่วย format เงินแบบปลอดภัย
+const money = (n?: number) => (typeof n === 'number' ? `฿ ${n.toLocaleString('th-TH')}` : '฿ 0');
 
 export default function DashboardPage() {
+  const [summary, setSummary] = useState<Summary | null>(null);
+  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const base = process.env.NEXT_PUBLIC_API_URL ?? '';
+    if (!base) return;
+
+    Promise.all([
+      fetch(`${base}/orders/summary`).then(res => res.json()),
+      fetch(`${base}/orders`).then(res => res.json()),
+    ])
+      .then(([summaryData, orders]) => {
+        setSummary(summaryData);
+        setRecentOrders(Array.isArray(orders) ? orders.slice(0, 5) : []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, []);
+
   const summaryCards = [
     {
-      label: 'ยอดขายวันนี้',
-      value: '฿ 12,500',
+      label: 'ยอดขายรวมวันนี้',
+      value: money(summary?.salesToday),
       icon: <MonetizationOnIcon sx={{ fontSize: 40, color: '#4caf50' }} />,
     },
     {
-      label: 'งานค้าง',
-      value: '8',
-      icon: <HourglassEmptyIcon sx={{ fontSize: 40, color: '#ff9800' }} />,
+      label: 'ยอดขายเงินสด',
+      value: money(summary?.cashToday),
+      icon: <MonetizationOnIcon sx={{ fontSize: 40, color: '#ff9800' }} />,
+    },
+    {
+      label: 'ยอดขายโอน (PromptPay)',
+      value: money(summary?.promptPayToday),
+      icon: <MonetizationOnIcon sx={{ fontSize: 40, color: '#2196f3' }} />,
     },
     {
       label: 'งานเสร็จสิ้น',
-      value: '15',
-      icon: <CheckCircleIcon sx={{ fontSize: 40, color: '#2196f3' }} />,
-    },
-    {
-      label: 'ลูกค้าใหม่',
-      value: '3',
-      icon: <PeopleAltIcon sx={{ fontSize: 40, color: '#9c27b0' }} />,
+      value: summary?.completed ?? 0,
+      icon: <CheckCircleIcon sx={{ fontSize: 40, color: '#9c27b0' }} />,
     },
   ];
 
+  if (loading) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
+        <CircularProgress />
+      </Box>
+    );
+  }
+
   return (
-    <Box
-      sx={{
-        p: 4,
-        minHeight: '100vh',
-      }}>
+    <Box sx={{ p: 4, minHeight: '100vh' }}>
       <Typography
         variant="h4"
         fontWeight="bold"
@@ -149,7 +177,7 @@ export default function DashboardPage() {
               📈 กราฟยอดขายรายเดือน
             </Typography>
             <ResponsiveContainer width="100%" height="90%">
-              <BarChart data={salesData}>
+              <BarChart data={[]}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
@@ -190,25 +218,33 @@ export default function DashboardPage() {
               <Table size="small">
                 <TableHead>
                   <TableRow>
+                    <TableCell>Order ID</TableCell>
                     <TableCell>ลูกค้า</TableCell>
                     <TableCell>ประเภทงาน</TableCell>
                     <TableCell>สถานะ</TableCell>
-                    <TableCell>ยอดชำระ</TableCell>
+                    <TableCell>ยอดรวม</TableCell>
+                    <TableCell>วันที่</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {recentOrders.map(row => (
-                    <TableRow key={row.id} hover>
-                      <TableCell>{row.customer}</TableCell>
-                      <TableCell>{row.category}</TableCell>
+                  {recentOrders.map(order => (
+                    <TableRow key={order._id} hover>
+                      <TableCell>{order.orderId}</TableCell>
+                      <TableCell>{order.customerName || '-'}</TableCell>
+                      <TableCell>{order.category}</TableCell>
                       <TableCell>
-                        {row.status === 'completed' ? (
+                        {order.status === 'paid' ? (
                           <Chip label="เสร็จสิ้น" color="success" size="small" />
-                        ) : (
+                        ) : order.status === 'pending' ? (
                           <Chip label="รอดำเนินการ" color="warning" size="small" />
+                        ) : (
+                          <Chip label="ยกเลิก" color="error" size="small" />
                         )}
                       </TableCell>
-                      <TableCell>{row.paid}</TableCell>
+                      <TableCell>{money(order.total)}</TableCell>
+                      <TableCell>
+                        {order.createdAt ? dayjs(order.createdAt).format('DD/MM/YYYY HH:mm') : '-'}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
