@@ -173,7 +173,7 @@ function UploadedFilesPage() {
     const fetchUploads = async ()=>{
         try {
             setLoading(true);
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`${("TURBOPACK compile-time value", "https://glossydesignpos-backend-14013700490.asia-southeast1.run.app")}/upload`);
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].get(`${("TURBOPACK compile-time value", "http://localhost:3001")}/upload`);
             setRows(res.data);
         } catch (err) {
             console.error('❌ Error fetching uploads', err);
@@ -194,7 +194,7 @@ function UploadedFilesPage() {
     const handleSave = async ()=>{
         try {
             if (!editingRecord) return;
-            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].patch(`${("TURBOPACK compile-time value", "https://glossydesignpos-backend-14013700490.asia-southeast1.run.app")}/upload/${editingRecord._id}`, {
+            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].patch(`${("TURBOPACK compile-time value", "http://localhost:3001")}/upload/${editingRecord._id}`, {
                 customerName,
                 phone,
                 status
@@ -208,7 +208,7 @@ function UploadedFilesPage() {
     const handleDelete = async (id)=>{
         if (!confirm('ยืนยันการลบรายการนี้?')) return;
         try {
-            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].delete(`${("TURBOPACK compile-time value", "https://glossydesignpos-backend-14013700490.asia-southeast1.run.app")}/upload/${id}`);
+            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$ssr$5d$__$28$ecmascript$29$__["default"].delete(`${("TURBOPACK compile-time value", "http://localhost:3001")}/upload/${id}`);
             fetchUploads();
         } catch (err) {
             console.error('❌ Error deleting record', err);

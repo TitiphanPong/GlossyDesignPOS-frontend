@@ -21,53 +21,61 @@ type Props = {
   open: boolean;
   total: number;
   payment: 'cash' | 'promptpay';
+  currentOrderId: string | null;
   onClose: () => void;
-  onConfirmPaid: () => void;
-  onNewOrder: () => void;
+  onPaid: () => void; // callback หลังอัปเดตเป็น paid สำเร็จ
+  onNewOrder: () => void; // กดทำรายการใหม่
 };
 
-export default function SuccessModal({
-  open,
-  total,
-  payment,
-  onClose,
-  onConfirmPaid,
-  onNewOrder,
-}: Props) {
+export default function SuccessModal({ open, total, payment, onClose, onPaid, onNewOrder }: Props) {
   const [isPaid, setIsPaid] = useState(false);
 
-  // reset state ทุกครั้งที่เปิดใหม่
   useEffect(() => {
     if (open) setIsPaid(false);
   }, [open]);
 
-  // auto close หลังจากชำระแล้ว 5 วิ
   useEffect(() => {
     if (isPaid) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, 5000);
+      const timer = setTimeout(onClose, 5000);
       return () => clearTimeout(timer);
     }
   }, [isPaid, onClose]);
 
-  const handleConfirm = () => {
-    setIsPaid(true);
-    onConfirmPaid();
+  const handleConfirm = async () => {
+    try {
+      const orderStr = localStorage.getItem('pendingOrder');
+      if (!orderStr) return;
+      const order = JSON.parse(orderStr);
+
+      const base = process.env.NEXT_PUBLIC_API_URL ?? '';
+      const res = await fetch(`${base}/orders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...order, status: 'paid' }),
+      });
+      if (!res.ok) throw new Error('บันทึกออเดอร์ไม่สำเร็จ');
+      await res.json();
+
+      // 👉 update localStorage → paid
+      localStorage.setItem('pendingOrder', JSON.stringify({ ...order, status: 'paid' }));
+      window.dispatchEvent(new Event('storage')); // ✅ บังคับให้ CustomerScreen รับรู้
+      setIsPaid(true);
+      onPaid();
+    } catch (err) {
+      console.error(err);
+      alert('เกิดข้อผิดพลาดในการยืนยันการชำระเงิน');
+    }
   };
 
   return (
     <Dialog
       open={open}
-      onClose={onClose}
+      onClose={() => {
+        onClose();
+      }}
       maxWidth="sm"
       fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: 3,
-          p: 1,
-        },
-      }}>
+      PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
           {isPaid ? (
@@ -93,9 +101,7 @@ export default function SuccessModal({
             วิธีชำระเงิน: {payment === 'cash' ? '💵 เงินสด' : '📱 PromptPay'}
           </Typography>
         </Box>
-
         <Divider sx={{ my: 2 }} />
-
         <Typography variant="body2" color="text.secondary" align="center">
           {isPaid ? 'ชำระเงินเสร็จสิ้น ระบบจะปิดอัตโนมัติใน 5 วินาที' : 'โปรดยืนยันการชำระเงิน'}
         </Typography>
@@ -119,8 +125,14 @@ export default function SuccessModal({
             {payment === 'cash' ? 'รับเงินแล้ว' : 'ยืนยันการโอนแล้ว'}
           </Button>
         )}
-
-        <Button variant="outlined" color="primary" startIcon={<ReplayIcon />} onClick={onNewOrder}>
+        <Button
+          variant="outlined"
+          color="primary"
+          startIcon={<ReplayIcon />}
+          onClick={() => {
+            localStorage.removeItem('pendingOrder');
+            onNewOrder(); // callback ไปล้าง cart, orderId, discount
+          }}>
           ทำรายการใหม่
         </Button>
       </DialogActions>

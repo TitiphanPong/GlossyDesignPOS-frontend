@@ -82,7 +82,7 @@ function UploadedFilesPage() {
     const fetchUploads = async ()=>{
         try {
             setLoading(true);
-            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get("".concat(("TURBOPACK compile-time value", "https://glossydesignpos-backend-14013700490.asia-southeast1.run.app"), "/upload"));
+            const res = await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].get("".concat(("TURBOPACK compile-time value", "http://localhost:3001"), "/upload"));
             setRows(res.data);
         } catch (err) {
             console.error('❌ Error fetching uploads', err);
@@ -105,7 +105,7 @@ function UploadedFilesPage() {
     const handleSave = async ()=>{
         try {
             if (!editingRecord) return;
-            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].patch("".concat(("TURBOPACK compile-time value", "https://glossydesignpos-backend-14013700490.asia-southeast1.run.app"), "/upload/").concat(editingRecord._id), {
+            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].patch("".concat(("TURBOPACK compile-time value", "http://localhost:3001"), "/upload/").concat(editingRecord._id), {
                 customerName,
                 phone,
                 status
@@ -119,7 +119,7 @@ function UploadedFilesPage() {
     const handleDelete = async (id)=>{
         if (!confirm('ยืนยันการลบรายการนี้?')) return;
         try {
-            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete("".concat(("TURBOPACK compile-time value", "https://glossydesignpos-backend-14013700490.asia-southeast1.run.app"), "/upload/").concat(id));
+            await __TURBOPACK__imported__module__$5b$project$5d2f$node_modules$2f$axios$2f$lib$2f$axios$2e$js__$5b$app$2d$client$5d$__$28$ecmascript$29$__["default"].delete("".concat(("TURBOPACK compile-time value", "http://localhost:3001"), "/upload/").concat(id));
             fetchUploads();
         } catch (err) {
             console.error('❌ Error deleting record', err);

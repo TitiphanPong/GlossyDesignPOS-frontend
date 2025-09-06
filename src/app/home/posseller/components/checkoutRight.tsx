@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import styles from './checkoutRight.module.css';
 
 type CartItem = {
@@ -28,6 +28,7 @@ type Props = {
 const CheckOutRight: React.FC<Props> = ({
   cart,
   total,
+  discount,
   onCheckout,
   onDiscountChange,
   onPaymentChange,
@@ -36,6 +37,14 @@ const CheckOutRight: React.FC<Props> = ({
   const [discountValue, setDiscountValue] = useState(0);
   const [discountType, setDiscountType] = useState<'percent' | 'fixed' | null>(null);
   const [payment, setPayment] = useState<'cash' | 'promptpay'>('cash');
+
+  useEffect(() => {
+    if (discount === 0) {
+      setDiscountInput('');
+      setDiscountValue(0);
+      setDiscountType(null);
+    }
+  }, [discount]);
 
   // ✅ คำนวณราคาสุทธิ
   const finalTotal =

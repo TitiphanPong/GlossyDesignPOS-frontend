@@ -1,7 +1,10 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
+  "/customer/page": "app/customer/page.js",
   "/favicon.ico/route": "app/favicon.ico/route.js",
+  "/home/page": "app/home/page.js",
   "/home/posseller/page": "app/home/posseller/page.js",
   "/home/saleListPage/page": "app/home/saleListPage/page.js",
-  "/home/storage/page": "app/home/storage/page.js"
+  "/home/storage/page": "app/home/storage/page.js",
+  "/page": "app/page.js"
 }
