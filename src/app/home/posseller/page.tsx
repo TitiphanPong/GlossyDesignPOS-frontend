@@ -20,7 +20,7 @@ import {
 } from '@mui/material';
 
 //COMPONENTS
-import NameCardModal from './components/NameCardModal';
+
 import CheckOutRight from './components/checkoutRight';
 import SuccessModal from './components/successModal';
 import CustomerInfoModal from './components/customerInfoModal';
@@ -37,6 +37,7 @@ import ApprovalRoundedIcon from '@mui/icons-material/ApprovalRounded';
 import MapIcon from '@mui/icons-material/Map';
 import StampModal from './components/StampModal';
 import { CartItem } from './types/cart';
+import NameCardModal from './components/NameCardModal';
 
 
 type Variant = { name: string; price: number; note?: string };
