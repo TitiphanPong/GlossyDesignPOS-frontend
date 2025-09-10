@@ -43,7 +43,7 @@ const variantList: VariantOption[] = [
   { name: 'Custom Size', width: 0, height: 0, paperKind: 'CUSTOM', custom: true },
 ];
 
-export default function NameCardModal({
+export default function NamecardModal({
   open,
   onClose,
   onSelect,
