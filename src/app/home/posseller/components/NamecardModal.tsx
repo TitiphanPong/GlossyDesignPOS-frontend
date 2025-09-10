@@ -11,60 +11,73 @@ import {
   Box,
   Card,
   TextField,
-  MenuItem,
-  Paper,
+  Divider,
+  FormControlLabel,
+  RadioGroup,
+  Radio,
+  CardContent,
 } from '@mui/material';
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+import { CartItem } from '../types/cart';
 
 interface VariantOption {
   name: string;
   width: number;
   height: number;
-  price: number;
+  paperKind: string;
+  custom?: boolean;
 }
 
-interface NamecardModalProps {
+interface NameCardModalProps {
   open: boolean;
   onClose: () => void;
-  onSelect: (order: {
-    variant: VariantOption;
-    quantity: number;
-    customerName: string;
-    companyName: string;
-    note: string;
-    sides: string;
-    material: string;
-    totalPrice: number;
-  }) => void;
+  onSelect: (item: CartItem) => void;
   productName: string;
+  initialData?: any;
 }
 
 const variantList: VariantOption[] = [
-  { name: 'Portrait', width: 55, height: 90, price: 3 },
-  { name: 'Landscape', width: 90, height: 55, price: 3 },
+  { name: '90 × 55 mm / MATTE', width: 90, height: 55, paperKind: 'MATTE' },
+  { name: '90 × 55 mm / GLOSS', width: 90, height: 55, paperKind: 'GLOSS' },
+  { name: '90 × 55 mm / PVC', width: 90, height: 55, paperKind: 'PVC' },
+  { name: 'Custom Size', width: 0, height: 0, paperKind: 'CUSTOM', custom: true },
 ];
 
-export default function NamecardModal({
+export default function NameCardModal({
   open,
   onClose,
   onSelect,
   productName,
-}: NamecardModalProps) {
+  initialData,
+}: NameCardModalProps) {
   const [selected, setSelected] = useState<VariantOption | null>(null);
-
   const [sides, setSides] = useState<'1' | '2'>('1');
-  const [material, setMaterial] = useState('กระดาษ 260 แกรม');
+  const [material, setMaterial] = useState('');
   const [quantity, setQuantity] = useState(100);
-  const [customerName, setCustomerName] = useState('');
-  const [companyName, setCompanyName] = useState('');
-  const [note, setNote] = useState('');
+  const [productNote, setProductNote] = useState('');
+  const [colorMode, setColorMode] = useState('color');
+  const [total, setTotal] = useState<number>(0);
+  const [deposit, setDeposit] = useState<number>(0);
+  const [fullPayment, setFullPayment] = useState<boolean>(false);
 
-  const basePrice = selected ? selected.price : 0;
-  const sidePrice = sides === '2' ? 1.0 : 0;
-  const materialPrice =
-    material === 'กระดาษ 300 แกรม' ? 0.5 : material === 'กระดาษพรีเมียม' ? 1.0 : 0;
+  const remaining = Math.max(total - deposit, 0);
 
-  const totalPrice = (basePrice + sidePrice + materialPrice) * quantity;
+  // state สำหรับ custom size
+  const [customWidth, setCustomWidth] = useState<number>(90);
+  const [customHeight, setCustomHeight] = useState<number>(55);
+
+  useEffect(() => {
+    if (initialData) {
+      setQuantity(initialData.qty || 100);
+      setDeposit(initialData.deposit || 0);
+      setFullPayment(initialData.fullPayment || false);
+      setMaterial(initialData.material || '');
+      setSides(initialData.sides || '1');
+      setColorMode(initialData.colorMode || 'color');
+      setTotal(initialData.total ?? initialData.totalPrice ?? 0);
+      if (initialData.variant) setSelected(initialData.variant);
+    }
+  }, [initialData, open]);
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
@@ -74,16 +87,17 @@ export default function NamecardModal({
         <Stack direction="row" spacing={3} justifyContent="center" mb={3}>
           {variantList.map((v, i) => {
             const isSelected = selected?.name === v.name;
+            const isCustom = v.custom;
             return (
               <Card
                 key={i}
                 onClick={() => setSelected(v)}
                 sx={{
-                  width: 180,
-                  height: 220,
+                  width: 200,
+                  height: 260,
                   border: isSelected ? '2px solid #1976d2' : '1px solid #e0e0e0',
-                  borderRadius: 3,
-                  p: 4,
+                  borderRadius: 2,
+                  p: 2,
                   cursor: 'pointer',
                   position: 'relative',
                   display: 'flex',
@@ -95,28 +109,9 @@ export default function NamecardModal({
                   boxShadow: isSelected
                     ? '0 6px 20px rgba(25,118,210,0.2)'
                     : '0 3px 10px rgba(0,0,0,0.05)',
-                  '&:hover': {
-                    boxShadow: '0 6px 20px rgba(0,0,0,0.1)',
-                  },
+                  '&:hover': { boxShadow: '0 6px 20px rgba(0,0,0,0.1)' },
                 }}>
-                {/* ราคา มุมบนซ้าย */}
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    left: 8,
-                    bgcolor: 'white',
-                    px: 1,
-                    py: 0.3,
-                    borderRadius: 1,
-                    fontSize: 13,
-                    fontWeight: 'bold',
-                    border: '1px solid #ccc',
-                  }}>
-                  ฿ {v.price.toFixed(2)}
-                </Box>
-
-                {/* กล่อง preview */}
+                {/* preview */}
                 <Box
                   sx={{
                     flex: 1,
@@ -125,93 +120,309 @@ export default function NamecardModal({
                     justifyContent: 'center',
                     width: '100%',
                   }}>
-                  <Box
-                    sx={{
-                      width: v.width > v.height ? '80%' : '50%',
-                      height: v.height > v.width ? '80%' : '50%',
-                      border: '2px solid #333',
-                      borderRadius: 1,
-                      backgroundColor: '#fafafa',
-                    }}
-                  />
+                  {isCustom ? (
+                    (() => {
+                      const maxSize = 80;
+                      const aspectRatio =
+                        customWidth && customHeight ? customWidth / customHeight : 1;
+
+                      let previewW = maxSize;
+                      let previewH = maxSize;
+
+                      if (aspectRatio > 1) {
+                        previewH = maxSize / aspectRatio;
+                      } else {
+                        previewW = maxSize * aspectRatio;
+                      }
+
+                      return (
+                        <Box
+                          sx={{
+                            width: previewW,
+                            height: previewH,
+                            border: '2px solid #333',
+                            borderRadius: 1,
+                            backgroundColor: '#fafafa',
+                          }}
+                        />
+                      );
+                    })()
+                  ) : (
+                    <Box
+                      sx={{
+                        width: v.width > v.height ? '70%' : '40%',
+                        height: v.height > v.width ? '70%' : '40%',
+                        border: '2px solid #333',
+                        borderRadius: 1,
+                        backgroundColor: '#fafafa',
+                      }}
+                    />
+                  )}
                 </Box>
 
-                {/* ข้อความด้านล่าง */}
-                <Box sx={{ textAlign: 'center', mt: 0 }}>
-                  <Typography variant="body2" fontWeight={600}>
-                    {v.width} × {v.height} mm
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    ราคาเริ่มต้น
-                  </Typography>
-                </Box>
+                {/* description custom */}
+                {isCustom ? (
+                  <Box sx={{ textAlign: 'center', mt: 1 }}>
+                    <Typography variant="body2" fontWeight={600}>
+                      Custom Size (mm)
+                    </Typography>
+                    <Stack direction="row" spacing={1} mt={1}>
+                      <TextField
+                        size="small"
+                        type="text"
+                        label="W"
+                        value={customWidth}
+                        onClick={e => e.stopPropagation()}
+                        onChange={e => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          setCustomWidth(val === '' ? 0 : parseInt(val, 10));
+                        }}
+                        sx={{ width: 70 }}
+                        inputProps={{ style: { textAlign: 'center' } }}
+                      />
+                      <TextField
+                        size="small"
+                        type="text"
+                        label="H"
+                        value={customHeight}
+                        onClick={e => e.stopPropagation()}
+                        onChange={e => {
+                          const val = e.target.value.replace(/\D/g, '');
+                          setCustomHeight(val === '' ? 0 : parseInt(val, 10));
+                        }}
+                        sx={{ width: 70 }}
+                        inputProps={{ style: { textAlign: 'center' } }}
+                      />
+                    </Stack>
+                  </Box>
+                ) : (
+                  <Box sx={{ textAlign: 'center', mt: 1 }}>
+                    <Typography variant="body2" fontWeight={600}>
+                      {v.width} × {v.height} mm
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      PAPER / {v.paperKind}
+                    </Typography>
+                  </Box>
+                )}
               </Card>
             );
           })}
         </Stack>
 
-        {/* ตัวเลือกเพิ่มเติม */}
+        <Typography variant="h6" fontWeight={700} gutterBottom>
+          รายละเอียดเพิ่มเติม :
+        </Typography>
+
         <TextField
-          label="ชื่อลูกค้า"
-          value={customerName}
-          onChange={e => setCustomerName(e.target.value)}
-          fullWidth
-          sx={{ mb: 2 }}
-        />
-        <TextField
-          label="ชื่อบริษัท"
-          value={companyName}
-          onChange={e => setCompanyName(e.target.value)}
+          label="รายละเอียดสินค้า"
+          value={productNote}
+          onChange={e => setProductNote(e.target.value)}
           fullWidth
           sx={{ mb: 2 }}
         />
 
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} sx={{ mb: 2 }}>
-          <TextField
-            select
-            label="การพิมพ์"
-            value={sides}
-            onChange={e => setSides(e.target.value as '1' | '2')}
-            fullWidth>
-            <MenuItem value="1">1 ด้าน</MenuItem>
-            <MenuItem value="2">2 ด้าน</MenuItem>
-          </TextField>
+        <Divider sx={{ my: 2 }} />
+        <Typography variant="h6" fontWeight={700} gutterBottom>
+          ตัวเลือกเพิ่มเติม :
+        </Typography>
 
-          <TextField
-            select
-            label="วัสดุกระดาษ"
-            value={material}
-            onChange={e => setMaterial(e.target.value)}
-            fullWidth>
-            <MenuItem value="กระดาษ 260 แกรม">กระดาษ 260 แกรม</MenuItem>
-            <MenuItem value="กระดาษ 300 แกรม">กระดาษ 300 แกรม</MenuItem>
-            <MenuItem value="กระดาษพรีเมียม">กระดาษพรีเมียม</MenuItem>
-          </TextField>
+        <Stack
+          direction="row"
+          spacing={2}
+          justifyContent="space-between"
+          alignItems="center"
+          sx={{ mb: 2 }}>
+          {/* พิมพ์กี่ด้าน */}
+          <Box display="flex" alignItems="center">
+            <Typography variant="body2" sx={{ mr: 1, fontWeight: 600 }}>
+              พิมพ์กี่ด้าน :
+            </Typography>
+            <RadioGroup row value={sides} onChange={e => setSides(e.target.value as '1' | '2')}>
+              <FormControlLabel value="1" control={<Radio />} label="1 ด้าน" />
+              <FormControlLabel value="2" control={<Radio />} label="2 ด้าน" />
+            </RadioGroup>
+          </Box>
+
+          <Divider orientation="vertical" flexItem />
+
+          {/* โหมดสี */}
+          <Box display="flex" alignItems="center">
+            <Typography variant="body2" sx={{ mr: 1, fontWeight: 600 }}>
+              โหมดสี :
+            </Typography>
+            <RadioGroup row value={colorMode} onChange={e => setColorMode(e.target.value)}>
+              <FormControlLabel value="bw" control={<Radio />} label="ขาวดำ" />
+              <FormControlLabel value="color" control={<Radio />} label="สี" />
+            </RadioGroup>
+          </Box>
+
+          <Divider orientation="vertical" flexItem />
+
+          {/* จำนวนชิ้น */}
+          <Box display="flex" alignItems="center">
+            <Typography variant="body2" sx={{ mr: 1, fontWeight: 600 }}>
+              จำนวนสินค้า :
+            </Typography>
+            <TextField
+              type="text"
+              value={quantity}
+              onChange={e => {
+                const val = e.target.value.replace(/\D/g, '');
+                setQuantity(val === '' ? 0 : parseInt(val, 10));
+              }}
+              sx={{ width: 100 }}
+              inputProps={{ style: { textAlign: 'center' } }}
+            />
+            <Typography variant="body2" sx={{ mr: 1, fontWeight: 600, ml: 1 }}>
+              ชิ้น
+            </Typography>
+          </Box>
         </Stack>
 
-        <TextField
-          label="จำนวน (ใบ)"
-          type="number"
-          value={quantity}
-          onChange={e => setQuantity(Math.max(1, parseInt(e.target.value || '1')))}
-          sx={{ mb: 2 }}
-          fullWidth
-        />
+        <Divider sx={{ my: 2 }} />
 
-        <TextField
-          label="หมายเหตุ :"
-          value={note}
-          onChange={e => setNote(e.target.value)}
-          fullWidth
-          multiline
-          rows={1}
-        />
-
-        {/* สรุปราคา */}
-        <Typography align="right" fontWeight={800} fontSize={20} color="success.main" mt={2}>
-          รวมทั้งหมด: ฿ {totalPrice.toFixed(2)}
+        <Typography variant="h6" fontWeight={700} gutterBottom>
+          ชนิดวัสดุ :
         </Typography>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+          <RadioGroup
+            row
+            value={material}
+            onChange={e => setMaterial(e.target.value)}
+            sx={{
+              display: 'flex',
+              justifyContent: 'center', // ✅ จัดกึ่งกลางแนวนอน
+              gap: 3, // ✅ ระยะห่างระหว่างปุ่ม
+            }}>
+            <FormControlLabel value="150g" control={<Radio />} label="150g" />
+            <FormControlLabel value="160g" control={<Radio />} label="160g" />
+            <FormControlLabel value="260g" control={<Radio />} label="260g" />
+            <FormControlLabel value="300g" control={<Radio />} label="300g" />
+            <FormControlLabel value="200MC" control={<Radio />} label="200MC" />
+            <FormControlLabel value="220MC" control={<Radio />} label="220MC" />
+            <FormControlLabel value="other" control={<Radio />} label="อื่นๆ" />
+          </RadioGroup>
+        </Box>
+
+        <Divider sx={{ my: 2 }} />
+
+        <Box sx={{ mt: 3 }}>
+          <Typography variant="h6" fontWeight={700} gutterBottom>
+            สรุปราคา :
+          </Typography>
+
+          <RadioGroup
+            row
+            value={fullPayment ? 'full' : 'deposit'}
+            onChange={e => setFullPayment(e.target.value === 'full')}
+            sx={{ width: '100%' }}>
+            <Stack
+              direction={{ xs: 'column', md: 'row' }}
+              spacing={3}
+              alignItems="stretch"
+              flexWrap="wrap"
+              sx={{ width: '100%' }}>
+              {/* การ์ดมัดจำ */}
+              <Card
+                variant="outlined"
+                sx={{
+                  flex: 1,
+                  minWidth: 280,
+                  borderColor: !fullPayment ? 'primary.main' : 'grey.300',
+                }}>
+                <CardContent>
+                  <FormControlLabel
+                    value="deposit"
+                    control={<Radio />}
+                    label={
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        มัดจำสินค้า
+                      </Typography>
+                    }
+                  />
+                  <Stack spacing={2} mt={2}>
+                    <TextField
+                      label="ยอดรวม"
+                      type="text"
+                      value={total}
+                      onChange={e => setTotal(Number(e.target.value) || 0)}
+                      fullWidth
+                      disabled={fullPayment}
+                      InputProps={{
+                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
+                      }}
+                    />
+                    <TextField
+                      label="ยอดมัดจำ"
+                      type="text"
+                      value={deposit}
+                      onChange={e => setDeposit(Number(e.target.value) || 0)}
+                      fullWidth
+                      disabled={fullPayment}
+                      InputProps={{
+                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
+                      }}
+                    />
+                    <TextField
+                      label="คงค้าง"
+                      type="text"
+                      value={remaining}
+                      fullWidth
+                      disabled
+                      InputProps={{
+                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
+                      }}
+                    />
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              {/* การ์ดชำระเต็มจำนวน */}
+              <Card
+                variant="outlined"
+                sx={{
+                  flex: 1,
+                  minWidth: 280,
+                  borderColor: fullPayment ? 'primary.main' : 'grey.300',
+                }}>
+                <CardContent>
+                  <FormControlLabel
+                    value="full"
+                    control={<Radio />}
+                    label={
+                      <Typography variant="subtitle1" fontWeight={600}>
+                        ชำระเต็มจำนวน
+                      </Typography>
+                    }
+                  />
+                  <Stack spacing={2} mt={2}>
+                    <TextField
+                      label="จำนวนเงิน"
+                      type="text"
+                      value={total}
+                      onChange={e => setTotal(Number(e.target.value) || 0)}
+                      fullWidth
+                      disabled={!fullPayment}
+                      InputProps={{
+                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
+                      }}
+                    />
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Stack>
+          </RadioGroup>
+        </Box>
       </DialogContent>
+      <Box sx={{ mt: 2, textAlign: 'right' }}>
+        <Typography variant="h6" sx={{ color: 'green', fontWeight: 700, px: 3 }}>
+          {fullPayment
+            ? `ยอดที่ต้องชำระเต็มจำนวน: ${total.toLocaleString()} ฿`
+            : `ยอดที่ต้องชำระมัดจำ: ${deposit.toLocaleString()} ฿`}
+        </Typography>
+      </Box>
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose}>ยกเลิก</Button>
         <Button
@@ -221,15 +432,25 @@ export default function NamecardModal({
           onClick={() =>
             selected &&
             onSelect({
-              variant: selected,
-              quantity,
-              customerName,
-              companyName,
-              note,
+              key: '',
+              name: productName,
+              category: 'นามบัตร',
+              variant: {
+                ...selected,
+                width: customWidth,
+                height: customHeight,
+              },
+              productNote,
               sides,
+              colorMode,
               material,
-              totalPrice,
-            })
+              qty: quantity,
+              unitPrice: total / (quantity || 1),
+              totalPrice: total,
+              deposit: fullPayment ? total : deposit,
+              remaining: fullPayment ? 0 : remaining,
+              fullPayment,
+            } as CartItem)
           }>
           ถัดไป
         </Button>

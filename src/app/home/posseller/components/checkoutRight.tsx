@@ -2,18 +2,36 @@
 
 import React, { useEffect, useState } from 'react';
 import styles from './checkoutRight.module.css';
+import ButtonEdit from './buttonEdit';
+import ButtonDelete from './buttonDelete';
 
 type CartItem = {
   key: string;
   name: string;
-  variant: string;
+  category?: string;
+  variant: any;
   qty: number;
   unitPrice: number;
-  note?: string;
-  customerName?: string;
-  companyName?: string;
+  totalPrice: number;
+
+  // ✅ รายละเอียดสินค้า
+  productNote?: string;
+
+  // นามบัตร
   material?: string;
   sides?: string;
+  colorMode?: string;
+
+  // ตรายาง
+
+  type?: 'normal' | 'inked';
+  shape?: 'circle' | 'square';
+  size?: string;
+
+  // ✅ การชำระเงิน
+  deposit?: number;
+  remaining?: number;
+  fullPayment?: boolean;
 };
 
 type Props = {
@@ -23,6 +41,9 @@ type Props = {
   onCheckout: (payment: 'cash' | 'promptpay') => void;
   onDiscountChange?: (discount: number) => void;
   onPaymentChange?: (payment: 'cash' | 'promptpay') => void;
+
+  onEditItem?: (item: CartItem) => void;
+  onDeleteItem?: (key: string) => void;
 };
 
 const CheckOutRight: React.FC<Props> = ({
@@ -32,6 +53,8 @@ const CheckOutRight: React.FC<Props> = ({
   onCheckout,
   onDiscountChange,
   onPaymentChange,
+  onEditItem,
+  onDeleteItem,
 }) => {
   const [discountInput, setDiscountInput] = useState('');
   const [discountValue, setDiscountValue] = useState(0);
@@ -46,13 +69,34 @@ const CheckOutRight: React.FC<Props> = ({
     }
   }, [discount]);
 
-  // ✅ คำนวณราคาสุทธิ
+  // ✅ ยอดสุทธิหลังส่วนลด
   const finalTotal =
     discountType === 'percent'
       ? total - (total * discountValue) / 100
       : discountType === 'fixed'
-        ? Math.max(total - discountValue, 0) // ป้องกันติดลบ
+        ? Math.max(total - discountValue, 0)
         : total;
+
+  // ✅ กระจายส่วนลดลงสินค้าใน cart
+  let totalDeposit = 0;
+  let totalRemaining = 0;
+
+  cart.forEach(item => {
+    const itemPrice = item.totalPrice || 0;
+    const ratio = total > 0 ? itemPrice / total : 0;
+    const discountedItemPrice = finalTotal * ratio;
+
+    if (item.fullPayment) {
+      totalDeposit += discountedItemPrice;
+    } else {
+      const scale = discountedItemPrice / itemPrice;
+      const depositPart = (item.deposit || 0) * scale;
+      const remainingPart = (item.remaining || 0) * scale;
+
+      totalDeposit += depositPart;
+      totalRemaining += remainingPart;
+    }
+  });
 
   const handleApplyDiscount = () => {
     const value = discountInput.trim();
@@ -64,7 +108,6 @@ const CheckOutRight: React.FC<Props> = ({
       return;
     }
 
-    // ✅ case ส่วนลด %
     if (value.endsWith('%')) {
       const percent = parseFloat(value.replace('%', ''));
       if (!isNaN(percent) && percent >= 0 && percent <= 100) {
@@ -74,9 +117,7 @@ const CheckOutRight: React.FC<Props> = ({
       } else {
         alert('กรุณากรอกเปอร์เซ็นต์ 0-100%');
       }
-    }
-    // ✅ case ส่วนลดคงที่ เช่น -20
-    else if (value.startsWith('-')) {
+    } else if (value.startsWith('-')) {
       const fixed = parseFloat(value.replace('-', ''));
       if (!isNaN(fixed) && fixed > 0) {
         setDiscountValue(fixed);
@@ -92,41 +133,81 @@ const CheckOutRight: React.FC<Props> = ({
 
   return (
     <div className={styles['master-container']}>
-      {/* Cart */}
+      {/* ✅ Cart Section */}
       <div className={`${styles.card} ${styles.cart}`}>
         <div className={styles.title}>🛒 รายการในตะกร้า</div>
         <div className={styles.products}>
-          {cart.map(item => (
+          {cart.map((item, idx) => (
             <div
               key={item.key}
-              className={styles.product}
-              style={{ alignItems: 'flex-start', paddingLeft: '0.25rem' }}>
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'flex-start',
+                padding: '1rem 0.75rem',
+                borderBottom: idx !== cart.length - 1 ? '1px solid #e0e0e0' : 'none', // Divider
+              }}>
               <div className={styles.details}>
                 <div className={styles.name}>{item.name}</div>
                 <ul
-                  style={{
-                    margin: 0,
-                    paddingLeft: '0.25rem',
-                    fontSize: '0.85rem',
-                    color: '#000',
-                  }}>
-                  <li>👤 ลูกค้า: {item.customerName || 'ไม่ระบุ'}</li>
-                  <li>🏢 บริษัท: {item.companyName || 'ไม่ระบุ'}</li>
-                  <li>📑 การพิมพ์: {item.sides ? `พิมพ์ ${item.sides} ด้าน` : 'ไม่ระบุ'}</li>
-                  <li>📄 กระดาษ: {item.material || 'ไม่ระบุ'}</li>
-                  <li>📝 หมายเหตุ: {item.note || 'ไม่ระบุ'}</li>
+                  style={{ margin: 0, paddingLeft: '0.25rem', fontSize: '0.85rem', color: '#000' }}>
+                  {/* รายละเอียดสินค้า */}
+
+                  {/* ✅ ถ้าเป็นนามบัตร */}
+                  {item.category === 'นามบัตร' && (
+                    <>
+                      <li>📦 ขนาด : {item.variant?.name || 'ไม่ระบุ'}</li>
+                      <li>📄 วัสดุ : {item.material || 'ไม่ระบุ'}</li>
+                      <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
+                      <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
+                      <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+                    </>
+                  )}
+
+                  {/* ✅ ถ้าเป็นตรายาง */}
+                  {item.category === 'ตรายาง' && (
+                    <>
+                      <li>🪧 ประเภท : {item.type === 'inked' ? 'หมึกในตัว' : 'ธรรมดา'}</li>
+                      <li>🔲 รูปทรง : {item.shape === 'circle' ? 'วงกลม' : 'สี่เหลี่ยม'}</li>
+                      <li>📏 ขนาด : {item.size || 'ไม่ระบุ'}</li>
+                      <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+                    </>
+                  )}
+                  {/* การชำระ */}
+                  <li style={{ whiteSpace: 'nowrap' }}>
+                    💰 การชำระ :{' '}
+                    {item.fullPayment
+                      ? `เต็มจำนวน (${Number(item.totalPrice).toFixed(2)}฿)`
+                      : `มัดจำ ${Number(item.deposit || 0).toFixed(2)}฿ (คงเหลือ ${Number(item.remaining || 0).toFixed(2)}฿)`}
+                  </li>
                 </ul>
+                <div
+                  style={{
+                    display: 'flex',
+                    gap: '1rem',
+                    marginTop: '0.7rem',
+                    justifyContent: 'center',
+                    alignItems: 'center',
+                    width: '100%',
+                    marginLeft: 28,
+                  }}>
+                  <ButtonEdit onClick={() => onEditItem?.(item)} />
+                  <ButtonDelete onClick={() => onDeleteItem?.(item.key)} />
+                </div>
               </div>
+
               <div className={styles.quantity}>
                 <div>x{item.qty}</div>
-                <span className={styles.price}>฿{(item.unitPrice * item.qty).toFixed(2)}</span>
+                <span className={styles.price}>
+                  ฿{(Number(item.unitPrice) * Number(item.qty || 0)).toFixed(2)}
+                </span>
               </div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Coupon */}
+      {/* ✅ Coupon Section */}
       <div className={`${styles.card} ${styles.coupons}`}>
         <div className={styles.title}>💸 โค้ดส่วนลด</div>
         <form
@@ -158,7 +239,7 @@ const CheckOutRight: React.FC<Props> = ({
         )}
       </div>
 
-      {/* Payment Method */}
+      {/* ✅ Payment Section */}
       <div className={`${styles.card} ${styles.payment}`}>
         <div className={styles.title}>💳 วิธีการชำระเงิน</div>
 
@@ -205,9 +286,10 @@ const CheckOutRight: React.FC<Props> = ({
         </div>
       </div>
 
-      {/* Checkout */}
+      {/* ✅ Checkout Section */}
       <div className={`${styles.card} ${styles.checkout}`}>
         <div className={styles.title}>✅ ชำระเงิน</div>
+
         <div className={styles.details}>
           <span>ยอดรวม:</span>
           <span>฿{total.toFixed(2)}</span>
@@ -227,15 +309,26 @@ const CheckOutRight: React.FC<Props> = ({
           <span>ค่าส่ง:</span>
           <span>฿0.00</span>
         </div>
-        <div className={styles['checkout--footer']}>
+
+        <div
+          className={styles['checkout--footer']}
+          style={{ flexDirection: 'column', alignItems: 'stretch', gap: '0.5rem' }}>
           <label className={styles.price}>
             <span className="currency">฿</span>
-            {finalTotal.toFixed(2)}
+            {totalDeposit.toFixed(2)}
           </label>
+
+          {totalRemaining > 0 && (
+            <p style={{ textAlign: 'center', margin: 0, color: '#d32f2f', fontWeight: 600 }}>
+              ค้างชำระ {totalRemaining.toFixed(2)} บาท
+            </p>
+          )}
+
           <button
             className={styles['checkout-btn']}
             onClick={() => onCheckout(payment)}
-            disabled={cart.length === 0}>
+            disabled={cart.length === 0}
+            style={{ width: '100%' }}>
             ชำระเงิน
           </button>
         </div>

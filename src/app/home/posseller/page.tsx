@@ -18,16 +18,25 @@ import {
   Skeleton,
   Alert,
 } from '@mui/material';
+
+//COMPONENTS
+import NameCardModal from './components/NameCardModal';
+import CheckOutRight from './components/checkoutRight';
+import SuccessModal from './components/successModal';
+import CustomerInfoModal from './components/customerInfoModal';
+
+//ICON MATERIAL
+import AdfScannerIcon from '@mui/icons-material/AdfScanner';
+import LocalPrintshopIcon from '@mui/icons-material/LocalPrintshop';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
 import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
-import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
-import StickyNote2RoundedIcon from '@mui/icons-material/StickyNote2Rounded';
-import NamecardModal from './components/NamecardModal';
-import CheckOutRight from './components/checkoutRight';
-import SuccessModal from './components/successModal';
+import ApprovalRoundedIcon from '@mui/icons-material/ApprovalRounded';
+import MapIcon from '@mui/icons-material/Map';
+import StampModal from './components/StampModal';
+import { CartItem } from './types/cart';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -71,53 +80,52 @@ export default function SellPage() {
   const [openModal, setOpenModal] = React.useState(false);
 
   const [discount, setDiscount] = React.useState(0); // เก็บเป็นจำนวนเงิน หรือ %
-  const [cart, setCart] = React.useState<any[]>([]);
-  const [currentOrderId, setCurrentOrderId] = React.useState<string | null>(null);
+  const [cart, setCart] = React.useState<CartItem[]>([]);
 
-  const total = cart.reduce((sum, item) => sum + item.unitPrice * item.qty, 0);
+  const [editingItem, setEditingItem] = React.useState<CartItem | null>(null);
+
+  const total = cart.reduce((sum, item) => sum + Number(item.unitPrice) * Number(item.qty || 0), 0);
 
   const grandTotal = Math.max(Math.floor(total - discount), 0);
 
+  const [customer, setCustomer] = React.useState({
+    customerName: '',
+    phoneNumber: '',
+    note: '',
+  });
+
   // หลังกดชำระสินค้า
 
+  const [customerModalOpen, setCustomerModalOpen] = React.useState(false);
   const [successOpen, setSuccessOpen] = React.useState(false);
   const [lastPayment, setLastPayment] = React.useState<'cash' | 'promptpay'>('cash');
 
-  // SellPage.tsx (เฉพาะส่วน handleCheckout)
+  const adjustedCart = cart.map(item => {
+    const itemPrice = item.totalPrice || 0;
+    const ratio = total > 0 ? itemPrice / total : 0;
+    const discountedItemPrice = grandTotal * ratio;
 
-  const [pendingOrder, setPendingOrder] = React.useState<any | null>(null);
+    if (item.fullPayment) {
+      return {
+        ...item,
+        deposit: discountedItemPrice,
+        remaining: 0,
+        totalPrice: discountedItemPrice,
+      };
+    } else {
+      const scale = discountedItemPrice / itemPrice;
+      return {
+        ...item,
+        deposit: (item.deposit || 0) * scale,
+        remaining: (item.remaining || 0) * scale,
+        totalPrice: discountedItemPrice,
+      };
+    }
+  });
 
   const handleCheckout = (payment: 'cash' | 'promptpay') => {
-    localStorage.removeItem('pendingOrder');
-
-    const order = {
-      orderId: Date.now().toString(), // temp id ไว้ให้ customer screen แสดงก่อน
-      customerName: cart[0]?.customerName ?? '',
-      companyName: cart[0]?.companyName ?? '',
-      note: cart[0]?.note ?? '',
-      category: cart[0]?.category ?? '',
-      payment,
-      total: grandTotal,
-      discount,
-      status: 'pending',
-      cart: cart.map(item => ({
-        name: item.name,
-        unitPrice: item.unitPrice,
-        totalPrice: item.unitPrice * item.qty,
-        extra: {
-          sides: item.sides,
-          material: item.material,
-          variant: item.variant,
-          qty: item.qty,
-        },
-      })),
-    };
-
-    // 👉 เก็บใน localStorage
-    localStorage.setItem('pendingOrder', JSON.stringify(order));
-
     setLastPayment(payment);
-    setSuccessOpen(true);
+    setCustomerModalOpen(true);
   };
 
   React.useEffect(() => {
@@ -131,7 +139,18 @@ export default function SellPage() {
       .then(async res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as Product[];
-        setProducts(Array.isArray(data) ? data : []);
+
+        const fixedData = Array.isArray(data)
+          ? data.map(p => ({
+              ...p,
+              variants: p.variants.map(v => ({
+                ...v,
+                price: Number(v.price), // ✅ บังคับแปลงเป็น number
+              })),
+            }))
+          : [];
+
+        setProducts(fixedData);
         setLoading(false);
       })
       .catch(() => {
@@ -140,26 +159,11 @@ export default function SellPage() {
       });
   }, []);
 
-  const categories = React.useMemo(() => {
-    const set = new Set<Category>();
-    products.forEach(p => set.add(p.category));
-    if (activeCat !== 'ทั้งหมด' && !set.has(activeCat)) setActiveCat('ทั้งหมด');
-    return Array.from(set);
-  }, [products]);
-
   const filtered = React.useMemo(() => {
     return products
       .filter(p => (activeCat === 'ทั้งหมด' ? true : p.category === activeCat))
       .filter(p => p.name.toLowerCase().includes(qDebounced.toLowerCase()));
   }, [products, activeCat, qDebounced]);
-
-  const catIcon = (cat: Category) => {
-    if (cat === 'นามบัตร') return <CreditCardRoundedIcon />;
-    if (cat === 'Postcard' || cat === 'Photo') return <ImageRoundedIcon />;
-    if (cat === 'Print A3/A4') return <PrintRoundedIcon />;
-    if (cat === 'Sticker Laser') return <StickyNote2RoundedIcon />;
-    return <LayersRoundedIcon />;
-  };
 
   return (
     <Box sx={{ minHeight: '100dvh' }}>
@@ -218,9 +222,37 @@ export default function SellPage() {
                 iconPosition="start"
                 label="ทั้งหมด"
               />
-              {categories.map(c => (
-                <Tab key={c} value={c} icon={catIcon(c)} iconPosition="start" label={c} />
-              ))}
+              <Tab
+                value="นามบัตร"
+                icon={<CreditCardRoundedIcon />}
+                iconPosition="start"
+                label="นามบัตร"
+              />
+              <Tab
+                value="ปริ้นท์เอกสาร"
+                icon={<AdfScannerIcon />}
+                iconPosition="start"
+                label="ปริ้นท์เอกสาร"
+              />
+              <Tab
+                value="โพสการ์ด"
+                icon={<ImageRoundedIcon />}
+                iconPosition="start"
+                label="โพสการ์ด"
+              />
+              <Tab
+                value="ตรายาง"
+                icon={<ApprovalRoundedIcon />}
+                iconPosition="start"
+                label="ตรายาง"
+              />
+              <Tab
+                value="อิงค์เจ็ท"
+                icon={<LocalPrintshopIcon />}
+                iconPosition="start"
+                label="อิงค์เจ็ท"
+              />
+              <Tab value="พล็อตแพลน" icon={<MapIcon />} iconPosition="start" label="พล็อตแพลน" />
             </Tabs>
 
             <Box
@@ -265,26 +297,35 @@ export default function SellPage() {
                     sx={{
                       borderRadius: 3,
                       overflow: 'hidden',
-                      backdropFilter: 'blur(4px)',
-                      boxShadow: '0 6px 24px rgba(0,0,0,.06)',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.08)',
+                      transition: 'all 0.2s ease',
                       '&:hover': {
-                        boxShadow: '0 10px 28px rgba(0,0,0,.1)',
-                        transform: 'translateY(-1px)',
+                        boxShadow: '0 8px 20px rgba(0,0,0,0.15)',
+                        transform: 'translateY(-4px)',
                       },
-                      transition: 'all .2s',
                     }}>
+                    {/* Cover */}
                     <Box
                       sx={{
-                        height: 120,
+                        height: 180,
+                        width: '100%',
                         bgcolor: p.tint || '#f5f5f5',
-                        display: 'grid',
-                        placeItems: 'center',
-                        fontSize: 56,
+                        overflow: 'hidden',
                       }}>
-                      {p.cover}
+                      <img
+                        src={p.cover}
+                        alt={p.name}
+                        style={{
+                          width: '100%',
+                          height: '100%',
+                          objectFit: 'cover',
+                          display: 'block',
+                        }}
+                      />
                     </Box>
 
-                    <CardContent sx={{ pb: 0.5 }}>
+                    {/* Content */}
+                    <CardContent sx={{ pb: 1 }}>
                       <Stack direction="row" alignItems="center" spacing={1}>
                         <Typography fontWeight={700} flex={1} noWrap>
                           {p.name}
@@ -301,7 +342,9 @@ export default function SellPage() {
                         {money(p.variants[0].price)}
                       </Typography>
                     </CardContent>
-                    <CardActions sx={{ p: 1.5, pt: 0.5 }}>
+
+                    {/* Action */}
+                    <CardActions sx={{ p: 1.5, pt: 0 }}>
                       <Button
                         fullWidth
                         variant="contained"
@@ -326,40 +369,74 @@ export default function SellPage() {
               discount={discount}
               onDiscountChange={setDiscount}
               onPaymentChange={setLastPayment}
+              onEditItem={item => {
+                setEditingItem(item); // กดแก้ไข → preload ข้อมูล item
+                setActiveProduct({
+                  id: item.key,
+                  name: item.name,
+                  category: item.category ?? '',
+                  cover: '',
+                  tint: '',
+                  variants: [],
+                });
+                setOpenModal(true);
+              }}
+              onDeleteItem={key => {
+                setCart(prev => prev.filter(i => i.key !== key));
+              }}
             />
           </Box>
         </Box>
       </Container>
 
       {/* Modal สำหรับสินค้าประเภทนามบัตร */}
-      {activeProduct?.category === 'นามบัตร' && (
-        <NamecardModal
+      {activeProduct?.category?.trim() === 'นามบัตร' && (
+        <NameCardModal
           open={openModal}
           onClose={() => {
             setOpenModal(false);
-            localStorage.removeItem('pendingOrder');
+            setEditingItem(null);
           }}
           productName={activeProduct?.name || ''}
-          onSelect={order => {
-            // push เข้า cart
-            setCart(prev => [
-              ...prev,
-              {
-                key: `${activeProduct?.id}-${Date.now()}`,
-                name: activeProduct?.name,
-                category: activeProduct?.category,
-                variant: order.variant.name,
-                qty: order.quantity,
-                unitPrice: order.totalPrice / order.quantity,
-                note: order.note,
-                customerName: order.customerName,
-                companyName: order.companyName,
-                sides: order.sides,
-                material: order.material,
-                totalPrice: order.totalPrice,
-              },
-            ]);
+          initialData={editingItem || undefined}
+          onSelect={item => {
+            if (editingItem) {
+              setCart(prev =>
+                prev.map(it =>
+                  it.key === editingItem.key ? { ...item, key: editingItem.key } : it
+                )
+              );
+              setEditingItem(null);
+            } else {
+              setCart(prev => [...prev, { ...item, key: `${activeProduct?.id}-${Date.now()}` }]);
+            }
+            setOpenModal(false);
+          }}
+        />
+      )}
 
+      {activeProduct?.category?.trim() === 'ตรายาง' && (
+        <StampModal
+          open={openModal}
+          onClose={() => {
+            setOpenModal(false);
+            setEditingItem(null);
+          }}
+          productName={activeProduct?.name || ''}
+          initialData={editingItem || undefined}
+          onSelect={item => {
+            if (editingItem) {
+              // 📝 กรณีแก้ไข → ใช้ key เดิม
+              setCart(prev =>
+                prev.map(it =>
+                  it.key === editingItem.key ? { ...item, key: editingItem.key } : it
+                )
+              );
+              setEditingItem(null);
+            } else {
+              // 📝 กรณีเพิ่มใหม่ → generate key ใหม่
+              setCart(prev => [...prev, { ...item, key: `${activeProduct?.id}-${Date.now()}` }]);
+            }
             setOpenModal(false);
           }}
         />
@@ -367,24 +444,49 @@ export default function SellPage() {
 
       <SuccessModal
         open={successOpen}
-        total={grandTotal}
         payment={lastPayment}
-        currentOrderId={currentOrderId}
         onClose={() => {
           setSuccessOpen(false);
           localStorage.removeItem('pendingOrder'); // ✅ เคลียร์ให้ Customer กลับ Banner
         }}
         onPaid={() => {
           console.log('อัปเดตเป็น paid แล้ว');
-          setCurrentOrderId(null);
+
           setCart([]);
           setDiscount(0);
         }}
         onNewOrder={() => {
           setCart([]);
-          setCurrentOrderId(null);
+
           setSuccessOpen(false);
           setDiscount(0);
+        }}
+      />
+
+      <CustomerInfoModal
+        open={customerModalOpen}
+        onClose={() => setCustomerModalOpen(false)}
+        customer={customer}
+        onSubmit={data => {
+          setCustomer(data); // เก็บ state ลูกค้า
+          setCustomerModalOpen(false);
+          setSuccessOpen(true);
+
+          const order = {
+            orderId: Date.now().toString(),
+            ...data, // ✅ ใช้ค่าล่าสุดจาก Modal
+            payment: lastPayment,
+            total: grandTotal,
+            discount,
+            status: 'pending',
+            depositTotal: adjustedCart.reduce((s, i) => s + (i.deposit || 0), 0),
+            remainingTotal: adjustedCart.reduce((s, i) => s + (i.remaining || 0), 0),
+            cart: adjustedCart,
+          };
+
+          localStorage.setItem('pendingOrder', JSON.stringify(order));
+          setCustomerModalOpen(false);
+          setSuccessOpen(true);
         }}
       />
     </Box>

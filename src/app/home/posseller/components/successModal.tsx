@@ -19,19 +19,32 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 
 type Props = {
   open: boolean;
-  total: number;
   payment: 'cash' | 'promptpay';
-  currentOrderId: string | null;
   onClose: () => void;
   onPaid: () => void; // callback หลังอัปเดตเป็น paid สำเร็จ
   onNewOrder: () => void; // กดทำรายการใหม่
 };
 
-export default function SuccessModal({ open, total, payment, onClose, onPaid, onNewOrder }: Props) {
+export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrder }: Props) {
   const [isPaid, setIsPaid] = useState(false);
+  const [amountToPay, setAmountToPay] = useState(0);
 
   useEffect(() => {
-    if (open) setIsPaid(false);
+    if (open) {
+      setIsPaid(false);
+
+      // ✅ โหลดข้อมูล order จาก localStorage
+      const orderStr = localStorage.getItem('pendingOrder');
+      if (orderStr) {
+        const order = JSON.parse(orderStr);
+
+        const deposit = order.cart.reduce((sum: number, i: any) => sum + (i.deposit || 0), 0);
+        const amount =
+          order.cart.some((i: any) => i.deposit) && deposit > 0 ? deposit : order.total;
+
+        setAmountToPay(amount);
+      }
+    }
   }, [open]);
 
   useEffect(() => {
@@ -53,7 +66,11 @@ export default function SuccessModal({ open, total, payment, onClose, onPaid, on
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...order, status: 'paid' }),
       });
-      if (!res.ok) throw new Error('บันทึกออเดอร์ไม่สำเร็จ');
+      if (!res.ok) {
+        const text = await res.text();
+        console.error('❌ Backend error:', res.status, text);
+        throw new Error('บันทึกออเดอร์ไม่สำเร็จ');
+      }
       await res.json();
 
       // 👉 update localStorage → paid
@@ -70,9 +87,7 @@ export default function SuccessModal({ open, total, payment, onClose, onPaid, on
   return (
     <Dialog
       open={open}
-      onClose={() => {
-        onClose();
-      }}
+      onClose={onClose}
       maxWidth="sm"
       fullWidth
       PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
@@ -95,7 +110,7 @@ export default function SuccessModal({ open, total, payment, onClose, onPaid, on
             variant="h4"
             fontWeight={800}
             color={isPaid ? 'success.main' : 'warning.main'}>
-            ฿{total.toFixed(2)}
+            ฿{amountToPay.toFixed(2)}
           </Typography>
           <Typography variant="body1" color="text.secondary" mt={1}>
             วิธีชำระเงิน: {payment === 'cash' ? '💵 เงินสด' : '📱 PromptPay'}
@@ -131,7 +146,7 @@ export default function SuccessModal({ open, total, payment, onClose, onPaid, on
           startIcon={<ReplayIcon />}
           onClick={() => {
             localStorage.removeItem('pendingOrder');
-            onNewOrder(); // callback ไปล้าง cart, orderId, discount
+            onNewOrder();
           }}>
           ทำรายการใหม่
         </Button>
