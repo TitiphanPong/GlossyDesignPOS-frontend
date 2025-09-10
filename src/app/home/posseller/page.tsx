@@ -38,6 +38,7 @@ import MapIcon from '@mui/icons-material/Map';
 import StampModal from './components/StampModal';
 import { CartItem } from './types/cart';
 
+
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
 type Product = {
