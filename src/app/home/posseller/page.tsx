@@ -40,6 +40,7 @@ import { CartItem } from './types/cart';
 import NameCardModal from './components/NameCardModal';
 
 
+
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
 type Product = {
