@@ -1,1 +1,12 @@
-node_modules
+# dependencies
+node_modules/
+
+# build
+.next/
+out/
+dist/
+
+# misc
+.env
+.env.local
+.env.production
