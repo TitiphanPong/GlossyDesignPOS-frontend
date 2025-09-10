@@ -37,7 +37,7 @@ import ApprovalRoundedIcon from '@mui/icons-material/ApprovalRounded';
 import MapIcon from '@mui/icons-material/Map';
 import StampModal from './components/StampModal';
 import { CartItem } from './types/cart';
-import NamecardModal from './components/NameCardModal';
+import NameCardModal from './components/NameCardModal';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -392,7 +392,7 @@ export default function SellPage() {
 
       {/* Modal สำหรับสินค้าประเภทนามบัตร */}
       {activeProduct?.category?.trim() === 'นามบัตร' && (
-        <NamecardModal
+        <NameCardModal
           open={openModal}
           onClose={() => {
             setOpenModal(false);
