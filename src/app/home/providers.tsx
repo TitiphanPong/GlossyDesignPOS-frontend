@@ -12,6 +12,12 @@ export default function MuiProviders({ children }: { children: React.ReactNode }
           h1: { fontFamily: 'var(--font-head), var(--font-sans)' },
           h2: { fontFamily: 'var(--font-head), var(--font-sans)' },
           button: { textTransform: 'none', fontWeight: 600 },
+          body2: {
+            color: 'rgba(0, 0, 0, 1)', // ✅ บังคับ body2 เป็นสีดำ
+          },
+          subtitle2: {
+            color: 'rgba(0, 0, 0, 1)', // ✅ บังคับ subtitle2 เป็นสีดำ
+          },
         },
       }),
     []

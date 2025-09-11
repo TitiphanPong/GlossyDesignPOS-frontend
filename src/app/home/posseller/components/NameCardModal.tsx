@@ -52,10 +52,10 @@ export default function NameCardModal({
 }: NameCardModalProps) {
   const [selected, setSelected] = useState<VariantOption | null>(null);
   const [sides, setSides] = useState<'1' | '2'>('1');
-  const [material, setMaterial] = useState('');
+  const [material, setMaterial] = useState('other');
   const [quantity, setQuantity] = useState(100);
   const [productNote, setProductNote] = useState('');
-  const [colorMode, setColorMode] = useState('color');
+  const [colorMode, setColorMode] = useState('bw');
   const [total, setTotal] = useState<number>(0);
   const [deposit, setDeposit] = useState<number>(0);
   const [fullPayment, setFullPayment] = useState<boolean>(false);
@@ -72,7 +72,7 @@ export default function NameCardModal({
       setDeposit(initialData.deposit || 0);
       setFullPayment(initialData.fullPayment || false);
       setMaterial(initialData.material || '');
-      setSides(initialData.sides || '1');
+      setSides(initialData.sides || '2');
       setColorMode(initialData.colorMode || 'color');
       setTotal(initialData.total ?? initialData.totalPrice ?? 0);
       if (initialData.variant) setSelected(initialData.variant);

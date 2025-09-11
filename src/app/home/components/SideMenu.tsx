@@ -197,8 +197,6 @@ export default function SideMenu({
   items = DEFAULT_ITEMS,
   defaultCollapsed = false,
   onCollapsedChange,
-  onToggleTheme,
-  themeMode = 'light',
 }: SideMenuProps) {
   const theme = useTheme();
   const [collapsed, setCollapsed] = React.useState(defaultCollapsed);

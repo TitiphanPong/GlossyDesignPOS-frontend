@@ -3,19 +3,14 @@
 import * as React from 'react';
 import { Box } from '@mui/material';
 import { usePathname } from 'next/navigation';
-import Header from './components/Header'; // Header / AppBar
 import SideMenu from './components/SideMenu'; // Side navigation
 import AppBreadCrumb from './components/AppBreadCrumb'; // Breadcrumb
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const [openMobile, setOpenMobile] = React.useState(false);
   const pathname = usePathname();
 
   return (
     <>
-      {/* ✅ Top Header */}
-      <Header onMenuClick={() => setOpenMobile(true)} />
-
       {/* ✅ Layout Container */}
       <Box
         sx={{

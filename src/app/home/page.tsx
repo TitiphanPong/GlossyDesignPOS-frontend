@@ -21,15 +21,22 @@ import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 
+type CartItem = {
+  name: string;
+  category?: string;
+  quantity?: number;
+  price?: number;
+};
+
 type Order = {
   _id: string;
   orderId: string;
   customerName?: string;
-  category: string;
   status: 'pending' | 'paid' | 'cancelled';
   total?: number;
   payment: 'cash' | 'promptpay';
   createdAt: string;
+  cart?: CartItem[]; // ✅ เพิ่ม cart เข้าไป
 };
 
 type Summary = {
@@ -57,7 +64,19 @@ export default function DashboardPage() {
     ])
       .then(([summaryData, orders]) => {
         setSummary(summaryData);
-        setRecentOrders(Array.isArray(orders) ? orders.slice(0, 5) : []);
+
+        if (Array.isArray(orders)) {
+          // ✅ เรียงจาก createdAt ล่าสุด → เก่าสุด
+          const sorted = [...orders].sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+
+          // ✅ เอามาแค่ 4 ออเดอร์ล่าสุด
+          setRecentOrders(sorted.slice(0, 4));
+        } else {
+          setRecentOrders([]);
+        }
+
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -75,7 +94,7 @@ export default function DashboardPage() {
       icon: <MonetizationOnIcon sx={{ fontSize: 40, color: '#ff9800' }} />,
     },
     {
-      label: 'ยอดขายโอน (PromptPay)',
+      label: 'ยอดขายโอน',
       value: money(summary?.promptPayToday),
       icon: <MonetizationOnIcon sx={{ fontSize: 40, color: '#2196f3' }} />,
     },
@@ -212,18 +231,16 @@ export default function DashboardPage() {
             <Typography variant="h6" fontWeight="bold" gutterBottom>
               📋 งานล่าสุด
             </Typography>
-            <Paper
-              sx={{ width: '100%', overflow: 'hidden', background: 'transparent' }}
-              elevation={0}>
+            <Box sx={{ flex: 1, overflowX: 'auto' }}>
               <Table size="small">
                 <TableHead>
                   <TableRow>
-                    <TableCell>Order ID</TableCell>
-                    <TableCell>ลูกค้า</TableCell>
-                    <TableCell>ประเภทงาน</TableCell>
-                    <TableCell>สถานะ</TableCell>
-                    <TableCell>ยอดรวม</TableCell>
-                    <TableCell>วันที่</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>Order ID</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>ลูกค้า</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>ประเภทงาน</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>สถานะ</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>ยอดรวม</TableCell>
+                    <TableCell sx={{ whiteSpace: 'nowrap' }}>วันที่</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -231,7 +248,11 @@ export default function DashboardPage() {
                     <TableRow key={order._id} hover>
                       <TableCell>{order.orderId}</TableCell>
                       <TableCell>{order.customerName || '-'}</TableCell>
-                      <TableCell>{order.category}</TableCell>
+                      <TableCell>
+                        {order.cart && order.cart.length > 0
+                          ? order.cart[0].name // หรือ .category
+                          : '-'}
+                      </TableCell>
                       <TableCell>
                         {order.status === 'paid' ? (
                           <Chip label="เสร็จสิ้น" color="success" size="small" />
@@ -249,7 +270,7 @@ export default function DashboardPage() {
                   ))}
                 </TableBody>
               </Table>
-            </Paper>
+            </Box>
           </Card>
         </motion.div>
       </Box>
