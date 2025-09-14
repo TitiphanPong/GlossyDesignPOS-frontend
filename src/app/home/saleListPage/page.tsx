@@ -31,6 +31,7 @@ import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import dayjs from 'dayjs';
 import { motion, AnimatePresence } from 'framer-motion';
+import PayRemainingModal from './components/PayRemainingModal';
 
 type CartItem = {
   name: string;
@@ -42,6 +43,13 @@ type CartItem = {
   extra?: Record<string, any>;
   productNote?: string;
   category: string;
+  qty: number;
+  sides: string;
+  colorMode: string;
+  material: string;
+  size: string;
+  shape: string;
+  type: string;
 };
 
 type Order = {
@@ -52,6 +60,7 @@ type Order = {
   note?: string;
   category: string;
   total: number;
+  remainingTotal: number;
   discount?: number;
   payment: 'cash' | 'promptpay';
   status: 'pending' | 'paid' | 'cancelled';
@@ -69,17 +78,20 @@ export default function OrdersPage() {
   const [page, setPage] = useState(0);
   const pageSize = 6;
 
+  //PayRemainingModal
+
+  const [payDialogOpen, setPayDialogOpen] = useState(false);
+
   const getPaymentChip = (order: Order) => {
-    const remainingTotal = order.cart.reduce((s, i) => s + (i.remaining || 0), 0);
+    const remainingTotal =
+      order.remainingTotal ?? order.cart.reduce((s, i) => s + (i.remaining || 0), 0);
 
     if (order.status === 'cancelled') {
       return <Chip label="ยกเลิก" color="error" size="small" />;
     }
-
     if (remainingTotal === 0) {
       return <Chip label="ชำระแล้ว" color="success" size="small" />;
     }
-
     return <Chip label="ค้างชำระ" color="warning" size="small" />;
   };
 
@@ -115,7 +127,6 @@ export default function OrdersPage() {
     }
 
     if (filter === 'pending') {
-      // สมมติยังอยากให้ pending ใช้จาก status เดิม
       return order.status === 'pending';
     }
 
@@ -226,7 +237,7 @@ export default function OrdersPage() {
                           display: 'flex',
                           flexDirection: 'column',
                           justifyContent: 'space-between',
-                          minHeight: 400,
+                          minHeight: 450,
                         }}>
                         <CardContent>
                           <Stack direction="row" justifyContent="space-between" mb={0.5}>
@@ -392,23 +403,133 @@ export default function OrdersPage() {
         onClose={() => setSelectedOrder(null)}
         maxWidth="sm"
         fullWidth>
-        <DialogTitle>รายละเอียดออเดอร์ {selectedOrder?.orderId}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>
+          รายละเอียดออเดอร์ #{selectedOrder?.orderId}
+        </DialogTitle>
+
         <DialogContent dividers>
-          <Typography>ลูกค้า: {selectedOrder?.customerName}</Typography>
-          <Typography>เบอร์โทร: {selectedOrder?.phoneNumber}</Typography>
-          <Typography>หมายเหตุ: {selectedOrder?.note}</Typography>
-          <Divider sx={{ my: 1 }} />
-          <Typography fontWeight={600}>รายการสินค้า</Typography>
-          {selectedOrder?.cart.map((item, i) => (
-            <Typography key={i} sx={{ pl: 2 }}>
-              - {item.category} {item.productNote ? `(${item.productNote})` : ''} {item.totalPrice}฿
+          {/* ข้อมูลลูกค้า */}
+          <Stack spacing={1} mb={2}>
+            <Typography>
+              <strong>ลูกค้า:</strong> {selectedOrder?.customerName}
             </Typography>
-          ))}
+            <Typography>
+              <strong>เบอร์โทร:</strong> {selectedOrder?.phoneNumber}
+            </Typography>
+            <Typography>
+              <strong>หมายเหตุ:</strong> {selectedOrder?.note || '-'}
+            </Typography>
+          </Stack>
+
+          <Divider sx={{ my: 2 }} />
+
+          {/* รายการสินค้า */}
+          <Typography fontWeight={700} gutterBottom>
+            🛒 รายการสินค้า
+          </Typography>
+
+          <Stack spacing={2}>
+            {selectedOrder?.cart.map((item, i) => (
+              <Box
+                key={i}
+                sx={{
+                  p: 2,
+                  border: '1px solid #eee',
+                  borderRadius: 2,
+                  bgcolor: 'grey.50',
+                }}>
+                <Typography fontWeight={600} gutterBottom>
+                  {i + 1}. {item.category} {item.productNote ? `(${item.productNote})` : ''}
+                </Typography>
+
+                {/* นามบัตร */}
+                {item.category === 'นามบัตร' && (
+                  <Stack spacing={0.5} pl={2}>
+                    <Typography variant="body2">• จำนวน: {item.qty} ใบ</Typography>
+                    <Typography variant="body2">• ด้าน: {item.sides} ด้าน</Typography>
+                    <Typography variant="body2">
+                      • โหมดสี:{' '}
+                      {item.colorMode === 'bw'
+                        ? 'ขาวดำ'
+                        : item.colorMode === 'color'
+                          ? 'สี'
+                          : item.colorMode}
+                    </Typography>
+                    <Typography variant="body2">• วัสดุ: {item.material}</Typography>
+                    <Typography variant="body2">
+                      • ราคา : {item.totalPrice.toLocaleString()} บาท
+                    </Typography>
+                  </Stack>
+                )}
+
+                {/* ตรายาง */}
+                {item.category === 'ตรายาง' && (
+                  <Stack spacing={0.5} pl={2}>
+                    <Typography variant="body2">
+                      • ชนิด:{' '}
+                      {item.type === 'normal'
+                        ? 'ธรรมดา'
+                        : item.type === 'inked'
+                          ? 'หมึกในตัว'
+                          : item.type}
+                    </Typography>
+                    <Typography variant="body2">
+                      • รูปทรง:{' '}
+                      {item.shape === 'square'
+                        ? 'สี่เหลี่ยม'
+                        : item.shape === 'circle'
+                          ? 'วงกลม'
+                          : item.shape}
+                    </Typography>
+                    <Typography variant="body2">• ขนาด: {item.size}</Typography>
+                    <Typography variant="body2">• จำนวน: {item.qty} ชิ้น</Typography>
+                    <Typography variant="body2">
+                      • ราคา : {item.totalPrice.toLocaleString()} บาท
+                    </Typography>
+                  </Stack>
+                )}
+                {/* ปริ้นท์เอกสาร */}
+                {item.category === 'ปริ้นท์เอกสาร' && (
+                  <Stack spacing={0.5} pl={2}>
+                    <Typography variant="body2">• จำนวน: {item.qty} ใบ</Typography>
+                    <Typography variant="body2">• ด้าน: {item.sides} ด้าน</Typography>
+                    <Typography variant="body2">
+                      • โหมดสี:{' '}
+                      {item.colorMode === 'bw'
+                        ? 'ขาวดำ'
+                        : item.colorMode === 'color'
+                          ? 'สี'
+                          : item.colorMode}
+                    </Typography>
+                    <Typography variant="body2">• วัสดุ: {item.material}</Typography>
+                    <Typography variant="body2">
+                      • ราคา : {item.totalPrice.toLocaleString()} บาท
+                    </Typography>
+                  </Stack>
+                )}
+              </Box>
+            ))}
+          </Stack>
         </DialogContent>
         <DialogActions>
+          {selectedOrder && selectedOrder.remainingTotal > 0 && (
+            <Button variant="contained" color="success" onClick={() => setPayDialogOpen(true)}>
+              ชำระยอดคงเหลือ
+            </Button>
+          )}
           <Button onClick={() => setSelectedOrder(null)}>ปิด</Button>
         </DialogActions>
       </Dialog>
+      <PayRemainingModal
+        open={payDialogOpen}
+        orderId={selectedOrder?._id || ''}
+        remaining={selectedOrder?.cart.reduce((s, i) => s + (i.remaining || 0), 0) || 0}
+        onClose={() => setPayDialogOpen(false)}
+        onSuccess={updated => {
+          setOrders(prev => prev.map(o => (o._id === updated._id ? updated : o)));
+          setSelectedOrder(updated);
+        }}
+      />
     </Container>
   );
 }

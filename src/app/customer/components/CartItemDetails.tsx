@@ -20,11 +20,11 @@ export default function CartItemDetails({ item }: { item: CartItem }) {
   return (
     <Paper elevation={2} sx={{ p: 2, mb: 2, borderRadius: 3, bgcolor: '#fafafa' }}>
       <Stack spacing={1}>
-        <Typography variant="h6" fontWeight="bold">
+        <Typography variant="h5" fontWeight="bold">
           {item.name} × {item.qty} ชิ้น
         </Typography>
         <Typography variant="h5" color="primary" fontWeight="bold">
-          ฿{item.totalPrice.toLocaleString('th-TH')}
+          {Math.round(item.totalPrice).toLocaleString('th-TH')} บาท
         </Typography>
 
         {fields.map(({ key, label, format }) =>
@@ -39,19 +39,6 @@ export default function CartItemDetails({ item }: { item: CartItem }) {
           <Typography variant="body2" color="text.secondary">
             ✏️ {item.note}
           </Typography>
-        )}
-
-        {item.fullPayment ? (
-          <Typography variant="body2" color="success.main" fontWeight="bold">
-            ✅ ชำระเต็มจำนวน
-          </Typography>
-        ) : (
-          (item.deposit || item.remaining) && (
-            <Typography variant="body2" color="warning.main" fontWeight="bold">
-              💰 มัดจำ {item.deposit?.toLocaleString('th-TH')}฿ (คงเหลือ{' '}
-              {item.remaining?.toLocaleString('th-TH')}฿)
-            </Typography>
-          )
         )}
       </Stack>
     </Paper>

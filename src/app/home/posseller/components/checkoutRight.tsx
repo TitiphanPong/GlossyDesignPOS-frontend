@@ -41,6 +41,7 @@ type Props = {
   onCheckout: (payment: 'cash' | 'promptpay') => void;
   onDiscountChange?: (discount: number) => void;
   onPaymentChange?: (payment: 'cash' | 'promptpay') => void;
+  onTaxInvoiceChange?: (value: 'yes' | 'no') => void; // ✅ เพิ่มเข้ามา
 
   onEditItem?: (item: CartItem) => void;
   onDeleteItem?: (key: string) => void;
@@ -55,11 +56,13 @@ const CheckOutRight: React.FC<Props> = ({
   onPaymentChange,
   onEditItem,
   onDeleteItem,
+  onTaxInvoiceChange,
 }) => {
   const [discountInput, setDiscountInput] = useState('');
   const [discountValue, setDiscountValue] = useState(0);
   const [discountType, setDiscountType] = useState<'percent' | 'fixed' | null>(null);
   const [payment, setPayment] = useState<'cash' | 'promptpay'>('cash');
+  const [taxInvoice, setTaxInvoice] = useState<'yes' | 'no'>('no');
 
   useEffect(() => {
     if (discount === 0) {
@@ -77,6 +80,10 @@ const CheckOutRight: React.FC<Props> = ({
         ? Math.max(total - discountValue, 0)
         : total;
 
+  // ✅ คำนวณ VAT และยอดสุทธิ
+  const vatAmount = taxInvoice === 'yes' ? finalTotal * 0.07 : 0;
+  const grandTotal = finalTotal + vatAmount;
+
   // ✅ กระจายส่วนลดลงสินค้าใน cart
   let totalDeposit = 0;
   let totalRemaining = 0;
@@ -84,7 +91,7 @@ const CheckOutRight: React.FC<Props> = ({
   cart.forEach(item => {
     const itemPrice = item.totalPrice || 0;
     const ratio = total > 0 ? itemPrice / total : 0;
-    const discountedItemPrice = finalTotal * ratio;
+    const discountedItemPrice = grandTotal * ratio;
 
     if (item.fullPayment) {
       totalDeposit += discountedItemPrice;
@@ -156,7 +163,12 @@ const CheckOutRight: React.FC<Props> = ({
                   {/* ✅ ถ้าเป็นนามบัตร */}
                   {item.category === 'นามบัตร' && (
                     <>
-                      <li>📦 ขนาด : {item.variant?.name || 'ไม่ระบุ'}</li>
+                      <li>
+                        📦 ขนาด :{' '}
+                        {item.variant?.custom
+                          ? `${item.variant?.width} × ${item.variant?.height} mm`
+                          : item.variant?.name || 'ไม่ระบุ'}
+                      </li>
                       <li>📄 วัสดุ : {item.material || 'ไม่ระบุ'}</li>
                       <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
                       <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
@@ -173,6 +185,23 @@ const CheckOutRight: React.FC<Props> = ({
                       <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
                     </>
                   )}
+
+                  {/* ✅ ถ้าเป็นปริ้นท์เอกสาร */}
+                  {item.category === 'ปริ้นท์เอกสาร' && (
+                    <>
+                      <li>
+                        📦 ขนาด :{' '}
+                        {item.variant?.custom
+                          ? `${item.variant?.width} × ${item.variant?.height} mm`
+                          : item.variant?.name || 'ไม่ระบุ'}
+                      </li>
+                      <li>📄 ชนิดกระดาษ : {item.material || 'ไม่ระบุ'}</li>
+                      <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
+                      <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
+                      <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+                    </>
+                  )}
+
                   {/* การชำระ */}
                   <li style={{ whiteSpace: 'nowrap' }}>
                     💰 การชำระ :{' '}
@@ -286,6 +315,51 @@ const CheckOutRight: React.FC<Props> = ({
         </div>
       </div>
 
+      {/* ✅ Tax Invoice Section */}
+      <div className={`${styles.card} ${styles.payment}`}>
+        <div className={styles.title}>🧾 ใบกำกับภาษี</div>
+
+        <div className="flex flex-col gap-3 mt-3">
+          <div className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+            <input
+              type="radio"
+              id="taxYes"
+              name="taxInvoice"
+              value="yes"
+              checked={taxInvoice === 'yes'}
+              onChange={() => {
+                setTaxInvoice('yes');
+                onTaxInvoiceChange?.('yes'); // ✅ ส่งขึ้นไป SellPage
+              }}
+              className="w-4 h-4 accent-black"
+            />
+            <label htmlFor="taxYes" className="flex items-center gap-2 cursor-pointer text-black">
+              <span className="text-xl">✅</span>
+              <span className="font-medium">ออกใบกำกับภาษี</span>
+            </label>
+          </div>
+
+          <div className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+            <input
+              type="radio"
+              id="taxNo"
+              name="taxInvoice"
+              value="no"
+              checked={taxInvoice === 'no'}
+              onChange={() => {
+                setTaxInvoice('no');
+                onTaxInvoiceChange?.('no'); // ✅ ส่งขึ้นไป SellPage ด้วย
+              }}
+              className="w-4 h-4 accent-black"
+            />
+            <label htmlFor="taxNo" className="flex items-center gap-2 cursor-pointer text-black">
+              <span className="text-xl">🚫</span>
+              <span className="font-medium">ไม่ออกใบกำกับภาษี</span>
+            </label>
+          </div>
+        </div>
+      </div>
+
       {/* ✅ Checkout Section */}
       <div className={`${styles.card} ${styles.checkout}`}>
         <div className={styles.title}>✅ ชำระเงิน</div>
@@ -294,21 +368,23 @@ const CheckOutRight: React.FC<Props> = ({
           <span>ยอดรวม:</span>
           <span>฿{total.toFixed(2)}</span>
         </div>
-        {discountType && (
+        {discount > 0 && (
           <div className={styles.details}>
-            <span>ส่วนลด:</span>
-            <span>
-              -฿
-              {discountType === 'percent'
-                ? ((total * discountValue) / 100).toFixed(2)
-                : discountValue.toFixed(2)}
-            </span>
+            <span>ส่วนลด :</span>
+            <span>-฿{discount.toFixed(2)}</span>
           </div>
         )}
         <div className={styles.details}>
-          <span>ค่าส่ง:</span>
+          <span>ค่าส่ง :</span>
           <span>฿0.00</span>
         </div>
+
+        {taxInvoice === 'yes' && (
+          <div className={styles.details}>
+            <span>VAT 7% :</span>
+            <span>฿{vatAmount.toFixed(2)}</span>
+          </div>
+        )}
 
         <div
           className={styles['checkout--footer']}

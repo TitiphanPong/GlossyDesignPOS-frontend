@@ -1,10 +1,17 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import styled from 'styled-components';
 
 const CheckOutPass = () => {
+  const [animate, setAnimate] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setAnimate(true), 200); // delay นิดหน่อยให้ smooth
+    return () => clearTimeout(timer);
+  }, []);
+
   return (
     <StyledWrapper>
-      <div className="container">
+      <div className={`container ${animate ? 'animate' : ''}`}>
         <div className="left-side">
           <div className="card">
             <div className="card-line" />
@@ -19,9 +26,7 @@ const CheckOutPass = () => {
             <div className="numbers-line2" />
           </div>
         </div>
-        <div className="right-side">
-          <div className="new">Checkout</div>
-        </div>
+        <div className="right-side"></div>
       </div>
     </StyledWrapper>
   );
@@ -39,14 +44,6 @@ const StyledWrapper = styled.div`
     animation: zoomIn 1s ease-in-out forwards;
   }
 
-  .container:hover {
-    transform: scale(1.03);
-  }
-
-  .container:hover .left-side {
-    width: 100%;
-  }
-
   .left-side {
     background-color: #5de2a3;
     width: 130px;
@@ -56,7 +53,7 @@ const StyledWrapper = styled.div`
     display: flex;
     justify-content: center;
     align-items: center;
-    cursor: pointer;
+    cursor: default;
     transition: 0.3s;
     flex-shrink: 0;
     overflow: hidden;
@@ -66,20 +63,9 @@ const StyledWrapper = styled.div`
     display: flex;
     align-items: center;
     overflow: hidden;
-    cursor: pointer;
     justify-content: space-between;
     white-space: nowrap;
     transition: 0.3s;
-  }
-
-  .right-side:hover {
-    background-color: #f9f7f9;
-  }
-
-  .arrow {
-    width: 20px;
-    height: 20px;
-    margin-right: 20px;
   }
 
   .new {
@@ -98,9 +84,7 @@ const StyledWrapper = styled.div`
     z-index: 10;
     flex-direction: column;
     align-items: center;
-    -webkit-box-shadow: 9px 9px 9px -2px rgba(77, 200, 143, 0.72);
-    -moz-box-shadow: 9px 9px 9px -2px rgba(77, 200, 143, 0.72);
-    -webkit-box-shadow: 9px 9px 9px -2px rgba(77, 200, 143, 0.72);
+    box-shadow: 9px 9px 9px -2px rgba(77, 200, 143, 0.72);
   }
 
   .card-line {
@@ -109,20 +93,6 @@ const StyledWrapper = styled.div`
     background-color: #80ea69;
     border-radius: 2px;
     margin-top: 7px;
-  }
-
-  @media only screen and (max-width: 480px) {
-    .container {
-      transform: scale(0.7);
-    }
-
-    .container:hover {
-      transform: scale(0.74);
-    }
-
-    .new {
-      font-size: 18px;
-    }
   }
 
   .buttons {
@@ -136,36 +106,6 @@ const StyledWrapper = styled.div`
     margin-top: 5px;
     transform: rotate(90deg);
     margin: 10px 0 0 -30px;
-  }
-
-  .container:hover .card {
-    animation: slide-top 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) both;
-  }
-
-  .container:hover .post {
-    animation: slide-post 1s cubic-bezier(0.165, 0.84, 0.44, 1) both;
-  }
-
-  @keyframes slide-top {
-    0% {
-      -webkit-transform: translateY(0);
-      transform: translateY(0);
-    }
-
-    50% {
-      -webkit-transform: translateY(-70px) rotate(90deg);
-      transform: translateY(-70px) rotate(90deg);
-    }
-
-    60% {
-      -webkit-transform: translateY(-70px) rotate(90deg);
-      transform: translateY(-70px) rotate(90deg);
-    }
-
-    100% {
-      -webkit-transform: translateY(-8px) rotate(90deg);
-      transform: translateY(-8px) rotate(90deg);
-    }
   }
 
   .post {
@@ -237,18 +177,6 @@ const StyledWrapper = styled.div`
     top: 68px;
   }
 
-  @keyframes slide-post {
-    50% {
-      -webkit-transform: translateY(0);
-      transform: translateY(0);
-    }
-
-    100% {
-      -webkit-transform: translateY(-70px);
-      transform: translateY(-70px);
-    }
-  }
-
   .dollar {
     position: absolute;
     font-size: 16px;
@@ -258,10 +186,48 @@ const StyledWrapper = styled.div`
     top: 0;
     color: #4b953b;
     text-align: center;
+    opacity: 0;
   }
 
-  .container:hover .dollar {
-    animation: fade-in-fwd 0.3s 1s backwards;
+  /* 🔥 เปลี่ยนจาก hover → auto animate */
+  .container.animate .left-side {
+    width: 100%;
+  }
+
+  .container.animate .card {
+    animation: slide-top 1.2s cubic-bezier(0.645, 0.045, 0.355, 1) both;
+  }
+
+  .container.animate .post {
+    animation: slide-post 1s cubic-bezier(0.165, 0.84, 0.44, 1) both;
+  }
+
+  .container.animate .dollar {
+    animation: fade-in-fwd 0.3s 1s forwards;
+  }
+
+  @keyframes slide-top {
+    0% {
+      transform: translateY(0);
+    }
+    50% {
+      transform: translateY(-70px) rotate(90deg);
+    }
+    60% {
+      transform: translateY(-70px) rotate(90deg);
+    }
+    100% {
+      transform: translateY(-8px) rotate(90deg);
+    }
+  }
+
+  @keyframes slide-post {
+    50% {
+      transform: translateY(0);
+    }
+    100% {
+      transform: translateY(-70px);
+    }
   }
 
   @keyframes fade-in-fwd {
@@ -269,7 +235,6 @@ const StyledWrapper = styled.div`
       opacity: 0;
       transform: translateY(-5px);
     }
-
     100% {
       opacity: 1;
       transform: translateY(0);

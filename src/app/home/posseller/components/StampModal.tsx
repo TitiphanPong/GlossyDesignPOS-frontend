@@ -180,7 +180,10 @@ export default function StampModal({
                     label="ยอดมัดจำ"
                     type="number"
                     value={deposit}
-                    onChange={e => setDeposit(Number(e.target.value) || 0)}
+                    onChange={e => {
+                      const val = Number(e.target.value) || 0;
+                      setDeposit(Math.min(Math.max(val, 0), total));
+                    }}
                     fullWidth
                     disabled={fullPayment}
                     InputProps={{

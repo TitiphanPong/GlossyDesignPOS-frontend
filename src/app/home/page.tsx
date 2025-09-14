@@ -32,7 +32,7 @@ type Order = {
   _id: string;
   orderId: string;
   customerName?: string;
-  status: 'pending' | 'paid' | 'cancelled';
+  status: 'pending' | 'paid' | 'cancelled' | 'partial';
   total?: number;
   payment: 'cash' | 'promptpay';
   createdAt: string;
@@ -257,7 +257,9 @@ export default function DashboardPage() {
                         {order.status === 'paid' ? (
                           <Chip label="เสร็จสิ้น" color="success" size="small" />
                         ) : order.status === 'pending' ? (
-                          <Chip label="รอดำเนินการ" color="warning" size="small" />
+                          <Chip label="รอดำเนินการ" color="info" size="small" />
+                        ) : order.status === 'partial' ? (
+                          <Chip label="ค้างชำระ" color="warning" size="small" />
                         ) : (
                           <Chip label="ยกเลิก" color="error" size="small" />
                         )}

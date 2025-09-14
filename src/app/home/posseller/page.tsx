@@ -38,6 +38,7 @@ import MapIcon from '@mui/icons-material/Map';
 import StampModal from './components/StampModal';
 import { CartItem } from './types/cart';
 import NameCardModal from './components/NameCardModal';
+import DocumentPrintModal from './components/DocumentPrintModal';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -87,7 +88,9 @@ export default function SellPage() {
 
   const total = cart.reduce((sum, item) => sum + Number(item.unitPrice) * Number(item.qty || 0), 0);
 
-  const grandTotal = Math.max(Math.floor(total - discount), 0);
+  const round2 = (n: number) => Math.round(n * 100) / 100;
+
+  const netAfterDiscount = round2(Math.max(total - discount, 0));
 
   const [customer, setCustomer] = React.useState({
     customerName: '',
@@ -100,26 +103,35 @@ export default function SellPage() {
   const [customerModalOpen, setCustomerModalOpen] = React.useState(false);
   const [successOpen, setSuccessOpen] = React.useState(false);
   const [lastPayment, setLastPayment] = React.useState<'cash' | 'promptpay'>('cash');
+  const [taxInvoice, setTaxInvoice] = React.useState<'yes' | 'no'>('no');
+
+  const vatAmount = taxInvoice === 'yes' ? round2(netAfterDiscount * 0.07) : 0;
+  const grossTotal = round2(netAfterDiscount + vatAmount);
 
   const adjustedCart = cart.map(item => {
-    const itemPrice = item.totalPrice || 0;
-    const ratio = total > 0 ? itemPrice / total : 0;
-    const discountedItemPrice = grandTotal * ratio;
+    const itemNet = item.totalPrice || 0;
+    const ratio = total > 0 ? itemNet / total : 0;
+
+    // Net หลังหักส่วนลดแบบเฉลี่ยต่อชิ้น
+    const itemNetAfterDiscount = round2(netAfterDiscount * ratio);
+    const itemVat = taxInvoice === 'yes' ? round2(itemNetAfterDiscount * 0.07) : 0;
+    const itemGross = round2(itemNetAfterDiscount + itemVat);
 
     if (item.fullPayment) {
       return {
         ...item,
-        deposit: discountedItemPrice,
+        deposit: itemGross,
         remaining: 0,
-        totalPrice: discountedItemPrice,
+        totalPrice: itemNetAfterDiscount,
       };
     } else {
-      const scale = discountedItemPrice / itemPrice;
+      const safeBase = itemNet || 1; // กันหารศูนย์
+      const scale = itemGross / safeBase;
       return {
         ...item,
-        deposit: (item.deposit || 0) * scale,
-        remaining: (item.remaining || 0) * scale,
-        totalPrice: discountedItemPrice,
+        deposit: round2((item.deposit || 0) * scale),
+        remaining: round2((item.remaining || 0) * scale),
+        totalPrice: itemNetAfterDiscount,
       };
     }
   });
@@ -370,6 +382,7 @@ export default function SellPage() {
               discount={discount}
               onDiscountChange={setDiscount}
               onPaymentChange={setLastPayment}
+              onTaxInvoiceChange={setTaxInvoice}
               onEditItem={item => {
                 setEditingItem(item); // กดแก้ไข → preload ข้อมูล item
                 setActiveProduct({
@@ -443,6 +456,33 @@ export default function SellPage() {
         />
       )}
 
+      {activeProduct?.category?.trim() === 'ปริ้นท์เอกสาร' && (
+        <DocumentPrintModal
+          open={openModal}
+          onClose={() => {
+            setOpenModal(false);
+            setEditingItem(null);
+          }}
+          productName={activeProduct?.name || ''}
+          initialData={editingItem || undefined}
+          onSelect={item => {
+            if (editingItem) {
+              // 📝 กรณีแก้ไข → ใช้ key เดิม
+              setCart(prev =>
+                prev.map(it =>
+                  it.key === editingItem.key ? { ...item, key: editingItem.key } : it
+                )
+              );
+              setEditingItem(null);
+            } else {
+              // 📝 กรณีเพิ่มใหม่ → generate key ใหม่
+              setCart(prev => [...prev, { ...item, key: `${activeProduct?.id}-${Date.now()}` }]);
+            }
+            setOpenModal(false);
+          }}
+        />
+      )}
+
       <SuccessModal
         open={successOpen}
         payment={lastPayment}
@@ -475,14 +515,17 @@ export default function SellPage() {
 
           const order = {
             orderId: Date.now().toString(),
-            ...data, // ✅ ใช้ค่าล่าสุดจาก Modal
+            ...data,
             payment: lastPayment,
-            total: grandTotal,
+            total: netAfterDiscount, // เก็บ Net หลังหักส่วนลด
             discount,
             status: 'pending',
             depositTotal: adjustedCart.reduce((s, i) => s + (i.deposit || 0), 0),
             remainingTotal: adjustedCart.reduce((s, i) => s + (i.remaining || 0), 0),
             cart: adjustedCart,
+            taxInvoice,
+            vatAmount,
+            grandTotal: grossTotal, // ✅ เก็บ Gross รวม VAT
           };
 
           localStorage.setItem('pendingOrder', JSON.stringify(order));

@@ -78,7 +78,7 @@ export default function CustomerInfoModal({ open, onClose, onSubmit, customer }:
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>ยกเลิก</Button>
-        <Button variant="contained" onClick={handleConfirm}>
+        <Button variant="contained" onClick={handleConfirm} sx={{ my: 1, mr: 1 }}>
           ยืนยัน
         </Button>
       </DialogActions>

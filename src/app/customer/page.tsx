@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Typography, Divider, List } from '@mui/material';
+import { Box, Typography, Divider, List, Stack } from '@mui/material';
 import { QRCodeCanvas } from 'qrcode.react';
 import generatePayload from 'promptpay-qr';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -20,8 +20,11 @@ type Order = {
   discount: number;
   grandTotal: number;
   payment: 'cash' | 'promptpay';
-  status: 'pending' | 'paid';
+  status: 'pending' | 'paid' | 'partial';
   cart: any[];
+  taxInvoice?: 'yes' | 'no';
+  vatAmount?: number;
+  remainingTotal: number;
 };
 
 export default function CustomerScreen() {
@@ -47,7 +50,7 @@ export default function CustomerScreen() {
   }, []);
 
   useEffect(() => {
-    if (order?.status === 'paid') {
+    if (order?.status === 'paid' || (order?.status === 'partial' && order.remainingTotal === 0)) {
       const timer = setTimeout(() => {
         localStorage.removeItem('pendingOrder');
         setOrder(null);
@@ -98,53 +101,125 @@ export default function CustomerScreen() {
     );
   }
 
-  const total = Math.max(order.grandTotal ?? order.total, 0);
+  // 1) Subtotal
+  const subtotal = order.total;
+
+  // 2) Discount
+  const discount = order.discount || 0;
+
+  // 3) Net total
+  const netTotal = subtotal - discount;
+
+  // 4) VAT
+  const vat = order.taxInvoice === 'yes' ? (order.vatAmount ?? netTotal * 0.07) : 0;
+
+  // 5) Grand total (รวมทุกอย่าง)
+  const grandTotal = netTotal + vat;
+
+  // 6) Deposit/Remaining
   const deposit = order.cart.reduce((s, i) => s + (i.deposit || 0), 0);
   const remaining = order.cart.reduce((s, i) => s + (i.remaining || 0), 0);
-  const amountToPay = order.cart.some(i => i.deposit) && deposit > 0 ? deposit : total;
 
-  if (order.status === 'paid') {
+  // ✅ ถ้ามีมัดจำให้เก็บเฉพาะมัดจำ, ถ้าไม่ → จ่ายเต็ม grandTotal
+  const amountToPay = order.cart.some(i => i.deposit) && deposit > 0 ? deposit : grandTotal;
+
+  if (order.status === 'paid' || order?.status === 'partial') {
     return (
       <Box
         sx={{
           width: '100%',
           height: '100vh',
-          bgcolor: '#000',
+          bgcolor: '#ffffff', // ✅ พื้นหลังขาว
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           flexDirection: 'column',
-          color: '#fff',
+          textAlign: 'center',
         }}>
-        <CheckOutPass />
+        {/* การ์ด animation */}
         <motion.div
-          initial={{ scale: 0.5, opacity: 0 }}
-          animate={{ scale: 1.2, opacity: 1 }}
-          transition={{ duration: 0.6 }}>
-          <Typography variant="h3" color="success.main" fontWeight="bold">
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ duration: 0.6 }}
+          style={{ marginBottom: '20px' }}>
+          <CheckOutPass />
+        </motion.div>
+
+        {/* ข้อความหลัก */}
+        <motion.div
+          initial={{ y: 30, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.3, duration: 0.6 }}>
+          <Typography variant="h3" fontWeight="bold" gutterBottom color="success.main">
             ✅ ชำระเงินเรียบร้อย
           </Typography>
         </motion.div>
-        <Typography variant="h6" mt={2}>
-          ขอบคุณที่ใช้บริการ Glossy Design
-        </Typography>
-        <Typography variant="body2" color="text.secondary" mt={1}>
-          หน้าจอจะกลับไปโฆษณาภายใน 5 วินาที...
-        </Typography>
+
+        {/* ข้อความรอง */}
+        <motion.div
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.6, duration: 0.6 }}>
+          <Typography variant="h6" gutterBottom color="text.primary">
+            ขอบคุณที่ใช้บริการ <strong>Glossy Design</strong>
+          </Typography>
+          <Typography variant="body2" color="text.secondary">
+            หน้าจอจะกลับไปโฆษณาภายใน 5 วินาที...
+          </Typography>
+        </motion.div>
+
+        {/* เอฟเฟกต์เส้นแสงด้านล่าง */}
+        <motion.div
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: '60%', opacity: 1 }}
+          transition={{ delay: 1, duration: 0.8 }}>
+          <Divider
+            sx={{
+              mt: 4,
+              borderColor: 'rgba(0,0,0,0.2)', // ✅ เทาอ่อน บนพื้นหลังขาวมองเห็นชัด
+              borderBottomWidth: 2,
+            }}
+          />
+        </motion.div>
       </Box>
     );
   }
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#fdfdfd' }}>
-      <Box sx={{ flex: 1, display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr' } }}>
+    <Box
+      sx={{
+        height: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        bgcolor: '#f9fafc',
+        fontFamily: 'Prompt, sans-serif',
+      }}>
+      {/* Content */}
+      <Box
+        sx={{
+          flex: 1,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+        }}>
+        {/* ซ้าย: รายการสินค้า */}
         <Box sx={{ p: 4, overflowY: 'auto' }}>
-          <Typography variant="h5" fontWeight="bold" gutterBottom>
+          <Typography
+            variant="h3"
+            fontWeight="bold"
+            gutterBottom
+            color="black"
+            sx={{ ml: 10, mt: 3 }}>
             🧾 ใบสั่งซื้อ #{order.orderId}
           </Typography>
-          <Typography variant="h6">คุณ : {order.customerName || '-'}</Typography>
-          <Typography variant="h6">เบอร์โทรศัพท์ : {order.phoneNumber || '-'}</Typography>
-          <Typography variant="h6">หมายเหตุ : {order.note || '-'}</Typography>
+          <Typography variant="h4" color="black">
+            คุณ : {order.customerName || '-'}
+          </Typography>
+          <Typography variant="h4" color="black">
+            เบอร์โทรศัพท์ : {order.phoneNumber || '-'}
+          </Typography>
+          <Typography variant="h4" color="black">
+            หมายเหตุ : {order.note || '-'}
+          </Typography>
 
           <Divider sx={{ my: 2 }} />
 
@@ -155,6 +230,7 @@ export default function CustomerScreen() {
           </List>
         </Box>
 
+        {/* ขวา: รวมยอด */}
         <Box
           sx={{
             bgcolor: '#fff',
@@ -163,51 +239,71 @@ export default function CustomerScreen() {
             display: 'flex',
             flexDirection: 'column',
             alignItems: 'center',
+            justifyContent: 'center',
           }}>
-          <Typography variant="h4" fontWeight="bold">
-            รวมสุทธิ
+          <Typography variant="h4" fontWeight="bold" gutterBottom color="success">
+            ยอดทั้งหมด
           </Typography>
-          <Typography variant="h2" color="primary" fontWeight="bold">
-            ฿{total.toLocaleString('th-TH')}
+
+          <Typography
+            variant="h2"
+            color="primary"
+            fontWeight="bold"
+            sx={{ fontSize: { xs: '2.5rem', md: '3rem' } }}>
+            {Math.round(grandTotal).toLocaleString('th-TH')} บาท
           </Typography>
+
+          {order.taxInvoice === 'yes' && (
+            <Typography variant="h5" color="red">
+              VAT 7%: {(order.vatAmount ?? 0).toLocaleString('th-TH')} บาท
+            </Typography>
+          )}
 
           {order.discount > 0 && (
-            <Typography variant="h6" color="error" gutterBottom>
-              🔖 ส่วนลด: -฿{order.discount.toLocaleString('th-TH')}
+            <Typography variant="h5" color="success" gutterBottom>
+              ส่วนลด: - {order.discount.toLocaleString('th-TH')} บาท
             </Typography>
           )}
 
-          {order.cart.some(i => i.deposit) && (
-            <>
-              <Typography variant="h6" color="warning.main">
-                มัดจำ: ฿{deposit.toLocaleString('th-TH')}
+          {order.cart.some(i => !i.fullPayment && i.deposit) && (
+            <Stack spacing={1} mt={2} alignItems="center">
+              <Typography variant="h5" color="warning.main">
+                ยอดมัดจำ : {Math.round(deposit).toLocaleString('th-TH')} บาท
               </Typography>
-              <Typography variant="h6" color="error.main" fontWeight="bold">
-                คงเหลือ: ฿{remaining.toLocaleString('th-TH')}
+              <Typography variant="h5" color="error.main" fontWeight="bold">
+                คงเหลือ : {Math.round(remaining).toLocaleString('th-TH')} บาท
               </Typography>
-            </>
+            </Stack>
           )}
 
-          <Divider sx={{ my: 3, width: '100%' }} />
+          <Divider sx={{ my: 3, width: '75%' }} />
 
+          {/* Payment section */}
           {order.payment === 'promptpay' ? (
-            <>
-              <Typography variant="h6" gutterBottom>
-                📱 ชำระด้วย PromptPay
+            <Box textAlign="center">
+              <Typography variant="h5" mt={2} color="black">
+                📱 กรุณาชำระด้วย PromptPay
               </Typography>
-              <QRCodeCanvas
-                value={generatePayload(promptpayId, { amount: amountToPay })}
-                size={280}
-                includeMargin
-              />
-              <Typography variant="body1" mt={2} fontWeight="bold">
-                ต้องชำระตอนนี้: ฿{amountToPay.toLocaleString('th-TH')}
+              <Box sx={{ display: 'flex', justifyContent: 'center', my: 0 }}>
+                <QRCodeCanvas
+                  value={generatePayload(promptpayId, { amount: Math.round(amountToPay) })}
+                  size={420}
+                  includeMargin
+                />
+              </Box>
+              <Typography variant="h4" mt={0} fontWeight="bold" color="success">
+                ต้องชำระตอนนี้ : {Math.round(amountToPay).toLocaleString('th-TH')} บาท
               </Typography>
-            </>
+            </Box>
           ) : (
-            <Typography variant="h4" color="success.main" fontWeight="bold">
-              💵 ชำระด้วยเงินสด
-            </Typography>
+            <Box textAlign="center">
+              <Typography variant="h4" color="success.main" fontWeight="bold" sx={{ mb: 2 }}>
+                💵 ชำระด้วยเงินสด
+              </Typography>
+              <Typography variant="h4" mt={0} fontWeight="bold" color="success">
+                ต้องชำระตอนนี้ : {Math.round(amountToPay).toLocaleString('th-TH')} บาท
+              </Typography>
+            </Box>
           )}
         </Box>
       </Box>

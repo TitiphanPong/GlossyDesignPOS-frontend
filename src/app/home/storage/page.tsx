@@ -1,5 +1,3 @@
-// ✅ ปรับโค้ดให้ถูกต้องและสมบูรณ์ พร้อมแก้ dialog ให้ทำงานได้จริง
-
 'use client';
 
 import * as React from 'react';
@@ -20,18 +18,19 @@ import {
   Select,
   FormControl,
   InputLabel,
+  Card,
+  CardContent,
 } from '@mui/material';
-import { DataGrid, GridColDef, GridToolbarContainer } from '@mui/x-data-grid';
+import { DataGrid, GridColDef } from '@mui/x-data-grid';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import PhoneIcon from '@mui/icons-material/Phone';
-import WorkIcon from '@mui/icons-material/Work';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import CloseIcon from '@mui/icons-material/Close';
 import axios from 'axios';
-import { m } from 'framer-motion';
+import { Cell, Legend, Pie, PieChart, Tooltip } from 'recharts';
 
 interface UploadedFile {
   fileId: string;
@@ -48,6 +47,12 @@ interface UploadRecord {
   files: UploadedFile[];
   createdAt: string;
   status: string;
+}
+
+interface FolderUsage {
+  size: number;
+  sizeGB: string;
+  sizeMB: string;
 }
 
 const getIconPathByExtension = (ext: string) => {
@@ -80,6 +85,21 @@ export default function UploadedFilesPage() {
   const [phone, setPhone] = React.useState('');
   const [status, setStatus] = React.useState<'completed' | 'pending'>('pending');
 
+  // Google Drive Usage Section
+
+  const [quota, setQuota] = React.useState<{
+    limit: number;
+    usage: number;
+    usageInDrive: number;
+    usageInDriveTrash: number;
+  } | null>(null);
+
+  const [folderUsage, setFolderUsage] = React.useState<Record<string, FolderUsage>>({});
+
+  const [usageByCategory, setUsageByCategory] = React.useState<any>({});
+
+  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
+
   const fetchUploads = async () => {
     try {
       setLoading(true);
@@ -92,16 +112,34 @@ export default function UploadedFilesPage() {
     }
   };
 
-  React.useEffect(() => {
-    fetchUploads();
-  }, []);
-
   const handleEdit = (record: UploadRecord) => {
     setEditingRecord(record);
     setCustomerName(record.customerName);
     setPhone(record.phone);
     setStatus(record.status as 'completed' | 'pending');
     setEditOpen(true);
+  };
+
+  const fetchQuota = async () => {
+    try {
+      const [quotaRes, folderRes] = await Promise.all([
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/upload/quota`),
+        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/upload/quota/folders`),
+      ]);
+      setQuota(quotaRes.data);
+      setFolderUsage(folderRes.data);
+    } catch (err) {
+      console.error('❌ Error fetching quota', err);
+    }
+  };
+
+  const fetchFolderQuota = async () => {
+    try {
+      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/upload/quota/folders`);
+      setUsageByCategory(res.data);
+    } catch (err) {
+      console.error('❌ Error fetching folder usage', err);
+    }
   };
 
   const handleSave = async () => {
@@ -128,6 +166,19 @@ export default function UploadedFilesPage() {
       console.error('❌ Error deleting record', err);
     }
   };
+
+  React.useEffect(() => {
+    fetchUploads();
+    fetchFolderQuota();
+    fetchQuota();
+  }, []);
+
+  const pieData = Object.entries(folderUsage).map(([name, data]) => ({
+    name,
+    value: Number((data.size / 1024 ** 2).toFixed(2)), // ✅ บังคับให้เป็น number
+  }));
+
+  const COLORS = ['#8884d8', '#ff8042', '#ffc658', '#82ca9d', '#00c49f'];
 
   const getCategoryColor = (category: string) => {
     switch (category) {
@@ -319,7 +370,124 @@ export default function UploadedFilesPage() {
   });
 
   return (
-    <Box sx={{ p: 4, height: '100vh' }}>
+    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
+      <Box sx={{ p: 4 }}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }} // responsive
+          spacing={2}
+          sx={{ flex: 1, alignItems: 'stretch', justifyContent: 'space-between' }}>
+          {/* Left: All Folders */}
+          <Card sx={{ flex: '2 1 500px', borderRadius: 2, height: '100%' }}>
+            <CardContent>
+              <Stack direction="row" justifyContent="space-between" mb={2}>
+                <Typography variant="h6" fontWeight={700} padding={1}>
+                  All Folders
+                </Typography>
+              </Stack>
+
+              <Stack spacing={1.5}>
+                {Object.entries(folderUsage).map(([name, data], i) => (
+                  <Box
+                    key={i}
+                    sx={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      p: 2,
+                      border: '1px solid #eee',
+                      borderRadius: 2,
+                      bgcolor: '#fafafa',
+                    }}>
+                    <Stack>
+                      <Typography fontWeight={700}>📁 {name}</Typography>
+                      <Typography variant="body2" color="text.secondary" mt={1}>
+                        {(data.size / 1024 ** 2).toFixed(2)} MB
+                      </Typography>
+                    </Stack>
+                    <Typography variant="body2" color="text.secondary">
+                      {data.sizeGB}
+                    </Typography>
+                  </Box>
+                ))}
+              </Stack>
+            </CardContent>
+          </Card>
+
+          {/* Right: Storage Details */}
+          <Card sx={{ flex: '1 1 300px', borderRadius: 2, textAlign: 'center', p: 2 }}>
+            <Typography variant="h5" fontWeight={700} gutterBottom mt={3}>
+              Storage Details
+            </Typography>
+
+            {quota && (
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
+                  height: 400,
+                }}>
+                <PieChart width={260} height={260}>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={90}
+                    outerRadius={120}
+                    paddingAngle={4}
+                    dataKey="value"
+                    labelLine={false}
+                    onMouseEnter={(_, index) => setActiveIndex(index)}
+                    onMouseLeave={() => setActiveIndex(null)}>
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    ))}
+                  </Pie>
+
+                  {/* ✅ ตรงกลาง (ข้อความ dynamic ตาม hover) */}
+                  <foreignObject x="80" y="100" width="100" height="100">
+                    <Box
+                      sx={{
+                        textAlign: 'center',
+                        pointerEvents: 'none',
+                      }}>
+                      {activeIndex !== null ? (
+                        <>
+                          <Typography fontWeight={700}>{pieData[activeIndex].name}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {pieData[activeIndex].value} MB
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <Typography fontWeight={700}>Storage</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            พื้นที่ข้อมูลรวม
+                          </Typography>
+                        </>
+                      )}
+                    </Box>
+                  </foreignObject>
+                </PieChart>
+              </Box>
+            )}
+
+            {quota && (
+              <>
+                <Typography fontWeight={700}>
+                  ใช้ไป {(quota.usage / 1024 ** 3).toFixed(2)} GB / ทั้งหมด{' '}
+                  {(quota.limit / 1024 ** 3).toFixed(2)} GB
+                </Typography>
+
+                <Typography variant="body2" color="text.secondary">
+                  Free Space: {((quota.limit - quota.usage) / 1024 ** 3).toFixed(2)} GB
+                </Typography>
+              </>
+            )}
+          </Card>
+        </Stack>
+      </Box>
+
       <Box display="flex" justifyContent="space-between" mb={2}>
         <TextField
           size="small"
@@ -337,7 +505,6 @@ export default function UploadedFilesPage() {
         <Box
           sx={{
             minWidth: 1000,
-            height: 'calc(100vh - 160px)',
             backgroundColor: 'white',
             borderRadius: 2,
           }}>

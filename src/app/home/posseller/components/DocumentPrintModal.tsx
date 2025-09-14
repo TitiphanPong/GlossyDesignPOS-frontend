@@ -24,11 +24,10 @@ interface VariantOption {
   name: string;
   width: number;
   height: number;
-  paperKind: string;
   custom?: boolean;
 }
 
-interface NameCardModalProps {
+interface DocumentPrintModalProps {
   open: boolean;
   onClose: () => void;
   onSelect: (item: CartItem) => void;
@@ -37,23 +36,25 @@ interface NameCardModalProps {
 }
 
 const variantList: VariantOption[] = [
-  { name: '90 × 55 mm / MATTE', width: 90, height: 55, paperKind: 'MATTE' },
-  { name: '90 × 55 mm / GLOSS', width: 90, height: 55, paperKind: 'GLOSS' },
-  { name: '90 × 55 mm / PVC', width: 90, height: 55, paperKind: 'PVC' },
-  { name: 'Custom Size', width: 0, height: 0, paperKind: 'CUSTOM', custom: true },
+  { name: 'A4', width: 210, height: 297 },
+  { name: 'A3', width: 297, height: 420 },
+  { name: 'A2', width: 420, height: 594 },
+  { name: 'A1', width: 594, height: 841 },
+  { name: 'A0', width: 841, height: 1189 },
+  { name: 'Custom Size', width: 0, height: 0, custom: true },
 ];
 
-export default function NameCardModal({
+export default function DocumentPrintModal({
   open,
   onClose,
   onSelect,
   productName,
   initialData,
-}: NameCardModalProps) {
+}: DocumentPrintModalProps) {
   const [selected, setSelected] = useState<VariantOption | null>(null);
   const [sides, setSides] = useState<'1' | '2'>('1');
   const [material, setMaterial] = useState('other');
-  const [quantity, setQuantity] = useState(100);
+  const [quantity, setQuantity] = useState(1);
   const [productNote, setProductNote] = useState('');
   const [colorMode, setColorMode] = useState('bw');
   const [total, setTotal] = useState<number>(0);
@@ -63,17 +64,17 @@ export default function NameCardModal({
   const remaining = Math.max(total - deposit, 0);
 
   // state สำหรับ custom size
-  const [customWidth, setCustomWidth] = useState<number>(90);
-  const [customHeight, setCustomHeight] = useState<number>(55);
+  const [customWidth, setCustomWidth] = useState<number>(0);
+  const [customHeight, setCustomHeight] = useState<number>(0);
 
   useEffect(() => {
     if (initialData) {
-      setQuantity(initialData.qty || 100);
+      setQuantity(initialData.qty || 1);
       setDeposit(initialData.deposit || 0);
       setFullPayment(initialData.fullPayment || false);
       setMaterial(initialData.material || '');
-      setSides(initialData.sides || '2');
-      setColorMode(initialData.colorMode || 'color');
+      setSides(initialData.sides || '1');
+      setColorMode(initialData.colorMode || 'bw');
       setTotal(initialData.total ?? initialData.totalPrice ?? 0);
       if (initialData.variant) setSelected(initialData.variant);
     }
@@ -84,7 +85,13 @@ export default function NameCardModal({
       <DialogTitle sx={{ fontWeight: 700 }}>{productName}</DialogTitle>
       <DialogContent dividers>
         {/* การ์ดเลือกขนาด */}
-        <Stack direction="row" spacing={3} justifyContent="center" mb={3}>
+        <Stack
+          direction="row"
+          spacing={0}
+          justifyContent="center"
+          mb={3}
+          flexWrap="wrap"
+          sx={{ gap: 2 }}>
           {variantList.map((v, i) => {
             const isSelected = selected?.name === v.name;
             const isCustom = v.custom;
@@ -93,18 +100,24 @@ export default function NameCardModal({
                 key={i}
                 onClick={() => setSelected(v)}
                 sx={{
-                  width: 200,
                   height: 260,
+                  flex: {
+                    xs: '0 0 100%', // มือถือ: 1 การ์ดต่อแถว
+                    sm: '0 0 50%', // tablet: 2 การ์ดต่อแถว
+                    md: '0 0 28%', // desktop: 3 การ์ดต่อแถว
+                  },
                   border: isSelected ? '2px solid #1976d2' : '1px solid #e0e0e0',
                   borderRadius: 2,
                   p: 2,
+
                   cursor: 'pointer',
                   position: 'relative',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
+                  justifyContent: 'flex-start',
                   transition: '0.25s',
+
                   backgroundColor: isSelected ? '#E3F2FD' : 'white',
                   boxShadow: isSelected
                     ? '0 6px 20px rgba(25,118,210,0.2)'
@@ -196,12 +209,12 @@ export default function NameCardModal({
                     </Stack>
                   </Box>
                 ) : (
-                  <Box sx={{ textAlign: 'center', mt: 1 }}>
-                    <Typography variant="body2" fontWeight={600}>
-                      {v.width} × {v.height} mm
+                  <Box sx={{ textAlign: 'center', mt: 0 }}>
+                    <Typography variant="body1" color="text.secondary">
+                      {v.name}
                     </Typography>
-                    <Typography variant="caption" color="text.secondary">
-                      PAPER / {v.paperKind}
+                    <Typography variant="body2" fontWeight={600} mt={1}>
+                      {v.width} × {v.height} mm
                     </Typography>
                   </Box>
                 )}
@@ -211,9 +224,8 @@ export default function NameCardModal({
         </Stack>
 
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          รายละเอียดเพิ่มเติม :
+          รายละเอียดสินค้า :
         </Typography>
-
         <TextField
           label="รายละเอียดสินค้า"
           value={productNote}
@@ -223,6 +235,7 @@ export default function NameCardModal({
         />
 
         <Divider sx={{ my: 2 }} />
+
         <Typography variant="h6" fontWeight={700} gutterBottom>
           ตัวเลือกเพิ่มเติม :
         </Typography>
@@ -251,7 +264,7 @@ export default function NameCardModal({
             <Typography variant="body2" sx={{ mr: 1, fontWeight: 600 }}>
               โหมดสี :
             </Typography>
-            <RadioGroup row value={colorMode} onChange={e => setColorMode(e.target.value)}>
+            <RadioGroup row value={colorMode} onChange={e => setColorMode(e.target.value as any)}>
               <FormControlLabel value="bw" control={<Radio />} label="ขาวดำ" />
               <FormControlLabel value="color" control={<Radio />} label="สี" />
             </RadioGroup>
@@ -283,36 +296,27 @@ export default function NameCardModal({
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          ชนิดวัสดุ :
+          ชนิดกระดาษ :
         </Typography>
-
-        <Box sx={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-          <RadioGroup
-            row
-            value={material}
-            onChange={e => setMaterial(e.target.value)}
-            sx={{
-              display: 'flex',
-              justifyContent: 'center', // ✅ จัดกึ่งกลางแนวนอน
-              gap: 3, // ✅ ระยะห่างระหว่างปุ่ม
-            }}>
-            <FormControlLabel value="150g" control={<Radio />} label="150g" />
-            <FormControlLabel value="160g" control={<Radio />} label="160g" />
-            <FormControlLabel value="260g" control={<Radio />} label="260g" />
-            <FormControlLabel value="300g" control={<Radio />} label="300g" />
-            <FormControlLabel value="200MC" control={<Radio />} label="200MC" />
-            <FormControlLabel value="220MC" control={<Radio />} label="220MC" />
-            <FormControlLabel value="other" control={<Radio />} label="อื่นๆ" />
-          </RadioGroup>
-        </Box>
+        <RadioGroup
+          row
+          value={material}
+          onChange={e => setMaterial(e.target.value)}
+          sx={{ justifyContent: 'center', gap: 3 }}>
+          <FormControlLabel value="80g" control={<Radio />} label="80 แกรม" />
+          <FormControlLabel value="100g" control={<Radio />} label="100 แกรม" />
+          <FormControlLabel value="120g" control={<Radio />} label="120 แกรม" />
+          <FormControlLabel value="150g" control={<Radio />} label="150 แกรม" />
+          <FormControlLabel value="other" control={<Radio />} label="อื่นๆ" />
+        </RadioGroup>
 
         <Divider sx={{ my: 2 }} />
 
+        {/* มัดจำ/เต็มจำนวน */}
         <Box sx={{ mt: 3 }}>
           <Typography variant="h6" fontWeight={700} gutterBottom>
             สรุปราคา :
           </Typography>
-
           <RadioGroup
             row
             value={fullPayment ? 'full' : 'deposit'}
@@ -324,7 +328,7 @@ export default function NameCardModal({
               alignItems="stretch"
               flexWrap="wrap"
               sx={{ width: '100%' }}>
-              {/* การ์ดมัดจำ */}
+              {/* มัดจำ */}
               <Card
                 variant="outlined"
                 sx={{
@@ -336,53 +340,34 @@ export default function NameCardModal({
                   <FormControlLabel
                     value="deposit"
                     control={<Radio />}
-                    label={
-                      <Typography variant="subtitle1" fontWeight={600}>
-                        มัดจำสินค้า
-                      </Typography>
-                    }
+                    label={<Typography fontWeight={600}>มัดจำสินค้า</Typography>}
                   />
                   <Stack spacing={2} mt={2}>
                     <TextField
                       label="ยอดรวม"
-                      type="text"
+                      type="number"
                       value={total}
                       onChange={e => setTotal(Number(e.target.value) || 0)}
                       fullWidth
                       disabled={fullPayment}
-                      InputProps={{
-                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
-                      }}
                     />
                     <TextField
                       label="ยอดมัดจำ"
-                      type="text"
+                      type="number"
                       value={deposit}
                       onChange={e => {
                         const val = Number(e.target.value) || 0;
-                        setDeposit(Math.min(Math.max(val, 0), total));
+                        setDeposit(Math.min(Math.max(val, 0), total)); // ✅ clamp ไม่ให้ติดลบ หรือเกิน total
                       }}
                       fullWidth
                       disabled={fullPayment}
-                      InputProps={{
-                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
-                      }}
                     />
-                    <TextField
-                      label="คงค้าง"
-                      type="text"
-                      value={remaining}
-                      fullWidth
-                      disabled
-                      InputProps={{
-                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
-                      }}
-                    />
+                    <TextField label="คงค้าง" value={remaining} fullWidth disabled />
                   </Stack>
                 </CardContent>
               </Card>
 
-              {/* การ์ดชำระเต็มจำนวน */}
+              {/* เต็มจำนวน */}
               <Card
                 variant="outlined"
                 sx={{
@@ -394,23 +379,15 @@ export default function NameCardModal({
                   <FormControlLabel
                     value="full"
                     control={<Radio />}
-                    label={
-                      <Typography variant="subtitle1" fontWeight={600}>
-                        ชำระเต็มจำนวน
-                      </Typography>
-                    }
+                    label={<Typography fontWeight={600}>ชำระเต็มจำนวน</Typography>}
                   />
                   <Stack spacing={2} mt={2}>
                     <TextField
                       label="จำนวนเงิน"
-                      type="text"
+                      type="number"
                       value={total}
                       onChange={e => setTotal(Number(e.target.value) || 0)}
                       fullWidth
-                      disabled={!fullPayment}
-                      InputProps={{
-                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
-                      }}
                     />
                   </Stack>
                 </CardContent>
@@ -419,6 +396,8 @@ export default function NameCardModal({
           </RadioGroup>
         </Box>
       </DialogContent>
+
+      {/* แสดงยอดรวมด้านล่าง */}
       <Box sx={{ mt: 2, textAlign: 'right' }}>
         <Typography variant="h6" sx={{ color: 'green', fontWeight: 700, px: 3 }}>
           {fullPayment
@@ -426,6 +405,7 @@ export default function NameCardModal({
             : `ยอดที่ต้องชำระมัดจำ: ${deposit.toLocaleString()} ฿`}
         </Typography>
       </Box>
+
       <DialogActions sx={{ px: 3, py: 2 }}>
         <Button onClick={onClose}>ยกเลิก</Button>
         <Button
@@ -437,7 +417,7 @@ export default function NameCardModal({
             onSelect({
               key: '',
               name: productName,
-              category: 'นามบัตร',
+              category: 'ปริ้นท์เอกสาร',
               variant: {
                 ...selected,
                 width: customWidth,
