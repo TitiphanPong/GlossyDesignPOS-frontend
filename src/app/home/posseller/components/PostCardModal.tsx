@@ -231,7 +231,7 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
           <TextField label="จำนวน (ใบ)" type="string" value={quantity} onChange={e => setQuantity(Number(e.target.value) || 0)} sx={{ width: 120 }} inputProps={{ min: 1 }} />
 
           <Typography variant="body1" sx={{ mr: 1, fontWeight: 600 }}>
-            นับเป็นจำนวน (Set) : {setCount} ชุด 
+            นับเป็นจำนวน (Set) : {setCount} ชุด
           </Typography>
           {/* ราคารวม */}
 
@@ -242,7 +242,7 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
             </Typography>
             <TextField
               type="string"
-              label="ราคารวม"   
+              label="ราคารวม"
               value={total}
               onChange={e => setTotal(Number(e.target.value) || 0)}
               sx={{ width: 150 }}

@@ -24,14 +24,14 @@ export default function StampModal({ open, onClose, onSelect, productName, initi
   const [fullPayment, setFullPayment] = useState(false);
 
   const typeOptions = [
-    { value: 'normal', label: 'ธรรมดา', description: 'ไม่มีหมึกในตัว', img: '/assets/stamp_normal.png' },
-    { value: 'inked', label: 'หมึกในตัว', description: 'มาพร้อมหมึกในตัว', img: '/assets/stamp_ink.png' },
+    { value: 'normal', label: 'ธรรมดา', description: 'ไม่มีหมึกในตัว', img: '/assets/stamp_Normal.png' },
+    { value: 'inked', label: 'หมึกในตัว', description: 'มาพร้อมหมึกในตัว', img: '/assets/stamp_Ink.png' },
   ];
 
   const shapeOptions = [
-  { value: 'circle', label: 'วงกลม', preview: 'circle' },
-  { value: 'square', label: 'สี่เหลี่ยม', preview: 'square' },
-];
+    { value: 'circle', label: 'วงกลม', preview: 'circle' },
+    { value: 'square', label: 'สี่เหลี่ยม', preview: 'square' },
+  ];
 
   const remaining = Math.max(total - deposit, 0);
 
@@ -120,7 +120,7 @@ export default function StampModal({ open, onClose, onSelect, productName, initi
                 key={opt.value}
                 onClick={() => setShape(opt.value as 'circle' | 'square')}
                 sx={{
-                  width: 180 ,
+                  width: 180,
                   height: 180,
                   cursor: 'pointer',
                   border: isSelected ? '2px solid #1976d2' : '1px solid #e0e0e0',

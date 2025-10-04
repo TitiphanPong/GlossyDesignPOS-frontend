@@ -36,7 +36,6 @@ export type CartItem = {
   sizeFlex?: SizeItem[];
   inkjetType?: 'canvas' | 'paper-gloss' | 'pp-board' | 'pp-banner' | 'vinyl' | 'pp-passwood' | 'backlid';
 
-
   // Sticker PVC
   stickerPVCType?: string;
 
