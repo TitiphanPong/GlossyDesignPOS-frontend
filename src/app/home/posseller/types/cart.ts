@@ -1,11 +1,16 @@
 // src/types/cart.ts
 
+export type SizeItem = {
+  height: string;
+  width: string;
+};
+
 export type CartItem = {
   key: string;
   name: string;
   category?: string;
 
-  variant: any;
+  variant?: any;
 
   qty: number;
   unitPrice: number;
@@ -20,10 +25,20 @@ export type CartItem = {
   colorMode?: string;
 
   // ตรายาง
-
   type?: 'normal' | 'inked';
   shape?: 'circle' | 'square';
   size?: string;
+
+  // โพสการ์ด
+  setCount?: number; // ✅ จำนวนชุด
+
+  // อิงค์เจ็ท
+  sizeFlex?: SizeItem[];
+  inkjetType?: 'canvas' | 'paper-gloss' | 'pp-board' | 'pp-banner' | 'vinyl' | 'pp-passwood' | 'backlid';
+
+
+  // Sticker PVC
+  stickerPVCType?: string;
 
   // ✅ การชำระเงิน
   deposit?: number;

@@ -1,23 +1,6 @@
 'use client';
 
-import {
-  Breadcrumbs,
-  Link,
-  Typography,
-  Box,
-  useTheme,
-  alpha,
-  useMediaQuery,
-  IconButton,
-  Drawer,
-  Stack,
-  Avatar,
-  Divider,
-  ListItemButton,
-  List,
-  ListItemIcon,
-  ListItemText,
-} from '@mui/material';
+import { Breadcrumbs, Link, Typography, Box, useTheme, alpha, useMediaQuery, IconButton, Drawer, Stack, Avatar, Divider, ListItemButton, List, ListItemIcon, ListItemText } from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
@@ -106,8 +89,7 @@ function DrawerMenu({ onClose }: { onClose: () => void }) {
                 transform: 'translateX(4px)',
               },
               '&.Mui-selected': {
-                bgcolor: theme =>
-                  `linear-gradient(90deg, ${theme.palette.primary.light}, transparent)`,
+                bgcolor: theme => `linear-gradient(90deg, ${theme.palette.primary.light}, transparent)`,
                 '& .MuiListItemIcon-root': {
                   color: 'primary.main',
                 },
@@ -133,15 +115,8 @@ function DrawerMenu({ onClose }: { onClose: () => void }) {
       <Divider />
 
       {/* User Profile */}
-      <Stack
-        direction="row"
-        alignItems="center"
-        spacing={1.5}
-        sx={{ p: 2, bgcolor: 'background.paper' }}>
-        <Avatar
-          src={`https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`}
-          sx={{ width: 36, height: 36 }}
-        />
+      <Stack direction="row" alignItems="center" spacing={1.5} sx={{ p: 2, bgcolor: 'background.paper' }}>
+        <Avatar src={`https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`} sx={{ width: 36, height: 36 }} />
         <Box>
           <Typography variant="body2" fontWeight={600}>
             ADMIN GLOSSY
@@ -193,11 +168,7 @@ export default function AppBreadCrumb() {
         </>
       )}
       <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumb">
-        <Link
-          color="inherit"
-          href="/"
-          underline="hover"
-          sx={{ display: 'flex', alignItems: 'center' }}>
+        <Link color="inherit" href="/" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
           <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
           หน้าหลัก
         </Link>

@@ -141,9 +141,7 @@ export default function ModernUploadPage() {
               }}>
               <input {...getInputProps()} />
               <Loader />
-              <Typography mt={1}>
-                {isDragActive ? 'ปล่อยไฟล์ได้เลย...' : 'ลากไฟล์มาที่นี่ หรือคลิกเพื่อเลือก'}
-              </Typography>
+              <Typography mt={1}>{isDragActive ? 'ปล่อยไฟล์ได้เลย...' : 'ลากไฟล์มาที่นี่ หรือคลิกเพื่อเลือก'}</Typography>
             </Box>
           )}
 
@@ -176,11 +174,7 @@ export default function ModernUploadPage() {
           <Stack spacing={2} mt={3}>
             <FormControl fullWidth>
               <InputLabel id="category-label">ประเภทงาน</InputLabel>
-              <Select
-                labelId="category-label"
-                value={category}
-                label="ประเภทงาน"
-                onChange={e => setCategory(e.target.value)}>
+              <Select labelId="category-label" value={category} label="ประเภทงาน" onChange={e => setCategory(e.target.value)}>
                 {categories.map(cat => (
                   <MenuItem key={cat} value={cat}>
                     {cat}
@@ -188,51 +182,19 @@ export default function ModernUploadPage() {
                 ))}
               </Select>
             </FormControl>
-            <TextField
-              label="ชื่อลูกค้า"
-              value={customerName}
-              onChange={e => setCustomerName(e.target.value)}
-              fullWidth
-              size={isMobile ? 'small' : 'medium'}
-            />
-            <TextField
-              label="เบอร์โทรศัพท์"
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-              fullWidth
-              size={isMobile ? 'small' : 'medium'}
-            />
-            <TextField
-              label="Note"
-              value={note}
-              onChange={e => setNote(e.target.value)}
-              fullWidth
-              multiline
-              rows={isMobile ? 2 : 3}
-              size={isMobile ? 'small' : 'medium'}
-            />
+            <TextField label="ชื่อลูกค้า" value={customerName} onChange={e => setCustomerName(e.target.value)} fullWidth size={isMobile ? 'small' : 'medium'} />
+            <TextField label="เบอร์โทรศัพท์" value={phone} onChange={e => setPhone(e.target.value)} fullWidth size={isMobile ? 'small' : 'medium'} />
+            <TextField label="Note" value={note} onChange={e => setNote(e.target.value)} fullWidth multiline rows={isMobile ? 2 : 3} size={isMobile ? 'small' : 'medium'} />
           </Stack>
 
-          <Button
-            variant="contained"
-            fullWidth
-            sx={{ mt: 4, py: isMobile ? 1 : 1.5, borderRadius: '12px' }}
-            onClick={handleUpload}
-            disabled={files.length === 0 || !customerName}>
+          <Button variant="contained" fullWidth sx={{ mt: 4, py: isMobile ? 1 : 1.5, borderRadius: '12px' }} onClick={handleUpload} disabled={files.length === 0 || !customerName}>
             {uploading ? `Uploading... ${progress}%` : '🚀 อัพโหลดไฟล์'}
           </Button>
         </CardContent>
       </Card>
 
-      <Snackbar
-        open={snackbar.open}
-        autoHideDuration={4000}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
-        onClose={() => setSnackbar({ ...snackbar, open: false })}>
-        <Alert
-          onClose={() => setSnackbar({ ...snackbar, open: false })}
-          severity={snackbar.severity}
-          sx={{ width: '100%' }}>
+      <Snackbar open={snackbar.open} autoHideDuration={4000} anchorOrigin={{ vertical: 'top', horizontal: 'right' }} onClose={() => setSnackbar({ ...snackbar, open: false })}>
+        <Alert onClose={() => setSnackbar({ ...snackbar, open: false })} severity={snackbar.severity} sx={{ width: '100%' }}>
           {snackbar.message}
         </Alert>
       </Snackbar>

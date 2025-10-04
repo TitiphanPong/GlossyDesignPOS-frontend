@@ -26,10 +26,11 @@ export const cartFieldConfigs: Record<string, FieldConfig[]> = {
     { key: 'colorMode', label: '🎨 โหมดสี', format: v => (v === 'bw' ? 'ขาวดำ' : 'สี') },
     { key: 'productNote', label: '📝 รายละเอียด' },
   ],
-  สติ๊กเกอร์: [
-    { key: 'size', label: '📏 ขนาด' },
+  โพสการ์ด: [
+    { key: 'variant', label: '📦 ขนาด', format: v => (v?.custom ? `${v.width} × ${v.height} นิ้ว` : v?.name || '') },
     { key: 'material', label: '📄 วัสดุ' },
     { key: 'laminate', label: '✨ เคลือบ' },
+    { key: 'setCount', label: '🗂️ จำนวนชุด', format: v => `${v} ชุด` }, // ✅ เพิ่มจำนวนชุด
   ],
   โปสเตอร์: [
     { key: 'dimension', label: '📐 ขนาด' },

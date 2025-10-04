@@ -1,19 +1,6 @@
 'use client';
 
-import {
-  Box,
-  Card,
-  CardContent,
-  Typography,
-  Chip,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableRow,
-  Paper,
-  CircularProgress,
-} from '@mui/material';
+import { Box, Card, CardContent, Typography, Chip, Table, TableBody, TableCell, TableHead, TableRow, Paper, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -58,18 +45,13 @@ export default function DashboardPage() {
     const base = process.env.NEXT_PUBLIC_API_URL ?? '';
     if (!base) return;
 
-    Promise.all([
-      fetch(`${base}/orders/summary`).then(res => res.json()),
-      fetch(`${base}/orders`).then(res => res.json()),
-    ])
+    Promise.all([fetch(`${base}/orders/summary`).then(res => res.json()), fetch(`${base}/orders`).then(res => res.json())])
       .then(([summaryData, orders]) => {
         setSummary(summaryData);
 
         if (Array.isArray(orders)) {
           // ✅ เรียงจาก createdAt ล่าสุด → เก่าสุด
-          const sorted = [...orders].sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
+          const sorted = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
           // ✅ เอามาแค่ 4 ออเดอร์ล่าสุด
           setRecentOrders(sorted.slice(0, 4));
@@ -138,11 +120,7 @@ export default function DashboardPage() {
           mb: 4,
         }}>
         {summaryCards.map((card, index) => (
-          <motion.div
-            key={index}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.2 }}>
+          <motion.div key={index} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.2 }}>
             <Card
               sx={{
                 borderRadius: 4,
@@ -179,10 +157,7 @@ export default function DashboardPage() {
           gap: 3,
         }}>
         {/* Sales Chart */}
-        <motion.div
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.6 }}>
+        <motion.div initial={{ opacity: 0, x: -50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.6 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -214,10 +189,7 @@ export default function DashboardPage() {
         </motion.div>
 
         {/* Recent Orders */}
-        <motion.div
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ delay: 0.8 }}>
+        <motion.div initial={{ opacity: 0, x: 50 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: 0.8 }}>
           <Card
             sx={{
               borderRadius: 4,
@@ -265,9 +237,7 @@ export default function DashboardPage() {
                         )}
                       </TableCell>
                       <TableCell>{money(order.total)}</TableCell>
-                      <TableCell>
-                        {order.createdAt ? dayjs(order.createdAt).format('DD/MM/YYYY HH:mm') : '-'}
-                      </TableCell>
+                      <TableCell>{order.createdAt ? dayjs(order.createdAt).format('DD/MM/YYYY HH:mm') : '-'}</TableCell>
                     </TableRow>
                   ))}
                 </TableBody>

@@ -1,23 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
-  Box,
-  Container,
-  Stack,
-  Typography,
-  TextField,
-  InputAdornment,
-  Tabs,
-  Tab,
-  Card,
-  CardContent,
-  CardActions,
-  Button,
-  Chip,
-  Skeleton,
-  Alert,
-} from '@mui/material';
+import { Box, Container, Stack, Typography, TextField, InputAdornment, Tabs, Tab, Card, CardContent, CardActions, Button, Chip, Skeleton, Alert } from '@mui/material';
 
 //COMPONENTS
 
@@ -39,6 +23,10 @@ import StampModal from './components/StampModal';
 import { CartItem } from './types/cart';
 import NameCardModal from './components/NameCardModal';
 import DocumentPrintModal from './components/DocumentPrintModal';
+import PostCardModal from './components/PostCardModal';
+import ColorLensIcon from '@mui/icons-material/ColorLens';
+import InkjetModal from './components/InkjetModal';
+import StickerPVCModal from './components/stickerPVCModal';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -173,9 +161,7 @@ export default function SellPage() {
   }, []);
 
   const filtered = React.useMemo(() => {
-    return products
-      .filter(p => (activeCat === 'ทั้งหมด' ? true : p.category === activeCat))
-      .filter(p => p.name.toLowerCase().includes(qDebounced.toLowerCase()));
+    return products.filter(p => (activeCat === 'ทั้งหมด' ? true : p.category === activeCat)).filter(p => p.name.toLowerCase().includes(qDebounced.toLowerCase()));
   }, [products, activeCat, qDebounced]);
 
   return (
@@ -229,42 +215,13 @@ export default function SellPage() {
                 mb: 2,
                 '& .MuiTabs-indicator': { height: 3 },
               }}>
-              <Tab
-                value="ทั้งหมด"
-                icon={<LayersRoundedIcon />}
-                iconPosition="start"
-                label="ทั้งหมด"
-              />
-              <Tab
-                value="นามบัตร"
-                icon={<CreditCardRoundedIcon />}
-                iconPosition="start"
-                label="นามบัตร"
-              />
-              <Tab
-                value="ปริ้นท์เอกสาร"
-                icon={<AdfScannerIcon />}
-                iconPosition="start"
-                label="ปริ้นท์เอกสาร"
-              />
-              <Tab
-                value="โพสการ์ด"
-                icon={<ImageRoundedIcon />}
-                iconPosition="start"
-                label="โพสการ์ด"
-              />
-              <Tab
-                value="ตรายาง"
-                icon={<ApprovalRoundedIcon />}
-                iconPosition="start"
-                label="ตรายาง"
-              />
-              <Tab
-                value="อิงค์เจ็ท"
-                icon={<LocalPrintshopIcon />}
-                iconPosition="start"
-                label="อิงค์เจ็ท"
-              />
+              <Tab value="ทั้งหมด" icon={<LayersRoundedIcon />} iconPosition="start" label="ทั้งหมด" />
+              <Tab value="นามบัตร" icon={<CreditCardRoundedIcon />} iconPosition="start" label="นามบัตร" />
+              <Tab value="ปริ้นท์เอกสาร" icon={<AdfScannerIcon />} iconPosition="start" label="ปริ้นท์เอกสาร" />
+              <Tab value="โพสการ์ด" icon={<ImageRoundedIcon />} iconPosition="start" label="โพสการ์ด" />
+              <Tab value="ตรายาง" icon={<ApprovalRoundedIcon />} iconPosition="start" label="ตรายาง" />
+              <Tab value="อิงค์เจ็ท" icon={<LocalPrintshopIcon />} iconPosition="start" label="อิงค์เจ็ท" />
+              <Tab value="สติ๊กเกอร์" icon={<ColorLensIcon />} iconPosition="start" label="สติ๊กเกอร์" />
               <Tab value="พล็อตแพลน" icon={<MapIcon />} iconPosition="start" label="พล็อตแพลน" />
             </Tabs>
 
@@ -281,10 +238,7 @@ export default function SellPage() {
               }}>
               {loading &&
                 Array.from({ length: 8 }).map((_, i) => (
-                  <Card
-                    key={`sk-${i}`}
-                    variant="outlined"
-                    sx={{ borderRadius: 3, overflow: 'hidden' }}>
+                  <Card key={`sk-${i}`} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
                     <Skeleton variant="rectangular" width="100%" height={120} />
                     <CardContent>
                       <Skeleton width="80%" />
@@ -343,13 +297,7 @@ export default function SellPage() {
                         <Typography fontWeight={700} flex={1} noWrap>
                           {p.name}
                         </Typography>
-                        {p.badge && (
-                          <Chip
-                            size="small"
-                            label={p.badge}
-                            color={p.badge === 'NEW' ? 'secondary' : 'primary'}
-                          />
-                        )}
+                        {p.badge && <Chip size="small" label={p.badge} color={p.badge === 'NEW' ? 'secondary' : 'primary'} />}
                       </Stack>
                       <Typography variant="body2" color="text.secondary">
                         {money(p.variants[0].price)}
@@ -415,11 +363,7 @@ export default function SellPage() {
           initialData={editingItem || undefined}
           onSelect={item => {
             if (editingItem) {
-              setCart(prev =>
-                prev.map(it =>
-                  it.key === editingItem.key ? { ...item, key: editingItem.key } : it
-                )
-              );
+              setCart(prev => prev.map(it => (it.key === editingItem.key ? { ...item, key: editingItem.key } : it)));
               setEditingItem(null);
             } else {
               setCart(prev => [...prev, { ...item, key: `${activeProduct?.id}-${Date.now()}` }]);
@@ -441,11 +385,7 @@ export default function SellPage() {
           onSelect={item => {
             if (editingItem) {
               // 📝 กรณีแก้ไข → ใช้ key เดิม
-              setCart(prev =>
-                prev.map(it =>
-                  it.key === editingItem.key ? { ...item, key: editingItem.key } : it
-                )
-              );
+              setCart(prev => prev.map(it => (it.key === editingItem.key ? { ...item, key: editingItem.key } : it)));
               setEditingItem(null);
             } else {
               // 📝 กรณีเพิ่มใหม่ → generate key ใหม่
@@ -468,14 +408,77 @@ export default function SellPage() {
           onSelect={item => {
             if (editingItem) {
               // 📝 กรณีแก้ไข → ใช้ key เดิม
-              setCart(prev =>
-                prev.map(it =>
-                  it.key === editingItem.key ? { ...item, key: editingItem.key } : it
-                )
-              );
+              setCart(prev => prev.map(it => (it.key === editingItem.key ? { ...item, key: editingItem.key } : it)));
               setEditingItem(null);
             } else {
               // 📝 กรณีเพิ่มใหม่ → generate key ใหม่
+              setCart(prev => [...prev, { ...item, key: `${activeProduct?.id}-${Date.now()}` }]);
+            }
+            setOpenModal(false);
+          }}
+        />
+      )}
+
+      {activeProduct?.category?.trim() === 'โพสการ์ด' && (
+        <PostCardModal
+          open={openModal}
+          onClose={() => {
+            setOpenModal(false);
+            setEditingItem(null);
+          }}
+          productName={activeProduct?.name || ''}
+          initialData={editingItem || undefined}
+          onSelect={item => {
+            if (editingItem) {
+              // 📝 กรณีแก้ไข → ใช้ key เดิม
+              setCart(prev => prev.map(it => (it.key === editingItem.key ? { ...item, key: editingItem.key } : it)));
+              setEditingItem(null);
+            } else {
+              // 📝 กรณีเพิ่มใหม่ → generate key ใหม่
+              setCart(prev => [...prev, { ...item, key: `${activeProduct?.id}-${Date.now()}` }]);
+            }
+            setOpenModal(false);
+          }}
+        />
+      )}
+
+      {activeProduct?.category?.trim() === 'อิงค์เจ็ท' && (
+        <InkjetModal
+          open={openModal}
+          onClose={() => {
+            setOpenModal(false);
+            setEditingItem(null);
+          }}
+          productName={activeProduct?.name || ''}
+          initialData={editingItem || undefined}
+          onSelect={item => {
+            if (editingItem) {
+              // 📝 กรณีแก้ไข → ใช้ key เดิม
+              setCart(prev => prev.map(it => (it.key === editingItem.key ? { ...item, key: editingItem.key } : it)));
+              setEditingItem(null);
+            } else {
+              // 📝 กรณีเพิ่มใหม่ → generate key ใหม่
+              setCart(prev => [...prev, { ...item, key: `${activeProduct?.id}-${Date.now()}` }]);
+            }
+            setOpenModal(false);
+          }}
+        />
+      )}
+
+      {activeProduct?.name?.includes('สติ๊กเกอร์ PVC Inkjet') && (
+        <StickerPVCModal
+          open={openModal}
+          onClose={() => {
+            setOpenModal(false);
+            setEditingItem(null);
+          }}
+          productName={activeProduct?.name || ''}
+          initialData={editingItem || undefined}
+          onSelect={item => {
+            if (editingItem) {
+              setCart(prev => prev.map(it => (it.key === editingItem.key ? { ...item, key: editingItem.key } : it)));
+              setEditingItem(null);
+            } else {
               setCart(prev => [...prev, { ...item, key: `${activeProduct?.id}-${Date.now()}` }]);
             }
             setOpenModal(false);

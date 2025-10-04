@@ -1,17 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  Typography,
-  Stack,
-  Divider,
-  Box,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Stack, Divider, Box } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ReplayIcon from '@mui/icons-material/Replay';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
@@ -102,19 +92,10 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
-          {isPaid ? (
-            <CheckCircleIcon color="success" fontSize="large" />
-          ) : (
-            <HourglassEmptyIcon color="warning" fontSize="large" />
-          )}
+          {isPaid ? <CheckCircleIcon color="success" fontSize="large" /> : <HourglassEmptyIcon color="warning" fontSize="large" />}
           <Typography variant="h6" fontWeight={700}>
             {isPaid ? 'ชำระเงินเรียบร้อย' : 'รอชำระเงิน'}
           </Typography>
@@ -123,14 +104,8 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
 
       <DialogContent dividers>
         <Box textAlign="center" py={1}>
-          <Typography
-            variant="h3"
-            fontWeight={800}
-            color={isPaid ? 'success.main' : 'warning.main'}>
-            {Number(
-              orderData?.remainingTotal > 0 ? orderData?.depositTotal : orderData?.grandTotal
-            ).toFixed(2)}{' '}
-            บาท
+          <Typography variant="h3" fontWeight={800} color={isPaid ? 'success.main' : 'warning.main'}>
+            {Number(orderData?.remainingTotal > 0 ? orderData?.depositTotal : orderData?.grandTotal).toFixed(2)} บาท
           </Typography>
 
           {orderData?.remainingTotal > 0 && (
@@ -160,9 +135,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         </Box>
 
         <Typography variant="body2" color="text.secondary" align="center">
-          {isPaid
-            ? 'ชำระเงินเสร็จสิ้น ระบบจะปิดอัตโนมัติใน 5 วินาที'
-            : '*โปรดยืนยัน / ตรวจสอบการชำระเงิน'}
+          {isPaid ? 'ชำระเงินเสร็จสิ้น ระบบจะปิดอัตโนมัติใน 5 วินาที' : '*โปรดยืนยัน / ตรวจสอบการชำระเงิน'}
         </Typography>
       </DialogContent>
 
@@ -177,11 +150,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           pt: 2,
         }}>
         {!isPaid && (
-          <Button
-            variant="contained"
-            color={payment === 'cash' ? 'success' : 'warning'}
-            startIcon={<DoneAllIcon />}
-            onClick={handleConfirm}>
+          <Button variant="contained" color={payment === 'cash' ? 'success' : 'warning'} startIcon={<DoneAllIcon />} onClick={handleConfirm}>
             {payment === 'cash' ? 'รับเงินแล้ว' : 'ยืนยันการโอนแล้ว'}
           </Button>
         )}

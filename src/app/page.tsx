@@ -1,23 +1,7 @@
 'use client';
 import * as React from 'react';
 import Link from 'next/link';
-import {
-  Box,
-  Container,
-  Stack,
-  Typography,
-  Button,
-  Card,
-  CardContent,
-  CardActions,
-  List,
-  ListItemButton,
-  ListItemIcon,
-  ListItemText,
-  Chip,
-  Divider,
-  Grow,
-} from '@mui/material';
+import { Box, Container, Stack, Typography, Button, Card, CardContent, CardActions, List, ListItemButton, ListItemIcon, ListItemText, Chip, Divider, Grow } from '@mui/material';
 import { alpha, keyframes } from '@mui/material/styles';
 import StorefrontIcon from '@mui/icons-material/Storefront';
 import PeopleAltIcon from '@mui/icons-material/PeopleAlt';
@@ -106,8 +90,7 @@ export default function LandingPage() {
           width: 260,
           height: 260,
           borderRadius: '50%',
-          bgcolor: t =>
-            alpha(t.palette.secondary ? t.palette.secondary.main : t.palette.primary.main, 0.12),
+          bgcolor: t => alpha(t.palette.secondary ? t.palette.secondary.main : t.palette.primary.main, 0.12),
           filter: 'blur(24px)',
           animation: `${float} 10s ease-in-out infinite`,
         }}
@@ -119,9 +102,7 @@ export default function LandingPage() {
           <Stack direction="row" spacing={1} alignItems="center">
             <Chip icon={<PrintIcon />} label="Glossy Design" color="primary" variant="outlined" />
           </Stack>
-          <Typography
-            variant="h2"
-            sx={{ fontWeight: 800, letterSpacing: -0.5, fontSize: { xs: 36, md: 56 } }}>
+          <Typography variant="h2" sx={{ fontWeight: 800, letterSpacing: -0.5, fontSize: { xs: 36, md: 56 } }}>
             ระบบหน้าร้านงานพิมพ์{' '}
             <Box component="span" sx={{ color: 'primary.main' }}>
               ครบจบในที่เดียว
@@ -151,13 +132,7 @@ export default function LandingPage() {
                   },
                 }}>
                 <CardContent>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    sx={{ mb: 1 }}
-                    marginTop={1}
-                    marginLeft={2}>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }} marginTop={1} marginLeft={2}>
                     <StorefrontIcon color="primary" />
                     <Typography variant="h5" sx={{ fontWeight: 700 }}>
                       สำหรับที่ร้าน
@@ -181,10 +156,7 @@ export default function LandingPage() {
                       <ListItemIcon>
                         <PointOfSaleIcon />
                       </ListItemIcon>
-                      <ListItemText
-                        primary="ขายหน้าร้าน (POS)"
-                        secondary="คิดราคา / ส่วนลด พร้อมชำระเงิน"
-                      />
+                      <ListItemText primary="ขายหน้าร้าน (POS)" secondary="คิดราคา / ส่วนลด พร้อมชำระเงิน" />
                       <ArrowForwardIcon fontSize="small" />
                     </ListItemButton>
 
@@ -221,27 +193,16 @@ export default function LandingPage() {
                       <ListItemIcon>
                         <AssessmentIcon />
                       </ListItemIcon>
-                      <ListItemText
-                        primary="รายงานยอด/กะ"
-                        secondary="สรุปยอดขาย วัสดุ สิ้นเปลือง"
-                      />
+                      <ListItemText primary="รายงานยอด/กะ" secondary="สรุปยอดขาย วัสดุ สิ้นเปลือง" />
                       <ArrowForwardIcon fontSize="small" />
                     </ListItemButton>
                   </List>
                 </CardContent>
                 <CardActions sx={{ px: 4, pb: 4 }}>
-                  <Button
-                    component={Link}
-                    href="/home"
-                    variant="contained"
-                    startIcon={<PointOfSaleIcon />}>
+                  <Button component={Link} href="/home" variant="contained" startIcon={<PointOfSaleIcon />}>
                     เริ่มขายเลย
                   </Button>
-                  <Button
-                    component={Link}
-                    href="/settings"
-                    color="inherit"
-                    startIcon={<HelpOutlineIcon />}>
+                  <Button component={Link} href="/settings" color="inherit" startIcon={<HelpOutlineIcon />}>
                     ตั้งค่าร้าน
                   </Button>
                 </CardActions>
@@ -258,8 +219,7 @@ export default function LandingPage() {
                   borderRadius: 4,
                   backdropFilter: 'blur(8px)',
                   backgroundColor: t => alpha(t.palette.background.paper, 0.7),
-                  boxShadow: t =>
-                    `0 10px 30px ${alpha(t.palette.secondary ? t.palette.secondary.main : t.palette.primary.main, 0.15)}`,
+                  boxShadow: t => `0 10px 30px ${alpha(t.palette.secondary ? t.palette.secondary.main : t.palette.primary.main, 0.15)}`,
                   transition: 'transform .2s ease, box-shadow .2s ease',
                   '&:hover': {
                     transform: 'translateY(-4px)',
@@ -267,13 +227,7 @@ export default function LandingPage() {
                   },
                 }}>
                 <CardContent>
-                  <Stack
-                    direction="row"
-                    spacing={1}
-                    alignItems="center"
-                    sx={{ mb: 1 }}
-                    marginTop={1}
-                    marginLeft={2}>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }} marginTop={1} marginLeft={2}>
                     <PeopleAltIcon color="secondary" />
                     <Typography variant="h5" sx={{ fontWeight: 700 }}>
                       สำหรับลูกค้า
@@ -290,13 +244,7 @@ export default function LandingPage() {
                       sx={{
                         borderRadius: 2,
                         '&:hover': {
-                          bgcolor: t =>
-                            alpha(
-                              t.palette.secondary
-                                ? t.palette.secondary.light
-                                : t.palette.primary.light,
-                              0.08
-                            ),
+                          bgcolor: t => alpha(t.palette.secondary ? t.palette.secondary.light : t.palette.primary.light, 0.08),
                         },
                         opacity: 0,
                         animation: `${fadeUp} .45s ease forwards`,
@@ -315,13 +263,7 @@ export default function LandingPage() {
                       sx={{
                         borderRadius: 2,
                         '&:hover': {
-                          bgcolor: t =>
-                            alpha(
-                              t.palette.secondary
-                                ? t.palette.secondary.light
-                                : t.palette.primary.light,
-                              0.08
-                            ),
+                          bgcolor: t => alpha(t.palette.secondary ? t.palette.secondary.light : t.palette.primary.light, 0.08),
                         },
                         opacity: 0,
                         animation: `${fadeUp} .45s ease forwards`,
@@ -330,10 +272,7 @@ export default function LandingPage() {
                       <ListItemIcon>
                         <PrintIcon />
                       </ListItemIcon>
-                      <ListItemText
-                        primary="เลือกขาวดำ/สี & คำนวณราคา"
-                        secondary="เห็นราคาแบบเรียลไทม์"
-                      />
+                      <ListItemText primary="เลือกขาวดำ/สี & คำนวณราคา" secondary="เห็นราคาแบบเรียลไทม์" />
                       <ArrowForwardIcon fontSize="small" />
                     </ListItemButton>
 
@@ -343,13 +282,7 @@ export default function LandingPage() {
                       sx={{
                         borderRadius: 2,
                         '&:hover': {
-                          bgcolor: t =>
-                            alpha(
-                              t.palette.secondary
-                                ? t.palette.secondary.light
-                                : t.palette.primary.light,
-                              0.08
-                            ),
+                          bgcolor: t => alpha(t.palette.secondary ? t.palette.secondary.light : t.palette.primary.light, 0.08),
                         },
                         opacity: 0,
                         animation: `${fadeUp} .45s ease forwards`,
@@ -358,20 +291,13 @@ export default function LandingPage() {
                       <ListItemIcon>
                         <QrCodeIcon />
                       </ListItemIcon>
-                      <ListItemText
-                        primary="ชำระเงินพร้อมเพย์"
-                        secondary="QR พร้อมเพย์ / อัปสลิป (ตัวอย่าง)"
-                      />
+                      <ListItemText primary="ชำระเงินพร้อมเพย์" secondary="QR พร้อมเพย์ / อัปสลิป (ตัวอย่าง)" />
                       <ArrowForwardIcon fontSize="small" />
                     </ListItemButton>
                   </List>
                 </CardContent>
                 <CardActions sx={{ px: 4, pb: 4 }}>
-                  <Button
-                    component={Link}
-                    href="/uploadFileGlossyDesign"
-                    variant="contained"
-                    startIcon={<UploadFileIcon />}>
+                  <Button component={Link} href="/uploadfile" variant="contained" startIcon={<UploadFileIcon />}>
                     เริ่มส่งไฟล์
                   </Button>
                   <Button component={Link} href="/pay" color="inherit" startIcon={<QrCodeIcon />}>

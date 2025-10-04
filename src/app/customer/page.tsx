@@ -68,11 +68,7 @@ export default function CustomerScreen() {
     ];
     return (
       <Box sx={{ width: '100%', height: '100vh', bgcolor: '#000' }}>
-        <Swiper
-          modules={[Autoplay]}
-          autoplay={{ delay: 5000 }}
-          loop
-          style={{ width: '100%', height: '100vh' }}>
+        <Swiper modules={[Autoplay]} autoplay={{ delay: 5000 }} loop style={{ width: '100%', height: '100vh' }}>
           {banners.map((item, idx) => (
             <SwiperSlide key={idx}>
               <Box
@@ -137,29 +133,19 @@ export default function CustomerScreen() {
           textAlign: 'center',
         }}>
         {/* การ์ด animation */}
-        <motion.div
-          initial={{ scale: 0.8, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 0.6 }}
-          style={{ marginBottom: '20px' }}>
+        <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.6 }} style={{ marginBottom: '20px' }}>
           <CheckOutPass />
         </motion.div>
 
         {/* ข้อความหลัก */}
-        <motion.div
-          initial={{ y: 30, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.3, duration: 0.6 }}>
+        <motion.div initial={{ y: 30, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3, duration: 0.6 }}>
           <Typography variant="h3" fontWeight="bold" gutterBottom color="success.main">
             ✅ ชำระเงินเรียบร้อย
           </Typography>
         </motion.div>
 
         {/* ข้อความรอง */}
-        <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
-          transition={{ delay: 0.6, duration: 0.6 }}>
+        <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.6, duration: 0.6 }}>
           <Typography variant="h6" gutterBottom color="text.primary">
             ขอบคุณที่ใช้บริการ <strong>Glossy Design</strong>
           </Typography>
@@ -169,10 +155,7 @@ export default function CustomerScreen() {
         </motion.div>
 
         {/* เอฟเฟกต์เส้นแสงด้านล่าง */}
-        <motion.div
-          initial={{ width: 0, opacity: 0 }}
-          animate={{ width: '60%', opacity: 1 }}
-          transition={{ delay: 1, duration: 0.8 }}>
+        <motion.div initial={{ width: 0, opacity: 0 }} animate={{ width: '60%', opacity: 1 }} transition={{ delay: 1, duration: 0.8 }}>
           <Divider
             sx={{
               mt: 4,
@@ -203,12 +186,7 @@ export default function CustomerScreen() {
         }}>
         {/* ซ้าย: รายการสินค้า */}
         <Box sx={{ p: 4, overflowY: 'auto' }}>
-          <Typography
-            variant="h3"
-            fontWeight="bold"
-            gutterBottom
-            color="black"
-            sx={{ ml: 10, mt: 3 }}>
+          <Typography variant="h3" fontWeight="bold" gutterBottom color="black" sx={{ ml: 10, mt: 3 }}>
             🧾 ใบสั่งซื้อ #{order.orderId}
           </Typography>
           <Typography variant="h4" color="black">
@@ -245,11 +223,7 @@ export default function CustomerScreen() {
             ยอดทั้งหมด
           </Typography>
 
-          <Typography
-            variant="h2"
-            color="primary"
-            fontWeight="bold"
-            sx={{ fontSize: { xs: '2.5rem', md: '3rem' } }}>
+          <Typography variant="h2" color="primary" fontWeight="bold" sx={{ fontSize: { xs: '2.5rem', md: '3rem' } }}>
             {Math.round(grandTotal).toLocaleString('th-TH')} บาท
           </Typography>
 
@@ -285,11 +259,7 @@ export default function CustomerScreen() {
                 📱 กรุณาชำระด้วย PromptPay
               </Typography>
               <Box sx={{ display: 'flex', justifyContent: 'center', my: 0 }}>
-                <QRCodeCanvas
-                  value={generatePayload(promptpayId, { amount: Math.round(amountToPay) })}
-                  size={420}
-                  includeMargin
-                />
+                <QRCodeCanvas value={generatePayload(promptpayId, { amount: Math.round(amountToPay) })} size={420} includeMargin />
               </Box>
               <Typography variant="h4" mt={0} fontWeight="bold" color="success">
                 ต้องชำระตอนนี้ : {Math.round(amountToPay).toLocaleString('th-TH')} บาท

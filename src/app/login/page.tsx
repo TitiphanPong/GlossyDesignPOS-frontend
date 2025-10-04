@@ -25,13 +25,7 @@ export default function LoginPage() {
 
   return (
     <>
-      <LoginForm
-        username={username}
-        password={password}
-        onUsernameChange={e => setUsername(e.target.value)}
-        onPasswordChange={e => setPassword(e.target.value)}
-        onSubmit={handleLogin}
-      />
+      <LoginForm username={username} password={password} onUsernameChange={e => setUsername(e.target.value)} onPasswordChange={e => setPassword(e.target.value)} onSubmit={handleLogin} />
 
       <Snackbar
         open={snackbarOpen}
@@ -39,11 +33,7 @@ export default function LoginPage() {
         onClose={() => setSnackbarOpen(false)}
         anchorOrigin={{ vertical: 'top', horizontal: 'right' }} // 🟢 ขวาบน
       >
-        <Alert
-          onClose={() => setSnackbarOpen(false)}
-          severity="error"
-          variant="filled"
-          sx={{ width: '100%' }}>
+        <Alert onClose={() => setSnackbarOpen(false)} severity="error" variant="filled" sx={{ width: '100%' }}>
           ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง
         </Alert>
       </Snackbar>

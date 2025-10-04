@@ -182,22 +182,12 @@ const Brand = ({ collapsed }: { collapsed: boolean }) => {
 
 const SectionHeader = ({ text, collapsed }: { text: string; collapsed: boolean }) =>
   collapsed ? null : (
-    <ListSubheader
-      component="div"
-      disableSticky
-      sx={{ px: 2.5, py: 1.5, typography: 'overline', color: 'text.secondary' }}>
+    <ListSubheader component="div" disableSticky sx={{ px: 2.5, py: 1.5, typography: 'overline', color: 'text.secondary' }}>
       {text}
     </ListSubheader>
   );
 
-export default function SideMenu({
-  width = 272,
-  miniWidth = 84,
-  currentPath = '/',
-  items = DEFAULT_ITEMS,
-  defaultCollapsed = false,
-  onCollapsedChange,
-}: SideMenuProps) {
+export default function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFAULT_ITEMS, defaultCollapsed = false, onCollapsedChange }: SideMenuProps) {
   const theme = useTheme();
   const [collapsed, setCollapsed] = React.useState(defaultCollapsed);
 
@@ -267,9 +257,7 @@ export default function SideMenu({
             background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
           }}
         />
-        <ListItemIcon sx={{ minWidth: 36, color: active ? 'primary.main' : 'inherit' }}>
-          {item.icon}
-        </ListItemIcon>
+        <ListItemIcon sx={{ minWidth: 36, color: active ? 'primary.main' : 'inherit' }}>{item.icon}</ListItemIcon>
         {!collapsed && (
           <ListItemText
             primary={
@@ -347,10 +335,7 @@ export default function SideMenu({
         }}>
         <Box sx={{ overflowY: 'auto', pb: 2 }}>
           {grouped.map(([section, list]) => (
-            <List
-              key={section}
-              subheader={<SectionHeader text={section} collapsed={collapsed} />}
-              sx={{ px: 0.5 }}>
+            <List key={section} subheader={<SectionHeader text={section} collapsed={collapsed} />} sx={{ px: 0.5 }}>
               {list.map(item => (
                 <ItemRow key={item.href} item={item} />
               ))}
@@ -408,10 +393,7 @@ export default function SideMenu({
             borderTop: '1px solid',
             borderColor: 'divider',
           }}>
-          <Avatar
-            src={`https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`}
-            sx={{ width: 36, height: 36 }}
-          />
+          <Avatar src={`https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`} sx={{ width: 36, height: 36 }} />
           {!collapsed && (
             <Box sx={{ minWidth: 0 }}>
               <Typography variant="body2" fontWeight={700} noWrap>

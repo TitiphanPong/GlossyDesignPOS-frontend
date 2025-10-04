@@ -16,13 +16,7 @@ interface LoginFormProps {
   onSubmit: (e: React.FormEvent) => void;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({
-  username,
-  password,
-  onUsernameChange,
-  onPasswordChange,
-  onSubmit,
-}) => {
+const LoginForm: React.FC<LoginFormProps> = ({ username, password, onUsernameChange, onPasswordChange, onSubmit }) => {
   return (
     <StyledWrapper>
       <div className={styles.wrapper}>
@@ -31,26 +25,14 @@ const LoginForm: React.FC<LoginFormProps> = ({
             <label>Username</label>
           </div>
           <div className={styles.inputForm}>
-            <input
-              type="text"
-              className={styles.input}
-              placeholder="Enter your Username"
-              value={username}
-              onChange={onUsernameChange}
-            />
+            <input type="text" className={styles.input} placeholder="Enter your Username" value={username} onChange={onUsernameChange} />
           </div>
 
           <div className={styles['flex-column']}>
             <label>Password</label>
           </div>
           <div className={styles.inputForm}>
-            <input
-              type="password"
-              className={styles.input}
-              placeholder="Enter your Password"
-              value={password}
-              onChange={onPasswordChange}
-            />
+            <input type="password" className={styles.input} placeholder="Enter your Password" value={password} onChange={onPasswordChange} />
           </div>
 
           <div className={styles['flex-row']} style={{ marginLeft: '5px' }}>

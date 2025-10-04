@@ -9,7 +9,7 @@ type CartItem = {
   key: string;
   name: string;
   category?: string;
-  variant: any;
+  variant?: any;
   qty: number;
   unitPrice: number;
   totalPrice: number;
@@ -23,10 +23,19 @@ type CartItem = {
   colorMode?: string;
 
   // ตรายาง
-
   type?: 'normal' | 'inked';
   shape?: 'circle' | 'square';
   size?: string;
+
+  // โพสการ์ด
+  setCount?: number; // ✅ จำนวนชุด
+
+  // อิงค์เจ็ท
+  sizeFlex?: { height: string; width: string }[]; // ✅ เพิ่มเข้าไป
+  inkjetType?: 'paper-gloss' | 'pp-board' | 'pp-banner' | 'vinyl' | 'pp-passwood' | 'backlid' | 'canvas';
+
+  // StickerPVC
+  stickerPVCType?: string;
 
   // ✅ การชำระเงิน
   deposit?: number;
@@ -47,17 +56,7 @@ type Props = {
   onDeleteItem?: (key: string) => void;
 };
 
-const CheckOutRight: React.FC<Props> = ({
-  cart,
-  total,
-  discount,
-  onCheckout,
-  onDiscountChange,
-  onPaymentChange,
-  onEditItem,
-  onDeleteItem,
-  onTaxInvoiceChange,
-}) => {
+const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onDiscountChange, onPaymentChange, onEditItem, onDeleteItem, onTaxInvoiceChange }) => {
   const [discountInput, setDiscountInput] = useState('');
   const [discountValue, setDiscountValue] = useState(0);
   const [discountType, setDiscountType] = useState<'percent' | 'fixed' | null>(null);
@@ -73,12 +72,7 @@ const CheckOutRight: React.FC<Props> = ({
   }, [discount]);
 
   // ✅ ยอดสุทธิหลังส่วนลด
-  const finalTotal =
-    discountType === 'percent'
-      ? total - (total * discountValue) / 100
-      : discountType === 'fixed'
-        ? Math.max(total - discountValue, 0)
-        : total;
+  const finalTotal = discountType === 'percent' ? total - (total * discountValue) / 100 : discountType === 'fixed' ? Math.max(total - discountValue, 0) : total;
 
   // ✅ คำนวณ VAT และยอดสุทธิ
   const vatAmount = taxInvoice === 'yes' ? finalTotal * 0.07 : 0;
@@ -143,129 +137,174 @@ const CheckOutRight: React.FC<Props> = ({
       {/* ✅ Cart Section */}
       <div className={`${styles.card} ${styles.cart}`}>
         <div className={styles.title}>🛒 รายการในตะกร้า</div>
+
         <div className={styles.products}>
-          {cart.map((item, idx) => (
-            <div
-              key={item.key}
-              style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'flex-start',
-                padding: '1rem 0.75rem',
-                borderBottom: idx !== cart.length - 1 ? '1px solid #e0e0e0' : 'none', // Divider
-              }}>
-              <div className={styles.details}>
-                <div className={styles.name}>{item.name}</div>
-                <ul
-                  style={{ margin: 0, paddingLeft: '0.25rem', fontSize: '0.85rem', color: '#000' }}>
-                  {/* รายละเอียดสินค้า */}
+          {cart.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>━━━ 🛒 ไม่มีสินค้าในตะกร้า ━━━</div>
+          ) : (
+            cart.map((item, idx) => (
+              <div
+                key={item.key}
+                style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  padding: '1rem 0.75rem',
+                  borderBottom: idx !== cart.length - 1 ? '1px solid #e0e0e0' : 'none', // Divider
+                }}>
+                <div className={styles.details}>
+                  <div className={styles.name}>{item.name}</div>
+                  <ul style={{ margin: 0, paddingLeft: '0.25rem', fontSize: '0.85rem', color: '#000' }}>
+                    {/* รายละเอียดสินค้า */}
 
-                  {/* ✅ ถ้าเป็นนามบัตร */}
-                  {item.category === 'นามบัตร' && (
-                    <>
-                      <li>
-                        📦 ขนาด :{' '}
-                        {item.variant?.custom
-                          ? `${item.variant?.width} × ${item.variant?.height} mm`
-                          : item.variant?.name || 'ไม่ระบุ'}
-                      </li>
-                      <li>📄 วัสดุ : {item.material || 'ไม่ระบุ'}</li>
-                      <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
-                      <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
-                      <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
-                    </>
-                  )}
+                    {/* ✅ ถ้าเป็นนามบัตร */}
+                    {item.category === 'นามบัตร' && (
+                      <>
+                        <li>📦 ขนาด : {item.variant?.custom ? `${item.variant?.width} × ${item.variant?.height} mm` : item.variant?.name || 'ไม่ระบุ'}</li>
+                        <li>📄 วัสดุ : {item.material || 'ไม่ระบุ'}</li>
+                        <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
+                        <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
+                        <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+                      </>
+                    )}
 
-                  {/* ✅ ถ้าเป็นตรายาง */}
-                  {item.category === 'ตรายาง' && (
-                    <>
-                      <li>🪧 ประเภท : {item.type === 'inked' ? 'หมึกในตัว' : 'ธรรมดา'}</li>
-                      <li>🔲 รูปทรง : {item.shape === 'circle' ? 'วงกลม' : 'สี่เหลี่ยม'}</li>
-                      <li>📏 ขนาด : {item.size || 'ไม่ระบุ'}</li>
-                      <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
-                    </>
-                  )}
+                    {/* ✅ ถ้าเป็นตรายาง */}
+                    {item.category === 'ตรายาง' && (
+                      <>
+                        <li>🪧 ประเภท : {item.type === 'inked' ? 'หมึกในตัว' : 'ธรรมดา'}</li>
+                        <li>🔲 รูปทรง : {item.shape === 'circle' ? 'วงกลม' : 'สี่เหลี่ยม'}</li>
+                        <li>📏 ขนาด : {item.size || 'ไม่ระบุ'}</li>
+                        <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+                      </>
+                    )}
 
-                  {/* ✅ ถ้าเป็นปริ้นท์เอกสาร */}
-                  {item.category === 'ปริ้นท์เอกสาร' && (
-                    <>
-                      <li>
-                        📦 ขนาด :{' '}
-                        {item.variant?.custom
-                          ? `${item.variant?.width} × ${item.variant?.height} mm`
-                          : item.variant?.name || 'ไม่ระบุ'}
-                      </li>
-                      <li>📄 ชนิดกระดาษ : {item.material || 'ไม่ระบุ'}</li>
-                      <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
-                      <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
-                      <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
-                    </>
-                  )}
+                    {/* ✅ ถ้าเป็นปริ้นท์เอกสาร */}
+                    {item.category === 'ปริ้นท์เอกสาร' && (
+                      <>
+                        <li>📦 ขนาด : {item.variant?.custom ? `${item.variant?.width} × ${item.variant?.height} mm` : item.variant?.name || 'ไม่ระบุ'}</li>
+                        <li>📄 ชนิดกระดาษ : {item.material || 'ไม่ระบุ'}</li>
+                        <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
+                        <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
+                        <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+                      </>
+                    )}
 
-                  {/* การชำระ */}
-                  <li style={{ whiteSpace: 'nowrap' }}>
-                    💰 การชำระ :{' '}
-                    {item.fullPayment
-                      ? `เต็มจำนวน (${Number(item.totalPrice).toFixed(2)}฿)`
-                      : `มัดจำ ${Number(item.deposit || 0).toFixed(2)}฿ (คงเหลือ ${Number(item.remaining || 0).toFixed(2)}฿)`}
-                  </li>
-                </ul>
-                <div
-                  style={{
-                    display: 'flex',
-                    gap: '1rem',
-                    marginTop: '0.7rem',
-                    justifyContent: 'center',
-                    alignItems: 'center',
-                    width: '100%',
-                    marginLeft: 28,
-                  }}>
-                  <ButtonEdit onClick={() => onEditItem?.(item)} />
-                  <ButtonDelete onClick={() => onDeleteItem?.(item.key)} />
+                    {/* ✅ ถ้าเป็นปริ้นท์โพสการ์ด */}
+                    {item.category === 'โพสการ์ด' && (
+                      <>
+                        <li>📦 ขนาด : {item.variant?.custom ? `${item.variant?.width} × ${item.variant?.height} นิ้ว` : item.variant?.name || 'ไม่ระบุ'}</li>
+                        <li>📄 ชนิดกระดาษ : {item.material || 'ไม่ระบุ'}</li>
+                        <li>🗂️ จำนวนชุด : {item.setCount || '-'} ชุด</li> {/* ✅ โชว์จำนวน Set */}
+                      </>
+                    )}
+
+                    {/* ✅ ถ้าเป็นอิงค์เจ็ท */}
+                    {item.category === 'อิงค์เจ็ท' && (
+                      <>
+                        {/* 📐 ขนาด (วนลูป sizeFlex) */}
+                        <li>
+                          📐 ขนาด :
+                          {item.sizeFlex && item.sizeFlex.length > 0 ? (
+                            <ul style={{ marginLeft: '1.5rem' }}>
+                              {item.sizeFlex.map((sz, idx) => (
+                                <li key={idx}>
+                                  {sz.width} × {sz.height} mm
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            'ไม่ระบุ'
+                          )}
+                        </li>
+
+                        {/* 🪧 ชนิดวัสดุ */}
+                        <li>
+                          🪧 ชนิดวัสดุ :{' '}
+                          {(() => {
+                            switch (item.inkjetType) {
+                              case 'paper-gloss':
+                                return 'PAPER GLOSS';
+                              case 'pp-board':
+                                return 'PP + BOARD';
+                              case 'pp-banner':
+                                return 'PP BANNER';
+                              case 'vinyl':
+                                return 'VINYL';
+                              case 'pp-passwood':
+                                return 'PP + PASSWOOD';
+                              case 'backlid':
+                                return 'BACKLID';
+                              case 'canvas':
+                                return 'CANVAS';
+                              default:
+                                return 'ไม่ระบุ';
+                            }
+                          })()}
+                        </li>
+
+                        {/* 📝 รายละเอียดสินค้า */}
+                        {item.productNote && <li>📝 รายละเอียด : {item.productNote}</li>}
+                      </>
+                    )}
+
+                    {item.name === 'สติ๊กเกอร์ PVC Inkjet' && (
+                      <>
+                        {/* ขนาด */}
+                        <li>
+                          📐 ขนาด :
+                          {item.sizeFlex && item.sizeFlex.length > 0 ? (
+                            <ul style={{ marginLeft: '1.5rem' }}>
+                              {item.sizeFlex.map((sz, idx) => (
+                                <li key={idx}>
+                                  {sz.width} × {sz.height} mm
+                                </li>
+                              ))}
+                            </ul>
+                          ) : (
+                            'ไม่ระบุ'
+                          )}
+                        </li>
+
+                        {/* ชนิดสติ๊กเกอร์ */}
+                        <li>🎨 ชนิดสติ๊กเกอร์ : {item.stickerPVCType || 'ไม่ระบุ'}</li>
+
+                        {/* จำนวนชิ้น */}
+                        <li>🔢 จำนวน : {item.qty || 0} ชิ้น</li>
+
+                        {/* รายละเอียดสินค้า */}
+                        <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+                      </>
+                    )}
+
+                    {/* การชำระ */}
+                    <li style={{ whiteSpace: 'nowrap' }}>
+                      💰 การชำระ :{' '}
+                      {item.fullPayment ? `เต็มจำนวน (${Number(item.totalPrice).toFixed(2)}฿)` : `มัดจำ ${Number(item.deposit || 0).toFixed(2)}฿ (คงเหลือ ${Number(item.remaining || 0).toFixed(2)}฿)`}
+                    </li>
+                  </ul>
+                  <div
+                    style={{
+                      display: 'flex',
+                      gap: '1rem',
+                      marginTop: '0.7rem',
+                      justifyContent: 'center',
+                      alignItems: 'center',
+                      width: '100%',
+                      marginLeft: 28,
+                    }}>
+                    <ButtonEdit onClick={() => onEditItem?.(item)} />
+                    <ButtonDelete onClick={() => onDeleteItem?.(item.key)} />
+                  </div>
+                </div>
+
+                <div className={styles.quantity}>
+                  <div>x{item.qty}</div>
+                  <span className={styles.price}>฿{(Number(item.unitPrice) * Number(item.qty || 0)).toFixed(2)}</span>
                 </div>
               </div>
-
-              <div className={styles.quantity}>
-                <div>x{item.qty}</div>
-                <span className={styles.price}>
-                  ฿{(Number(item.unitPrice) * Number(item.qty || 0)).toFixed(2)}
-                </span>
-              </div>
-            </div>
-          ))}
+            ))
+          )}
         </div>
-      </div>
-
-      {/* ✅ Coupon Section */}
-      <div className={`${styles.card} ${styles.coupons}`}>
-        <div className={styles.title}>💸 โค้ดส่วนลด</div>
-        <form
-          onSubmit={e => {
-            e.preventDefault();
-            handleApplyDiscount();
-          }}>
-          <input
-            type="text"
-            placeholder="เช่น 10% หรือ -20"
-            value={discountInput}
-            onChange={e => setDiscountInput(e.target.value)}
-            className={styles.input_field}
-            style={{ color: '#000' }}
-          />
-          <button type="submit" className={styles['checkout-btn']}>
-            ยืนยัน
-          </button>
-        </form>
-        {discountType === 'percent' && (
-          <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginTop: '4px' }}>
-            ใช้ส่วนลด {discountValue}%
-          </p>
-        )}
-        {discountType === 'fixed' && (
-          <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginTop: '4px' }}>
-            ใช้ส่วนลด {discountValue.toFixed(2)} บาท
-          </p>
-        )}
       </div>
 
       {/* ✅ Payment Section */}
@@ -305,9 +344,7 @@ const CheckOutRight: React.FC<Props> = ({
               }}
               className="w-4 h-4 accent-black"
             />
-            <label
-              htmlFor="promptpay"
-              className="flex items-center gap-2 cursor-pointer text-black">
+            <label htmlFor="promptpay" className="flex items-center gap-2 cursor-pointer text-black">
               <span className="text-xl">📱</span>
               <span className="font-medium">PromptPay</span>
             </label>
@@ -360,6 +397,23 @@ const CheckOutRight: React.FC<Props> = ({
         </div>
       </div>
 
+      {/* ✅ Coupon Section */}
+      <div className={`${styles.card} ${styles.coupons}`}>
+        <div className={styles.title}>💸 โค้ดส่วนลด</div>
+        <form
+          onSubmit={e => {
+            e.preventDefault();
+            handleApplyDiscount();
+          }}>
+          <input type="text" placeholder="เช่น 10% หรือ -20" value={discountInput} onChange={e => setDiscountInput(e.target.value)} className={styles.input_field} style={{ color: '#000' }} />
+          <button type="submit" className={styles['checkout-btn']}>
+            ยืนยัน
+          </button>
+        </form>
+        {discountType === 'percent' && <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginTop: '4px' }}>ใช้ส่วนลด {discountValue}%</p>}
+        {discountType === 'fixed' && <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginTop: '4px' }}>ใช้ส่วนลด {discountValue.toFixed(2)} บาท</p>}
+      </div>
+
       {/* ✅ Checkout Section */}
       <div className={`${styles.card} ${styles.checkout}`}>
         <div className={styles.title}>✅ ชำระเงิน</div>
@@ -386,25 +440,15 @@ const CheckOutRight: React.FC<Props> = ({
           </div>
         )}
 
-        <div
-          className={styles['checkout--footer']}
-          style={{ flexDirection: 'column', alignItems: 'stretch', gap: '0.5rem' }}>
+        <div className={styles['checkout--footer']} style={{ flexDirection: 'column', alignItems: 'stretch', gap: '0.5rem' }}>
           <label className={styles.price}>
             <span className="currency">฿</span>
             {totalDeposit.toFixed(2)}
           </label>
 
-          {totalRemaining > 0 && (
-            <p style={{ textAlign: 'center', margin: 0, color: '#d32f2f', fontWeight: 600 }}>
-              ค้างชำระ {totalRemaining.toFixed(2)} บาท
-            </p>
-          )}
+          {totalRemaining > 0 && <p style={{ textAlign: 'center', margin: 0, color: '#d32f2f', fontWeight: 600 }}>ค้างชำระ {totalRemaining.toFixed(2)} บาท</p>}
 
-          <button
-            className={styles['checkout-btn']}
-            onClick={() => onCheckout(payment)}
-            disabled={cart.length === 0}
-            style={{ width: '100%' }}>
+          <button className={styles['checkout-btn']} onClick={() => onCheckout(payment)} disabled={cart.length === 0} style={{ width: '100%' }}>
             ชำระเงิน
           </button>
         </div>

@@ -12,14 +12,7 @@ const FilePreview = (file: File) => {
   const ext = file.name.split('.').pop()?.toLowerCase();
 
   if (file.type.startsWith('image/')) {
-    return (
-      <Avatar
-        variant="rounded"
-        src={URL.createObjectURL(file)}
-        alt={file.name}
-        sx={{ width: 50, height: 50 }}
-      />
-    );
+    return <Avatar variant="rounded" src={URL.createObjectURL(file)} alt={file.name} sx={{ width: 50, height: 50 }} />;
   }
 
   if (ext === 'pdf') {

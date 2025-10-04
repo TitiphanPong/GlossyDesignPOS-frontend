@@ -1,17 +1,6 @@
 'use client';
 import React, { useEffect, useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Select,
-  MenuItem,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Select, MenuItem, Stack, Typography } from '@mui/material';
 
 type Props = {
   open: boolean;
@@ -59,16 +48,8 @@ export default function PayRemainingModal({ open, orderId, remaining, onClose, o
       <DialogTitle>💵 ชำระยอดคงเหลือ</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2}>
-          <Typography color="warning.main">
-            คงเหลือ: ฿{remaining.toLocaleString('th-TH')}
-          </Typography>
-          <TextField
-            label="จำนวนเงิน"
-            type="number"
-            value={amount}
-            onChange={e => setAmount(Number(e.target.value))}
-            fullWidth
-          />
+          <Typography color="warning.main">คงเหลือ: ฿{remaining.toLocaleString('th-TH')}</Typography>
+          <TextField label="จำนวนเงิน" type="number" value={amount} onChange={e => setAmount(Number(e.target.value))} fullWidth />
           <Select value={method} onChange={e => setMethod(e.target.value as any)} fullWidth>
             <MenuItem value="cash">เงินสด</MenuItem>
             <MenuItem value="promptpay">PromptPay</MenuItem>

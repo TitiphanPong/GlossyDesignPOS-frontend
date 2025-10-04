@@ -57,19 +57,19 @@ interface FolderUsage {
 
 const getIconPathByExtension = (ext: string) => {
   const extMap: Record<string, string> = {
-    pdf: '/icons/pdf.png',
-    txt: '/txt.png',
-    png: '/png.png',
-    jpeg: '/png.png',
-    jpg: '/png.png',
-    ai: '/illustrator.png',
-    psd: '/photoshop.png',
-    xls: '/excel.png',
-    xlsx: '/excel.png',
-    xslm: '/excel.png',
-    csv: '/excel.png',
-    doc: '/docxWord.png',
-    docx: '/docxWord.png',
+    pdf: 'icons/pdf.png',
+    txt: 'icons/txt.png',
+    png: 'icons/png.png',
+    jpeg: 'icons/png.png',
+    jpg: 'icons/png.png',
+    ai: 'icons/illustrator.png',
+    psd: 'icons/photoshop.png',
+    xls: 'icons/excel.png',
+    xlsx: 'icons/excel.png',
+    xslm: 'icons/excel.png',
+    csv: 'icons/excel.png',
+    doc: 'icons/docxWord.png',
+    docx: 'icons/docxWord.png',
   };
 
   return extMap[ext.toLowerCase()] || 'https://cdn-icons-png.flaticon.com/512/337/337951.png';
@@ -122,10 +122,7 @@ export default function UploadedFilesPage() {
 
   const fetchQuota = async () => {
     try {
-      const [quotaRes, folderRes] = await Promise.all([
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/upload/quota`),
-        axios.get(`${process.env.NEXT_PUBLIC_API_URL}/upload/quota/folders`),
-      ]);
+      const [quotaRes, folderRes] = await Promise.all([axios.get(`${process.env.NEXT_PUBLIC_API_URL}/upload/quota`), axios.get(`${process.env.NEXT_PUBLIC_API_URL}/upload/quota/folders`)]);
       setQuota(quotaRes.data);
       setFolderUsage(folderRes.data);
     } catch (err) {
@@ -233,14 +230,7 @@ export default function UploadedFilesPage() {
       field: 'category',
       headerName: 'ประเภทงาน',
       width: 200,
-      renderCell: params => (
-        <Chip
-          size="small"
-          icon={getCategoryIcon(params.value)}
-          label={params.value}
-          color={getCategoryColor(params.value)}
-        />
-      ),
+      renderCell: params => <Chip size="small" icon={getCategoryIcon(params.value)} label={params.value} color={getCategoryColor(params.value)} />,
     },
     {
       field: 'files',
@@ -280,11 +270,7 @@ export default function UploadedFilesPage() {
                     alignItems: 'left',
                     width: 60,
                   }}>
-                  <Link
-                    href={previewUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    underline="none">
+                  <Link href={previewUrl} target="_blank" rel="noopener noreferrer" underline="none">
                     <img
                       src={thumbnailUrl}
                       alt={name}
@@ -302,12 +288,7 @@ export default function UploadedFilesPage() {
                       }}
                     />
                   </Link>
-                  <Typography
-                    variant="caption"
-                    noWrap
-                    maxWidth={50}
-                    textAlign="center"
-                    sx={{ mt: 0.5 }}>
+                  <Typography variant="caption" noWrap maxWidth={50} textAlign="center" sx={{ mt: 0.5 }}>
                     {name}
                   </Typography>
                 </Box>
@@ -321,8 +302,7 @@ export default function UploadedFilesPage() {
       field: 'createdAt',
       headerName: 'วันที่',
       width: 180,
-      renderCell: (params: any) =>
-        new Date(params.value).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }),
+      renderCell: (params: any) => new Date(params.value).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }),
     },
     {
       field: 'status',
@@ -362,11 +342,7 @@ export default function UploadedFilesPage() {
 
   const filteredRows = rows.filter(row => {
     const q = search.toLowerCase();
-    return (
-      row.customerName.toLowerCase().includes(q) ||
-      row.category.toLowerCase().includes(q) ||
-      row.phone.includes(q)
-    );
+    return row.customerName.toLowerCase().includes(q) || row.category.toLowerCase().includes(q) || row.phone.includes(q);
   });
 
   return (
@@ -475,8 +451,7 @@ export default function UploadedFilesPage() {
             {quota && (
               <>
                 <Typography fontWeight={700}>
-                  ใช้ไป {(quota.usage / 1024 ** 3).toFixed(2)} GB / ทั้งหมด{' '}
-                  {(quota.limit / 1024 ** 3).toFixed(2)} GB
+                  ใช้ไป {(quota.usage / 1024 ** 3).toFixed(2)} GB / ทั้งหมด {(quota.limit / 1024 ** 3).toFixed(2)} GB
                 </Typography>
 
                 <Typography variant="body2" color="text.secondary">
@@ -489,13 +464,7 @@ export default function UploadedFilesPage() {
       </Box>
 
       <Box display="flex" justifyContent="space-between" mb={2}>
-        <TextField
-          size="small"
-          placeholder="Search..."
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          sx={{ width: 250 }}
-        />
+        <TextField size="small" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} sx={{ width: 250 }} />
         <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchUploads}>
           Refresh
         </Button>
@@ -534,12 +503,7 @@ export default function UploadedFilesPage() {
       </Box>
 
       {/* ✅ Edit Dialog */}
-      <Dialog
-        open={editOpen}
-        onClose={() => setEditOpen(false)}
-        fullWidth
-        maxWidth="xs"
-        PaperProps={{ sx: { borderRadius: 3 } }}>
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
         <DialogTitle sx={{ m: 0, p: 4 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Typography variant="h6" fontWeight="bold">
@@ -553,24 +517,11 @@ export default function UploadedFilesPage() {
 
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <TextField
-              label="ชื่อลูกค้า"
-              fullWidth
-              value={customerName}
-              onChange={e => setCustomerName(e.target.value)}
-            />
-            <TextField
-              label="เบอร์โทร"
-              fullWidth
-              value={phone}
-              onChange={e => setPhone(e.target.value)}
-            />
+            <TextField label="ชื่อลูกค้า" fullWidth value={customerName} onChange={e => setCustomerName(e.target.value)} />
+            <TextField label="เบอร์โทร" fullWidth value={phone} onChange={e => setPhone(e.target.value)} />
             <FormControl fullWidth>
               <InputLabel id="status-label">สถานะ</InputLabel>
-              <Select
-                labelId="status-label"
-                value={status}
-                onChange={e => setStatus(e.target.value as 'completed' | 'pending')}>
+              <Select labelId="status-label" value={status} onChange={e => setStatus(e.target.value as 'completed' | 'pending')}>
                 <MenuItem value="pending">🕒 รอดำเนินการ</MenuItem>
                 <MenuItem value="completed">✅ เสร็จสิ้น</MenuItem>
               </Select>

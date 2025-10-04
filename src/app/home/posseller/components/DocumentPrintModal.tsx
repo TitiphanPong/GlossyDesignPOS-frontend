@@ -1,22 +1,6 @@
 'use client';
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Typography,
-  Button,
-  Stack,
-  Box,
-  Card,
-  TextField,
-  Divider,
-  FormControlLabel,
-  RadioGroup,
-  Radio,
-  CardContent,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Stack, Box, Card, TextField, Divider, FormControlLabel, RadioGroup, Radio, CardContent } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { CartItem } from '../types/cart';
 
@@ -44,13 +28,7 @@ const variantList: VariantOption[] = [
   { name: 'Custom Size', width: 0, height: 0, custom: true },
 ];
 
-export default function DocumentPrintModal({
-  open,
-  onClose,
-  onSelect,
-  productName,
-  initialData,
-}: DocumentPrintModalProps) {
+export default function DocumentPrintModal({ open, onClose, onSelect, productName, initialData }: DocumentPrintModalProps) {
   const [selected, setSelected] = useState<VariantOption | null>(null);
   const [sides, setSides] = useState<'1' | '2'>('1');
   const [material, setMaterial] = useState('other');
@@ -85,13 +63,7 @@ export default function DocumentPrintModal({
       <DialogTitle sx={{ fontWeight: 700 }}>{productName}</DialogTitle>
       <DialogContent dividers>
         {/* การ์ดเลือกขนาด */}
-        <Stack
-          direction="row"
-          spacing={0}
-          justifyContent="center"
-          mb={3}
-          flexWrap="wrap"
-          sx={{ gap: 2 }}>
+        <Stack direction="row" spacing={0} justifyContent="center" mb={3} flexWrap="wrap" sx={{ gap: 2 }}>
           {variantList.map((v, i) => {
             const isSelected = selected?.name === v.name;
             const isCustom = v.custom;
@@ -119,9 +91,7 @@ export default function DocumentPrintModal({
                   transition: '0.25s',
 
                   backgroundColor: isSelected ? '#E3F2FD' : 'white',
-                  boxShadow: isSelected
-                    ? '0 6px 20px rgba(25,118,210,0.2)'
-                    : '0 3px 10px rgba(0,0,0,0.05)',
+                  boxShadow: isSelected ? '0 6px 20px rgba(25,118,210,0.2)' : '0 3px 10px rgba(0,0,0,0.05)',
                   '&:hover': { boxShadow: '0 6px 20px rgba(0,0,0,0.1)' },
                 }}>
                 {/* preview */}
@@ -136,8 +106,7 @@ export default function DocumentPrintModal({
                   {isCustom ? (
                     (() => {
                       const maxSize = 80;
-                      const aspectRatio =
-                        customWidth && customHeight ? customWidth / customHeight : 1;
+                      const aspectRatio = customWidth && customHeight ? customWidth / customHeight : 1;
 
                       let previewW = maxSize;
                       let previewH = maxSize;
@@ -226,13 +195,7 @@ export default function DocumentPrintModal({
         <Typography variant="h6" fontWeight={700} gutterBottom>
           รายละเอียดสินค้า :
         </Typography>
-        <TextField
-          label="รายละเอียดสินค้า"
-          value={productNote}
-          onChange={e => setProductNote(e.target.value)}
-          fullWidth
-          sx={{ mb: 2 }}
-        />
+        <TextField label="รายละเอียดสินค้า" value={productNote} onChange={e => setProductNote(e.target.value)} fullWidth sx={{ mb: 2 }} />
 
         <Divider sx={{ my: 2 }} />
 
@@ -240,12 +203,7 @@ export default function DocumentPrintModal({
           ตัวเลือกเพิ่มเติม :
         </Typography>
 
-        <Stack
-          direction="row"
-          spacing={2}
-          justifyContent="space-between"
-          alignItems="center"
-          sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
           {/* พิมพ์กี่ด้าน */}
           <Box display="flex" alignItems="center">
             <Typography variant="body2" sx={{ mr: 1, fontWeight: 600 }}>
@@ -298,11 +256,7 @@ export default function DocumentPrintModal({
         <Typography variant="h6" fontWeight={700} gutterBottom>
           ชนิดกระดาษ :
         </Typography>
-        <RadioGroup
-          row
-          value={material}
-          onChange={e => setMaterial(e.target.value)}
-          sx={{ justifyContent: 'center', gap: 3 }}>
+        <RadioGroup row value={material} onChange={e => setMaterial(e.target.value)} sx={{ justifyContent: 'center', gap: 3 }}>
           <FormControlLabel value="80g" control={<Radio />} label="80 แกรม" />
           <FormControlLabel value="100g" control={<Radio />} label="100 แกรม" />
           <FormControlLabel value="120g" control={<Radio />} label="120 แกรม" />
@@ -317,17 +271,8 @@ export default function DocumentPrintModal({
           <Typography variant="h6" fontWeight={700} gutterBottom>
             สรุปราคา :
           </Typography>
-          <RadioGroup
-            row
-            value={fullPayment ? 'full' : 'deposit'}
-            onChange={e => setFullPayment(e.target.value === 'full')}
-            sx={{ width: '100%' }}>
-            <Stack
-              direction={{ xs: 'column', md: 'row' }}
-              spacing={3}
-              alignItems="stretch"
-              flexWrap="wrap"
-              sx={{ width: '100%' }}>
+          <RadioGroup row value={fullPayment ? 'full' : 'deposit'} onChange={e => setFullPayment(e.target.value === 'full')} sx={{ width: '100%' }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="stretch" flexWrap="wrap" sx={{ width: '100%' }}>
               {/* มัดจำ */}
               <Card
                 variant="outlined"
@@ -337,20 +282,9 @@ export default function DocumentPrintModal({
                   borderColor: !fullPayment ? 'primary.main' : 'grey.300',
                 }}>
                 <CardContent>
-                  <FormControlLabel
-                    value="deposit"
-                    control={<Radio />}
-                    label={<Typography fontWeight={600}>มัดจำสินค้า</Typography>}
-                  />
+                  <FormControlLabel value="deposit" control={<Radio />} label={<Typography fontWeight={600}>มัดจำสินค้า</Typography>} />
                   <Stack spacing={2} mt={2}>
-                    <TextField
-                      label="ยอดรวม"
-                      type="number"
-                      value={total}
-                      onChange={e => setTotal(Number(e.target.value) || 0)}
-                      fullWidth
-                      disabled={fullPayment}
-                    />
+                    <TextField label="ยอดรวม" type="number" value={total} onChange={e => setTotal(Number(e.target.value) || 0)} fullWidth disabled={fullPayment} />
                     <TextField
                       label="ยอดมัดจำ"
                       type="number"
@@ -376,19 +310,9 @@ export default function DocumentPrintModal({
                   borderColor: fullPayment ? 'primary.main' : 'grey.300',
                 }}>
                 <CardContent>
-                  <FormControlLabel
-                    value="full"
-                    control={<Radio />}
-                    label={<Typography fontWeight={600}>ชำระเต็มจำนวน</Typography>}
-                  />
+                  <FormControlLabel value="full" control={<Radio />} label={<Typography fontWeight={600}>ชำระเต็มจำนวน</Typography>} />
                   <Stack spacing={2} mt={2}>
-                    <TextField
-                      label="จำนวนเงิน"
-                      type="number"
-                      value={total}
-                      onChange={e => setTotal(Number(e.target.value) || 0)}
-                      fullWidth
-                    />
+                    <TextField label="จำนวนเงิน" type="number" value={total} onChange={e => setTotal(Number(e.target.value) || 0)} fullWidth />
                   </Stack>
                 </CardContent>
               </Card>
@@ -400,9 +324,7 @@ export default function DocumentPrintModal({
       {/* แสดงยอดรวมด้านล่าง */}
       <Box sx={{ mt: 2, textAlign: 'right' }}>
         <Typography variant="h6" sx={{ color: 'green', fontWeight: 700, px: 3 }}>
-          {fullPayment
-            ? `ยอดที่ต้องชำระเต็มจำนวน: ${total.toLocaleString()} ฿`
-            : `ยอดที่ต้องชำระมัดจำ: ${deposit.toLocaleString()} ฿`}
+          {fullPayment ? `ยอดที่ต้องชำระเต็มจำนวน: ${total.toLocaleString()} ฿` : `ยอดที่ต้องชำระมัดจำ: ${deposit.toLocaleString()} ฿`}
         </Typography>
       </Box>
 

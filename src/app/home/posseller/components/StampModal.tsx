@@ -1,22 +1,6 @@
 'use client';
 
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Typography,
-  Button,
-  Stack,
-  Box,
-  Card,
-  TextField,
-  Divider,
-  FormControlLabel,
-  RadioGroup,
-  Radio,
-  CardContent,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Stack, Box, Card, TextField, Divider, FormControlLabel, RadioGroup, Radio, CardContent } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { CartItem } from '../types/cart';
 
@@ -28,13 +12,7 @@ interface StampModalProps {
   initialData?: Partial<CartItem>;
 }
 
-export default function StampModal({
-  open,
-  onClose,
-  onSelect,
-  productName,
-  initialData,
-}: StampModalProps) {
+export default function StampModal({ open, onClose, onSelect, productName, initialData }: StampModalProps) {
   const [type, setType] = useState<'normal' | 'inked'>('normal');
   const [shape, setShape] = useState<'circle' | 'square'>('circle');
   const [productNote, setProductNote] = useState('');
@@ -44,6 +22,16 @@ export default function StampModal({
   const [total, setTotal] = useState(0);
   const [deposit, setDeposit] = useState(0);
   const [fullPayment, setFullPayment] = useState(false);
+
+  const typeOptions = [
+    { value: 'normal', label: 'ธรรมดา', description: 'ไม่มีหมึกในตัว', img: '/assets/stamp_normal.png' },
+    { value: 'inked', label: 'หมึกในตัว', description: 'มาพร้อมหมึกในตัว', img: '/assets/stamp_ink.png' },
+  ];
+
+  const shapeOptions = [
+  { value: 'circle', label: 'วงกลม', preview: 'circle' },
+  { value: 'square', label: 'สี่เหลี่ยม', preview: 'square' },
+];
 
   const remaining = Math.max(total - deposit, 0);
 
@@ -74,10 +62,48 @@ export default function StampModal({
         <Typography variant="h6" fontWeight={700} gutterBottom>
           ประเภท :
         </Typography>
-        <RadioGroup row value={type} onChange={e => setType(e.target.value as 'normal' | 'inked')}>
-          <FormControlLabel value="normal" control={<Radio />} label="ธรรมดา" />
-          <FormControlLabel value="inked" control={<Radio />} label="หมึกในตัว" />
-        </RadioGroup>
+        <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap">
+          {typeOptions.map(opt => {
+            const isSelected = type === opt.value;
+            return (
+              <Card
+                key={opt.value}
+                onClick={() => setType(opt.value as 'normal' | 'inked')}
+                sx={{
+                  width: 180,
+                  height: 230,
+                  cursor: 'pointer',
+                  border: isSelected ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                  borderRadius: 2,
+                  backgroundColor: isSelected ? '#E3F2FD' : 'white',
+                  boxShadow: isSelected ? '0 6px 20px rgba(25,118,210,0.2)' : '0 3px 10px rgba(0,0,0,0.05)',
+                  transition: '0.25s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  p: 2,
+                }}>
+                {/* ดึงรูปจาก public/assets */}
+                <Box
+                  component="img"
+                  src={opt.img}
+                  alt={opt.label}
+                  sx={{
+                    width: 120,
+                    height: 120,
+                    objectFit: 'contain',
+                    mb: 2,
+                  }}
+                />
+                <Typography fontWeight={600}>{opt.label}</Typography>
+                <Typography variant="body2" color="text.secondary" mt={1}>
+                  {opt.description}
+                </Typography>
+              </Card>
+            );
+          })}
+        </Stack>
 
         <Divider sx={{ my: 2 }} />
 
@@ -85,13 +111,45 @@ export default function StampModal({
         <Typography variant="h6" fontWeight={700} gutterBottom>
           ชนิด :
         </Typography>
-        <RadioGroup
-          row
-          value={shape}
-          onChange={e => setShape(e.target.value as 'circle' | 'square')}>
-          <FormControlLabel value="circle" control={<Radio />} label="วงกลม" />
-          <FormControlLabel value="square" control={<Radio />} label="สี่เหลี่ยม" />
-        </RadioGroup>
+
+        <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap">
+          {shapeOptions.map(opt => {
+            const isSelected = shape === opt.value;
+            return (
+              <Card
+                key={opt.value}
+                onClick={() => setShape(opt.value as 'circle' | 'square')}
+                sx={{
+                  width: 180 ,
+                  height: 180,
+                  cursor: 'pointer',
+                  border: isSelected ? '2px solid #1976d2' : '1px solid #e0e0e0',
+                  borderRadius: 2,
+                  backgroundColor: isSelected ? '#E3F2FD' : 'white',
+                  boxShadow: isSelected ? '0 6px 20px rgba(25,118,210,0.2)' : '0 3px 10px rgba(0,0,0,0.05)',
+                  transition: '0.25s',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexDirection: 'column',
+                  p: 2,
+                }}>
+                {/* Preview รูปทรง */}
+                <Box
+                  sx={{
+                    width: 80,
+                    height: 80,
+                    border: '2px solid #333',
+                    borderRadius: opt.preview === 'circle' ? '50%' : '8px',
+                    backgroundColor: '#fafafa',
+                    mb: 2,
+                  }}
+                />
+                <Typography fontWeight={600}>{opt.label}</Typography>
+              </Card>
+            );
+          })}
+        </Stack>
 
         <Divider sx={{ my: 2 }} />
 
@@ -99,13 +157,7 @@ export default function StampModal({
           รายละเอียดสินค้า :
         </Typography>
 
-        <TextField
-          label="รายละเอียดสินค้า"
-          value={productNote}
-          onChange={e => setProductNote(e.target.value)}
-          fullWidth
-          sx={{ mb: 2 }}
-        />
+        <TextField label="รายละเอียดสินค้า" value={productNote} onChange={e => setProductNote(e.target.value)} fullWidth sx={{ mb: 2 }} />
 
         <Divider sx={{ my: 2 }} />
 
@@ -115,20 +167,8 @@ export default function StampModal({
         </Typography>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
           <TextField label="ขนาด" value={size} onChange={e => setSize(e.target.value)} fullWidth />
-          <TextField
-            label="ราคา"
-            type="number"
-            value={price}
-            onChange={e => setPrice(Number(e.target.value) || 0)}
-            fullWidth
-          />
-          <TextField
-            label="จำนวน"
-            type="number"
-            value={quantity}
-            onChange={e => setQuantity(Number(e.target.value) || 0)}
-            fullWidth
-          />
+          <TextField label="ราคา" type="number" value={price} onChange={e => setPrice(Number(e.target.value) || 0)} fullWidth />
+          <TextField label="จำนวน" type="number" value={quantity} onChange={e => setQuantity(Number(e.target.value) || 0)} fullWidth />
         </Stack>
 
         <Divider sx={{ my: 2 }} />
@@ -137,17 +177,8 @@ export default function StampModal({
         <Typography variant="h6" fontWeight={700} gutterBottom>
           สรุปราคา :
         </Typography>
-        <RadioGroup
-          row
-          value={fullPayment ? 'full' : 'deposit'}
-          onChange={e => setFullPayment(e.target.value === 'full')}
-          sx={{ width: '100%' }}>
-          <Stack
-            direction={{ xs: 'column', md: 'row' }}
-            spacing={3}
-            alignItems="stretch"
-            flexWrap="wrap"
-            sx={{ width: '100%' }}>
+        <RadioGroup row value={fullPayment ? 'full' : 'deposit'} onChange={e => setFullPayment(e.target.value === 'full')} sx={{ width: '100%' }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="stretch" flexWrap="wrap" sx={{ width: '100%' }}>
             {/* มัดจำ */}
             <Card
               variant="outlined"
@@ -240,9 +271,7 @@ export default function StampModal({
 
       <Box sx={{ mt: 2, textAlign: 'right' }}>
         <Typography variant="h6" sx={{ color: 'green', fontWeight: 700, px: 3 }}>
-          {fullPayment
-            ? `ยอดที่ต้องชำระเต็มจำนวน: ${total.toLocaleString()} ฿`
-            : `ยอดที่ต้องชำระมัดจำ: ${deposit.toLocaleString()} ฿`}
+          {fullPayment ? `ยอดที่ต้องชำระเต็มจำนวน: ${total.toLocaleString()} ฿` : `ยอดที่ต้องชำระมัดจำ: ${deposit.toLocaleString()} ฿`}
         </Typography>
       </Box>
 

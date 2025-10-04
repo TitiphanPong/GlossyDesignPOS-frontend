@@ -1,16 +1,7 @@
 'use client';
 
 import React, { useEffect, useState } from 'react';
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
-  Button,
-  TextField,
-  Stack,
-  Typography,
-} from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField, Stack, Typography } from '@mui/material';
 
 type Props = {
   open: boolean;
@@ -51,26 +42,9 @@ export default function CustomerInfoModal({ open, onClose, onSubmit, customer }:
       <DialogTitle>🧑 ข้อมูลลูกค้า</DialogTitle>
       <DialogContent dividers>
         <Stack spacing={2} sx={{ mt: 1 }}>
-          <TextField
-            label="ชื่อลูกค้า"
-            value={customerName}
-            onChange={e => setCustomerName(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label="เบอร์โทรศัพท์"
-            value={phoneNumber}
-            onChange={e => setPhoneNumber(e.target.value)}
-            fullWidth
-          />
-          <TextField
-            label="หมายเหตุ"
-            value={note}
-            onChange={e => setNote(e.target.value)}
-            fullWidth
-            multiline
-            rows={2}
-          />
+          <TextField label="ชื่อลูกค้า" value={customerName} onChange={e => setCustomerName(e.target.value)} fullWidth />
+          <TextField label="เบอร์โทรศัพท์" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} fullWidth />
+          <TextField label="หมายเหตุ" value={note} onChange={e => setNote(e.target.value)} fullWidth multiline rows={2} />
           <Typography variant="body2" color="text.secondary">
             * กรอกข้อมูลลูกค้าก่อนยืนยันการสั่งซื้อ
           </Typography>
