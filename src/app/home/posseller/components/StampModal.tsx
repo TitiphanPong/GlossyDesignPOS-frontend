@@ -24,8 +24,8 @@ export default function StampModal({ open, onClose, onSelect, productName, initi
   const [fullPayment, setFullPayment] = useState(false);
 
   const typeOptions = [
-    { value: 'normal', label: 'ธรรมดา', description: 'ไม่มีหมึกในตัว', img: '/assets/stamp_Normal.png' },
-    { value: 'inked', label: 'หมึกในตัว', description: 'มาพร้อมหมึกในตัว', img: '/assets/stamp_Ink.png' },
+    { value: 'normal', label: 'ธรรมดา', description: 'ไม่มีหมึกในตัว', img: '/assets/stamp_normal.png' },
+    { value: 'inked', label: 'หมึกในตัว', description: 'มาพร้อมหมึกในตัว', img: '/assets/stamp_ink.png' },
   ];
 
   const shapeOptions = [
