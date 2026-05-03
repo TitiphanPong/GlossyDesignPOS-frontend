@@ -29,7 +29,7 @@
     "fonts": "^0.0.2",
     "framer-motion": "^12.23.12",
     "mongoose": "^8.17.2",
-    "next": "15.4.6",
+    "next": "15.4.10",
     "next-auth": "^4.24.11",
     "promptpay-qr": "^0.5.0",
     "puppeteer": "^24.20.0",
