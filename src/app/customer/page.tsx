@@ -7,7 +7,6 @@ import generatePayload from 'promptpay-qr';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
 import { motion } from 'framer-motion';
-import 'swiper/css';
 import CheckOutPass from './components/checkoutpass';
 import CartItemDetails from './components/CartItemDetails';
 
