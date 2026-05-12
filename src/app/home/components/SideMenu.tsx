@@ -172,23 +172,23 @@ function ItemRow({ item, collapsed, currentPath, theme }: Readonly<ItemRowProps>
       component={Link}
       href={item.href}
       selected={active}
-      sx={{
+      sx={(muiTheme) => ({
         borderRadius: 2,
         mx: collapsed ? 1 : 2,
         mb: 0.5,
         py: 0.5,
         position: 'relative',
-        transition: theme.transitions.create(['background-color', 'transform'], {
+        transition: muiTheme.transitions.create(['background-color', 'transform'], {
           duration: 150,
         }),
         ...(active && {
-          bgcolor: alpha(theme.palette.primary.main, 0.14),
-          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.18) },
+          bgcolor: alpha(muiTheme.palette.primary.main, 0.14),
+          '&:hover': { bgcolor: alpha(muiTheme.palette.primary.main, 0.18) },
         }),
         '&:hover': { transform: 'translateY(-1px)' },
-      }}>
+      })}>
       <Box
-        sx={{
+        sx={(muiTheme) => ({
           position: 'absolute',
           left: 8,
           top: '50%',
@@ -197,9 +197,9 @@ function ItemRow({ item, collapsed, currentPath, theme }: Readonly<ItemRowProps>
           height: 24,
           borderRadius: 2,
           opacity: active ? 1 : 0,
-          transition: theme.transitions.create(['opacity', 'height'], { duration: 200 }),
-          background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-        }}
+          transition: muiTheme.transitions.create(['opacity', 'height'], { duration: 200 }),
+          background: `linear-gradient(180deg, ${muiTheme.palette.primary.main}, ${muiTheme.palette.secondary.main})`,
+        })}
       />
       <ListItemIcon sx={{ minWidth: 36, color: active ? 'primary.main' : 'inherit' }}>{item.icon}</ListItemIcon>
       {!collapsed && (
