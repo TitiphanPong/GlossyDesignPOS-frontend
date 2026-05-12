@@ -29,6 +29,9 @@ export type CartItem = {
   shape?: 'circle' | 'square';
   size?: string;
 
+  // สินค้าพรีเมียม
+  typePremium?: 'roundpin' | 'shirt-screen' | 'coffee-mug' | 'acrylic-sign';
+
   // โพสการ์ด
   setCount?: number; // ✅ จำนวนชุด
 

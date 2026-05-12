@@ -6,9 +6,18 @@ const nextConfig: NextConfig = {
     locales: ['th'],
     defaultLocale: 'th',
   },
-    eslint: {
-      ignoreDuringBuilds: true, // ✅ ตรงนี้ถึงจะทำงาน
-    },
+  eslint: {
+    ignoreDuringBuilds: true, // ✅ ตรงนี้ถึงจะทำงาน
+  },
+  async redirects() {
+    return [
+      {
+        source: '/',
+        destination: '/landing',
+        permanent: false,
+      },
+    ];
+  },
   // config อื่น ๆ ของคุณใส่ตรงนี้ได้
 };
 

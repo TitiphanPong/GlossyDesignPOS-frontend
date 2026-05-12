@@ -27,6 +27,9 @@ type CartItem = {
   shape?: 'circle' | 'square';
   size?: string;
 
+  // สินค้าพรีเมียม
+  typePremium?: 'roundpin' | 'shirt-screen' | 'coffee-mug' | 'acrylic-sign';
+
   // โพสการ์ด
   setCount?: number; // ✅ จำนวนชุด
 
@@ -56,6 +59,164 @@ type Props = {
   onDeleteItem?: (key: string) => void;
 };
 
+const premiumTypeLabel = (typePremium?: CartItem['typePremium']) => {
+  switch (typePremium) {
+    case 'roundpin':
+      return 'เข็มกลัด';
+    case 'shirt-screen':
+      return 'สกรีนเสื้อ';
+    case 'coffee-mug':
+      return 'สกรีนแก้ว';
+    case 'acrylic-sign':
+      return 'ป้ายอะคลิลิก';
+    default:
+      return 'ไม่ระบุ';
+  }
+};
+
+const inkjetTypeLabel = (inkjetType?: CartItem['inkjetType']) => {
+  switch (inkjetType) {
+    case 'paper-gloss':
+      return 'PAPER GLOSS';
+    case 'pp-board':
+      return 'PP + BOARD';
+    case 'pp-banner':
+      return 'PP BANNER';
+    case 'vinyl':
+      return 'VINYL';
+    case 'pp-passwood':
+      return 'PP + PASSWOOD';
+    case 'backlid':
+      return 'BACKLID';
+    case 'canvas':
+      return 'CANVAS';
+    default:
+      return 'ไม่ระบุ';
+  }
+};
+
+function CategoryDetails({ item }: Readonly<{ item: CartItem }>) {
+  return (
+    <>
+      {item.category === 'นามบัตร' && (
+        <>
+          <li>📦 ขนาด : {item.variant?.custom ? `${item.variant?.width} × ${item.variant?.height} mm` : item.variant?.name || 'ไม่ระบุ'}</li>
+          <li>📄 วัสดุ : {item.material || 'ไม่ระบุ'}</li>
+          <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
+          <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
+          <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+        </>
+      )}
+
+      {item.category === 'ตรายาง' && (
+        <>
+          <li>🪧 ประเภท : {item.type === 'inked' ? 'หมึกในตัว' : 'ธรรมดา'}</li>
+          <li>🔲 รูปทรง : {item.shape === 'circle' ? 'วงกลม' : 'สี่เหลี่ยม'}</li>
+          <li>📏 ขนาด : {item.size || 'ไม่ระบุ'}</li>
+          <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+        </>
+      )}
+
+      {item.category === 'สินค้าพรีเมียม' && (
+        <>
+          <li>🪧 ประเภท : {premiumTypeLabel(item.typePremium)}</li>
+          {item.shape && <li>🔲 รูปทรง : {item.shape === 'circle' ? 'วงกลม' : 'สี่เหลี่ยม'}</li>}
+          <li>📏 ขนาด : {item.size || 'ไม่ระบุ'}</li>
+          <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+        </>
+      )}
+
+      {item.category === 'ปริ้นท์เอกสาร' && (
+        <>
+          <li>📦 ขนาด : {item.variant?.custom ? `${item.variant?.width} × ${item.variant?.height} mm` : item.variant?.name || 'ไม่ระบุ'}</li>
+          <li>📄 ชนิดกระดาษ : {item.material || 'ไม่ระบุ'}</li>
+          <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
+          <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
+          <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+        </>
+      )}
+
+      {item.category === 'โพสการ์ด' && (
+        <>
+          <li>📦 ขนาด : {item.variant?.custom ? `${item.variant?.width} × ${item.variant?.height} นิ้ว` : item.variant?.name || 'ไม่ระบุ'}</li>
+          <li>📄 ชนิดกระดาษ : {item.material || 'ไม่ระบุ'}</li>
+          <li>🗂️ จำนวนชุด : {item.setCount || '-'} ชุด</li>
+        </>
+      )}
+
+      {item.category === 'อิงค์เจ็ท' && (
+        <>
+          <li>
+            📐 ขนาด :
+            {item.sizeFlex && item.sizeFlex.length > 0 ? (
+              <ul style={{ marginLeft: '1.5rem' }}>
+                {item.sizeFlex.map(sz => (
+                  <li key={`${sz.width}-${sz.height}`}>
+                    {sz.width} × {sz.height} mm
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              'ไม่ระบุ'
+            )}
+          </li>
+          <li>🪧 ชนิดวัสดุ : {inkjetTypeLabel(item.inkjetType)}</li>
+          {item.productNote && <li>📝 รายละเอียด : {item.productNote}</li>}
+        </>
+      )}
+    </>
+  );
+}
+
+function NamedProductDetails({ item }: Readonly<{ item: CartItem }>) {
+  return (
+    <>
+      {item.name === 'สติ๊กเกอร์ PVC Inkjet' && (
+        <>
+          <li>
+            📐 ขนาด :
+            {item.sizeFlex && item.sizeFlex.length > 0 ? (
+              <ul style={{ marginLeft: '1.5rem' }}>
+                {item.sizeFlex.map(sz => (
+                  <li key={`${sz.width}-${sz.height}`}>
+                    {sz.width} × {sz.height} mm
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              'ไม่ระบุ'
+            )}
+          </li>
+          <li>🎨 ชนิดสติ๊กเกอร์ : {item.stickerPVCType || 'ไม่ระบุ'}</li>
+          <li>🔢 จำนวน : {item.qty || 0} ชิ้น</li>
+          <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+        </>
+      )}
+
+      {item.name === 'สติ๊กเกอร์ PP Laser' && (
+        <>
+          <li>📦 ขนาด : {item.variant?.custom ? `${item.variant?.width} × ${item.variant?.height} mm` : item.variant?.name || 'ไม่ระบุ'}</li>
+          <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
+        </>
+      )}
+    </>
+  );
+}
+
+function CartItemDetailsList({ item }: Readonly<{ item: CartItem }>) {
+  return (
+    <>
+      <CategoryDetails item={item} />
+      <NamedProductDetails item={item} />
+
+      <li style={{ whiteSpace: 'nowrap' }}>
+        💰 การชำระ :{' '}
+        {item.fullPayment ? `เต็มจำนวน (${Number(item.totalPrice).toFixed(2)}฿)` : `มัดจำ ${Number(item.deposit || 0).toFixed(2)}฿ (คงเหลือ ${Number(item.remaining || 0).toFixed(2)}฿)`}
+      </li>
+    </>
+  );
+}
+
 const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onDiscountChange, onPaymentChange, onEditItem, onDeleteItem, onTaxInvoiceChange }) => {
   const [discountInput, setDiscountInput] = useState('');
   const [discountValue, setDiscountValue] = useState(0);
@@ -72,7 +233,12 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
   }, [discount]);
 
   // ✅ ยอดสุทธิหลังส่วนลด
-  const finalTotal = discountType === 'percent' ? total - (total * discountValue) / 100 : discountType === 'fixed' ? Math.max(total - discountValue, 0) : total;
+  let finalTotal = total;
+  if (discountType === 'percent') {
+    finalTotal = total - (total * discountValue) / 100;
+  } else if (discountType === 'fixed') {
+    finalTotal = Math.max(total - discountValue, 0);
+  }
 
   // ✅ คำนวณ VAT และยอดสุทธิ
   const vatAmount = taxInvoice === 'yes' ? finalTotal * 0.07 : 0;
@@ -110,8 +276,8 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
     }
 
     if (value.endsWith('%')) {
-      const percent = parseFloat(value.replace('%', ''));
-      if (!isNaN(percent) && percent >= 0 && percent <= 100) {
+      const percent = Number.parseFloat(value.replace('%', ''));
+      if (!Number.isNaN(percent) && percent >= 0 && percent <= 100) {
         setDiscountValue(percent);
         setDiscountType('percent');
         onDiscountChange?.((total * percent) / 100);
@@ -119,8 +285,8 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
         alert('กรุณากรอกเปอร์เซ็นต์ 0-100%');
       }
     } else if (value.startsWith('-')) {
-      const fixed = parseFloat(value.replace('-', ''));
-      if (!isNaN(fixed) && fixed > 0) {
+      const fixed = Number.parseFloat(value.replace('-', ''));
+      if (!Number.isNaN(fixed) && fixed > 0) {
         setDiscountValue(fixed);
         setDiscountType('fixed');
         onDiscountChange?.(fixed);
@@ -150,137 +316,12 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
                   padding: '1rem 0.75rem',
-                  borderBottom: idx !== cart.length - 1 ? '1px solid #e0e0e0' : 'none', // Divider
+                  borderBottom: idx < cart.length - 1 ? '1px solid #e0e0e0' : 'none',
                 }}>
                 <div className={styles.details}>
                   <div className={styles.name}>{item.name}</div>
                   <ul style={{ margin: 0, paddingLeft: '0.25rem', fontSize: '0.85rem', color: '#000' }}>
-                    {/* รายละเอียดสินค้า */}
-
-                    {/* ✅ ถ้าเป็นนามบัตร */}
-                    {item.category === 'นามบัตร' && (
-                      <>
-                        <li>📦 ขนาด : {item.variant?.custom ? `${item.variant?.width} × ${item.variant?.height} mm` : item.variant?.name || 'ไม่ระบุ'}</li>
-                        <li>📄 วัสดุ : {item.material || 'ไม่ระบุ'}</li>
-                        <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
-                        <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
-                        <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
-                      </>
-                    )}
-
-                    {/* ✅ ถ้าเป็นตรายาง */}
-                    {item.category === 'ตรายาง' && (
-                      <>
-                        <li>🪧 ประเภท : {item.type === 'inked' ? 'หมึกในตัว' : 'ธรรมดา'}</li>
-                        <li>🔲 รูปทรง : {item.shape === 'circle' ? 'วงกลม' : 'สี่เหลี่ยม'}</li>
-                        <li>📏 ขนาด : {item.size || 'ไม่ระบุ'}</li>
-                        <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
-                      </>
-                    )}
-
-                    {/* ✅ ถ้าเป็นปริ้นท์เอกสาร */}
-                    {item.category === 'ปริ้นท์เอกสาร' && (
-                      <>
-                        <li>📦 ขนาด : {item.variant?.custom ? `${item.variant?.width} × ${item.variant?.height} mm` : item.variant?.name || 'ไม่ระบุ'}</li>
-                        <li>📄 ชนิดกระดาษ : {item.material || 'ไม่ระบุ'}</li>
-                        <li>🖨️ พิมพ์ : {item.sides === '2' ? '2 ด้าน' : '1 ด้าน'}</li>
-                        <li>🎨 โหมดสี : {item.colorMode === 'bw' ? 'ขาวดำ' : 'สี'}</li>
-                        <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
-                      </>
-                    )}
-
-                    {/* ✅ ถ้าเป็นปริ้นท์โพสการ์ด */}
-                    {item.category === 'โพสการ์ด' && (
-                      <>
-                        <li>📦 ขนาด : {item.variant?.custom ? `${item.variant?.width} × ${item.variant?.height} นิ้ว` : item.variant?.name || 'ไม่ระบุ'}</li>
-                        <li>📄 ชนิดกระดาษ : {item.material || 'ไม่ระบุ'}</li>
-                        <li>🗂️ จำนวนชุด : {item.setCount || '-'} ชุด</li> {/* ✅ โชว์จำนวน Set */}
-                      </>
-                    )}
-
-                    {/* ✅ ถ้าเป็นอิงค์เจ็ท */}
-                    {item.category === 'อิงค์เจ็ท' && (
-                      <>
-                        {/* 📐 ขนาด (วนลูป sizeFlex) */}
-                        <li>
-                          📐 ขนาด :
-                          {item.sizeFlex && item.sizeFlex.length > 0 ? (
-                            <ul style={{ marginLeft: '1.5rem' }}>
-                              {item.sizeFlex.map((sz, idx) => (
-                                <li key={idx}>
-                                  {sz.width} × {sz.height} mm
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            'ไม่ระบุ'
-                          )}
-                        </li>
-
-                        {/* 🪧 ชนิดวัสดุ */}
-                        <li>
-                          🪧 ชนิดวัสดุ :{' '}
-                          {(() => {
-                            switch (item.inkjetType) {
-                              case 'paper-gloss':
-                                return 'PAPER GLOSS';
-                              case 'pp-board':
-                                return 'PP + BOARD';
-                              case 'pp-banner':
-                                return 'PP BANNER';
-                              case 'vinyl':
-                                return 'VINYL';
-                              case 'pp-passwood':
-                                return 'PP + PASSWOOD';
-                              case 'backlid':
-                                return 'BACKLID';
-                              case 'canvas':
-                                return 'CANVAS';
-                              default:
-                                return 'ไม่ระบุ';
-                            }
-                          })()}
-                        </li>
-
-                        {/* 📝 รายละเอียดสินค้า */}
-                        {item.productNote && <li>📝 รายละเอียด : {item.productNote}</li>}
-                      </>
-                    )}
-
-                    {item.name === 'สติ๊กเกอร์ PVC Inkjet' && (
-                      <>
-                        {/* ขนาด */}
-                        <li>
-                          📐 ขนาด :
-                          {item.sizeFlex && item.sizeFlex.length > 0 ? (
-                            <ul style={{ marginLeft: '1.5rem' }}>
-                              {item.sizeFlex.map((sz, idx) => (
-                                <li key={idx}>
-                                  {sz.width} × {sz.height} mm
-                                </li>
-                              ))}
-                            </ul>
-                          ) : (
-                            'ไม่ระบุ'
-                          )}
-                        </li>
-
-                        {/* ชนิดสติ๊กเกอร์ */}
-                        <li>🎨 ชนิดสติ๊กเกอร์ : {item.stickerPVCType || 'ไม่ระบุ'}</li>
-
-                        {/* จำนวนชิ้น */}
-                        <li>🔢 จำนวน : {item.qty || 0} ชิ้น</li>
-
-                        {/* รายละเอียดสินค้า */}
-                        <li>📝 รายละเอียด : {item.productNote || 'ไม่ระบุ'}</li>
-                      </>
-                    )}
-
-                    {/* การชำระ */}
-                    <li style={{ whiteSpace: 'nowrap' }}>
-                      💰 การชำระ :{' '}
-                      {item.fullPayment ? `เต็มจำนวน (${Number(item.totalPrice).toFixed(2)}฿)` : `มัดจำ ${Number(item.deposit || 0).toFixed(2)}฿ (คงเหลือ ${Number(item.remaining || 0).toFixed(2)}฿)`}
-                    </li>
+                    <CartItemDetailsList item={item} />
                   </ul>
                   <div
                     style={{

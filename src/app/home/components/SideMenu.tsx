@@ -41,18 +41,10 @@ export interface SideMenuProps {
   currentPath?: string;
   /** รายการเมนูทั้งหมด (รองรับ section) */
   items?: NavItem[];
-  /** โปรเจ็กต์/เวิร์คสเปซที่เลือก */
-  project?: string;
-  projects?: string[];
-  onProjectChange?: (value: string) => void;
   /** เริ่มต้นย่อเมนูหรือไม่ */
   defaultCollapsed?: boolean;
   /** callback เวลา toggle ย่อ/ขยาย */
   onCollapsedChange?: (collapsed: boolean) => void;
-  /** ปุ่มสลับธีม */
-  onToggleTheme?: () => void;
-  /** โหมดธีมปัจจุบัน (light/dark) เพื่อแสดงไอคอน) */
-  themeMode?: 'light' | 'dark';
 }
 
 const DEFAULT_ITEMS: NavItem[] = [
@@ -85,12 +77,6 @@ const DEFAULT_ITEMS: NavItem[] = [
 const shimmer = keyframes`
   0%{ background-position: 0% 50% }
   100%{ background-position: 100% 50% }
-`;
-
-const float = keyframes`
-  0% { transform: translateY(0px) }
-  50% { transform: translateY(-2px) }
-  100% { transform: translateY(0px) }
 `;
 
 const StyledDrawer = styled(Drawer, {
@@ -172,7 +158,84 @@ const SectionHeader = ({ text, collapsed }: { text: string; collapsed: boolean }
     </ListSubheader>
   );
 
-export default function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFAULT_ITEMS, defaultCollapsed = false, onCollapsedChange }: SideMenuProps) {
+type ItemRowProps = {
+  item: NavItem;
+  collapsed: boolean;
+  currentPath: string;
+  theme: ReturnType<typeof useTheme>;
+};
+
+function ItemRow({ item, collapsed, currentPath, theme }: Readonly<ItemRowProps>) {
+  const active = currentPath === item.href;
+  const content = (
+    <ListItemButton
+      component={Link}
+      href={item.href}
+      selected={active}
+      sx={{
+        borderRadius: 2,
+        mx: collapsed ? 1 : 2,
+        mb: 0.5,
+        py: 0.5,
+        position: 'relative',
+        transition: theme.transitions.create(['background-color', 'transform'], {
+          duration: 150,
+        }),
+        ...(active && {
+          bgcolor: alpha(theme.palette.primary.main, 0.14),
+          '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.18) },
+        }),
+        '&:hover': { transform: 'translateY(-1px)' },
+      }}>
+      <Box
+        sx={{
+          position: 'absolute',
+          left: 8,
+          top: '50%',
+          transform: 'translateY(-50%)',
+          width: 4,
+          height: 24,
+          borderRadius: 2,
+          opacity: active ? 1 : 0,
+          transition: theme.transitions.create(['opacity', 'height'], { duration: 200 }),
+          background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
+        }}
+      />
+      <ListItemIcon sx={{ minWidth: 36, color: active ? 'primary.main' : 'inherit' }}>{item.icon}</ListItemIcon>
+      {!collapsed && (
+        <ListItemText
+          primary={
+            <Stack direction="row" alignItems="center" spacing={1}>
+              <Typography fontWeight={active ? 400 : 300}>{item.label}</Typography>
+              {item.badge !== undefined && (
+                <Chip
+                  size="small"
+                  label={item.badge}
+                  sx={{
+                    height: 20,
+                    '& .MuiChip-label': { px: 0.75, fontSize: 12, fontWeight: 700 },
+                  }}
+                  color={typeof item.badge === 'number' ? 'primary' : 'secondary'}
+                  variant="filled"
+                />
+              )}
+            </Stack>
+          }
+        />
+      )}
+    </ListItemButton>
+  );
+
+  return collapsed ? (
+    <Tooltip title={item.label} placement="right" arrow>
+      <Box>{content}</Box>
+    </Tooltip>
+  ) : (
+    content
+  );
+}
+
+export default function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFAULT_ITEMS, defaultCollapsed = false, onCollapsedChange }: Readonly<SideMenuProps>) {
   const theme = useTheme();
   const [collapsed, setCollapsed] = React.useState(defaultCollapsed);
 
@@ -189,8 +252,8 @@ export default function SideMenu({ width = 272, miniWidth = 84, currentPath = '/
         });
       }
     };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
+    globalThis.addEventListener('keydown', onKey);
+    return () => globalThis.removeEventListener('keydown', onKey);
   }, [onCollapsedChange]);
 
   const grouped = React.useMemo(() => {
@@ -204,77 +267,6 @@ export default function SideMenu({ width = 272, miniWidth = 84, currentPath = '/
   }, [items]);
 
   const DrawerWidth = collapsed ? miniWidth : width;
-
-  const ItemRow = ({ item }: { item: NavItem }) => {
-    const active = currentPath === item.href;
-    const content = (
-      <ListItemButton
-        component={Link}
-        href={item.href}
-        selected={active}
-        sx={{
-          borderRadius: 2,
-          mx: collapsed ? 1 : 2,
-          mb: 0.5,
-          py: 0.5,
-          position: 'relative',
-          transition: theme.transitions.create(['background-color', 'transform'], {
-            duration: 150,
-          }),
-          ...(active && {
-            bgcolor: alpha(theme.palette.primary.main, 0.14),
-            '&:hover': { bgcolor: alpha(theme.palette.primary.main, 0.18) },
-          }),
-          '&:hover': { transform: 'translateY(-1px)' },
-        }}>
-        {/* active indicator pill (ซ้าย) */}
-        <Box
-          sx={{
-            position: 'absolute',
-            left: 8,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            width: 4,
-            height: 24,
-            borderRadius: 2,
-            opacity: active ? 1 : 0,
-            transition: theme.transitions.create(['opacity', 'height'], { duration: 200 }),
-            background: `linear-gradient(180deg, ${theme.palette.primary.main}, ${theme.palette.secondary.main})`,
-          }}
-        />
-        <ListItemIcon sx={{ minWidth: 36, color: active ? 'primary.main' : 'inherit' }}>{item.icon}</ListItemIcon>
-        {!collapsed && (
-          <ListItemText
-            primary={
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <Typography fontWeight={active ? 400 : 300}>{item.label}</Typography>
-                {item.badge !== undefined && (
-                  <Chip
-                    size="small"
-                    label={item.badge}
-                    sx={{
-                      height: 20,
-                      '& .MuiChip-label': { px: 0.75, fontSize: 12, fontWeight: 700 },
-                    }}
-                    color={typeof item.badge === 'number' ? 'primary' : 'secondary'}
-                    variant="filled"
-                  />
-                )}
-              </Stack>
-            }
-          />
-        )}
-      </ListItemButton>
-    );
-
-    return collapsed ? (
-      <Tooltip title={item.label} placement="right" arrow>
-        <Box>{content}</Box>
-      </Tooltip>
-    ) : (
-      content
-    );
-  };
 
   return (
     <StyledDrawer
@@ -322,7 +314,7 @@ export default function SideMenu({ width = 272, miniWidth = 84, currentPath = '/
           {grouped.map(([section, list]) => (
             <List key={section} subheader={<SectionHeader text={section} collapsed={collapsed} />} sx={{ px: 0.5 }}>
               {list.map(item => (
-                <ItemRow key={item.href} item={item} />
+                <ItemRow key={item.href} item={item} collapsed={collapsed} currentPath={currentPath} theme={theme} />
               ))}
             </List>
           ))}

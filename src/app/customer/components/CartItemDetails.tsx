@@ -1,6 +1,6 @@
 'use client';
 
-import { Typography, Box, Paper, Stack } from '@mui/material';
+import { Typography, Paper, Stack } from '@mui/material';
 import { cartFieldConfigs } from './cartFieldConfigs';
 
 type CartItem = {
@@ -14,7 +14,9 @@ type CartItem = {
   [key: string]: any; // dynamic fields
 };
 
-export default function CartItemDetails({ item }: { item: CartItem }) {
+type CartItemDetailsProps = Readonly<{ item: CartItem }>;
+
+export default function CartItemDetails({ item }: CartItemDetailsProps) {
   const fields = cartFieldConfigs[item.category || ''] || [];
 
   return (

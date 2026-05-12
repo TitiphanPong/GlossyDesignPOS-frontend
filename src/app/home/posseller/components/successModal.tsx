@@ -6,21 +6,19 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ReplayIcon from '@mui/icons-material/Replay';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import { PaymentMethod, PendingOrderDraft } from '../../../../lib/contracts';
 
 type Props = {
   open: boolean;
-  payment: 'cash' | 'promptpay';
+  payment: PaymentMethod;
   onClose: () => void;
   onPaid: () => void; // callback หลังอัปเดตเป็น paid สำเร็จ
   onNewOrder: () => void; // กดทำรายการใหม่
 };
 
-export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrder }: Props) {
+export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrder }: Readonly<Props>) {
   const [isPaid, setIsPaid] = useState(false);
-  const [amountToPay, setAmountToPay] = useState(0);
-  const [orderData, setOrderData] = useState<any | null>(null);
-  const [hasDeposit, setHasDeposit] = useState(false);
-  const [remaining, setRemaining] = useState(0);
+  const [orderData, setOrderData] = useState<PendingOrderDraft | null>(null);
 
   useEffect(() => {
     if (open) {
@@ -29,10 +27,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       // ✅ โหลดข้อมูล order จาก localStorage
       const orderStr = localStorage.getItem('pendingOrder');
       if (orderStr) {
-        const order = JSON.parse(orderStr);
-        setAmountToPay(order.grandTotal ?? order.total);
-        setHasDeposit((order.depositTotal ?? 0) > 0);
-        setRemaining(order.remainingTotal ?? 0);
+        const order = JSON.parse(orderStr) as PendingOrderDraft;
         setOrderData(order);
       }
     }
@@ -50,7 +45,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       const orderStr = localStorage.getItem('pendingOrder');
 
       if (!orderStr) return;
-      const order = JSON.parse(orderStr);
+      const order = JSON.parse(orderStr) as PendingOrderDraft;
       const isPartial = (order.remainingTotal ?? 0) > 0;
 
       const base = process.env.NEXT_PUBLIC_API_URL ?? '';
@@ -82,7 +77,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           vatAmount: order.vatAmount,
         })
       );
-      window.dispatchEvent(new Event('storage')); // ✅ บังคับให้ CustomerScreen รับรู้
+      globalThis.dispatchEvent(new Event('storage')); // ✅ บังคับให้ CustomerScreen รับรู้
       setIsPaid(true);
       onPaid();
     } catch (err) {
@@ -92,7 +87,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 3, p: 1 } } }}>
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
           {isPaid ? <CheckCircleIcon color="success" fontSize="large" /> : <HourglassEmptyIcon color="warning" fontSize="large" />}

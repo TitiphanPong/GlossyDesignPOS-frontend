@@ -1,44 +1,27 @@
 'use client';
 
-import { Box, Card, CardContent, Typography, Chip, Table, TableBody, TableCell, TableHead, TableRow, Paper, CircularProgress } from '@mui/material';
+import { Box, Card, CardContent, Typography, Chip, Table, TableBody, TableCell, TableHead, TableRow, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
 import { useEffect, useState } from 'react';
 import dayjs from 'dayjs';
-
-type CartItem = {
-  name: string;
-  category?: string;
-  quantity?: number;
-  price?: number;
-};
-
-type Order = {
-  _id: string;
-  orderId: string;
-  customerName?: string;
-  status: 'pending' | 'paid' | 'cancelled' | 'partial';
-  total?: number;
-  payment: 'cash' | 'promptpay';
-  createdAt: string;
-  cart?: CartItem[]; // ✅ เพิ่ม cart เข้าไป
-};
-
-type Summary = {
-  salesToday?: number;
-  cashToday?: number;
-  promptPayToday?: number;
-  completed?: number;
-};
+import { ApiOrder, OrdersSummary } from '../../lib/contracts';
 
 // ✅ ฟังก์ชันช่วย format เงินแบบปลอดภัย
 const money = (n?: number) => (typeof n === 'number' ? `฿ ${n.toLocaleString('th-TH')}` : '฿ 0');
 
+const statusChipByOrderStatus: Record<ApiOrder['status'], { label: string; color: 'success' | 'info' | 'warning' | 'error' }> = {
+  paid: { label: 'เสร็จสิ้น', color: 'success' },
+  pending: { label: 'รอดำเนินการ', color: 'info' },
+  partial: { label: 'ค้างชำระ', color: 'warning' },
+  cancelled: { label: 'ยกเลิก', color: 'error' },
+};
+
 export default function DashboardPage() {
-  const [summary, setSummary] = useState<Summary | null>(null);
-  const [recentOrders, setRecentOrders] = useState<Order[]>([]);
+  const [summary, setSummary] = useState<OrdersSummary | null>(null);
+  const [recentOrders, setRecentOrders] = useState<ApiOrder[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -51,7 +34,7 @@ export default function DashboardPage() {
 
         if (Array.isArray(orders)) {
           // ✅ เรียงจาก createdAt ล่าสุด → เก่าสุด
-          const sorted = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+          const sorted = [...(orders as ApiOrder[])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
           // ✅ เอามาแค่ 4 ออเดอร์ล่าสุด
           setRecentOrders(sorted.slice(0, 4));
@@ -120,7 +103,7 @@ export default function DashboardPage() {
           mb: 4,
         }}>
         {summaryCards.map((card, index) => (
-          <motion.div key={index} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.2 }}>
+          <motion.div key={card.label} initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.2 }}>
             <Card
               sx={{
                 borderRadius: 4,
@@ -226,15 +209,7 @@ export default function DashboardPage() {
                           : '-'}
                       </TableCell>
                       <TableCell>
-                        {order.status === 'paid' ? (
-                          <Chip label="เสร็จสิ้น" color="success" size="small" />
-                        ) : order.status === 'pending' ? (
-                          <Chip label="รอดำเนินการ" color="info" size="small" />
-                        ) : order.status === 'partial' ? (
-                          <Chip label="ค้างชำระ" color="warning" size="small" />
-                        ) : (
-                          <Chip label="ยกเลิก" color="error" size="small" />
-                        )}
+                        <Chip label={statusChipByOrderStatus[order.status].label} color={statusChipByOrderStatus[order.status].color} size="small" />
                       </TableCell>
                       <TableCell>{money(order.total)}</TableCell>
                       <TableCell>{order.createdAt ? dayjs(order.createdAt).format('DD/MM/YYYY HH:mm') : '-'}</TableCell>

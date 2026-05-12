@@ -21,7 +21,8 @@ import {
   Card,
   CardContent,
 } from '@mui/material';
-import { DataGrid, GridColDef } from '@mui/x-data-grid';
+import Image from 'next/image';
+import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -96,7 +97,6 @@ export default function UploadedFilesPage() {
 
   const [folderUsage, setFolderUsage] = React.useState<Record<string, FolderUsage>>({});
 
-  const [usageByCategory, setUsageByCategory] = React.useState<any>({});
 
   const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
 
@@ -131,12 +131,7 @@ export default function UploadedFilesPage() {
   };
 
   const fetchFolderQuota = async () => {
-    try {
-      const res = await axios.get(`${process.env.NEXT_PUBLIC_API_URL}/upload/quota/folders`);
-      setUsageByCategory(res.data);
-    } catch (err) {
-      console.error('❌ Error fetching folder usage', err);
-    }
+    // (ลบ empty try-catch block ที่ไม่ได้ใช้งาน)
   };
 
   const handleSave = async () => {
@@ -236,7 +231,7 @@ export default function UploadedFilesPage() {
       field: 'files',
       headerName: 'ไฟล์',
       width: 400,
-      renderCell: (params: any) => {
+      renderCell: (params: GridRenderCellParams) => {
         const files = params?.value;
         if (!files || !Array.isArray(files) || files.length === 0) {
           return <Typography color="text.secondary">ไม่มีไฟล์</Typography>;
@@ -251,7 +246,7 @@ export default function UploadedFilesPage() {
               alignItems: 'center',
               justifyContent: 'flex-start', // ✅ ชิดซ้าย
             }}>
-            {files.map((file: any, index: number) => {
+            {files.map((file: UploadedFile) => {
               const fileId = file?.fileId;
               const name = file?.name || '';
               if (!fileId) return null;
@@ -262,29 +257,28 @@ export default function UploadedFilesPage() {
 
               return (
                 <Box
-                  key={index}
+                  key={fileId}
                   sx={{
                     display: 'flex',
-                    // flex: 1,
                     flexDirection: 'column',
                     alignItems: 'left',
                     width: 60,
                   }}>
                   <Link href={previewUrl} target="_blank" rel="noopener noreferrer" underline="none">
-                    <img
+                    <Image
                       src={thumbnailUrl}
                       alt={name}
                       title={name}
-                      onError={e => {
-                        (e.currentTarget as HTMLImageElement).src = getIconPathByExtension(ext);
-                      }}
+                      width={60}
+                      height={60}
                       style={{
-                        width: 60,
-                        height: 60,
                         objectFit: 'cover',
                         borderRadius: 8,
                         border: '1px solid #ccc',
                         backgroundColor: '#f5f5f5',
+                      }}
+                      onError={(e: any) => {
+                        if (e.target) e.target.src = getIconPathByExtension(ext);
                       }}
                     />
                   </Link>
@@ -302,7 +296,7 @@ export default function UploadedFilesPage() {
       field: 'createdAt',
       headerName: 'วันที่',
       width: 180,
-      renderCell: (params: any) => new Date(params.value).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }),
+      renderCell: (params: GridRenderCellParams) => new Date(params.value as string).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }),
     },
     {
       field: 'status',
@@ -362,9 +356,9 @@ export default function UploadedFilesPage() {
               </Stack>
 
               <Stack spacing={1.5}>
-                {Object.entries(folderUsage).map(([name, data], i) => (
+                {Object.entries(folderUsage).map(([name, data]) => (
                   <Box
-                    key={i}
+                    key={name}
                     sx={{
                       display: 'flex',
                       justifyContent: 'space-between',
@@ -415,8 +409,8 @@ export default function UploadedFilesPage() {
                     labelLine={false}
                     onMouseEnter={(_, index) => setActiveIndex(index)}
                     onMouseLeave={() => setActiveIndex(null)}>
-                    {pieData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                    {pieData.map((entry) => (
+                      <Cell key={entry.name} fill={COLORS[pieData.findIndex(e => e.name === entry.name) % COLORS.length]} />
                     ))}
                   </Pie>
 
@@ -427,18 +421,18 @@ export default function UploadedFilesPage() {
                         textAlign: 'center',
                         pointerEvents: 'none',
                       }}>
-                      {activeIndex !== null ? (
-                        <>
-                          <Typography fontWeight={700}>{pieData[activeIndex].name}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {pieData[activeIndex].value} MB
-                          </Typography>
-                        </>
-                      ) : (
+                      {activeIndex === null ? (
                         <>
                           <Typography fontWeight={700}>Storage</Typography>
                           <Typography variant="body2" color="text.secondary">
                             พื้นที่ข้อมูลรวม
+                          </Typography>
+                        </>
+                      ) : (
+                        <>
+                          <Typography fontWeight={700}>{pieData[activeIndex].name}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {pieData[activeIndex].value} MB
                           </Typography>
                         </>
                       )}
@@ -503,7 +497,7 @@ export default function UploadedFilesPage() {
       </Box>
 
       {/* ✅ Edit Dialog */}
-      <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="xs" PaperProps={{ sx: { borderRadius: 3 } }}>
+      <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="xs" slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
         <DialogTitle sx={{ m: 0, p: 4 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
             <Typography variant="h6" fontWeight="bold">
@@ -521,7 +515,7 @@ export default function UploadedFilesPage() {
             <TextField label="เบอร์โทร" fullWidth value={phone} onChange={e => setPhone(e.target.value)} />
             <FormControl fullWidth>
               <InputLabel id="status-label">สถานะ</InputLabel>
-              <Select labelId="status-label" value={status} onChange={e => setStatus(e.target.value as 'completed' | 'pending')}>
+              <Select labelId="status-label" value={status} onChange={e => setStatus(e.target.value)}>
                 <MenuItem value="pending">🕒 รอดำเนินการ</MenuItem>
                 <MenuItem value="completed">✅ เสร็จสิ้น</MenuItem>
               </Select>

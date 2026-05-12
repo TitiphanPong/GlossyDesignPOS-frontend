@@ -3,8 +3,6 @@
 import React from 'react';
 import styles from './loginForm.module.css';
 import styled from 'styled-components';
-import Link from 'next/link';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 
 const StyledWrapper = styled.div``;
 
@@ -22,23 +20,23 @@ const LoginForm: React.FC<LoginFormProps> = ({ username, password, onUsernameCha
       <div className={styles.wrapper}>
         <form className={styles.form} onSubmit={onSubmit}>
           <div className={styles['flex-column']}>
-            <label>Username</label>
+            <label htmlFor="login-username">Username</label>
           </div>
           <div className={styles.inputForm}>
-            <input type="text" className={styles.input} placeholder="Enter your Username" value={username} onChange={onUsernameChange} />
+            <input id="login-username" type="text" className={styles.input} placeholder="Enter your Username" value={username} onChange={onUsernameChange} />
           </div>
 
           <div className={styles['flex-column']}>
-            <label>Password</label>
+            <label htmlFor="login-password">Password</label>
           </div>
           <div className={styles.inputForm}>
-            <input type="password" className={styles.input} placeholder="Enter your Password" value={password} onChange={onPasswordChange} />
+            <input id="login-password" type="password" className={styles.input} placeholder="Enter your Password" value={password} onChange={onPasswordChange} />
           </div>
 
           <div className={styles['flex-row']} style={{ marginLeft: '5px' }}>
             <div>
-              <input type="checkbox" />
-              <label> Remember me </label>
+              <input id="remember-me" type="checkbox" />
+              <label htmlFor="remember-me"> Remember me </label>
             </div>
           </div>
 
@@ -47,7 +45,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ username, password, onUsernameCha
           </button>
 
           <p className={styles.p}>
-            Don't have an account? <span className={styles.span}>Sign Up</span>
+            Don&apos;t have an account? <span className={styles.span}>Sign Up</span>
           </p>
           <p className={styles.p + ' ' + styles.line}></p>
         </form>

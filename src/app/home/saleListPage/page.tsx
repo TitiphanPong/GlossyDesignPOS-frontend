@@ -32,46 +32,33 @@ import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
 import dayjs from 'dayjs';
 import { motion, AnimatePresence } from 'framer-motion';
 import PayRemainingModal from './components/PayRemainingModal';
+import { ApiCartItem, ApiOrder, OrderStatus } from '../../../lib/contracts';
 
-type CartItem = {
-  name: string;
-  unitPrice: number;
-  totalPrice: number;
-  deposit?: number;
-  remaining?: number;
-  fullPayment?: boolean;
-  extra?: Record<string, any>;
-  productNote?: string;
-  category: string;
-  qty: number;
-  sides: string;
-  colorMode: string;
-  material: string;
-  size: string;
-  shape: string;
-  type: string;
+type CartItem = ApiCartItem;
+type Order = ApiOrder & { cart: ApiCartItem[] };
+
+const colorModeLabel = (mode?: string) => {
+  if (mode === 'bw') return 'ขาวดำ';
+  if (mode === 'color') return 'สี';
+  return mode ?? '-';
 };
 
-type Order = {
-  _id: string;
-  orderId: string;
-  customerName?: string;
-  phoneNumber?: string;
-  note?: string;
-  category: string;
-  total: number;
-  remainingTotal: number;
-  discount?: number;
-  payment: 'cash' | 'promptpay';
-  status: 'pending' | 'paid' | 'cancelled';
-  createdAt: string;
-  cart: CartItem[];
+const stampTypeLabel = (type?: string) => {
+  if (type === 'normal') return 'ธรรมดา';
+  if (type === 'inked') return 'หมึกในตัว';
+  return type ?? '-';
+};
+
+const shapeLabel = (shape?: string) => {
+  if (shape === 'square') return 'สี่เหลี่ยม';
+  if (shape === 'circle') return 'วงกลม';
+  return shape ?? '-';
 };
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<'all' | 'paid' | 'debt' | 'pending' | 'cancelled'>('all');
+  const [filter, setFilter] = useState<'all' | 'paid' | 'debt' | OrderStatus>('all');
   const [search, setSearch] = useState('');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
 
@@ -104,7 +91,7 @@ export default function OrdersPage() {
         return res.json();
       })
       .then(data => {
-        setOrders(data);
+        setOrders(data as Order[]);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -158,7 +145,7 @@ export default function OrdersPage() {
       <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} mb={3} flexWrap="wrap">
         <TextField size="small" placeholder="ค้นหาออเดอร์ / ชื่อลูกค้า..." value={search} onChange={e => setSearch(e.target.value)} sx={{ flex: 1, maxWidth: 300 }} />
 
-        <Select size="small" value={filter} onChange={e => setFilter(e.target.value as any)} sx={{ minWidth: 160 }}>
+        <Select size="small" value={filter} onChange={e => setFilter(e.target.value)} sx={{ minWidth: 160 }}>
           <MenuItem value="all">ทั้งหมด</MenuItem>
           <MenuItem value="paid">ชำระแล้ว</MenuItem>
           <MenuItem value="debt">ค้างชำระ</MenuItem>
@@ -201,6 +188,20 @@ export default function OrdersPage() {
                 {paginatedOrders.map(order => {
                   const depositTotal = order.cart.reduce((s, it) => s + (it.deposit || 0), 0);
                   const remainingTotal = order.cart.reduce((s, it) => s + (it.remaining || 0), 0);
+                  let paymentSummary: React.ReactNode = null;
+                  if (depositTotal > 0 && remainingTotal === 0) {
+                    paymentSummary = (
+                      <Typography variant="body2" color="success.main">
+                        ชำระเต็มจำนวน : ฿{order.total.toLocaleString('th-TH')}
+                      </Typography>
+                    );
+                  } else if (depositTotal > 0) {
+                    paymentSummary = (
+                      <Typography variant="body2" color="info.main">
+                        ยอดมัดจำรวม: ฿{depositTotal.toLocaleString('th-TH')}
+                      </Typography>
+                    );
+                  }
 
                   return (
                     <motion.div key={order._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onClick={() => setSelectedOrder(order)} exit={{ opacity: 0, y: -20 }}>
@@ -232,19 +233,7 @@ export default function OrdersPage() {
 
                           <Typography variant="body2">เบอร์โทรศัพท์ : {order.phoneNumber || '-'}</Typography>
                           <Typography variant="body2">หมายเหตุ : {order.note}</Typography>
-                          {depositTotal > 0 ? (
-                            remainingTotal === 0 ? (
-                              <Typography variant="body2" color="success.main">
-                                ชำระเต็มจำนวน : ฿{order.total.toLocaleString('th-TH')}
-                              </Typography>
-                            ) : (
-                              <>
-                                <Typography variant="body2" color="info.main">
-                                  ยอดมัดจำรวม: ฿{depositTotal.toLocaleString('th-TH')}
-                                </Typography>
-                              </>
-                            )
-                          ) : null}
+                          {paymentSummary}
 
                           <Divider sx={{ my: 1 }} />
                           {Object.entries(
@@ -258,8 +247,8 @@ export default function OrdersPage() {
                               <Typography variant="body2" fontWeight={600}>
                                 ประเภทงาน : {category}
                               </Typography>
-                              {items.map((item, i) => (
-                                <Typography key={i} variant="body2" sx={{ pl: 3 }}>
+                              {items.map(item => (
+                                <Typography key={`${item.category}-${item.name}-${item.qty}-${item.totalPrice}-${item.productNote ?? 'none'}`} variant="body2" sx={{ pl: 3 }}>
                                   - {item.productNote || item.name} {item.totalPrice.toLocaleString('th-TH')}฿
                                 </Typography>
                               ))}
@@ -386,7 +375,7 @@ export default function OrdersPage() {
           <Stack spacing={2}>
             {selectedOrder?.cart.map((item, i) => (
               <Box
-                key={i}
+                key={`${item.category}-${item.name}-${item.qty}-${item.totalPrice}-${item.productNote ?? 'none'}`}
                 sx={{
                   p: 2,
                   border: '1px solid #eee',
@@ -402,7 +391,7 @@ export default function OrdersPage() {
                   <Stack spacing={0.5} pl={2}>
                     <Typography variant="body2">• จำนวน: {item.qty} ใบ</Typography>
                     <Typography variant="body2">• ด้าน: {item.sides} ด้าน</Typography>
-                    <Typography variant="body2">• โหมดสี: {item.colorMode === 'bw' ? 'ขาวดำ' : item.colorMode === 'color' ? 'สี' : item.colorMode}</Typography>
+                    <Typography variant="body2">• โหมดสี: {colorModeLabel(item.colorMode)}</Typography>
                     <Typography variant="body2">• วัสดุ: {item.material}</Typography>
                     <Typography variant="body2">• ราคา : {item.totalPrice.toLocaleString()} บาท</Typography>
                   </Stack>
@@ -411,8 +400,8 @@ export default function OrdersPage() {
                 {/* ตรายาง */}
                 {item.category === 'ตรายาง' && (
                   <Stack spacing={0.5} pl={2}>
-                    <Typography variant="body2">• ชนิด: {item.type === 'normal' ? 'ธรรมดา' : item.type === 'inked' ? 'หมึกในตัว' : item.type}</Typography>
-                    <Typography variant="body2">• รูปทรง: {item.shape === 'square' ? 'สี่เหลี่ยม' : item.shape === 'circle' ? 'วงกลม' : item.shape}</Typography>
+                    <Typography variant="body2">• ชนิด: {stampTypeLabel(item.type)}</Typography>
+                    <Typography variant="body2">• รูปทรง: {shapeLabel(item.shape)}</Typography>
                     <Typography variant="body2">• ขนาด: {item.size}</Typography>
                     <Typography variant="body2">• จำนวน: {item.qty} ชิ้น</Typography>
                     <Typography variant="body2">• ราคา : {item.totalPrice.toLocaleString()} บาท</Typography>
@@ -423,7 +412,7 @@ export default function OrdersPage() {
                   <Stack spacing={0.5} pl={2}>
                     <Typography variant="body2">• จำนวน: {item.qty} ใบ</Typography>
                     <Typography variant="body2">• ด้าน: {item.sides} ด้าน</Typography>
-                    <Typography variant="body2">• โหมดสี: {item.colorMode === 'bw' ? 'ขาวดำ' : item.colorMode === 'color' ? 'สี' : item.colorMode}</Typography>
+                    <Typography variant="body2">• โหมดสี: {colorModeLabel(item.colorMode)}</Typography>
                     <Typography variant="body2">• วัสดุ: {item.material}</Typography>
                     <Typography variant="body2">• ราคา : {item.totalPrice.toLocaleString()} บาท</Typography>
                   </Stack>
