@@ -1,58 +1,37 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import { Box } from '@mui/material';
 import { usePathname } from 'next/navigation';
-import SideMenu from './components/SideMenu'; // Side navigation
-import AppBreadCrumb from './components/AppBreadCrumb'; // Breadcrumb
+import SideMenu from './components/SideMenu';
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+export default function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
 
   return (
-    <>
-      {/* ✅ Layout Container */}
+    <Box
+      sx={{
+        display: 'flex',
+        minHeight: '100dvh',
+        bgcolor: 'background.default',
+        overflow: 'hidden',
+      }}>
+      <SideMenu currentPath={pathname ?? '/'} />
+
       <Box
+        component="main"
         sx={{
-          display: 'flex',
-          minHeight: '100dvh',
+          flex: 1,
+          overflow: 'auto',
           bgcolor: 'background.default',
-          overflow: 'hidden', // ✅ ป้องกัน scrollbar แนวนอน
+          minHeight: '100vh',
+          display: 'flex',
+          flexDirection: 'column',
         }}>
-        {/* ✅ Side Menu */}
-        <SideMenu currentPath={pathname ?? '/'} />
-
-        {/* ✅ Main Content Area */}
-        <Box
-          component="main"
-          sx={{
-            flex: 1,
-            mt: 2,
-            px: { xs: 2, md: 3 },
-            overflow: 'hidden',
-            bgcolor: 'background.default',
-            minHeight: '100vh',
-            display: 'flex',
-            flexDirection: 'column',
-          }}>
-          {/* ✅ Breadcrumb */}
-          <AppBreadCrumb />
-
-          {/* ✅ Page Content */}
-          <Box
-            sx={{
-              flex: 1,
-              mt: 3,
-              px: { xs: 0, md: 0 }, // ไม่มี padding ซ้ำใน container
-              overflow: 'auto', // ✅ ให้ scroll ภายในได้ (เช่น ตารางยาว ๆ)
-            }}>
-            {children}
-          </Box>
-
-          {/* ✅ Footer (optional) */}
-          {/* <AppFooter /> */}
+        <Box sx={{ flex: 1 }}>
+          {children}
         </Box>
       </Box>
-    </>
+    </Box>
   );
 }

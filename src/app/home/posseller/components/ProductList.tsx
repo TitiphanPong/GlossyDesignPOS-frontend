@@ -31,8 +31,8 @@ export function ProductList({ loading, filtered, onAddProduct }: ProductListProp
           <Typography>ไม่พบสินค้าในหมวดนี้ / คำค้นนี้</Typography>
         </Box>
       )}
-      {!loading && filtered.map(p => (
-        <Card key={p.id} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', transition: 'all 0.2s ease', '&:hover': { boxShadow: '0 8px 20px rgba(0,0,0,0.15)', transform: 'translateY(-4px)' } }}>
+      {!loading && filtered.map((p, index) => (
+        <Card key={`${p.id || 'product'}-${index}`} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden', boxShadow: '0 4px 12px rgba(0,0,0,0.08)', transition: 'all 0.2s ease', '&:hover': { boxShadow: '0 8px 20px rgba(0,0,0,0.15)', transform: 'translateY(-4px)' } }}>
           <Box sx={{ position: 'relative', height: 250, width: '100%', bgcolor: p.tint || '#f5f5f5', overflow: 'hidden' }}>
             <Image src={p.cover || '/covers/4.png'} alt={p.name} fill unoptimized sizes="(max-width: 900px) 50vw, 25vw" style={{ objectFit: 'cover' }} />
           </Box>
