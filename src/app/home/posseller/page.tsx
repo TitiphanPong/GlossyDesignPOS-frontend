@@ -35,7 +35,7 @@ import PremiumProductModal from './components/premiumProductModal';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
-type Product = {
+export type Product = {
   id: string;
   name: string;
   cover: string;

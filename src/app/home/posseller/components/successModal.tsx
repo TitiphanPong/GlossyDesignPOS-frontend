@@ -19,6 +19,10 @@ type Props = {
 export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrder }: Readonly<Props>) {
   const [isPaid, setIsPaid] = useState(false);
   const [orderData, setOrderData] = useState<PendingOrderDraft | null>(null);
+  const remainingTotal = orderData?.remainingTotal ?? 0;
+  const depositTotal = orderData?.depositTotal ?? 0;
+  const grandTotal = orderData?.grandTotal ?? 0;
+  const amountToShow = remainingTotal > 0 ? depositTotal : grandTotal;
 
   useEffect(() => {
     if (open) {
@@ -100,12 +104,12 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       <DialogContent dividers>
         <Box textAlign="center" py={1}>
           <Typography variant="h3" fontWeight={800} color={isPaid ? 'success.main' : 'warning.main'}>
-            {Number(orderData?.remainingTotal > 0 ? orderData?.depositTotal : orderData?.grandTotal).toFixed(2)} บาท
+            {Number(amountToShow).toFixed(2)} บาท
           </Typography>
 
-          {orderData?.remainingTotal > 0 && (
+          {remainingTotal > 0 && (
             <Typography color="error" fontWeight={600} mt={1}>
-              คงเหลือ: {orderData.remainingTotal.toFixed(2)} บาท
+              คงเหลือ: {remainingTotal.toFixed(2)} บาท
             </Typography>
           )}
 

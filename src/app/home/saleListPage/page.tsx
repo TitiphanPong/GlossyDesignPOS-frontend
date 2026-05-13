@@ -36,6 +36,10 @@ import { ApiCartItem, ApiOrder, OrderStatus } from '../../../lib/contracts';
 
 type CartItem = ApiCartItem;
 type Order = ApiOrder & { cart: ApiCartItem[] };
+const toOrder = (order: ApiOrder): Order => ({
+  ...order,
+  cart: order.cart ?? [],
+});
 
 const colorModeLabel = (mode?: string) => {
   if (mode === 'bw') return 'ขาวดำ';
@@ -54,6 +58,8 @@ const shapeLabel = (shape?: string) => {
   if (shape === 'circle') return 'วงกลม';
   return shape ?? '-';
 };
+
+const formatMoney = (amount?: number) => (amount ?? 0).toLocaleString('th-TH');
 
 export default function OrdersPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -91,7 +97,8 @@ export default function OrdersPage() {
         return res.json();
       })
       .then(data => {
-        setOrders(data as Order[]);
+        const normalized = Array.isArray(data) ? (data as ApiOrder[]).map(toOrder) : [];
+        setOrders(normalized);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -192,7 +199,7 @@ export default function OrdersPage() {
                   if (depositTotal > 0 && remainingTotal === 0) {
                     paymentSummary = (
                       <Typography variant="body2" color="success.main">
-                        ชำระเต็มจำนวน : ฿{order.total.toLocaleString('th-TH')}
+                        ชำระเต็มจำนวน : ฿{formatMoney(order.total)}
                       </Typography>
                     );
                   } else if (depositTotal > 0) {
@@ -238,8 +245,9 @@ export default function OrdersPage() {
                           <Divider sx={{ my: 1 }} />
                           {Object.entries(
                             order.cart.reduce((acc: Record<string, CartItem[]>, item) => {
-                              if (!acc[item.category]) acc[item.category] = [];
-                              acc[item.category].push(item);
+                              const categoryKey = item.category ?? 'ไม่ระบุประเภท';
+                              if (!acc[categoryKey]) acc[categoryKey] = [];
+                              acc[categoryKey].push(item);
                               return acc;
                             }, {})
                           ).map(([category, items]) => (
@@ -249,7 +257,7 @@ export default function OrdersPage() {
                               </Typography>
                               {items.map(item => (
                                 <Typography key={`${item.category}-${item.name}-${item.qty}-${item.totalPrice}-${item.productNote ?? 'none'}`} variant="body2" sx={{ pl: 3 }}>
-                                  - {item.productNote || item.name} {item.totalPrice.toLocaleString('th-TH')}฿
+                                  - {item.productNote || item.name} {formatMoney(item.totalPrice)}฿
                                 </Typography>
                               ))}
                             </Box>
@@ -266,7 +274,7 @@ export default function OrdersPage() {
                             alignItems: 'flex-end',
                           }}>
                           <Typography fontWeight={700} color="success.main">
-                            ยอดรวมทั้งหมด : ฿{order.total.toLocaleString('th-TH')}
+                            ยอดรวมทั้งหมด : ฿{formatMoney(order.total)}
                           </Typography>
 
                           {remainingTotal > 0 ? (
@@ -337,7 +345,7 @@ export default function OrdersPage() {
                         <TableCell>{order.phoneNumber || '-'}</TableCell>
                         <TableCell>{order.category || order.cart?.[0]?.name || '-'}</TableCell>
                         <TableCell>{getPaymentChip(order)}</TableCell>
-                        <TableCell>฿{order.total.toLocaleString('th-TH')}</TableCell>
+                        <TableCell>฿{formatMoney(order.total)}</TableCell>
                         <TableCell>{order.createdAt ? dayjs(order.createdAt).format('DD/MM/YYYY HH:mm') : '-'}</TableCell>
                       </TableRow>
                     ))}
@@ -393,7 +401,7 @@ export default function OrdersPage() {
                     <Typography variant="body2">• ด้าน: {item.sides} ด้าน</Typography>
                     <Typography variant="body2">• โหมดสี: {colorModeLabel(item.colorMode)}</Typography>
                     <Typography variant="body2">• วัสดุ: {item.material}</Typography>
-                    <Typography variant="body2">• ราคา : {item.totalPrice.toLocaleString()} บาท</Typography>
+                    <Typography variant="body2">• ราคา : {formatMoney(item.totalPrice)} บาท</Typography>
                   </Stack>
                 )}
 
@@ -404,7 +412,7 @@ export default function OrdersPage() {
                     <Typography variant="body2">• รูปทรง: {shapeLabel(item.shape)}</Typography>
                     <Typography variant="body2">• ขนาด: {item.size}</Typography>
                     <Typography variant="body2">• จำนวน: {item.qty} ชิ้น</Typography>
-                    <Typography variant="body2">• ราคา : {item.totalPrice.toLocaleString()} บาท</Typography>
+                    <Typography variant="body2">• ราคา : {formatMoney(item.totalPrice)} บาท</Typography>
                   </Stack>
                 )}
                 {/* ปริ้นท์เอกสาร */}
@@ -414,7 +422,7 @@ export default function OrdersPage() {
                     <Typography variant="body2">• ด้าน: {item.sides} ด้าน</Typography>
                     <Typography variant="body2">• โหมดสี: {colorModeLabel(item.colorMode)}</Typography>
                     <Typography variant="body2">• วัสดุ: {item.material}</Typography>
-                    <Typography variant="body2">• ราคา : {item.totalPrice.toLocaleString()} บาท</Typography>
+                    <Typography variant="body2">• ราคา : {formatMoney(item.totalPrice)} บาท</Typography>
                   </Stack>
                 )}
               </Box>
@@ -422,7 +430,7 @@ export default function OrdersPage() {
           </Stack>
         </DialogContent>
         <DialogActions>
-          {selectedOrder && selectedOrder.remainingTotal > 0 && (
+          {selectedOrder && (selectedOrder.remainingTotal ?? 0) > 0 && (
             <Button variant="contained" color="success" onClick={() => setPayDialogOpen(true)}>
               ชำระยอดคงเหลือ
             </Button>
@@ -436,8 +444,9 @@ export default function OrdersPage() {
         remaining={selectedOrder?.cart.reduce((s, i) => s + (i.remaining || 0), 0) || 0}
         onClose={() => setPayDialogOpen(false)}
         onSuccess={updated => {
-          setOrders(prev => prev.map(o => (o._id === updated._id ? updated : o)));
-          setSelectedOrder(updated);
+          const normalized = toOrder(updated);
+          setOrders(prev => prev.map(o => (o._id === normalized._id ? normalized : o)));
+          setSelectedOrder(normalized);
         }}
       />
     </Container>

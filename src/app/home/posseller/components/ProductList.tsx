@@ -1,7 +1,7 @@
 import * as React from 'react';
 import { Box, Card, CardContent, CardActions, Button, Chip, Skeleton, Typography, Stack } from '@mui/material';
 import Image from 'next/image';
-import { Product } from '../page';
+import type { Product } from '../page';
 
 type ProductListProps = Readonly<{
   loading: boolean;
