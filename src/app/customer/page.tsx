@@ -85,7 +85,7 @@ const STATUS_MESSAGES: Record<number, string> = {
 };
 
 const BANNERS = [
-  { title: 'Glossy Design Studio', sub: 'Premium Printing Services', img: '/banners/Banner1.png' },
+  { title: 'Glossy Design', sub: 'Premium Printing Services', img: '/banners/Banner1.png' },
   { title: 'งานสติกเกอร์ครบวงจร', sub: 'Sticker & Label Printing', img: '/banners/Banner8.png' },
   { title: 'งานด่วน รอรับได้เลย', sub: 'Express Print Service', img: '/banners/Banner9.png' },
   { title: 'พิมพ์งานคุณภาพสูง', sub: 'Premium Print Production', img: '/banners/Banner10.png' },
@@ -459,7 +459,7 @@ function IdleScreen() {
                           lineHeight: 1,
                         }}
                       >
-                        Glossy POS
+                        Glossy Design
                       </Typography>
                       <Typography
                         sx={{
@@ -508,7 +508,7 @@ function IdleScreen() {
                         letterSpacing: '0.07em',
                       }}
                     >
-                      ยินดีต้อนรับสู่ Glossy Design Studio
+                      ยินดีต้อนรับสู่ Glossy Design
                     </Typography>
                   </Box>
                 </Box>
@@ -585,7 +585,7 @@ function PaidScreen() {
 
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.55, duration: 0.6 }}>
           <Typography sx={{ fontSize: { xs: '1rem', md: '1.3rem', lg: '1.6rem' }, color: 'rgba(255,255,255,0.55)', mt: { xs: 3, md: 4 }, fontWeight: 300 }}>
-            ขอบคุณที่ใช้บริการ Glossy Design Studio
+            ขอบคุณที่ใช้บริการ Glossy Design
           </Typography>
           <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.95rem' }, color: 'rgba(255,255,255,0.28)', mt: 1.5, letterSpacing: '0.06em' }}>
             หน้าจอจะกลับสู่หน้าหลักโดยอัตโนมัติ...
@@ -809,7 +809,7 @@ function ActiveOrderScreen({
                   textTransform: 'uppercase',
                 }}
               >
-                Glossy POS
+                Glossy Design
               </Typography>
               <Typography sx={{ fontSize: '0.6rem', color: 'rgba(255,255,255,0.38)', letterSpacing: '0.16em', textTransform: 'uppercase', mt: 0.25 }}>
                 Customer Display
@@ -1156,7 +1156,7 @@ function ActiveOrderScreen({
               display: { xs: 'none', sm: 'block' },
             }}
           >
-            ขอบคุณที่ใช้บริการ Glossy Design Studio • โทร 062-562-4598
+            ขอบคุณที่ใช้บริการ Glossy Design • โทร 062-562-4598
           </Typography>
         </Box>
       </motion.div>

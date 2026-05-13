@@ -20,7 +20,7 @@ export default function PrivacyPolicyPage() {
             <Stack spacing={2}>
               <Typography sx={{ fontWeight: 700 }}>1. ข้อมูลที่เราเก็บรวบรวม</Typography>
               <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>
-                เราอาจเก็บข้อมูลบัญชีผู้ใช้งาน ข้อมูลออเดอร์ลูกค้า ไฟล์ที่อัปโหลด หลักฐานการชำระเงิน และข้อมูลทางเทคนิคที่จำเป็นต่อการให้บริการ Glossy POS
+                เราอาจเก็บข้อมูลบัญชีผู้ใช้งาน ข้อมูลออเดอร์ลูกค้า ไฟล์ที่อัปโหลด หลักฐานการชำระเงิน และข้อมูลทางเทคนิคที่จำเป็นต่อการให้บริการของ Glossy Design
               </Typography>
 
               <Typography sx={{ fontWeight: 700 }}>2. วัตถุประสงค์การใช้ข้อมูล</Typography>

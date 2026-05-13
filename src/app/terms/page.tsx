@@ -20,7 +20,7 @@ export default function TermsPage() {
             <Stack spacing={2}>
               <Typography sx={{ fontWeight: 700 }}>1. ขอบเขตการให้บริการ</Typography>
               <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>
-                Glossy POS ให้บริการระบบขายหน้าร้าน การจัดการออเดอร์ การจัดการไฟล์ และเวิร์กโฟลว์การผลิตบนคลาวด์ สำหรับธุรกิจงานพิมพ์และงานป้าย
+                Glossy Design ให้บริการงานสื่อสิ่งพิมพ์ครบวงจร ครอบคลุมงานออกแบบ งานผลิต การรับออเดอร์ และการติดตามสถานะงาน สำหรับธุรกิจงานพิมพ์และงานป้าย
               </Typography>
 
               <Typography sx={{ fontWeight: 700 }}>2. ความรับผิดชอบของบัญชีผู้ใช้งาน</Typography>

@@ -14,7 +14,6 @@ import {
   IconButton,
   Link,
   Stack,
-  Switch,
   Tab,
   Tabs,
   Typography,
@@ -52,13 +51,11 @@ const navItems = [
   { id: 'features', label: 'ฟีเจอร์' },
   { id: 'workflow', label: 'ขั้นตอนการทำงาน' },
   { id: 'showcase', label: 'ตัวอย่างหน้าจอ' },
-  { id: 'pricing', label: 'แพ็กเกจ' },
   { id: 'faq', label: 'คำถามที่พบบ่อย' },
 ];
 
 const footerLinks = [
   { key: 'features', label: 'ฟีเจอร์' },
-  { key: 'pricing', label: 'แพ็กเกจ' },
   { key: 'faq', label: 'คำถามที่พบบ่อย' },
   { key: 'contact', label: 'ติดต่อ' },
   { key: 'terms', label: 'เงื่อนไขการใช้งาน' },
@@ -91,7 +88,7 @@ const solutions = [
 ];
 
 const features = [
-  { title: 'ระบบ POS', desc: 'ขายหน้าร้านไว รองรับตัวเลือกงานพิมพ์และมัดจำครบ', icon: <PointOfSaleRoundedIcon /> },
+  { title: 'รับออเดอร์หน้าร้าน', desc: 'รับงานไว รองรับตัวเลือกงานพิมพ์และมัดจำครบ', icon: <PointOfSaleRoundedIcon /> },
   { title: 'อัปโหลดไฟล์', desc: 'รับไฟล์งานลูกค้าพร้อมตรวจรูปแบบและพรีวิวทันที', icon: <CloudUploadRoundedIcon /> },
   { title: 'ติดตามออเดอร์', desc: 'เห็นสถานะงานตั้งแต่รับงานจนส่งมอบแบบเรียลไทม์', icon: <TrackChangesRoundedIcon /> },
   { title: 'ฐานข้อมูลลูกค้า', desc: 'เก็บประวัติงาน ความชอบ และสั่งซ้ำได้ในหน้าเดียว', icon: <GroupsRoundedIcon /> },
@@ -215,7 +212,6 @@ function SectionTitle({ eyebrow, title, desc, center = false }: SectionTitleProp
 export default function LandingPage() {
   const router = useRouter();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [yearly, setYearly] = React.useState(true);
   const [faqIndex, setFaqIndex] = React.useState(0);
 
   const scrollToSection = React.useCallback((id: string) => {
@@ -234,7 +230,7 @@ export default function LandingPage() {
   }, [scrollToSection]);
 
   const handleBookDemo = React.useCallback(() => {
-    const subject = encodeURIComponent('นัดเดโมระบบ - Glossy POS');
+    const subject = encodeURIComponent('นัดปรึกษางานพิมพ์ - Glossy Design');
     globalThis.location.href = `mailto:${contactEmail}?subject=${subject}`;
   }, []);
 
@@ -261,7 +257,6 @@ export default function LandingPage() {
   const handleFooterLink = React.useCallback(
     (key: string) => {
       if (key === 'features') scrollToSection('features');
-      if (key === 'pricing') scrollToSection('pricing');
       if (key === 'faq') scrollToSection('faq');
       if (key === 'contact') handleBookDemo();
       if (key === 'terms') openUrl(termsUrl);
@@ -332,7 +327,7 @@ export default function LandingPage() {
                 G
               </Box>
               <Typography className={jakarta.className} sx={{ fontWeight: 800, letterSpacing: '0.01em' }}>
-                Glossy POS
+                Glossy Design
               </Typography>
             </Stack>
 
@@ -439,7 +434,7 @@ export default function LandingPage() {
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}>
-                  ระบบ POS สมัยใหม่สำหรับธุรกิจงานพิมพ์
+                  ร้านสื่อสิ่งพิมพ์ครบวงจรสำหรับธุรกิจของคุณ
                 </Typography>
                 <Typography sx={{ mt: 2.4, maxWidth: 610, color: 'rgba(232, 240, 255, 0.8)', fontSize: { xs: '1rem', md: '1.12rem' } }}>
                   จัดการออเดอร์ ไฟล์ลูกค้า การชำระเงิน เวิร์กโฟลว์การผลิต และงานพิมพ์ทั้งหมดได้ในแพลตฟอร์มเดียวที่ออกแบบมาเพื่อความเร็วจริงของร้านพิมพ์
@@ -514,7 +509,7 @@ export default function LandingPage() {
                       background: 'linear-gradient(180deg, rgba(15, 21, 45, 0.88), rgba(10, 13, 31, 0.9))',
                     }}>
                     <Stack direction="row" justifyContent="space-between" alignItems="center" mb={2}>
-                      <Typography sx={{ fontWeight: 700 }}>แดชบอร์ด Glossy POS</Typography>
+                      <Typography sx={{ fontWeight: 700 }}>แดชบอร์ดงานพิมพ์ Glossy Design</Typography>
                       <Chip size="small" label="กำลังใช้งาน" color="info" />
                     </Stack>
 
@@ -560,7 +555,7 @@ export default function LandingPage() {
               center
               eyebrow="ได้รับความไว้วางใจ"
               title="ร้านพิมพ์คุณภาพสูงไว้วางใจใช้งาน"
-              desc="ตั้งแต่ร้านถ่ายเอกสารในชุมชนจนถึงธุรกิจป้ายหลายสาขา Glossy POS ช่วยให้การผลิตรายวันเป็นระบบและมั่นใจได้"
+              desc="ตั้งแต่ร้านถ่ายเอกสารในชุมชนจนถึงธุรกิจป้ายหลายสาขา Glossy Design ช่วยให้งานผลิตรายวันเป็นระบบและมั่นใจได้"
             />
             <Stack direction="row" justifyContent="center" spacing={1.1} mt={4} flexWrap="wrap" useFlexGap>
               {brands.map(brand => (
@@ -586,7 +581,7 @@ export default function LandingPage() {
           <SectionTitle
             eyebrow="ปัญหา สู่ ทางออก"
             title="หยุดความวุ่นวายของออเดอร์ในแชต"
-            desc="Glossy POS เปลี่ยนงานมือที่กระจัดกระจายให้เป็นกระบวนการเดียวที่ทีมของคุณทำงานต่อได้ทันที"
+            desc="Glossy Design เปลี่ยนงานมือที่กระจัดกระจายให้เป็นกระบวนการเดียวที่ทีมของคุณทำงานต่อได้ทันที"
           />
           <Grid container spacing={2.2} mt={2}>
             <Grid size={{ xs: 12, md: 6 }}>
@@ -610,7 +605,7 @@ export default function LandingPage() {
               <MotionBox initial={{ opacity: 0, y: 28 }} whileInView={{ opacity: 1, y: 0 }} transition={{ duration: 0.6, ease: 'easeOut' }} viewport={{ once: true }}>
                 <Box sx={{ p: 2.3, borderRadius: 4, bgcolor: 'rgba(103, 235, 198, 0.08)', border: '1px solid rgba(103, 235, 198, 0.3)' }}>
                   <Typography className={jakarta.className} sx={{ mb: 1.3, fontWeight: 700 }}>
-                    เมื่อใช้ Glossy POS
+                    เมื่อทำงานกับ Glossy Design
                   </Typography>
                   <Stack spacing={1.1}>
                     {solutions.map(solution => (
@@ -738,7 +733,7 @@ export default function LandingPage() {
         <Box component="section" sx={{ py: { xs: 6, md: 9 } }}>
           <SectionTitle
             eyebrow="เปรียบเทียบ"
-            title="ระบบเดิม เทียบกับ Glossy POS"
+            title="ระบบเดิม เทียบกับ Glossy Design"
             desc="เห็นความต่างชัดเจนทั้งความเร็ว คุณภาพงาน และความเชื่อมั่นของลูกค้า"
           />
           <Grid container spacing={2} mt={2.5}>
@@ -759,7 +754,7 @@ export default function LandingPage() {
             <Grid size={{ xs: 12, md: 6 }}>
               <Box sx={{ p: 2.2, borderRadius: 4, bgcolor: 'rgba(125, 247, 207, 0.08)', border: '1px solid rgba(125, 247, 207, 0.28)' }}>
                 <Typography className={jakarta.className} sx={{ mb: 1.1, fontWeight: 700 }}>
-                  Glossy POS
+                  Glossy Design
                 </Typography>
                 <Stack spacing={0.9}>
                   {['ระบบคลาวด์เป็นระเบียบ', 'ติดตามออเดอร์แบบเรียลไทม์', 'เวิร์กโฟลว์การผลิตอัจฉริยะ', 'ฐานข้อมูลประวัติลูกค้า'].map(item => (
@@ -777,7 +772,7 @@ export default function LandingPage() {
           <SectionTitle
             eyebrow="เสียงจากผู้ใช้จริง"
             title="เจ้าของร้านที่รับงานจำนวนมากเลือกใช้จริง"
-            desc="เสียงตอบรับจากทีมที่เปลี่ยนจากงานมือมาใช้ Glossy POS"
+            desc="เสียงตอบรับจากทีมที่เปลี่ยนจากงานมือมาใช้ Glossy Design"
             center
           />
           <Grid container spacing={2} mt={2.5}>
@@ -804,76 +799,6 @@ export default function LandingPage() {
                     </Box>
                   </Stack>
                 </MotionBox>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        <Box id="pricing" component="section" sx={{ py: { xs: 6, md: 9 } }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', md: 'center' }} spacing={2}>
-            <SectionTitle eyebrow="แพ็กเกจ" title="เลือกแพ็กเกจที่โตไปพร้อมธุรกิจคุณ" desc="ราคาเข้าใจง่ายสำหรับร้านทุกขนาด และปรับเพิ่มได้เมื่อออเดอร์เติบโต" />
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography sx={{ color: 'rgba(236,242,255,0.75)' }}>รายเดือน</Typography>
-              <Switch checked={yearly} onChange={e => setYearly(e.target.checked)} />
-              <Typography sx={{ color: '#9ef5ff' }}>รายปี (ประหยัด 20%)</Typography>
-            </Stack>
-          </Stack>
-          <Grid container spacing={2} mt={2}>
-            {[
-              {
-                name: 'เริ่มต้น',
-                price: yearly ? '฿1,490' : '฿1,890',
-                perks: ['1 สาขา', 'POS + อัปโหลดไฟล์', 'รายงานพื้นฐาน'],
-                cta: 'เริ่มใช้งานแพ็กเกจนี้',
-              },
-              {
-                name: 'ธุรกิจ',
-                price: yearly ? '฿2,990' : '฿3,690',
-                perks: ['สูงสุด 5 สาขา', 'เวิร์กโฟลว์ + ติดตามการชำระเงิน', 'วิเคราะห์ข้อมูลขั้นสูง'],
-                cta: 'เลือกแพ็กเกจธุรกิจ',
-                popular: true,
-              },
-              {
-                name: 'องค์กร',
-                price: 'กำหนดเอง',
-                perks: ['ไม่จำกัดสาขา', 'ผู้ดูแลความสำเร็จเฉพาะทีม', 'เชื่อมต่อระบบแบบกำหนดเอง'],
-                cta: 'คุยกับทีมขาย',
-              },
-            ].map(plan => (
-              <Grid key={plan.name} size={{ xs: 12, md: 4 }}>
-                <Box
-                  sx={{
-                    p: 2.4,
-                    borderRadius: 4,
-                    height: '100%',
-                    position: 'relative',
-                    background: plan.popular ? 'linear-gradient(170deg, rgba(102, 221, 255, 0.23), rgba(121,108,255,0.2), rgba(255,108,209,0.16))' : 'rgba(255,255,255,0.06)',
-                    border: plan.popular ? '1px solid rgba(132, 229, 255, 0.42)' : '1px solid rgba(255,255,255,0.13)',
-                  }}>
-                  {plan.popular && <Chip label="ยอดนิยม" size="small" sx={{ position: 'absolute', top: 14, right: 14, bgcolor: '#9ff4ff', color: '#041019' }} />}
-                  <Typography className={jakarta.className} sx={{ fontWeight: 800, fontSize: 24 }}>
-                    {plan.name}
-                  </Typography>
-                  <Typography sx={{ mt: 0.8, color: '#9de9ff', fontSize: 13 }}>ต่อเดือน</Typography>
-                  <Typography className={jakarta.className} sx={{ mt: 0.5, fontWeight: 800, fontSize: 33 }}>
-                    {plan.price}
-                  </Typography>
-                  <Stack spacing={1} my={2.2}>
-                    {plan.perks.map(perk => (
-                      <Stack key={perk} direction="row" spacing={1} alignItems="center">
-                        <CheckCircleRoundedIcon sx={{ fontSize: 17, color: '#82f1ce' }} />
-                        <Typography sx={{ fontSize: 14, color: 'rgba(236,243,255,0.83)' }}>{perk}</Typography>
-                      </Stack>
-                    ))}
-                  </Stack>
-                  <Button
-                    fullWidth
-                    variant={plan.popular ? 'contained' : 'outlined'}
-                    onClick={plan.name === 'องค์กร' ? handleBookDemo : handleStartTrial}
-                    sx={{ borderRadius: 99 }}>
-                    {plan.cta}
-                  </Button>
-                </Box>
               </Grid>
             ))}
           </Grid>
@@ -950,9 +875,9 @@ export default function LandingPage() {
           <Grid container spacing={2} alignItems="center">
             <Grid size={{ xs: 12, md: 4 }}>
               <Typography className={jakarta.className} sx={{ fontWeight: 800, fontSize: '1.1rem' }}>
-                Glossy POS
+                Glossy Design
               </Typography>
-              <Typography sx={{ color: 'rgba(233,239,255,0.66)', fontSize: 13, mt: 0.5 }}>ระบบ POS และจัดการออเดอร์สำหรับธุรกิจงานพิมพ์ยุคใหม่</Typography>
+              <Typography sx={{ color: 'rgba(233,239,255,0.66)', fontSize: 13, mt: 0.5 }}>ร้านสื่อสิ่งพิมพ์ครบวงจร พร้อมรับออกแบบ ผลิต และจัดการออเดอร์</Typography>
             </Grid>
             <Grid size={{ xs: 12, md: 5 }}>
               <Stack direction="row" spacing={2.5} flexWrap="wrap" useFlexGap>
@@ -977,7 +902,7 @@ export default function LandingPage() {
               </Stack>
             </Grid>
           </Grid>
-          <Typography sx={{ mt: 2, color: 'rgba(228,235,255,0.5)', fontSize: 12 }}>© {new Date().getFullYear()} Glossy POS. สงวนลิขสิทธิ์</Typography>
+          <Typography sx={{ mt: 2, color: 'rgba(228,235,255,0.5)', fontSize: 12 }}>© {new Date().getFullYear()} Glossy Design. สงวนลิขสิทธิ์</Typography>
         </Box>
       </Container>
 
