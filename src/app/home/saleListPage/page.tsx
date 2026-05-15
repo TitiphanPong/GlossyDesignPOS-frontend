@@ -3,7 +3,6 @@
 import React, { useEffect, useState } from 'react';
 import {
   Box,
-  Container,
   Typography,
   Card,
   CardContent,
@@ -11,7 +10,6 @@ import {
   Stack,
   CircularProgress,
   Divider,
-  Paper,
   Table,
   TableHead,
   TableRow,
@@ -26,6 +24,8 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import ArrowForwardIosIcon from '@mui/icons-material/ArrowForwardIos';
@@ -33,32 +33,11 @@ import dayjs from 'dayjs';
 import { motion, AnimatePresence } from 'framer-motion';
 import PayRemainingModal from './components/PayRemainingModal';
 import { ApiCartItem, ApiOrder, OrderStatus } from '../../../lib/contracts';
+import AdminPageContainer from '../components/AdminPageContainer';
+import { commonButtonSx, interactiveCardSx, sectionTitleSx, statusChipSx, tableShellSx, topActionBarSx, uiCardSx } from '../components/adminUi';
 
-type CartItem = ApiCartItem;
 type Order = ApiOrder & { cart: ApiCartItem[] };
-const toOrder = (order: ApiOrder): Order => ({
-  ...order,
-  cart: order.cart ?? [],
-});
-
-const colorModeLabel = (mode?: string) => {
-  if (mode === 'bw') return 'ขาวดำ';
-  if (mode === 'color') return 'สี';
-  return mode ?? '-';
-};
-
-const stampTypeLabel = (type?: string) => {
-  if (type === 'normal') return 'ธรรมดา';
-  if (type === 'inked') return 'หมึกในตัว';
-  return type ?? '-';
-};
-
-const shapeLabel = (shape?: string) => {
-  if (shape === 'square') return 'สี่เหลี่ยม';
-  if (shape === 'circle') return 'วงกลม';
-  return shape ?? '-';
-};
-
+const toOrder = (order: ApiOrder): Order => ({ ...order, cart: order.cart ?? [] });
 const formatMoney = (amount?: number) => (amount ?? 0).toLocaleString('th-TH');
 
 export default function OrdersPage() {
@@ -66,25 +45,19 @@ export default function OrdersPage() {
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'paid' | 'debt' | OrderStatus>('all');
   const [search, setSearch] = useState('');
+  const [sort, setSort] = useState<'newest' | 'oldest' | 'high'>('newest');
   const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
-
   const [page, setPage] = useState(0);
-  const pageSize = 6;
-
-  //PayRemainingModal
-
   const [payDialogOpen, setPayDialogOpen] = useState(false);
+  const pageSize = 6;
 
   const getPaymentChip = (order: Order) => {
     const remainingTotal = order.remainingTotal ?? order.cart.reduce((s, i) => s + (i.remaining || 0), 0);
 
-    if (order.status === 'cancelled') {
-      return <Chip label="ยกเลิก" color="error" size="small" />;
-    }
-    if (remainingTotal === 0) {
-      return <Chip label="ชำระแล้ว" color="success" size="small" />;
-    }
-    return <Chip label="ค้างชำระ" color="warning" size="small" />;
+    if (order.status === 'cancelled') return <Chip label="Error" color="error" size="small" sx={statusChipSx} />;
+    if (remainingTotal === 0) return <Chip label="Success" color="success" size="small" sx={statusChipSx} />;
+    if (order.status === 'pending') return <Chip label="Processing" color="info" size="small" sx={statusChipSx} />;
+    return <Chip label="Warning" color="warning" size="small" sx={statusChipSx} />;
   };
 
   useEffect(() => {
@@ -92,11 +65,11 @@ export default function OrdersPage() {
     if (!base) return;
 
     fetch(`${base}/orders`)
-      .then(async res => {
+      .then(async (res) => {
         if (!res.ok) throw new Error('โหลดข้อมูลล้มเหลว');
         return res.json();
       })
-      .then(data => {
+      .then((data) => {
         const normalized = Array.isArray(data) ? (data as ApiOrder[]).map(toOrder) : [];
         setOrders(normalized);
         setLoading(false);
@@ -104,34 +77,29 @@ export default function OrdersPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const filteredOrders = orders.filter(order => {
-    const remaining = order.cart.reduce((s, i) => s + (i.remaining || 0), 0);
+  const filteredOrders = orders
+    .filter((order) => {
+      const remaining = order.cart.reduce((s, i) => s + (i.remaining || 0), 0);
+      if (filter === 'debt') return order.status !== 'cancelled' && remaining > 0;
+      if (filter === 'paid') return order.status !== 'cancelled' && remaining === 0;
+      if (filter === 'cancelled') return order.status === 'cancelled';
+      if (filter === 'pending') return order.status === 'pending';
+      if (search) return order.orderId.toLowerCase().includes(search.toLowerCase()) || order.customerName?.toLowerCase().includes(search.toLowerCase());
+      return true;
+    })
+    .sort((a, b) => {
+      if (sort === 'high') return (b.total ?? 0) - (a.total ?? 0);
+      const t1 = new Date(a.createdAt || '').getTime();
+      const t2 = new Date(b.createdAt || '').getTime();
+      return sort === 'newest' ? t2 - t1 : t1 - t2;
+    });
 
-    if (filter === 'debt') {
-      return order.status !== 'cancelled' && remaining > 0;
-    }
-
-    if (filter === 'paid') {
-      return order.status !== 'cancelled' && remaining === 0;
-    }
-
-    if (filter === 'cancelled') {
-      return order.status === 'cancelled';
-    }
-
-    if (filter === 'pending') {
-      return order.status === 'pending';
-    }
-
-    if (search) {
-      return order.orderId.toLowerCase().includes(search.toLowerCase()) || order.customerName?.toLowerCase().includes(search.toLowerCase());
-    }
-
-    return true;
-  });
-
-  const totalPages = Math.ceil(filteredOrders.length / pageSize);
+  const totalPages = Math.max(1, Math.ceil(filteredOrders.length / pageSize));
   const paginatedOrders = filteredOrders.slice(page * pageSize, page * pageSize + pageSize);
+
+  const paidCount = orders.filter((order) => (order.remainingTotal ?? 0) === 0 && order.status !== 'cancelled').length;
+  const debtCount = orders.filter((order) => (order.remainingTotal ?? 0) > 0 && order.status !== 'cancelled').length;
+  const totalAmount = orders.reduce((sum, order) => sum + (order.total ?? 0), 0);
 
   if (loading) {
     return (
@@ -143,299 +111,148 @@ export default function OrdersPage() {
   }
 
   return (
-    <Container maxWidth="lg" sx={{ py: 3 }}>
-      <Typography variant="h5" fontWeight={800} mb={3} color="black">
-        📋 ใบรายการขาย (Sales Orders)
-      </Typography>
+    <AdminPageContainer title="Sales Orders" subtitle="ติดตามประวัติการขาย การชำระเงิน และรายการย้อนหลังแบบมืออาชีพ">
+      <Stack spacing={2.5}>
+        <Card sx={topActionBarSx}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2}>
+            <TextField size="small" placeholder="ค้นหาออเดอร์ / ชื่อลูกค้า..." value={search} onChange={(e) => setSearch(e.target.value)} sx={{ flex: 1 }} />
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 170 } }}>
+              <InputLabel id="status-select-label">Filter</InputLabel>
+              <Select labelId="status-select-label" value={filter} label="Filter" onChange={(e) => setFilter(e.target.value as 'all' | 'paid' | 'debt' | OrderStatus)}>
+                <MenuItem value="all">ทั้งหมด</MenuItem>
+                <MenuItem value="paid">ชำระแล้ว</MenuItem>
+                <MenuItem value="debt">ค้างชำระ</MenuItem>
+                <MenuItem value="pending">รอดำเนินการ</MenuItem>
+                <MenuItem value="cancelled">ยกเลิก</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 170 } }}>
+              <InputLabel id="sort-select-label">Sort</InputLabel>
+              <Select labelId="sort-select-label" value={sort} label="Sort" onChange={(e) => setSort(e.target.value as 'newest' | 'oldest' | 'high')}>
+                <MenuItem value="newest">ล่าสุดก่อน</MenuItem>
+                <MenuItem value="oldest">เก่าสุดก่อน</MenuItem>
+                <MenuItem value="high">ยอดสูงสุด</MenuItem>
+              </Select>
+            </FormControl>
+            <Button variant="contained" sx={commonButtonSx}>Export</Button>
+          </Stack>
+        </Card>
 
-      {/* 🔎 Search + Filter */}
-      <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2} mb={3} flexWrap="wrap">
-        <TextField size="small" placeholder="ค้นหาออเดอร์ / ชื่อลูกค้า..." value={search} onChange={e => setSearch(e.target.value)} sx={{ flex: 1, maxWidth: 300 }} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1.5 }}>
+          {[
+            { label: 'ยอดขายรวม', value: `฿${formatMoney(totalAmount)}` },
+            { label: 'ชำระแล้ว', value: `${paidCount} รายการ` },
+            { label: 'ค้างชำระ', value: `${debtCount} รายการ` },
+          ].map((item) => (
+            <Card key={item.label} sx={{ ...uiCardSx, p: 2 }}>
+              <Typography variant="caption" color="text.secondary">{item.label}</Typography>
+              <Typography variant="h6" fontWeight={800}>{item.value}</Typography>
+            </Card>
+          ))}
+        </Box>
 
-        <Select size="small" value={filter} onChange={e => setFilter(e.target.value)} sx={{ minWidth: 160 }}>
-          <MenuItem value="all">ทั้งหมด</MenuItem>
-          <MenuItem value="paid">ชำระแล้ว</MenuItem>
-          <MenuItem value="debt">ค้างชำระ</MenuItem>
-          <MenuItem value="pending">รอดำเนินการ</MenuItem>
-          <MenuItem value="cancelled">ยกเลิก</MenuItem>
-        </Select>
-      </Stack>
+        <Box position="relative">
+          <Stack direction="row" justifyContent="space-between" alignItems="center" mb={1}>
+            <Typography sx={sectionTitleSx}>Recent Transactions</Typography>
+            <Typography variant="body2" color="text.secondary">หน้า {page + 1} / {totalPages}</Typography>
+          </Stack>
+          <IconButton onClick={() => setPage((p) => Math.max(p - 1, 0))} disabled={page === 0} sx={{ position: 'absolute', top: '46%', left: { xs: -8, md: -16 }, zIndex: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
+            <ArrowBackIosNewIcon fontSize="small" />
+          </IconButton>
 
-      {orders.length === 0 ? (
-        <Typography align="center" color="text.secondary" mt={5}>
-          ❌ ยังไม่มีออเดอร์
-        </Typography>
-      ) : (
-        <>
-          {/* ✅ Cards (animate) */}
-          <Box position="relative" mb={4}>
-            {/* ปุ่มซ้าย */}
-            <IconButton
-              onClick={() => setPage(p => Math.max(p - 1, 0))}
-              disabled={page === 0}
-              sx={{
-                position: 'absolute',
-                top: '40%',
-                left: -60,
-                zIndex: 1,
-                bgcolor: 'white',
-                boxShadow: 2,
-              }}>
-              <ArrowBackIosNewIcon />
-            </IconButton>
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr' }, gap: 1.5 }}>
+            <AnimatePresence mode="wait">
+              {paginatedOrders.map((order) => {
+                const depositTotal = order.cart.reduce((s, it) => s + (it.deposit || 0), 0);
+                const remainingTotal = order.cart.reduce((s, it) => s + (it.remaining || 0), 0);
 
-            {/* การ์ด 6 ใบ */}
-            <Box
-              sx={{
-                display: 'grid',
-                gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr', lg: '1fr 1fr 1fr' },
-                gap: 2,
-              }}>
-              <AnimatePresence mode="wait">
-                {paginatedOrders.map(order => {
-                  const depositTotal = order.cart.reduce((s, it) => s + (it.deposit || 0), 0);
-                  const remainingTotal = order.cart.reduce((s, it) => s + (it.remaining || 0), 0);
-                  let paymentSummary: React.ReactNode = null;
-                  if (depositTotal > 0 && remainingTotal === 0) {
-                    paymentSummary = (
-                      <Typography variant="body2" color="success.main">
-                        ชำระเต็มจำนวน : ฿{formatMoney(order.total)}
-                      </Typography>
-                    );
-                  } else if (depositTotal > 0) {
-                    paymentSummary = (
-                      <Typography variant="body2" color="info.main">
-                        ยอดมัดจำรวม: ฿{depositTotal.toLocaleString('th-TH')}
-                      </Typography>
-                    );
-                  }
-
-                  return (
-                    <motion.div key={order._id} initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} onClick={() => setSelectedOrder(order)} exit={{ opacity: 0, y: -20 }}>
-                      <Card
-                        variant="outlined"
-                        sx={{
-                          borderRadius: 3,
-                          boxShadow: '0 4px 16px rgba(0,0,0,0.05)',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          minHeight: 450,
-                        }}>
-                        <CardContent>
-                          <Stack direction="row" justifyContent="space-between" mb={0.5}>
-                            <Typography variant="subtitle2" color="text.secondary">
-                              {dayjs(order.createdAt).format('DD/MM/YYYY HH:mm')}
-                            </Typography>
-                            {getPaymentChip(order)}
-                          </Stack>
-
-                          <Typography variant="subtitle1" fontWeight={700}>
-                            รายการ : {order.orderId}
-                          </Typography>
-
-                          <Divider sx={{ my: 1 }} />
-
-                          <Typography variant="body2">ชื่อลูกค้า : {order.customerName || '-'}</Typography>
-
-                          <Typography variant="body2">เบอร์โทรศัพท์ : {order.phoneNumber || '-'}</Typography>
-                          <Typography variant="body2">หมายเหตุ : {order.note}</Typography>
-                          {paymentSummary}
-
-                          <Divider sx={{ my: 1 }} />
-                          {Object.entries(
-                            order.cart.reduce((acc: Record<string, CartItem[]>, item) => {
-                              const categoryKey = item.category ?? 'ไม่ระบุประเภท';
-                              if (!acc[categoryKey]) acc[categoryKey] = [];
-                              acc[categoryKey].push(item);
-                              return acc;
-                            }, {})
-                          ).map(([category, items]) => (
-                            <Box key={category} sx={{ mb: 1 }}>
-                              <Typography variant="body2" fontWeight={600}>
-                                ประเภทงาน : {category}
-                              </Typography>
-                              {items.map(item => (
-                                <Typography key={`${item.category}-${item.name}-${item.qty}-${item.totalPrice}-${item.productNote ?? 'none'}`} variant="body2" sx={{ pl: 3 }}>
-                                  - {item.productNote || item.name} {formatMoney(item.totalPrice)}฿
-                                </Typography>
-                              ))}
-                            </Box>
-                          ))}
-                        </CardContent>
-
-                        <Box
-                          sx={{
-                            bgcolor: 'grey.50',
-                            borderTop: '1px solid #eee',
-                            p: 2,
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'flex-end',
-                          }}>
-                          <Typography fontWeight={700} color="success.main">
-                            ยอดรวมทั้งหมด : ฿{formatMoney(order.total)}
-                          </Typography>
-
-                          {remainingTotal > 0 ? (
-                            <Typography variant="body2" color="warning.main">
-                              คงเหลือ: ฿{remainingTotal.toLocaleString('th-TH')}
-                            </Typography>
-                          ) : (
-                            <Typography variant="body2" color="success.main">
-                              ✅ ชำระเต็มจำนวน
-                            </Typography>
-                          )}
-                          <Typography variant="body2">วิธีการชำระ : {order.payment === 'cash' ? 'เงินสด' : 'PromptPay'}</Typography>
-                        </Box>
-                      </Card>
-                    </motion.div>
-                  );
-                })}
-              </AnimatePresence>
-            </Box>
-
-            {/* ปุ่มขวา */}
-            <IconButton
-              onClick={() => setPage(p => Math.min(p + 1, totalPages - 1))}
-              disabled={page >= totalPages - 1}
-              sx={{
-                position: 'absolute',
-                top: '40%',
-                right: -60,
-                zIndex: 1,
-                bgcolor: 'white',
-                boxShadow: 2,
-              }}>
-              <ArrowForwardIosIcon />
-            </IconButton>
-
-            {/* ตัวบอกหน้า */}
-            <Box textAlign="center" mt={2}>
-              <Typography variant="body2" color="text.secondary">
-                หน้า {page + 1} / {totalPages}
-              </Typography>
-            </Box>
+                return (
+                  <motion.div key={order._id} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -16 }} onClick={() => setSelectedOrder(order)}>
+                    <Card sx={{ ...interactiveCardSx, minHeight: 340 }}>
+                      <CardContent>
+                        <Stack direction="row" justifyContent="space-between" mb={1}>
+                          <Typography variant="caption" color="text.secondary">{dayjs(order.createdAt).format('DD/MM/YYYY HH:mm')}</Typography>
+                          {getPaymentChip(order)}
+                        </Stack>
+                        <Typography variant="subtitle1" fontWeight={700}>{order.orderId}</Typography>
+                        <Typography variant="body2" color="text.secondary" mt={0.4}>{order.customerName || '-'} • {order.phoneNumber || '-'}</Typography>
+                        <Divider sx={{ my: 1.2 }} />
+                        {depositTotal > 0 && <Typography variant="body2">มัดจำ: ฿{formatMoney(depositTotal)}</Typography>}
+                        <Typography variant="body2" color={remainingTotal > 0 ? 'warning.main' : 'success.main'}>
+                          {remainingTotal > 0 ? `ค้างชำระ: ฿${formatMoney(remainingTotal)}` : 'ชำระครบแล้ว'}
+                        </Typography>
+                        <Typography variant="body2" mt={0.6}>วิธีชำระ: {order.payment === 'cash' ? 'เงินสด' : 'PromptPay'}</Typography>
+                        <Typography variant="h6" fontWeight={800} mt={1.1}>฿{formatMoney(order.total)}</Typography>
+                      </CardContent>
+                    </Card>
+                  </motion.div>
+                );
+              })}
+            </AnimatePresence>
           </Box>
 
-          {/* ✅ Table (animate) */}
-          <motion.div initial={{ opacity: 0, y: 30 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
-            <Card variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
-              <Typography variant="h6" fontWeight={700} sx={{ p: 2 }}>
-                📋 รายการทั้งหมด
-              </Typography>
-              <Paper sx={{ width: '100%', overflowX: 'auto' }}>
-                <Table size="small" stickyHeader>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Order ID</TableCell>
-                      <TableCell>ลูกค้า</TableCell>
-                      <TableCell>เบอร์โทรศัพท์</TableCell>
-                      <TableCell>หมวดสินค้า</TableCell>
-                      <TableCell>สถานะ</TableCell>
-                      <TableCell>ยอดรวม</TableCell>
-                      <TableCell>วันที่</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {filteredOrders.map(order => (
-                      <TableRow key={order._id} hover>
-                        <TableCell>{order.orderId}</TableCell>
-                        <TableCell>{order.customerName || '-'}</TableCell>
-                        <TableCell>{order.phoneNumber || '-'}</TableCell>
-                        <TableCell>{order.category || order.cart?.[0]?.name || '-'}</TableCell>
-                        <TableCell>{getPaymentChip(order)}</TableCell>
-                        <TableCell>฿{formatMoney(order.total)}</TableCell>
-                        <TableCell>{order.createdAt ? dayjs(order.createdAt).format('DD/MM/YYYY HH:mm') : '-'}</TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </Paper>
-            </Card>
-          </motion.div>
-        </>
-      )}
+          <IconButton onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))} disabled={page >= totalPages - 1} sx={{ position: 'absolute', top: '46%', right: { xs: -8, md: -16 }, zIndex: 1, bgcolor: 'background.paper', boxShadow: 1 }}>
+            <ArrowForwardIosIcon fontSize="small" />
+          </IconButton>
+        </Box>
+
+        <Card sx={uiCardSx}>
+          <Typography sx={{ ...sectionTitleSx, p: 2 }}>Transaction History</Typography>
+          <Box sx={{ width: '100%', overflowX: 'auto', ...tableShellSx }}>
+            <Table size="small" stickyHeader>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Order ID</TableCell>
+                  <TableCell>ลูกค้า</TableCell>
+                  <TableCell>เบอร์โทรศัพท์</TableCell>
+                  <TableCell>หมวดสินค้า</TableCell>
+                  <TableCell>สถานะ</TableCell>
+                  <TableCell>ยอดรวม</TableCell>
+                  <TableCell>วันที่</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredOrders.map((order) => (
+                  <TableRow key={order._id} hover>
+                    <TableCell>{order.orderId}</TableCell>
+                    <TableCell>{order.customerName || '-'}</TableCell>
+                    <TableCell>{order.phoneNumber || '-'}</TableCell>
+                    <TableCell>{order.category || order.cart?.[0]?.name || '-'}</TableCell>
+                    <TableCell>{getPaymentChip(order)}</TableCell>
+                    <TableCell>฿{formatMoney(order.total)}</TableCell>
+                    <TableCell>{order.createdAt ? dayjs(order.createdAt).format('DD/MM/YYYY HH:mm') : '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </Box>
+        </Card>
+      </Stack>
+
       <Dialog open={Boolean(selectedOrder)} onClose={() => setSelectedOrder(null)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700 }}>รายละเอียดออเดอร์ #{selectedOrder?.orderId}</DialogTitle>
-
         <DialogContent dividers>
-          {/* ข้อมูลลูกค้า */}
           <Stack spacing={1} mb={2}>
-            <Typography>
-              <strong>ลูกค้า:</strong> {selectedOrder?.customerName}
-            </Typography>
-            <Typography>
-              <strong>เบอร์โทร:</strong> {selectedOrder?.phoneNumber}
-            </Typography>
-            <Typography>
-              <strong>หมายเหตุ:</strong> {selectedOrder?.note || '-'}
-            </Typography>
+            <Typography><strong>ลูกค้า:</strong> {selectedOrder?.customerName}</Typography>
+            <Typography><strong>เบอร์โทร:</strong> {selectedOrder?.phoneNumber}</Typography>
+            <Typography><strong>หมายเหตุ:</strong> {selectedOrder?.note || '-'}</Typography>
           </Stack>
-
           <Divider sx={{ my: 2 }} />
-
-          {/* รายการสินค้า */}
-          <Typography fontWeight={700} gutterBottom>
-            🛒 รายการสินค้า
-          </Typography>
-
-          <Stack spacing={2}>
+          <Typography fontWeight={700} gutterBottom>รายการสินค้า</Typography>
+          <Stack spacing={1.5}>
             {selectedOrder?.cart.map((item, i) => (
-              <Box
-                key={`${item.category}-${item.name}-${item.qty}-${item.totalPrice}-${item.productNote ?? 'none'}`}
-                sx={{
-                  p: 2,
-                  border: '1px solid #eee',
-                  borderRadius: 2,
-                  bgcolor: 'grey.50',
-                }}>
-                <Typography fontWeight={600} gutterBottom>
-                  {i + 1}. {item.category} {item.productNote ? `(${item.productNote})` : ''}
-                </Typography>
-
-                {/* นามบัตร */}
-                {item.category === 'นามบัตร' && (
-                  <Stack spacing={0.5} pl={2}>
-                    <Typography variant="body2">• จำนวน: {item.qty} ใบ</Typography>
-                    <Typography variant="body2">• ด้าน: {item.sides} ด้าน</Typography>
-                    <Typography variant="body2">• โหมดสี: {colorModeLabel(item.colorMode)}</Typography>
-                    <Typography variant="body2">• วัสดุ: {item.material}</Typography>
-                    <Typography variant="body2">• ราคา : {formatMoney(item.totalPrice)} บาท</Typography>
-                  </Stack>
-                )}
-
-                {/* ตรายาง */}
-                {item.category === 'ตรายาง' && (
-                  <Stack spacing={0.5} pl={2}>
-                    <Typography variant="body2">• ชนิด: {stampTypeLabel(item.type)}</Typography>
-                    <Typography variant="body2">• รูปทรง: {shapeLabel(item.shape)}</Typography>
-                    <Typography variant="body2">• ขนาด: {item.size}</Typography>
-                    <Typography variant="body2">• จำนวน: {item.qty} ชิ้น</Typography>
-                    <Typography variant="body2">• ราคา : {formatMoney(item.totalPrice)} บาท</Typography>
-                  </Stack>
-                )}
-                {/* ปริ้นท์เอกสาร */}
-                {item.category === 'ปริ้นท์เอกสาร' && (
-                  <Stack spacing={0.5} pl={2}>
-                    <Typography variant="body2">• จำนวน: {item.qty} ใบ</Typography>
-                    <Typography variant="body2">• ด้าน: {item.sides} ด้าน</Typography>
-                    <Typography variant="body2">• โหมดสี: {colorModeLabel(item.colorMode)}</Typography>
-                    <Typography variant="body2">• วัสดุ: {item.material}</Typography>
-                    <Typography variant="body2">• ราคา : {formatMoney(item.totalPrice)} บาท</Typography>
-                  </Stack>
-                )}
+              <Box key={`${item.category}-${item.name}-${item.qty}-${item.totalPrice}-${item.productNote ?? 'none'}`} sx={{ p: 1.6, border: '1px solid', borderColor: 'divider', borderRadius: 2, bgcolor: 'grey.50' }}>
+                <Typography fontWeight={600}>{i + 1}. {item.category} {item.productNote ? `(${item.productNote})` : ''}</Typography>
+                <Typography variant="body2">จำนวน: {item.qty} • ราคา: {formatMoney(item.totalPrice)} บาท</Typography>
               </Box>
             ))}
           </Stack>
         </DialogContent>
         <DialogActions>
           {selectedOrder && (selectedOrder.remainingTotal ?? 0) > 0 && (
-            <Button variant="contained" color="success" onClick={() => setPayDialogOpen(true)}>
-              ชำระยอดคงเหลือ
-            </Button>
+            <Button variant="contained" color="success" onClick={() => setPayDialogOpen(true)} sx={commonButtonSx}>ชำระยอดคงเหลือ</Button>
           )}
-          <Button onClick={() => setSelectedOrder(null)}>ปิด</Button>
+          <Button onClick={() => setSelectedOrder(null)} sx={commonButtonSx}>ปิด</Button>
         </DialogActions>
       </Dialog>
       <PayRemainingModal
@@ -443,12 +260,13 @@ export default function OrdersPage() {
         orderId={selectedOrder?._id || ''}
         remaining={selectedOrder?.cart.reduce((s, i) => s + (i.remaining || 0), 0) || 0}
         onClose={() => setPayDialogOpen(false)}
-        onSuccess={updated => {
+        onSuccess={(updated) => {
           const normalized = toOrder(updated);
-          setOrders(prev => prev.map(o => (o._id === normalized._id ? normalized : o)));
+          setOrders((prev) => prev.map((o) => (o._id === normalized._id ? normalized : o)));
           setSelectedOrder(normalized);
         }}
       />
-    </Container>
+    </AdminPageContainer>
   );
 }
+

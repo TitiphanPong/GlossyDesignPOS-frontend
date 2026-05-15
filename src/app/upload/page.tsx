@@ -76,33 +76,33 @@ export default function UploadPage() {
     setForm((prev) => ({ ...prev, [key]: value }));
   };
 
-  const pushError = (message: string) => {
-    setApiError(message);
-  };
-
   const validateAndFilterFiles = (inputFiles: File[]) => {
     const validFiles: File[] = [];
+    const validationErrors: string[] = [];
     for (const file of inputFiles) {
       if (!isValidUploadFile(file)) {
-        pushError(`Invalid file type: ${file.name}. Allowed: ${ACCEPTED_EXTENSIONS.join(', ').toUpperCase()}`);
+        validationErrors.push(`Invalid file type: ${file.name}. Allowed: ${ACCEPTED_EXTENSIONS.join(', ').toUpperCase()}`);
         continue;
       }
       if (file.size > MAX_FILE_SIZE_BYTES) {
-        pushError(`File too large: ${file.name}. Maximum is ${formatFileSize(MAX_FILE_SIZE_BYTES)} per file.`);
+        validationErrors.push(`File too large: ${file.name}. Maximum is ${formatFileSize(MAX_FILE_SIZE_BYTES)} per file.`);
         continue;
       }
       validFiles.push(file);
     }
-    return validFiles;
+    return { validFiles, validationErrors };
   };
 
   const appendFiles = (incoming: File[]) => {
     setApiError(null);
-    const validated = validateAndFilterFiles(incoming);
+    const { validFiles, validationErrors } = validateAndFilterFiles(incoming);
+    if (validationErrors.length > 0) {
+      setApiError(validationErrors.join(' '));
+    }
     setFiles((prev) => {
       const map = new Map<string, File>();
       for (const file of prev) map.set(`${file.name}-${file.lastModified}-${file.size}`, file);
-      for (const file of validated) map.set(`${file.name}-${file.lastModified}-${file.size}`, file);
+      for (const file of validFiles) map.set(`${file.name}-${file.lastModified}-${file.size}`, file);
       return Array.from(map.values());
     });
   };
@@ -156,7 +156,10 @@ export default function UploadPage() {
       try {
         response = await axios.post<UploadApiResponse>(`${getApiBaseUrl()}/uploads`, createPayload('files'), requestConfig);
       } catch (firstError) {
-        if (axios.isAxiosError(firstError) && String(firstError.response?.data?.message ?? '').includes('Unexpected field')) {
+        const status = firstError && axios.isAxiosError(firstError) ? firstError.response?.status : undefined;
+        const message = firstError && axios.isAxiosError(firstError) ? String(firstError.response?.data?.message ?? '') : '';
+        const shouldRetryWithBracketField = status === 400 || status === 422 || message.includes('Unexpected field');
+        if (axios.isAxiosError(firstError) && shouldRetryWithBracketField) {
           response = await axios.post<UploadApiResponse>(`${getApiBaseUrl()}/uploads`, createPayload('files[]'), requestConfig);
         } else {
           throw firstError;
@@ -170,14 +173,14 @@ export default function UploadPage() {
     } catch (error) {
       if (axios.isAxiosError(error)) {
         if (error.response?.data?.message) {
-          pushError(String(error.response.data.message));
+          setApiError(String(error.response.data.message));
         } else if (error.code === 'ERR_NETWORK') {
-          pushError('Network error while uploading. Please try again.');
+          setApiError('Network error while uploading. Please try again.');
         } else {
-          pushError('Upload failure. Please retry.');
+          setApiError('Upload failure. Please retry.');
         }
       } else {
-        pushError('Unexpected error happened during upload.');
+        setApiError('Unexpected error happened during upload.');
       }
     } finally {
       setIsUploading(false);
@@ -307,7 +310,7 @@ export default function UploadPage() {
                       accept={ACCEPTED_EXTENSIONS.map((ext) => `.${ext}`).join(',')}
                     />
                     <Typography variant="caption" color="text.secondary">
-                      Allowed: {ACCEPTED_EXTENSIONS.join(', ').toUpperCase()} • Max {formatFileSize(MAX_FILE_SIZE_BYTES)} per file
+                      Allowed: {ACCEPTED_EXTENSIONS.join(', ').toUpperCase()} | Max {formatFileSize(MAX_FILE_SIZE_BYTES)} per file
                     </Typography>
                     <FilePreviewList files={files} uploadProgress={progress} onRemoveFile={handleRemoveFile} />
                   </Stack>
@@ -357,3 +360,4 @@ export default function UploadPage() {
     </Box>
   );
 }
+

@@ -42,7 +42,6 @@ import LocalPhoneRoundedIcon from '@mui/icons-material/LocalPhoneRounded';
 import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
 import ChatRoundedIcon from '@mui/icons-material/ChatRounded';
 import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
-import { useRouter } from 'next/navigation';
 
 type NavItem = {
   id: string;
@@ -226,7 +225,6 @@ function getTrustBadgeIcon(badge: string) {
 }
 
 export default function LandingPage() {
-  const router = useRouter();
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [scrolled, setScrolled] = React.useState(false);
 
@@ -256,10 +254,6 @@ export default function LandingPage() {
   const openMaps = React.useCallback(() => {
     globalThis.open(mapsUrl, '_blank', 'noopener,noreferrer');
   }, []);
-
-  const goToUpload = React.useCallback(() => {
-    router.push('/uploadfile');
-  }, [router]);
 
   return (
     <Box
@@ -351,7 +345,7 @@ export default function LandingPage() {
             <Button variant="contained" onClick={openChat} sx={{ bgcolor: '#1267b0', borderRadius: '10px', mt: 1 }}>
               ส่งไฟล์งาน / สอบถามราคา
             </Button>
-            <Button variant="outlined" onClick={goToUpload} sx={{ borderRadius: '10px', borderColor: '#9ec7eb', color: '#1f568a' }}>
+            <Button variant="outlined" onClick={openChat} sx={{ borderRadius: '10px', borderColor: '#9ec7eb', color: '#1f568a' }}>
               อัปโหลดไฟล์งาน
             </Button>
           </Stack>
@@ -403,7 +397,7 @@ export default function LandingPage() {
                 <Button
                   variant="outlined"
                   startIcon={<UploadFileRoundedIcon />}
-                  onClick={goToUpload}
+                  onClick={openChat}
                   sx={{
                     borderColor: '#9ec7eb',
                     color: '#1f568a',
@@ -712,7 +706,7 @@ export default function LandingPage() {
             <Button fullWidth startIcon={<LocalPhoneRoundedIcon />} component="a" href={phoneHref} sx={{ borderRadius: '10px', bgcolor: '#eaf4ff', color: '#155e9d' }}>
               โทรหาเรา
             </Button>
-            <Button fullWidth variant="contained" startIcon={<UploadFileRoundedIcon />} onClick={goToUpload} sx={{ borderRadius: '10px', bgcolor: '#1267b0' }}>
+            <Button fullWidth variant="contained" startIcon={<UploadFileRoundedIcon />} onClick={openChat} sx={{ borderRadius: '10px', bgcolor: '#1267b0' }}>
               ส่งไฟล์งาน
             </Button>
           </Stack>

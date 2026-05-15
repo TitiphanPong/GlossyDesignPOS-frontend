@@ -1,394 +1,275 @@
-﻿'use client';
+'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
-import { styled, keyframes, alpha, useTheme } from '@mui/material/styles';
-import Drawer, { drawerClasses } from '@mui/material/Drawer';
-import Box from '@mui/material/Box';
-import List from '@mui/material/List';
-import ListSubheader from '@mui/material/ListSubheader';
-import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
-import ListItemText from '@mui/material/ListItemText';
-import Typography from '@mui/material/Typography';
-import Avatar from '@mui/material/Avatar';
-import Stack from '@mui/material/Stack';
-import Tooltip from '@mui/material/Tooltip';
-import IconButton from '@mui/material/IconButton';
-import Chip from '@mui/material/Chip';
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import AssignmentRoundedIcon from '@mui/icons-material/AssignmentRounded';
-import MoreVertRoundedIcon from '@mui/icons-material/MoreVertRounded';
+import { alpha, styled } from '@mui/material/styles';
+import {
+  Avatar,
+  Badge,
+  Box,
+  Divider,
+  Drawer,
+  IconButton,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  ListSubheader,
+  Stack,
+  Tooltip,
+  Typography,
+} from '@mui/material';
+import { useTheme } from '@mui/material';
+import { drawerClasses } from '@mui/material/Drawer';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
-import InsertDriveFileIcon from '@mui/icons-material/InsertDriveFile';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
+import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
+import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
+import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
+import PrecisionManufacturingRoundedIcon from '@mui/icons-material/PrecisionManufacturingRounded';
+import Groups2RoundedIcon from '@mui/icons-material/Groups2Rounded';
+import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 
 export type NavItem = {
+  section: string;
   label: string;
   href: string;
   icon: React.ReactNode;
   badge?: string | number;
-  section?: string; // ไว้จัดกลุ่มหัวข้อ
 };
 
 export interface SideMenuProps {
-  /** ความกว้างโหมดปกติ (px) */
   width?: number;
-  /** ความกว้างโหมดย่อ (px) */
   miniWidth?: number;
-  /** path ปัจจุบัน (ไว้ทำ active state) */
   currentPath?: string;
-  /** รายการเมนูทั้งหมด (รองรับ section) */
   items?: NavItem[];
-  /** เริ่มต้นย่อเมนูหรือไม่ */
   defaultCollapsed?: boolean;
-  /** callback เวลา toggle ย่อ/ขยาย */
   onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 const DEFAULT_ITEMS: NavItem[] = [
-  { section: 'Overview', label: 'หน้าหลัก', href: '/home', icon: <HomeRoundedIcon /> },
-  // { section: 'Overview', label: 'Analytics', href: '/analytics', icon: <AnalyticsRoundedIcon />, badge: 'NEW' },
-  {
-    section: 'Work',
-    label: 'เมนูชำระสินค้า',
-    href: '/home/posseller',
-    icon: <AssignmentRoundedIcon />,
-    badge: 7,
-  },
-  // { section: 'Work', label: 'Task', href: '/home/tasks', icon: <SettingsRoundedIcon /> },
-  {
-    section: 'Order',
-    label: 'ใบรายการขาย',
-    href: '/home/saleListPage',
-    icon: <AssignmentRoundedIcon />,
-  },
-  {
-    section: 'Order',
-    label: 'ไฟล์ลูกค้า',
-    href: '/home/storage',
-    icon: <InsertDriveFileIcon />,
-  },
-  // { section: 'System', label: 'About', href: '/about', icon: <InfoRoundedIcon /> },
-  // { section: 'System', label: 'Feedback', href: '/feedback', icon: <HelpOutlineRoundedIcon /> },
+  { section: 'WORK', label: 'Dashboard', href: '/home', icon: <HomeRoundedIcon fontSize="small" /> },
+  { section: 'WORK', label: 'POS', href: '/home/posseller', icon: <PointOfSaleRoundedIcon fontSize="small" />, badge: 7 },
+  { section: 'WORK', label: 'Customer Files', href: '/home/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
+  { section: 'ORDER', label: 'Order List', href: '/home/saleListPage', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
+  { section: 'ORDER', label: 'Print Queue', href: '/home/saleListPage?view=queue', icon: <PrintRoundedIcon fontSize="small" />, badge: 3 },
+  { section: 'ORDER', label: 'Production Status', href: '/home/saleListPage?view=production', icon: <PrecisionManufacturingRoundedIcon fontSize="small" /> },
+  { section: 'CUSTOMERS', label: 'Customers', href: '/home/storage?view=customers', icon: <Groups2RoundedIcon fontSize="small" /> },
+  { section: 'SYSTEM', label: 'Settings', href: '/home/storage?view=settings', icon: <SettingsRoundedIcon fontSize="small" /> },
 ];
 
-const shimmer = keyframes`
-  0%{ background-position: 0% 50% }
-  100%{ background-position: 100% 50% }
-`;
-
-const StyledDrawer = styled(Drawer, {
-  shouldForwardProp: prop => prop !== 'data-collapsed',
-})<{ 'data-collapsed'?: boolean }>(({ theme, ['data-collapsed']: collapsed }) => ({
+const StyledDrawer = styled(Drawer)(({ theme }) => ({
   [`& .${drawerClasses.paper}`]: {
-    borderRight: `1px solid ${theme.palette.divider}`,
-    backdropFilter: 'blur(8px)',
-    backgroundImage: `linear-gradient(135deg, ${alpha(theme.palette.primary.main, 0.08)} 0%, transparent 40%, transparent 60%, ${alpha(theme.palette.secondary.main, 0.08)} 100%)`,
-    backgroundSize: '200% 200%',
-    animation: `${shimmer} 16s ease infinite`,
-    overflow: 'hidden',
-    transition: theme.transitions.create(['width'], { duration: 200 }),
+    borderRight: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+    background: '#ffffff',
+    boxSizing: 'border-box',
+    transition: theme.transitions.create(['width'], { duration: 240 }),
   },
-  ...(collapsed && {
-    [`& .${drawerClasses.paper}`]: {
-      overflowX: 'hidden',
-    },
-  }),
 }));
 
-const Brand = ({ collapsed }: { collapsed: boolean }) => {
+function isActivePath(currentPath: string, href: string) {
+  if (href === '/home') return currentPath === '/home';
+  return currentPath === href || currentPath.startsWith(`${href}/`);
+}
+
+function Brand({ collapsed }: { collapsed: boolean }) {
   const theme = useTheme();
   return (
-    <Stack
-      direction="row"
-      alignItems="center" // ให้แถวเดียวกันขนานกัน
-      sx={{ p: 2, pb: 1.5 }}>
-      {/* กล่องไอคอน */}
-      <Box
-        sx={{
-          width: 36,
-          height: 36,
-          borderRadius: 2,
-          display: 'grid',
-          placeItems: 'center',
-          bgcolor: alpha(theme.palette.primary.main, 0.15),
-          boxShadow: `inset 0 0 0 1px ${alpha(theme.palette.primary.main, 0.25)}`,
-          mr: collapsed ? 0 : 1.25,
-        }}>
-        <StarRoundedIcon fontSize="small" />
+    <Stack direction="row" alignItems="center" sx={{ px: 2, pt: 2, pb: 1.5, minHeight: 62 }}>
+      <Box sx={{ width: 34, height: 34, borderRadius: 2, display: 'grid', placeItems: 'center', bgcolor: alpha(theme.palette.primary.main, 0.12), border: `1px solid ${alpha(theme.palette.primary.main, 0.22)}`, mr: collapsed ? 0 : 1.2 }}>
+        <StarRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />
       </Box>
-
-      {/* บล็อกข้อความ (กึ่งกลางเท่ากับไอคอน 36px) */}
       {!collapsed && (
-        <Box
-          sx={{
-            minWidth: 0,
-            minHeight: 36, // สูงเท่าไอคอน
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center', // จัดกลางแนวตั้งภายใน 36px
-            lineHeight: 1.1,
-          }}>
-          <Typography
-            variant="body1" // ลดความหนาแน่น
-            fontWeight={600}
-            noWrap
-            sx={{ letterSpacing: 0.1 }}>
-            GLOSSY{' '}
-            <Box component="span" sx={{ color: 'primary.main' }}>
-              DESIGN
-            </Box>
-          </Typography>
-
-          <Typography variant="caption" color="text.secondary" noWrap sx={{ mt: 0.25 }}>
-            Print & Cashier System
-          </Typography>
+        <Box sx={{ minWidth: 0 }}>
+          <Typography fontWeight={700} sx={{ fontSize: 14, lineHeight: 1.2 }}>GLOSSY DESIGN</Typography>
+          <Typography variant="caption" color="text.secondary">Admin Console</Typography>
         </Box>
       )}
     </Stack>
   );
-};
+}
 
-const SectionHeader = ({ text, collapsed }: { text: string; collapsed: boolean }) =>
-  collapsed ? null : (
-    <ListSubheader component="div" disableSticky sx={{ px: 2.5, py: 1.5, typography: 'overline', color: 'text.secondary' }}>
-      {text}
-    </ListSubheader>
-  );
-
-type ItemRowProps = {
-  item: NavItem;
-  collapsed: boolean;
-  currentPath: string;
-};
-
-function ItemRow({ item, collapsed, currentPath }: Readonly<ItemRowProps>) {
-  const active = currentPath === item.href;
-  const content = (
+function MenuRow({ item, active, collapsed }: { item: NavItem; active: boolean; collapsed: boolean }) {
+  const node = (
     <ListItemButton
       component={Link}
       href={item.href}
-      selected={active}
-      sx={(muiTheme) => ({
+      sx={(theme) => ({
+        height: 40,
+        px: collapsed ? 1.2 : 1.4,
+        mx: 1.2,
+        mb: 0.75,
         borderRadius: 2,
-        mx: collapsed ? 1 : 2,
-        mb: 0.5,
-        py: 0.5,
-        position: 'relative',
-        transition: muiTheme.transitions.create(['background-color', 'transform'], {
-          duration: 150,
-        }),
-        ...(active && {
-          bgcolor: alpha(muiTheme.palette.primary.main, 0.14),
-          '&:hover': { bgcolor: alpha(muiTheme.palette.primary.main, 0.18) },
-        }),
-        '&:hover': { transform: 'translateY(-1px)' },
-      })}>
-      <Box
-        sx={(muiTheme) => ({
-          position: 'absolute',
-          left: 8,
-          top: '50%',
-          transform: 'translateY(-50%)',
-          width: 4,
-          height: 24,
-          borderRadius: 2,
-          opacity: active ? 1 : 0,
-          transition: muiTheme.transitions.create(['opacity', 'height'], { duration: 200 }),
-          background: `linear-gradient(180deg, ${muiTheme.palette.primary.main}, ${muiTheme.palette.secondary.main})`,
-        })}
-      />
-      <ListItemIcon sx={{ minWidth: 36, color: active ? 'primary.main' : 'inherit' }}>{item.icon}</ListItemIcon>
+        alignItems: 'center',
+        transition: theme.transitions.create(['background-color', 'transform', 'box-shadow'], { duration: 160 }),
+        bgcolor: active ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
+        '&:hover': {
+          bgcolor: alpha(theme.palette.primary.main, 0.07),
+          transform: 'translateY(-1px)',
+          boxShadow: `0 6px 14px ${alpha(theme.palette.primary.main, 0.12)}`,
+        },
+      })}
+    >
+      <Box sx={(theme) => ({ position: 'absolute', left: -1, top: 8, bottom: 8, width: 3, borderRadius: 2, bgcolor: 'primary.main', opacity: active ? 1 : 0, transition: theme.transitions.create('opacity', { duration: 180 }) })} />
+      <ListItemIcon sx={{ minWidth: 28, color: active ? 'primary.main' : 'text.secondary', display: 'grid', placeItems: 'center' }}>{item.icon}</ListItemIcon>
       {!collapsed && (
-        <ListItemText
-          primary={
-            <Stack direction="row" alignItems="center" spacing={1}>
-              <Typography fontWeight={active ? 400 : 300}>{item.label}</Typography>
-              {item.badge !== undefined && (
-                <Chip
-                  size="small"
-                  label={item.badge}
-                  sx={{
-                    height: 20,
-                    '& .MuiChip-label': { px: 0.75, fontSize: 12, fontWeight: 700 },
-                  }}
-                  color={typeof item.badge === 'number' ? 'primary' : 'secondary'}
-                  variant="filled"
-                />
-              )}
-            </Stack>
-          }
-        />
+        <>
+          <ListItemText primary={item.label} primaryTypographyProps={{ fontSize: 14, fontWeight: active ? 600 : 500, color: active ? 'text.primary' : 'text.secondary' }} />
+          {item.badge !== undefined && (
+            <Badge
+              badgeContent={item.badge}
+              color="primary"
+              sx={{
+                '& .MuiBadge-badge': {
+                  right: 0,
+                  minWidth: 20,
+                  height: 20,
+                  borderRadius: 10,
+                  px: 0.6,
+                  fontWeight: 700,
+                  fontSize: 11,
+                },
+              }}
+            />
+          )}
+        </>
       )}
     </ListItemButton>
   );
 
-  return collapsed ? (
-    <Tooltip title={item.label} placement="right" arrow>
-      <Box>{content}</Box>
-    </Tooltip>
-  ) : (
-    content
+  return collapsed ? <Tooltip title={item.label} placement="right">{node}</Tooltip> : node;
+}
+
+function SidebarContent({
+  items,
+  currentPath,
+  collapsed,
+  onToggle,
+}: {
+  items: NavItem[];
+  currentPath: string;
+  collapsed: boolean;
+  onToggle?: () => void;
+}) {
+  const grouped = React.useMemo(() => {
+    const map = new Map<string, NavItem[]>();
+    items.forEach((item) => {
+      if (!map.has(item.section)) map.set(item.section, []);
+      map.get(item.section)?.push(item);
+    });
+    return Array.from(map.entries());
+  }, [items]);
+
+  return (
+    <Stack sx={{ height: '100%' }}>
+      <Stack direction="row" alignItems="center" sx={{ pr: 1 }}>
+        <Brand collapsed={collapsed} />
+        <Box sx={{ ml: 'auto' }}>
+          <Tooltip title={collapsed ? 'Expand' : 'Collapse'}>
+            <IconButton size="small" onClick={onToggle}>{collapsed ? <ChevronRightRoundedIcon fontSize="small" /> : <ChevronLeftRoundedIcon fontSize="small" />}</IconButton>
+          </Tooltip>
+        </Box>
+      </Stack>
+
+      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pb: 1 }}>
+        {grouped.map(([section, sectionItems], index) => (
+          <List
+            key={section}
+            disablePadding
+            subheader={
+              collapsed ? undefined : (
+                <ListSubheader
+                  component="div"
+                  disableSticky
+                  sx={{
+                    bgcolor: 'transparent',
+                    px: 2.4,
+                    pt: index === 0 ? 0.5 : 2.1,
+                    pb: 0.9,
+                    fontSize: 11,
+                    fontWeight: 700,
+                    letterSpacing: 1.1,
+                    color: 'text.disabled',
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {section}
+                </ListSubheader>
+              )
+            }
+          >
+            {sectionItems.map((item) => (
+              <MenuRow key={item.href} item={item} active={isActivePath(currentPath, item.href)} collapsed={collapsed} />
+            ))}
+          </List>
+        ))}
+      </Box>
+
+      <Divider />
+      <Stack direction="row" alignItems="center" spacing={1.1} sx={{ p: 1.5 }}>
+        <Avatar sx={{ width: 32, height: 32 }}>A</Avatar>
+        {!collapsed && (
+          <Box sx={{ minWidth: 0 }}>
+            <Typography variant="body2" fontWeight={600} noWrap>Admin</Typography>
+            <Typography variant="caption" color="text.secondary" noWrap>glossydesign</Typography>
+          </Box>
+        )}
+      </Stack>
+    </Stack>
   );
 }
 
-export default function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFAULT_ITEMS, defaultCollapsed = false, onCollapsedChange }: Readonly<SideMenuProps>) {
+export default function SideMenu({
+  width = 272,
+  miniWidth = 84,
+  currentPath = '/',
+  items = DEFAULT_ITEMS,
+  defaultCollapsed = false,
+  onCollapsedChange,
+}: Readonly<SideMenuProps>) {
   const [collapsed, setCollapsed] = React.useState(defaultCollapsed);
 
-  // คีย์ลัด Ctrl/Cmd + B เพื่อพับเมนู
   React.useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const isMac = /Mac|iPod|iPhone|iPad/.test(navigator.platform);
-      if ((isMac ? e.metaKey : e.ctrlKey) && e.key.toLowerCase() === 'b') {
+      const withCmd = e.ctrlKey || e.metaKey;
+      if (withCmd && e.key.toLowerCase() === 'b') {
         e.preventDefault();
-        setCollapsed(c => {
-          const next = !c;
+        setCollapsed((prev) => {
+          const next = !prev;
           onCollapsedChange?.(next);
           return next;
         });
       }
     };
-    globalThis.addEventListener('keydown', onKey);
-    return () => globalThis.removeEventListener('keydown', onKey);
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
   }, [onCollapsedChange]);
 
-  const grouped = React.useMemo(() => {
-    const map = new Map<string, NavItem[]>();
-    items.forEach(it => {
-      const sec = it.section ?? 'Main';
-      if (!map.has(sec)) map.set(sec, []);
-      map.get(sec)!.push(it);
+  const drawerWidth = collapsed ? miniWidth : width;
+  const toggleDesktop = () => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      onCollapsedChange?.(next);
+      return next;
     });
-    return Array.from(map.entries());
-  }, [items]);
-
-  const DrawerWidth = collapsed ? miniWidth : width;
+  };
 
   return (
     <StyledDrawer
       variant="permanent"
-      data-collapsed={collapsed || undefined}
       sx={{
         display: { xs: 'none', md: 'block' },
-        width: DrawerWidth,
+        width: drawerWidth,
         flexShrink: 0,
         [`& .${drawerClasses.paper}`]: {
-          width: DrawerWidth,
-          boxSizing: 'border-box',
-          bgcolor: 'background.paper',
+          width: drawerWidth,
         },
-      }}>
-      {/* ส่วนหัวโลโก้ + ปุ่มควบคุม */}
-      <Stack direction="row" alignItems="center" sx={{ px: 1, pt: 1.5 }}>
-        <Brand collapsed={collapsed} />
-        <Box sx={{ ml: 'auto', pr: 1 }}>
-          <Tooltip title={collapsed ? 'ขยายเมนู (Ctrl/Cmd+B)' : 'ย่อเมนู (Ctrl/Cmd+B)'} arrow>
-            <IconButton
-              size="small"
-              onClick={() => {
-                const next = !collapsed;
-                setCollapsed(next);
-                onCollapsedChange?.(next);
-              }}>
-              {collapsed ? <ChevronRightRoundedIcon /> : <ChevronLeftRoundedIcon />}
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Stack>
-
-      {/* เลือกโปรเจ็กต์/เวิร์คสเปซ */}
-
-      {/* เมนูหลัก (จัดกลุ่มตาม section) */}
-      <Box
-        sx={{
-          height: '100%',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-        }}>
-        <Box sx={{ overflowY: 'auto', pb: 2 }}>
-          {grouped.map(([section, list]) => (
-            <List key={section} subheader={<SectionHeader text={section} collapsed={collapsed} />} sx={{ px: 0.5 }}>
-              {list.map(item => (
-                <ItemRow key={item.href} item={item} collapsed={collapsed} currentPath={currentPath} />
-              ))}
-            </List>
-          ))}
-        </Box>
-
-        {/* เส้นคั่น + ปุ่มลัด */}
-        {/* <Divider sx={{ mx: 2, my: 1 }} />
-        <Stack
-          direction="row"
-          alignItems="center"
-          spacing={1}
-          sx={{ px: collapsed ? 1 : 2, pb: 1 }}
-        >
-          {collapsed ? (
-            <>
-              <Tooltip title="สลับธีม" placement="right" arrow>
-                <IconButton size="small" onClick={onToggleTheme}>
-                  {themeMode === 'dark' ? <Brightness7RoundedIcon /> : <Brightness4RoundedIcon />}
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="เมนูเพิ่มเติม" placement="right" arrow>
-                <IconButton size="small">
-                  <MoreVertRoundedIcon />
-                </IconButton>
-              </Tooltip>
-            </>
-          ) : (
-            <>
-              <Button
-                onClick={onToggleTheme}
-                variant="outlined"
-                size="small"
-                startIcon={themeMode === 'dark' ? <Brightness7RoundedIcon /> : <Brightness4RoundedIcon />}
-                sx={{ borderRadius: 2 }}
-              >
-                Theme
-              </Button>
-              <Button variant="text" size="small" startIcon={<MoreVertRoundedIcon />}>
-                Quick Actions
-              </Button>
-            </>
-          )}
-        </Stack> */}
-
-        {/* โปรไฟล์ผู้ใช้ */}
-        <Stack
-          direction="row"
-          alignItems="center"
-          sx={{
-            mt: 'auto',
-            p: 2,
-            gap: 1.5,
-            borderTop: '1px solid',
-            borderColor: 'divider',
-          }}>
-          <Avatar src={`https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`} sx={{ width: 36, height: 36 }} />
-          {!collapsed && (
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="body2" fontWeight={700} noWrap>
-                ADMIN GLOSSY
-              </Typography>
-              <Typography variant="caption" sx={{ color: 'text.secondary' }} noWrap>
-                Accout : glossydesign
-              </Typography>
-            </Box>
-          )}
-
-          <Box sx={{ ml: 'auto' }}>
-            <Tooltip title="เมนูโปรไฟล์" arrow placement="top">
-              <IconButton size="small">
-                <MoreVertRoundedIcon fontSize="small" />
-              </IconButton>
-            </Tooltip>
-          </Box>
-        </Stack>
-      </Box>
+      }}
+    >
+      <SidebarContent items={items} currentPath={currentPath} collapsed={collapsed} onToggle={toggleDesktop} />
     </StyledDrawer>
   );
 }

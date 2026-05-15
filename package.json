@@ -4,9 +4,11 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "prebuild": "npm run check:utf8",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "check:utf8": "node scripts/check-utf8.cjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
   },
   "dependencies": {

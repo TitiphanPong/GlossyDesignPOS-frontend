@@ -12,6 +12,7 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
+  Grid,
   IconButton,
   InputLabel,
   LinearProgress,
@@ -37,8 +38,10 @@ import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
 import GridOnRoundedIcon from '@mui/icons-material/GridOnRounded';
 import axios from 'axios';
 import AdminPageContainer from '../components/AdminPageContainer';
+import { commonButtonSx, dataGridSx, sectionTitleSx, statusChipSx, topActionBarSx, uiCardSx } from '../components/adminUi';
 
 type StatusType = 'completed' | 'pending';
+type SortType = 'newest' | 'oldest' | 'customer';
 
 type UploadApiFile = {
   fileId?: string;
@@ -153,6 +156,8 @@ export default function StoragePage() {
   const [loading, setLoading] = React.useState(false);
   const [rows, setRows] = React.useState<UploadRecord[]>([]);
   const [search, setSearch] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState<'all' | StatusType>('all');
+  const [sort, setSort] = React.useState<SortType>('newest');
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
 
   const [editOpen, setEditOpen] = React.useState(false);
@@ -260,15 +265,26 @@ export default function StoragePage() {
     setErrorMessage('Unable to delete this record with current API paths.');
   };
 
-  const filteredRows = rows.filter((row) => {
-    const q = search.toLowerCase().trim();
-    if (!q) return true;
+  const filteredRows = rows
+    .filter((row) => {
+      const q = search.toLowerCase().trim();
+      if (!q) return true;
 
-    return row.customerName.toLowerCase().includes(q)
-      || row.phone.toLowerCase().includes(q)
-      || row.category.toLowerCase().includes(q)
-      || row.note.toLowerCase().includes(q);
-  });
+      return row.customerName.toLowerCase().includes(q)
+        || row.phone.toLowerCase().includes(q)
+        || row.category.toLowerCase().includes(q)
+        || row.note.toLowerCase().includes(q);
+    })
+    .filter((row) => (statusFilter === 'all' ? true : row.status === statusFilter))
+    .sort((a, b) => {
+      if (sort === 'customer') return a.customerName.localeCompare(b.customerName);
+      const t1 = new Date(a.createdAt).getTime();
+      const t2 = new Date(b.createdAt).getTime();
+      return sort === 'newest' ? t2 - t1 : t1 - t2;
+    });
+
+  const completedCount = rows.filter((row) => row.status === 'completed').length;
+  const pendingCount = rows.filter((row) => row.status === 'pending').length;
 
   const columns: GridColDef[] = [
     {
@@ -289,7 +305,7 @@ export default function StoragePage() {
       headerName: 'ประเภทงาน',
       minWidth: 150,
       flex: 0.9,
-      renderCell: (params) => <Chip size="small" label={String(params.value || 'Other')} variant="outlined" />,
+      renderCell: (params) => <Chip size="small" label={String(params.value || 'Other')} variant="outlined" sx={statusChipSx} />,
     },
     {
       field: 'files',
@@ -314,7 +330,7 @@ export default function StoragePage() {
                     rel="noopener noreferrer"
                     startIcon={getFileIcon(file.name)}
                     endIcon={<OpenInNewRoundedIcon fontSize="small" />}
-                    sx={{ textTransform: 'none', maxWidth: 170 }}>
+                    sx={{ ...commonButtonSx, textTransform: 'none', maxWidth: 170, minHeight: 34 }}>
                     <Typography noWrap variant="caption">{file.name}</Typography>
                   </Button>
                 ) : (
@@ -323,13 +339,13 @@ export default function StoragePage() {
                     variant="outlined"
                     disabled
                     startIcon={getFileIcon(file.name)}
-                    sx={{ textTransform: 'none', maxWidth: 170 }}>
+                    sx={{ ...commonButtonSx, textTransform: 'none', maxWidth: 170, minHeight: 34 }}>
                     <Typography noWrap variant="caption">{file.name}</Typography>
                   </Button>
                 )}
               </Tooltip>
             ))}
-            {files.length > 4 && <Chip size="small" label={`+${files.length - 4}`} />}
+            {files.length > 4 && <Chip size="small" label={`+${files.length - 4}`} sx={statusChipSx} />}
           </Stack>
         );
       },
@@ -352,8 +368,8 @@ export default function StoragePage() {
       flex: 0.8,
       renderCell: (params) =>
         params.value === 'completed'
-          ? <Chip label="เสร็จสิ้น" size="small" color="success" icon={<CheckCircleIcon />} />
-          : <Chip label="รอดำเนินการ" size="small" color="warning" icon={<HourglassEmptyIcon />} />,
+          ? <Chip label="Success" size="small" color="success" icon={<CheckCircleIcon />} sx={statusChipSx} />
+          : <Chip label="Processing" size="small" color="warning" icon={<HourglassEmptyIcon />} sx={statusChipSx} />,
     },
     {
       field: 'note',
@@ -381,29 +397,69 @@ export default function StoragePage() {
   ];
 
   return (
-    <AdminPageContainer title="ไฟล์ลูกค้า (Storage)">
-      <Stack spacing={2}>
+    <AdminPageContainer
+      title="Storage"
+      subtitle="จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร"
+      headerActions={
+        <Button variant="contained" startIcon={<RefreshIcon />} onClick={fetchUploads} disabled={loading} sx={commonButtonSx}>
+          Refresh
+        </Button>
+      }>
+      <Stack spacing={2.5}>
         {errorMessage && <Alert severity="warning">{errorMessage}</Alert>}
 
-        <Card sx={{ p: 2.2, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} justifyContent="space-between">
+        <Card sx={topActionBarSx}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} alignItems={{ xs: 'stretch', md: 'center' }}>
             <TextField
               size="small"
               placeholder="ค้นหาจากชื่อลูกค้า เบอร์โทร ประเภทงาน..."
               value={search}
               onChange={(event) => setSearch(event.target.value)}
-              sx={{ width: { xs: '100%', sm: 360 } }}
+              sx={{ flex: 1, minWidth: { md: 280 } }}
             />
-            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchUploads} disabled={loading}>
-              Refresh
-            </Button>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 170 } }}>
+              <InputLabel id="status-filter-label">Filter</InputLabel>
+              <Select labelId="status-filter-label" value={statusFilter} label="Filter" onChange={(event) => setStatusFilter(event.target.value as 'all' | StatusType)}>
+                <MenuItem value="all">ทั้งหมด</MenuItem>
+                <MenuItem value="pending">Processing</MenuItem>
+                <MenuItem value="completed">Success</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 180 } }}>
+              <InputLabel id="sort-label">Sort</InputLabel>
+              <Select labelId="sort-label" value={sort} label="Sort" onChange={(event) => setSort(event.target.value as SortType)}>
+                <MenuItem value="newest">ล่าสุดก่อน</MenuItem>
+                <MenuItem value="oldest">เก่าสุดก่อน</MenuItem>
+                <MenuItem value="customer">ชื่อลูกค้า A-Z</MenuItem>
+              </Select>
+            </FormControl>
+            <Button variant="contained" onClick={fetchUploads} disabled={loading} sx={commonButtonSx}>อัปเดตข้อมูล</Button>
           </Stack>
         </Card>
 
-        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+        <Grid container spacing={1.5}>
+          {[
+            { label: 'ทั้งหมด', value: rows.length },
+            { label: 'Processing', value: pendingCount },
+            { label: 'Success', value: completedCount },
+          ].map((item) => (
+            <Grid size={{ xs: 12, sm: 4 }} key={item.label}>
+              <Card sx={{ ...uiCardSx, p: 2 }}>
+                <Typography variant="caption" color="text.secondary">{item.label}</Typography>
+                <Typography variant="h5" fontWeight={800}>{item.value}</Typography>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
+        <Card sx={uiCardSx}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} sx={{ px: 2, pt: 2 }}>
+            <Typography sx={sectionTitleSx}>รายการไฟล์ลูกค้า</Typography>
+            <Typography variant="body2" color="text.secondary">{filteredRows.length} รายการ</Typography>
+          </Stack>
           {loading && <LinearProgress />}
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
-            <DataGrid        
+            <DataGrid
               rows={filteredRows}
               getRowId={(row) => row._id}
               columns={columns}
@@ -411,7 +467,7 @@ export default function StoragePage() {
               pageSizeOptions={[10, 20, 50]}
               initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
               disableRowSelectionOnClick
-              sx={{ border: 'none' }}
+              sx={dataGridSx}
             />
           </Box>
         </Card>
@@ -442,10 +498,11 @@ export default function StoragePage() {
         </DialogContent>
 
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setEditOpen(false)}>ยกเลิก</Button>
-          <Button variant="contained" onClick={handleSave}>บันทึก</Button>
+          <Button onClick={() => setEditOpen(false)} sx={commonButtonSx}>ยกเลิก</Button>
+          <Button variant="contained" onClick={handleSave} sx={commonButtonSx}>บันทึก</Button>
         </DialogActions>
       </Dialog>
     </AdminPageContainer>
   );
 }
+

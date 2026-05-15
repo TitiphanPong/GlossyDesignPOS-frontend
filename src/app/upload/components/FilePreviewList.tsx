@@ -61,7 +61,7 @@ export default function FilePreviewList({ files, uploadProgress, onRemoveFile }:
               {file.name}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              {getFileTypeLabel(file.name)} • {formatFileSize(file.size)}
+              {getFileTypeLabel(file.name)} | {formatFileSize(file.size)}
             </Typography>
           </Box>
           <IconButton size="small" onClick={() => onRemoveFile(file)} aria-label={`remove-${file.name}`}>
@@ -72,3 +72,4 @@ export default function FilePreviewList({ files, uploadProgress, onRemoveFile }:
     </Stack>
   );
 }
+
