@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import Link from 'next/link';
@@ -162,10 +162,9 @@ type ItemRowProps = {
   item: NavItem;
   collapsed: boolean;
   currentPath: string;
-  theme: ReturnType<typeof useTheme>;
 };
 
-function ItemRow({ item, collapsed, currentPath, theme }: Readonly<ItemRowProps>) {
+function ItemRow({ item, collapsed, currentPath }: Readonly<ItemRowProps>) {
   const active = currentPath === item.href;
   const content = (
     <ListItemButton
@@ -236,7 +235,6 @@ function ItemRow({ item, collapsed, currentPath, theme }: Readonly<ItemRowProps>
 }
 
 export default function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFAULT_ITEMS, defaultCollapsed = false, onCollapsedChange }: Readonly<SideMenuProps>) {
-  const theme = useTheme();
   const [collapsed, setCollapsed] = React.useState(defaultCollapsed);
 
   // คีย์ลัด Ctrl/Cmd + B เพื่อพับเมนู
@@ -314,7 +312,7 @@ export default function SideMenu({ width = 272, miniWidth = 84, currentPath = '/
           {grouped.map(([section, list]) => (
             <List key={section} subheader={<SectionHeader text={section} collapsed={collapsed} />} sx={{ px: 0.5 }}>
               {list.map(item => (
-                <ItemRow key={item.href} item={item} collapsed={collapsed} currentPath={currentPath} theme={theme} />
+                <ItemRow key={item.href} item={item} collapsed={collapsed} currentPath={currentPath} />
               ))}
             </List>
           ))}

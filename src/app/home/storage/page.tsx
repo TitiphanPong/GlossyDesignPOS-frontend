@@ -1,45 +1,80 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import {
+  Alert,
   Box,
   Button,
-  Typography,
-  IconButton,
-  Stack,
-  TextField,
+  Card,
   Chip,
-  Link,
   Dialog,
-  DialogTitle,
-  DialogContent,
   DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControl,
+  IconButton,
+  InputLabel,
+  LinearProgress,
   MenuItem,
   Select,
-  FormControl,
-  InputLabel,
-  Card,
-  CardContent,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
 } from '@mui/material';
-import Image from 'next/image';
-import { DataGrid, GridColDef, GridRenderCellParams } from '@mui/x-data-grid';
+import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
-import PhoneIcon from '@mui/icons-material/Phone';
+import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import CloseIcon from '@mui/icons-material/Close';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
+import ArchiveRoundedIcon from '@mui/icons-material/ArchiveRounded';
+import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
+import GridOnRoundedIcon from '@mui/icons-material/GridOnRounded';
 import axios from 'axios';
-import { Cell, Pie, PieChart } from 'recharts';
+import AdminPageContainer from '../components/AdminPageContainer';
 
-interface UploadedFile {
+type StatusType = 'completed' | 'pending';
+
+type UploadApiFile = {
+  fileId?: string;
+  id?: string;
+  key?: string;
+  name?: string;
+  originalName?: string;
+  filename?: string;
+  downloadUrl?: string;
+  url?: string;
+  signedUrl?: string;
+};
+
+type UploadApiRecord = {
+  _id?: string;
+  id?: string;
+  uploadId?: string;
+  customerName?: string;
+  customer?: string;
+  phone?: string;
+  phoneNumber?: string;
+  note?: string;
+  category?: string;
+  jobType?: string;
+  files?: UploadApiFile[] | string[];
+  createdAt?: string;
+  status?: string;
+};
+
+type UploadedFile = {
   fileId: string;
   name: string;
-  downloadUrl: string;
-}
+  url: string;
+};
 
-interface UploadRecord {
+type UploadRecord = {
   _id: string;
   customerName: string;
   phone: string;
@@ -47,286 +82,297 @@ interface UploadRecord {
   category: string;
   files: UploadedFile[];
   createdAt: string;
-  status: string;
-}
-
-interface FolderUsage {
-  size: number;
-  sizeGB: string;
-  sizeMB: string;
-}
-
-const getIconPathByExtension = (ext: string) => {
-  const extMap: Record<string, string> = {
-    pdf: 'icons/pdf.png',
-    txt: 'icons/txt.png',
-    png: 'icons/png.png',
-    jpeg: 'icons/png.png',
-    jpg: 'icons/png.png',
-    ai: 'icons/illustrator.png',
-    psd: 'icons/photoshop.png',
-    xls: 'icons/excel.png',
-    xlsx: 'icons/excel.png',
-    xslm: 'icons/excel.png',
-    csv: 'icons/excel.png',
-    doc: 'icons/docxWord.png',
-    docx: 'icons/docxWord.png',
-  };
-
-  return extMap[ext.toLowerCase()] || 'https://cdn-icons-png.flaticon.com/512/337/337951.png';
+  status: StatusType;
 };
 
-export default function UploadedFilesPage() {
+const endpointCandidates = ['/uploads', '/upload'];
+
+const extIconMap: Record<string, React.ReactNode> = {
+  pdf: <DescriptionRoundedIcon color="error" fontSize="small" />,
+  png: <ImageRoundedIcon color="primary" fontSize="small" />,
+  jpg: <ImageRoundedIcon color="primary" fontSize="small" />,
+  jpeg: <ImageRoundedIcon color="primary" fontSize="small" />,
+  gif: <ImageRoundedIcon color="primary" fontSize="small" />,
+  webp: <ImageRoundedIcon color="primary" fontSize="small" />,
+  zip: <ArchiveRoundedIcon sx={{ color: '#f59e0b' }} fontSize="small" />,
+  rar: <ArchiveRoundedIcon sx={{ color: '#f59e0b' }} fontSize="small" />,
+  xls: <GridOnRoundedIcon color="success" fontSize="small" />,
+  xlsx: <GridOnRoundedIcon color="success" fontSize="small" />,
+  csv: <GridOnRoundedIcon color="success" fontSize="small" />,
+};
+
+function getBaseUrl() {
+  return process.env.NEXT_PUBLIC_API_URL ?? '';
+}
+
+function getExt(name: string) {
+  return (name.split('.').pop() ?? '').toLowerCase();
+}
+
+function getFileIcon(name: string) {
+  return extIconMap[getExt(name)] ?? <InsertDriveFileRoundedIcon color="disabled" fontSize="small" />;
+}
+
+function normalizeFiles(rawFiles: UploadApiRecord['files']): UploadedFile[] {
+  if (!Array.isArray(rawFiles)) return [];
+
+  return rawFiles
+    .map((item): UploadedFile | null => {
+      if (typeof item === 'string') {
+        const name = item.split('/').pop() || item;
+        return { fileId: item, name, url: '' };
+      }
+
+      const fileId = String(item.fileId ?? item.id ?? item.key ?? '');
+      const normalizedName = item.name ?? item.originalName ?? item.filename ?? fileId ?? 'Unnamed file';
+      const name = String(normalizedName);
+      const url = String(item.signedUrl ?? item.downloadUrl ?? item.url ?? '');
+      if (!fileId && !name) return null;
+      return { fileId: fileId || name, name, url };
+    })
+    .filter((item): item is UploadedFile => Boolean(item));
+}
+
+function normalizeRecord(raw: UploadApiRecord): UploadRecord {
+  const id = String(raw._id ?? raw.id ?? raw.uploadId ?? `upload-${Math.random().toString(36).slice(2)}`);
+  const status = raw.status === 'completed' ? 'completed' : 'pending';
+
+  return {
+    _id: id,
+    customerName: String(raw.customerName ?? raw.customer ?? '-'),
+    phone: String(raw.phone ?? raw.phoneNumber ?? '-'),
+    note: String(raw.note ?? ''),
+    category: String(raw.category ?? raw.jobType ?? 'Other'),
+    files: normalizeFiles(raw.files),
+    createdAt: String(raw.createdAt ?? new Date().toISOString()),
+    status,
+  };
+}
+
+export default function StoragePage() {
   const [loading, setLoading] = React.useState(false);
   const [rows, setRows] = React.useState<UploadRecord[]>([]);
   const [search, setSearch] = React.useState('');
+  const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+
   const [editOpen, setEditOpen] = React.useState(false);
   const [editingRecord, setEditingRecord] = React.useState<UploadRecord | null>(null);
   const [customerName, setCustomerName] = React.useState('');
   const [phone, setPhone] = React.useState('');
-  const [status, setStatus] = React.useState<'completed' | 'pending'>('pending');
+  const [status, setStatus] = React.useState<StatusType>('pending');
 
-  // Google Drive Usage Section
+  const fetchUploads = React.useCallback(async () => {
+    const base = getBaseUrl();
+    if (!base) {
+      setErrorMessage('Missing NEXT_PUBLIC_API_URL');
+      setRows([]);
+      return;
+    }
 
-  const [quota, setQuota] = React.useState<{
-    limit: number;
-    usage: number;
-    usageInDrive: number;
-    usageInDriveTrash: number;
-  } | null>(null);
+    setLoading(true);
+    setErrorMessage(null);
 
-  const [folderUsage, setFolderUsage] = React.useState<Record<string, FolderUsage>>({});
-
-
-  const [activeIndex, setActiveIndex] = React.useState<number | null>(null);
-
-  const fetchUploads = async () => {
     try {
-      setLoading(true);
-      const res = await axios.get<UploadRecord[]>(`${process.env.NEXT_PUBLIC_API_URL}/upload`);
-      setRows(res.data);
-    } catch (err) {
-      console.error('❌ Error fetching uploads', err);
+      let loaded = false;
+
+      for (const endpoint of endpointCandidates) {
+        try {
+          const res = await axios.get(`${base}${endpoint}`);
+          const payload = res.data as unknown;
+          const list = Array.isArray(payload)
+            ? payload
+            : Array.isArray((payload as { data?: unknown[] })?.data)
+              ? (payload as { data: unknown[] }).data
+              : [];
+
+          const normalized = list
+            .filter((item): item is UploadApiRecord => typeof item === 'object' && item !== null)
+            .map(normalizeRecord);
+
+          setRows(normalized);
+          loaded = true;
+          break;
+        } catch {
+          // Try next endpoint
+        }
+      }
+
+      if (!loaded) {
+        setRows([]);
+        setErrorMessage('Unable to load records from API. Please verify /uploads or /upload endpoint.');
+      }
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
+
+  React.useEffect(() => {
+    fetchUploads();
+  }, [fetchUploads]);
 
   const handleEdit = (record: UploadRecord) => {
     setEditingRecord(record);
     setCustomerName(record.customerName);
     setPhone(record.phone);
-    setStatus(record.status as 'completed' | 'pending');
+    setStatus(record.status);
     setEditOpen(true);
   };
 
-  const fetchQuota = async () => {
-    try {
-      const [quotaRes, folderRes] = await Promise.all([axios.get(`${process.env.NEXT_PUBLIC_API_URL}/upload/quota`), axios.get(`${process.env.NEXT_PUBLIC_API_URL}/upload/quota/folders`)]);
-      setQuota(quotaRes.data);
-      setFolderUsage(folderRes.data);
-    } catch (err) {
-      console.error('❌ Error fetching quota', err);
-    }
-  };
-
-  const fetchFolderQuota = async () => {
-    // (ลบ empty try-catch block ที่ไม่ได้ใช้งาน)
-  };
-
   const handleSave = async () => {
-    try {
-      if (!editingRecord) return;
-      await axios.patch(`${process.env.NEXT_PUBLIC_API_URL}/upload/${editingRecord._id}`, {
-        customerName,
-        phone,
-        status,
-      });
-      setEditOpen(false);
-      fetchUploads();
-    } catch (err) {
-      console.error('❌ Error saving update', err);
+    if (!editingRecord) return;
+    const base = getBaseUrl();
+    if (!base) return;
+
+    const payload = { customerName, phone, status };
+    const candidates = endpointCandidates.map((path) => `${base}${path}/${editingRecord._id}`);
+
+    for (const url of candidates) {
+      try {
+        await axios.patch(url, payload);
+        setEditOpen(false);
+        fetchUploads();
+        return;
+      } catch {
+        // try next candidate
+      }
     }
+
+    setErrorMessage('Unable to update this record with current API paths.');
   };
 
   const handleDelete = async (id: string) => {
     if (!confirm('ยืนยันการลบรายการนี้?')) return;
-    try {
-      await axios.delete(`${process.env.NEXT_PUBLIC_API_URL}/upload/${id}`);
-      fetchUploads();
-    } catch (err) {
-      console.error('❌ Error deleting record', err);
+    const base = getBaseUrl();
+    if (!base) return;
+
+    const candidates = endpointCandidates.map((path) => `${base}${path}/${id}`);
+
+    for (const url of candidates) {
+      try {
+        await axios.delete(url);
+        fetchUploads();
+        return;
+      } catch {
+        // try next candidate
+      }
     }
+
+    setErrorMessage('Unable to delete this record with current API paths.');
   };
 
-  React.useEffect(() => {
-    fetchUploads();
-    fetchFolderQuota();
-    fetchQuota();
-  }, []);
+  const filteredRows = rows.filter((row) => {
+    const q = search.toLowerCase().trim();
+    if (!q) return true;
 
-  const pieData = Object.entries(folderUsage).map(([name, data]) => ({
-    name,
-    value: Number((data.size / 1024 ** 2).toFixed(2)), // ✅ บังคับให้เป็น number
-  }));
-
-  const COLORS = ['#8884d8', '#ff8042', '#ffc658', '#82ca9d', '#00c49f'];
-
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case 'นามบัตร':
-        return 'primary';
-      case 'ตรายาง':
-        return 'secondary';
-      case 'ถ่ายเอกสาร & ปริ้นงาน':
-        return 'success';
-      case 'สติ๊กเกอร์':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
-  const getCategoryIcon = (category: string) => {
-    switch (category) {
-      case 'นามบัตร':
-        return <span style={{ fontSize: '2rem' }}>🃏</span>;
-      case 'ตรายาง':
-        return <span style={{ fontSize: '2rem' }}>🕹️</span>;
-      case 'ถ่ายเอกสาร & ปริ้นงาน':
-        return <span style={{ fontSize: '2rem' }}>🖨️</span>;
-      case 'สติ๊กเกอร์':
-        return <span style={{ fontSize: '2rem' }}>🌠</span>;
-      default:
-        return <span style={{ fontSize: '2rem' }}>🗂️</span>;
-    }
-  };
+    return row.customerName.toLowerCase().includes(q)
+      || row.phone.toLowerCase().includes(q)
+      || row.category.toLowerCase().includes(q)
+      || row.note.toLowerCase().includes(q);
+  });
 
   const columns: GridColDef[] = [
     {
       field: 'customerName',
       headerName: 'ชื่อลูกค้า',
-      width: 250,
-      renderCell: params => <Typography fontWeight={500}>{params.value}</Typography>,
+      minWidth: 200,
+      flex: 1,
+      renderCell: (params) => <Typography fontWeight={600}>{String(params.value || '-')}</Typography>,
     },
-
     {
       field: 'phone',
       headerName: 'เบอร์โทร',
-      width: 160,
-      renderCell: params => (
-        <Stack direction="row" alignItems="center" spacing={1}>
-          <PhoneIcon fontSize="small" color="action" />
-          <Typography>{params.value}</Typography>
-        </Stack>
-      ),
+      minWidth: 140,
+      flex: 0.8,
     },
     {
       field: 'category',
       headerName: 'ประเภทงาน',
-      width: 200,
-      renderCell: params => <Chip size="small" icon={getCategoryIcon(params.value)} label={params.value} color={getCategoryColor(params.value)} />,
+      minWidth: 150,
+      flex: 0.9,
+      renderCell: (params) => <Chip size="small" label={String(params.value || 'Other')} variant="outlined" />,
     },
     {
       field: 'files',
-      headerName: 'ไฟล์',
-      width: 400,
-      renderCell: (params: GridRenderCellParams) => {
-        const files = params?.value;
-        if (!files || !Array.isArray(files) || files.length === 0) {
-          return <Typography color="text.secondary">ไม่มีไฟล์</Typography>;
-        }
+      headerName: 'ไฟล์จาก S3',
+      minWidth: 300,
+      flex: 1.6,
+      sortable: false,
+      renderCell: (params: GridRenderCellParams<UploadedFile[]>) => {
+        const files = params.value ?? [];
+        if (files.length === 0) return <Typography color="text.secondary">ไม่มีไฟล์</Typography>;
 
         return (
-          <Box
-            sx={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: 1,
-              alignItems: 'center',
-              justifyContent: 'flex-start', // ✅ ชิดซ้าย
-            }}>
-            {files.map((file: UploadedFile) => {
-              const fileId = file?.fileId;
-              const name = file?.name || '';
-              if (!fileId) return null;
-
-              const ext = name.split('.').pop() || '';
-              const thumbnailUrl = `https://drive.google.com/thumbnail?id=${fileId}`;
-              const previewUrl = `https://drive.google.com/file/d/${fileId}/preview`;
-
-              return (
-                <Box
-                  key={fileId}
-                  sx={{
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'left',
-                    width: 60,
-                  }}>
-                  <Link href={previewUrl} target="_blank" rel="noopener noreferrer" underline="none">
-                    <Image
-                      src={thumbnailUrl}
-                      alt={name}
-                      title={name}
-                      width={60}
-                      height={60}
-                      style={{
-                        objectFit: 'cover',
-                        borderRadius: 8,
-                        border: '1px solid #ccc',
-                        backgroundColor: '#f5f5f5',
-                      }}
-                      onError={(e: any) => {
-                        if (e.target) e.target.src = getIconPathByExtension(ext);
-                      }}
-                    />
-                  </Link>
-                  <Typography variant="caption" noWrap maxWidth={50} textAlign="center" sx={{ mt: 0.5 }}>
-                    {name}
-                  </Typography>
-                </Box>
-              );
-            })}
-          </Box>
+          <Stack direction="row" spacing={0.8} sx={{ overflowX: 'auto', py: 0.5 }}>
+            {files.slice(0, 4).map((file: UploadedFile) => (
+              <Tooltip key={`${file.fileId}-${file.name}`} title={file.name}>
+                {file.url ? (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    href={file.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    startIcon={getFileIcon(file.name)}
+                    endIcon={<OpenInNewRoundedIcon fontSize="small" />}
+                    sx={{ textTransform: 'none', maxWidth: 170 }}>
+                    <Typography noWrap variant="caption">{file.name}</Typography>
+                  </Button>
+                ) : (
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    disabled
+                    startIcon={getFileIcon(file.name)}
+                    sx={{ textTransform: 'none', maxWidth: 170 }}>
+                    <Typography noWrap variant="caption">{file.name}</Typography>
+                  </Button>
+                )}
+              </Tooltip>
+            ))}
+            {files.length > 4 && <Chip size="small" label={`+${files.length - 4}`} />}
+          </Stack>
         );
       },
     },
     {
       field: 'createdAt',
       headerName: 'วันที่',
-      width: 180,
-      renderCell: (params: GridRenderCellParams) => new Date(params.value as string).toLocaleString('th-TH', { dateStyle: 'short', timeStyle: 'short' }),
+      minWidth: 160,
+      flex: 0.9,
+      renderCell: (params) => {
+        const value = String(params.value || '');
+        const date = new Date(value);
+        return <Typography variant="body2">{Number.isNaN(date.getTime()) ? '-' : date.toLocaleString('th-TH')}</Typography>;
+      },
     },
     {
       field: 'status',
       headerName: 'สถานะ',
-      width: 150,
-      renderCell: params =>
-        params.value === 'completed' ? (
-          <Chip label="เสร็จสิ้น" size="small" color="success" icon={<CheckCircleIcon />} />
-        ) : (
-          <Chip label="รอดำเนินการ" size="small" color="warning" icon={<HourglassEmptyIcon />} />
-        ),
+      minWidth: 140,
+      flex: 0.8,
+      renderCell: (params) =>
+        params.value === 'completed'
+          ? <Chip label="เสร็จสิ้น" size="small" color="success" icon={<CheckCircleIcon />} />
+          : <Chip label="รอดำเนินการ" size="small" color="warning" icon={<HourglassEmptyIcon />} />,
     },
     {
       field: 'note',
       headerName: 'หมายเหตุ',
-      width: 150,
-      renderCell: params => <Typography fontWeight={500}>{params.value}</Typography>,
+      minWidth: 180,
+      flex: 1,
+      renderCell: (params) => <Typography noWrap>{String(params.value || '-')}</Typography>,
     },
-
     {
       field: 'actions',
-      headerName: 'Actions',
-      width: 120,
+      headerName: 'จัดการ',
+      minWidth: 110,
       sortable: false,
-      renderCell: params => (
-        <Stack direction="row" spacing={1}>
+      renderCell: (params) => (
+        <Stack direction="row" spacing={0.5}>
           <IconButton size="small" color="primary" onClick={() => handleEdit(params.row)}>
             <EditIcon fontSize="small" />
           </IconButton>
-          <IconButton size="small" color="error" onClick={() => handleDelete(params.row._id)}>
+          <IconButton size="small" color="error" onClick={() => handleDelete(String(params.row._id))}>
             <DeleteIcon fontSize="small" />
           </IconButton>
         </Stack>
@@ -334,175 +380,47 @@ export default function UploadedFilesPage() {
     },
   ];
 
-  const filteredRows = rows.filter(row => {
-    const q = search.toLowerCase();
-    return row.customerName.toLowerCase().includes(q) || row.category.toLowerCase().includes(q) || row.phone.includes(q);
-  });
-
   return (
-    <Box sx={{ p: 2, display: 'flex', flexDirection: 'column', gap: 1 }}>
-      <Box sx={{ p: 4 }}>
-        <Stack
-          direction={{ xs: 'column', md: 'row' }} // responsive
-          spacing={2}
-          sx={{ flex: 1, alignItems: 'stretch', justifyContent: 'space-between' }}>
-          {/* Left: All Folders */}
-          <Card sx={{ flex: '2 1 500px', borderRadius: 2, height: '100%' }}>
-            <CardContent>
-              <Stack direction="row" justifyContent="space-between" mb={2}>
-                <Typography variant="h6" fontWeight={700} padding={1}>
-                  All Folders
-                </Typography>
-              </Stack>
+    <AdminPageContainer title="ไฟล์ลูกค้า (Storage)">
+      <Stack spacing={2}>
+        {errorMessage && <Alert severity="warning">{errorMessage}</Alert>}
 
-              <Stack spacing={1.5}>
-                {Object.entries(folderUsage).map(([name, data]) => (
-                  <Box
-                    key={name}
-                    sx={{
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      p: 2,
-                      border: '1px solid #eee',
-                      borderRadius: 2,
-                      bgcolor: '#fafafa',
-                    }}>
-                    <Stack>
-                      <Typography fontWeight={700}>📁 {name}</Typography>
-                      <Typography variant="body2" color="text.secondary" mt={1}>
-                        {(data.size / 1024 ** 2).toFixed(2)} MB
-                      </Typography>
-                    </Stack>
-                    <Typography variant="body2" color="text.secondary">
-                      {data.sizeGB}
-                    </Typography>
-                  </Box>
-                ))}
-              </Stack>
-            </CardContent>
-          </Card>
+        <Card sx={{ p: 2.2, borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} justifyContent="space-between">
+            <TextField
+              size="small"
+              placeholder="ค้นหาจากชื่อลูกค้า เบอร์โทร ประเภทงาน..."
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+              sx={{ width: { xs: '100%', sm: 360 } }}
+            />
+            <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchUploads} disabled={loading}>
+              Refresh
+            </Button>
+          </Stack>
+        </Card>
 
-          {/* Right: Storage Details */}
-          <Card sx={{ flex: '1 1 300px', borderRadius: 2, textAlign: 'center', p: 2 }}>
-            <Typography variant="h5" fontWeight={700} gutterBottom mt={3}>
-              Storage Details
-            </Typography>
+        <Card sx={{ borderRadius: 3, border: '1px solid', borderColor: 'divider' }}>
+          {loading && <LinearProgress />}
+          <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            <DataGrid        
+              rows={filteredRows}
+              getRowId={(row) => row._id}
+              columns={columns}
+              loading={loading}
+              pageSizeOptions={[10, 20, 50]}
+              initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
+              disableRowSelectionOnClick
+              sx={{ border: 'none' }}
+            />
+          </Box>
+        </Card>
+      </Stack>
 
-            {quota && (
-              <Box
-                sx={{
-                  display: 'flex',
-                  justifyContent: 'center',
-                  alignItems: 'center',
-                  height: 400,
-                }}>
-                <PieChart width={260} height={260}>
-                  <Pie
-                    data={pieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={90}
-                    outerRadius={120}
-                    paddingAngle={4}
-                    dataKey="value"
-                    labelLine={false}
-                    onMouseEnter={(_, index) => setActiveIndex(index)}
-                    onMouseLeave={() => setActiveIndex(null)}>
-                    {pieData.map((entry) => (
-                      <Cell key={entry.name} fill={COLORS[pieData.findIndex(e => e.name === entry.name) % COLORS.length]} />
-                    ))}
-                  </Pie>
-
-                  {/* ✅ ตรงกลาง (ข้อความ dynamic ตาม hover) */}
-                  <foreignObject x="80" y="100" width="100" height="100">
-                    <Box
-                      sx={{
-                        textAlign: 'center',
-                        pointerEvents: 'none',
-                      }}>
-                      {activeIndex === null ? (
-                        <>
-                          <Typography fontWeight={700}>Storage</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            พื้นที่ข้อมูลรวม
-                          </Typography>
-                        </>
-                      ) : (
-                        <>
-                          <Typography fontWeight={700}>{pieData[activeIndex].name}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {pieData[activeIndex].value} MB
-                          </Typography>
-                        </>
-                      )}
-                    </Box>
-                  </foreignObject>
-                </PieChart>
-              </Box>
-            )}
-
-            {quota && (
-              <>
-                <Typography fontWeight={700}>
-                  ใช้ไป {(quota.usage / 1024 ** 3).toFixed(2)} GB / ทั้งหมด {(quota.limit / 1024 ** 3).toFixed(2)} GB
-                </Typography>
-
-                <Typography variant="body2" color="text.secondary">
-                  Free Space: {((quota.limit - quota.usage) / 1024 ** 3).toFixed(2)} GB
-                </Typography>
-              </>
-            )}
-          </Card>
-        </Stack>
-      </Box>
-
-      <Box display="flex" justifyContent="space-between" mb={2}>
-        <TextField size="small" placeholder="Search..." value={search} onChange={e => setSearch(e.target.value)} sx={{ width: 250 }} />
-        <Button variant="outlined" startIcon={<RefreshIcon />} onClick={fetchUploads}>
-          Refresh
-        </Button>
-      </Box>
-
-      <Box sx={{ width: '100%', overflowX: 'auto' }}>
-        <Box
-          sx={{
-            minWidth: 1000,
-            backgroundColor: 'white',
-            borderRadius: 2,
-          }}>
-          <DataGrid
-            rows={filteredRows}
-            rowHeight={100}
-            columns={columns}
-            getRowId={row => row._id}
-            loading={loading}
-            pageSizeOptions={[10, 20]}
-            initialState={{ pagination: { paginationModel: { pageSize: 10, page: 0 } } }}
-            disableRowSelectionOnClick
-            sx={{
-              '& .MuiDataGrid-columnHeader': {
-                justifyContent: 'flex-start', // หัวตารางชิดซ้าย
-                textAlign: 'left',
-                alignItems: 'center',
-              },
-              '& .MuiDataGrid-cell': {
-                justifyContent: 'flex-start', // เซลล์ข้อมูลชิดซ้าย
-                textAlign: 'left',
-                alignContent: 'center',
-              },
-            }}
-          />
-        </Box>
-      </Box>
-
-      {/* ✅ Edit Dialog */}
       <Dialog open={editOpen} onClose={() => setEditOpen(false)} fullWidth maxWidth="xs" slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
-        <DialogTitle sx={{ m: 0, p: 4 }}>
+        <DialogTitle sx={{ m: 0, p: 2.5 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between">
-            <Typography variant="h6" fontWeight="bold">
-              ✏️ แก้ไขข้อมูล
-            </Typography>
+            <Typography variant="h6" fontWeight={700}>แก้ไขข้อมูลลูกค้า</Typography>
             <IconButton onClick={() => setEditOpen(false)}>
               <CloseIcon />
             </IconButton>
@@ -511,27 +429,23 @@ export default function UploadedFilesPage() {
 
         <DialogContent>
           <Stack spacing={2} mt={1}>
-            <TextField label="ชื่อลูกค้า" fullWidth value={customerName} onChange={e => setCustomerName(e.target.value)} />
-            <TextField label="เบอร์โทร" fullWidth value={phone} onChange={e => setPhone(e.target.value)} />
+            <TextField label="ชื่อลูกค้า" fullWidth value={customerName} onChange={(event) => setCustomerName(event.target.value)} />
+            <TextField label="เบอร์โทร" fullWidth value={phone} onChange={(event) => setPhone(event.target.value)} />
             <FormControl fullWidth>
               <InputLabel id="status-label">สถานะ</InputLabel>
-              <Select labelId="status-label" value={status} onChange={e => setStatus(e.target.value)}>
-                <MenuItem value="pending">🕒 รอดำเนินการ</MenuItem>
-                <MenuItem value="completed">✅ เสร็จสิ้น</MenuItem>
+              <Select labelId="status-label" value={status} label="สถานะ" onChange={(event) => setStatus(event.target.value as StatusType)}>
+                <MenuItem value="pending">รอดำเนินการ</MenuItem>
+                <MenuItem value="completed">เสร็จสิ้น</MenuItem>
               </Select>
             </FormControl>
           </Stack>
         </DialogContent>
 
-        <DialogActions>
-          <Button onClick={() => setEditOpen(false)} sx={{ mb: 2, mr: 0 }}>
-            ยกเลิก
-          </Button>
-          <Button variant="contained" onClick={handleSave} sx={{ mb: 2, mr: 2 }}>
-            บันทึก
-          </Button>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setEditOpen(false)}>ยกเลิก</Button>
+          <Button variant="contained" onClick={handleSave}>บันทึก</Button>
         </DialogActions>
       </Dialog>
-    </Box>
+    </AdminPageContainer>
   );
 }

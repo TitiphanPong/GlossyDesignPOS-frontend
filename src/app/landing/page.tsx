@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import Image from 'next/image';
-import { Kanit, Sarabun } from 'next/font/google';
 import {
   Accordion,
   AccordionDetails,
@@ -66,8 +65,8 @@ type ShowcaseItem = {
   image: string;
 };
 
-const headingFont = Kanit({ subsets: ['thai', 'latin'], weight: ['500', '600', '700'] });
-const bodyFont = Sarabun({ subsets: ['thai', 'latin'], weight: ['400', '500', '700'] });
+const headingFont = { className: '' };
+const bodyFont = { className: '' };
 
 const navItems: NavItem[] = [
   { id: 'services', label: 'บริการของเรา' },
