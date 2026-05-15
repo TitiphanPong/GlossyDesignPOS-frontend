@@ -49,10 +49,6 @@ body {
 /* ============================= */
 
 /* From Uiverse.io by Juanes200122 */
-#svg-global {
-  zoom: 1.2;
-  overflow: visible;
-}
 
 @keyframes fade-particles {
   0%,
