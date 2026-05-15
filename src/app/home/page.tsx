@@ -4,37 +4,33 @@ import { Box, CircularProgress } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { ApiOrder, OrdersSummary } from '../../lib/contracts';
 
-import DashboardHeader    from './components/dashboard/DashboardHeader';
-import KPICards           from './components/dashboard/KPICards';
-import SalesChart         from './components/dashboard/SalesChart';
-import QuickActions       from './components/dashboard/QuickActions';
-import TopProducts        from './components/dashboard/TopProducts';
-import PaymentDonut       from './components/dashboard/PaymentDonut';
-import MonthlyGoal        from './components/dashboard/MonthlyGoal';
+import DashboardHeader from './components/dashboard/DashboardHeader';
+import KPICards from './components/dashboard/KPICards';
+import SalesChart from './components/dashboard/SalesChart';
+import QuickActions from './components/dashboard/QuickActions';
+import TopProducts from './components/dashboard/TopProducts';
+import PaymentDonut from './components/dashboard/PaymentDonut';
+import MonthlyGoal from './components/dashboard/MonthlyGoal';
 import OrderStatusSummary from './components/dashboard/OrderStatusSummary';
-import RecentOrdersTable  from './components/dashboard/RecentOrdersTable';
-
-import './components/dashboard/dashboard.css';
+import RecentOrdersTable from './components/dashboard/RecentOrdersTable';
 
 export default function DashboardPage() {
-  const [summary, setSummary]           = useState<OrdersSummary | null>(null);
+  const [summary, setSummary] = useState<OrdersSummary | null>(null);
   const [recentOrders, setRecentOrders] = useState<ApiOrder[]>([]);
-  const [loading, setLoading]           = useState(true);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_URL ?? '';
-    if (!base) { setLoading(false); return; }
+    if (!base) {
+      setLoading(false);
+      return;
+    }
 
-    Promise.all([
-      fetch(`${base}/orders/summary`).then((r) => r.json()),
-      fetch(`${base}/orders`).then((r) => r.json()),
-    ])
+    Promise.all([fetch(`${base}/orders/summary`).then(r => r.json()), fetch(`${base}/orders`).then(r => r.json())])
       .then(([summaryData, orders]) => {
         setSummary(summaryData);
         if (Array.isArray(orders)) {
-          const sorted = [...(orders as ApiOrder[])].sort(
-            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-          );
+          const sorted = [...(orders as ApiOrder[])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           setRecentOrders(sorted.slice(0, 8));
         }
       })
@@ -60,16 +56,10 @@ export default function DashboardPage() {
         pb: 6,
         maxWidth: '1600px',
         mx: 'auto',
-      }}
-    >
+      }}>
       <DashboardHeader />
 
-      <KPICards
-        salesToday={summary?.salesToday}
-        cashToday={summary?.cashToday}
-        promptPayToday={summary?.promptPayToday}
-        completed={summary?.completed}
-      />
+      <KPICards salesToday={summary?.salesToday} cashToday={summary?.cashToday} promptPayToday={summary?.promptPayToday} completed={summary?.completed} />
 
       <Box
         sx={{
@@ -80,8 +70,7 @@ export default function DashboardPage() {
           },
           gap: 3,
           alignItems: 'start',
-        }}
-      >
+        }}>
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
           <SalesChart />
 
@@ -91,8 +80,7 @@ export default function DashboardPage() {
               gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
               gap: 3,
               alignItems: 'stretch',
-            }}
-          >
+            }}>
             <QuickActions />
             <TopProducts />
           </Box>
