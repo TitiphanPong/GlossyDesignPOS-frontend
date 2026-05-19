@@ -7,12 +7,8 @@ import { alpha } from '@mui/material/styles';
 import { drawerClasses } from '@mui/material/Drawer';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
-import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
-import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
 import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
-import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
-import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 
 export type NavItem = {
@@ -30,7 +26,7 @@ export interface SideMenuProps {
 const DEFAULT_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/home', icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
   { label: 'Orders', href: '/home/saleListPage', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
-  { label: 'Printing Jobs', href: '/home/posseller', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
+  { label: 'POS Seller', href: '/home/posseller', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
   { label: 'Storage', href: '/home/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
 ];
 

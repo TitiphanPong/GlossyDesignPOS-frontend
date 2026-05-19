@@ -210,8 +210,7 @@ function CartItemDetailsList({ item }: Readonly<{ item: CartItem }>) {
       <NamedProductDetails item={item} />
 
       <li style={{ whiteSpace: 'nowrap' }}>
-        💰 การชำระ :{' '}
-        {item.fullPayment ? `เต็มจำนวน (${Number(item.totalPrice).toFixed(2)}฿)` : `มัดจำ ${Number(item.deposit || 0).toFixed(2)}฿ (คงเหลือ ${Number(item.remaining || 0).toFixed(2)}฿)`}
+        💰 การชำระ : {item.fullPayment ? `เต็มจำนวน (${Number(item.totalPrice).toFixed(2)}฿)` : `มัดจำ ${Number(item.deposit || 0).toFixed(2)}฿ (คงเหลือ ${Number(item.remaining || 0).toFixed(2)}฿)`}
       </li>
     </>
   );
@@ -306,7 +305,7 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
 
         <div className={styles.products}>
           {cart.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>━━━ 🛒 ไม่มีสินค้าในตะกร้า ━━━</div>
+            <div style={{ textAlign: 'center', padding: '1.8rem', color: '#728096', border: '1px dashed #D8E2F1', borderRadius: 12, background: '#FAFCFF' }}>━━━ 🛒 ไม่มีสินค้าในตะกร้า ━━━</div>
           ) : (
             cart.map((item, idx) => (
               <div
@@ -315,12 +314,12 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'flex-start',
-                  padding: '1rem 0.75rem',
-                  borderBottom: idx < cart.length - 1 ? '1px solid #e0e0e0' : 'none',
+                  padding: '0.92rem 0.72rem',
+                  borderBottom: idx < cart.length - 1 ? '1px solid #E7EDF7' : 'none',
                 }}>
                 <div className={styles.details}>
                   <div className={styles.name}>{item.name}</div>
-                  <ul style={{ margin: 0, paddingLeft: '0.25rem', fontSize: '0.85rem', color: '#000' }}>
+                  <ul style={{ margin: 0, paddingLeft: '0.25rem', fontSize: '0.84rem', color: '#4C5F78' }}>
                     <CartItemDetailsList item={item} />
                   </ul>
                   <div
@@ -352,8 +351,8 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
       <div className={`${styles.card} ${styles.payment}`}>
         <div className={styles.title}>💳 วิธีการชำระเงิน</div>
 
-        <div className="flex flex-col gap-3 mt-3">
-          <div className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', border: '1px solid #DCE6F4', borderRadius: 12, cursor: 'pointer', background: '#FCFDFF' }}>
             <input
               type="radio"
               id="cash"
@@ -364,15 +363,15 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
                 setPayment('cash');
                 onPaymentChange?.('cash');
               }}
-              className="w-4 h-4 accent-black"
+              style={{ width: 16, height: 16, accentColor: '#1E5EFF' }}
             />
-            <label htmlFor="cash" className="flex items-center gap-2 cursor-pointer text-black">
-              <span className="text-xl">💵</span>
-              <span className="font-medium">เงินสด</span>
+            <label htmlFor="cash" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', color: '#102A43' }}>
+              <span style={{ fontSize: 20 }}>💵</span>
+              <span style={{ fontWeight: 600 }}>เงินสด</span>
             </label>
           </div>
 
-          <div className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', border: '1px solid #DCE6F4', borderRadius: 12, cursor: 'pointer', background: '#FCFDFF' }}>
             <input
               type="radio"
               id="promptpay"
@@ -383,11 +382,11 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
                 setPayment('promptpay');
                 onPaymentChange?.('promptpay');
               }}
-              className="w-4 h-4 accent-black"
+              style={{ width: 16, height: 16, accentColor: '#1E5EFF' }}
             />
-            <label htmlFor="promptpay" className="flex items-center gap-2 cursor-pointer text-black">
-              <span className="text-xl">📱</span>
-              <span className="font-medium">PromptPay</span>
+            <label htmlFor="promptpay" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', color: '#102A43' }}>
+              <span style={{ fontSize: 20 }}>📱</span>
+              <span style={{ fontWeight: 600 }}>PromptPay</span>
             </label>
           </div>
         </div>
@@ -397,8 +396,8 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
       <div className={`${styles.card} ${styles.payment}`}>
         <div className={styles.title}>🧾 ใบกำกับภาษี</div>
 
-        <div className="flex flex-col gap-3 mt-3">
-          <div className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', border: '1px solid #DCE6F4', borderRadius: 12, cursor: 'pointer', background: '#FCFDFF' }}>
             <input
               type="radio"
               id="taxYes"
@@ -409,15 +408,15 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
                 setTaxInvoice('yes');
                 onTaxInvoiceChange?.('yes'); // ✅ ส่งขึ้นไป SellPage
               }}
-              className="w-4 h-4 accent-black"
+              style={{ width: 16, height: 16, accentColor: '#1E5EFF' }}
             />
-            <label htmlFor="taxYes" className="flex items-center gap-2 cursor-pointer text-black">
-              <span className="text-xl">✅</span>
-              <span className="font-medium">ออกใบกำกับภาษี</span>
+            <label htmlFor="taxYes" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', color: '#102A43' }}>
+              <span style={{ fontSize: 20 }}>✅</span>
+              <span style={{ fontWeight: 600 }}>ออกใบกำกับภาษี</span>
             </label>
           </div>
 
-          <div className="flex items-center gap-3 p-3 border rounded-lg cursor-pointer hover:bg-gray-50">
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', border: '1px solid #DCE6F4', borderRadius: 12, cursor: 'pointer', background: '#FCFDFF' }}>
             <input
               type="radio"
               id="taxNo"
@@ -428,11 +427,11 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
                 setTaxInvoice('no');
                 onTaxInvoiceChange?.('no'); // ✅ ส่งขึ้นไป SellPage ด้วย
               }}
-              className="w-4 h-4 accent-black"
+              style={{ width: 16, height: 16, accentColor: '#1E5EFF' }}
             />
-            <label htmlFor="taxNo" className="flex items-center gap-2 cursor-pointer text-black">
-              <span className="text-xl">🚫</span>
-              <span className="font-medium">ไม่ออกใบกำกับภาษี</span>
+            <label htmlFor="taxNo" style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer', color: '#102A43' }}>
+              <span style={{ fontSize: 20 }}>🚫</span>
+              <span style={{ fontWeight: 600 }}>ไม่ออกใบกำกับภาษี</span>
             </label>
           </div>
         </div>

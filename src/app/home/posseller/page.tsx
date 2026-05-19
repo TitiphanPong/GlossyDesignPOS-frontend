@@ -1,10 +1,15 @@
 ﻿'use client';
 
 import * as React from 'react';
-import { Box, Alert, Button, Card, FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
+import { alpha, Alert, Box, Card, CardContent, Stack, Typography } from '@mui/material';
+
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
+import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
+
 import { CheckoutSidebar } from './components/CheckoutSidebar';
 import { ProductList } from './components/ProductList';
-import { SearchBar } from './components/SearchBar';
+
 import { useCart } from './components/useCart';
 import { useProductModals } from './components/useProductModals';
 import SuccessModal from './components/successModal';
@@ -19,8 +24,7 @@ import StickerPVCModal from './components/stickerPVCModal';
 import StickerPPModal from './components/stickerPPModal';
 import PremiumProductModal from './components/premiumProductModal';
 import AdminPageContainer from '../components/AdminPageContainer';
-import { commonButtonSx, uiCardSx } from '../components/adminUi';
-import { SearchToolbar } from '../components/dashboardUi';
+import { uiCardSx } from '../components/adminUi';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -36,6 +40,49 @@ export type Product = {
 
 const normalizeVariant = (variant: Variant): Variant => ({ ...variant, price: Number(variant.price) });
 const normalizeProduct = (product: Product): Product => ({ ...product, variants: product.variants.map(normalizeVariant) });
+
+type PosStatCardProps = {
+  title: string;
+  value: string;
+  subtitle: string;
+  tone: string;
+  icon: React.ReactNode;
+};
+
+function PosStatCard({ title, value, subtitle, tone, icon }: Readonly<PosStatCardProps>) {
+  return (
+    <Card
+      sx={{
+        borderRadius: 4,
+        border: '1px solid #E8EDF5',
+        boxShadow: '0 12px 28px rgba(13, 30, 64, 0.07)',
+        background: `linear-gradient(140deg, ${alpha(tone, 0.1)} 0%, #FFFFFF 45%, #FFFFFF 100%)`,
+      }}>
+      <CardContent sx={{ p: 2.25 }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
+          <Box>
+            <Typography sx={{ color: '#64748B', fontSize: 12.5, fontWeight: 700 }}>{title}</Typography>
+            <Typography sx={{ mt: 0.8, color: '#0B1325', fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>{value}</Typography>
+            <Typography sx={{ mt: 0.6, color: '#8A95A7', fontSize: 11.5 }}>{subtitle}</Typography>
+          </Box>
+          <Box
+            sx={{
+              width: 46,
+              height: 46,
+              borderRadius: 2.6,
+              display: 'grid',
+              placeItems: 'center',
+              color: tone,
+              bgcolor: alpha(tone, 0.15),
+              boxShadow: `0 10px 20px ${alpha(tone, 0.22)}`,
+            }}>
+            {icon}
+          </Box>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
 
 function useDebouncedValue<T>(value: T, ms = 250) {
   const [v, setV] = React.useState(value);
@@ -114,64 +161,98 @@ export default function SellPage() {
     [products, activeCat, qDebounced]
   );
 
+  const summaryStats = React.useMemo(() => {
+    const itemCount = cart.reduce((acc, item) => acc + Number(item.qty || 0), 0);
+    const vat = taxInvoice === 'yes' ? netAfterDiscount * 0.07 : 0;
+    const amountDue = netAfterDiscount + vat;
+    return {
+      itemCount,
+      net: netAfterDiscount,
+      amountDue,
+    };
+  }, [cart, netAfterDiscount, taxInvoice]);
+
   return (
-    <AdminPageContainer title="POS Seller" subtitle="หน้าขายหน้าร้านสำหรับแคชเชียร์ ใช้งานเร็ว และจัดการคำสั่งซื้ออย่างเป็นระบบ">
-      <Stack spacing={2.5}>
-        {errorMsg && <Alert severity="error">{errorMsg}</Alert>}
+    <AdminPageContainer>
+      {/* Top Header Card */}
+      <Box
+        sx={{
+          borderRadius: 6,
+          border: '1px solid #E6EDF8',
+          boxShadow: '0 20px 45px rgba(18, 45, 82, 0.08)',
+          background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
+          mb: 3,
+        }}>
+        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.5} sx={{ p: { xs: 2.2, md: 3 } }}>
+          <Box>
+            <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Cashier</Typography>
+            <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>หน้าขายหน้าร้านสำหรับแคชเชียร์ ใช้งานเร็ว และจัดการคำสั่งซื้ออย่างเป็นระบบ</Typography>
+          </Box>
+        </Stack>
+      </Box>
 
-        <SearchToolbar>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2}>
-            <Box sx={{ flex: 1 }}>
-              <SearchBar q={q} setQ={setQ} />
-            </Box>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 200 } }}>
-              <InputLabel id="category-filter-label">Filter</InputLabel>
-              <Select labelId="category-filter-label" value={activeCat} label="Filter" onChange={e => setActiveCat(e.target.value)}>
-                <MenuItem value="ทั้งหมด">ทั้งหมด</MenuItem>
-                <MenuItem value="นามบัตร">นามบัตร</MenuItem>
-                <MenuItem value="ปริ้นท์เอกสาร">ปริ้นท์เอกสาร</MenuItem>
-                <MenuItem value="โพสการ์ด">โพสการ์ด</MenuItem>
-                <MenuItem value="ตรายาง">ตรายาง</MenuItem>
-                <MenuItem value="อิงค์เจ็ท">อิงค์เจ็ท</MenuItem>
-                <MenuItem value="สติ๊กเกอร์">สติ๊กเกอร์</MenuItem>
-                <MenuItem value="พล็อตแพลน">พล็อตแพลน</MenuItem>
-              </Select>
-            </FormControl>
-            <Button variant="contained" sx={commonButtonSx}>
-              เริ่มบิลใหม่
-            </Button>
-          </Stack>
-        </SearchToolbar>
+      {/* Bottom Summary */}
+      <Box
+        sx={{
+          mt: 2.4,
+          mb: 2.4,
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(3, minmax(0, 1fr))' },
+          gap: 1.5,
+        }}>
+        <PosStatCard title="Items in Cart" value={`${summaryStats.itemCount}`} subtitle="จำนวนชิ้นรวมในบิล" tone="#1E5EFF" icon={<Inventory2RoundedIcon />} />
+        <PosStatCard
+          title="Net After Discount"
+          value={summaryStats.net.toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 })}
+          subtitle="ยอดสุทธิหลังหักส่วนลด"
+          tone="#4F46E5"
+          icon={<RequestQuoteRoundedIcon />}
+        />
+        <PosStatCard
+          title="Amount Due"
+          value={summaryStats.amountDue.toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 })}
+          subtitle={taxInvoice === 'yes' ? 'รวมภาษีมูลค่าเพิ่ม 7%' : 'ยังไม่รวมภาษีมูลค่าเพิ่ม'}
+          tone="#0EA5A3"
+          icon={<PaymentsRoundedIcon />}
+        />
+      </Box>
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 3fr) minmax(320px, 1fr)' }, gap: 2 }}>
-          <Card sx={{ ...uiCardSx, p: 1.4 }}>
-            <ProductList
-              loading={loading}
-              filtered={filtered}
-              onAddProduct={p => {
-                modalState.setActiveProduct(p);
-                modalState.setOpenModal(true);
-              }}
-            />
-          </Card>
+      {/* Error Message */}
+      {errorMsg && (
+        <Alert severity="error" sx={{ mb: 2 }}>
+          {errorMsg}
+        </Alert>
+      )}
 
-          <CheckoutSidebar
-            cart={cart}
-            total={total}
-            onCheckout={handleCheckout}
-            discount={discount}
-            onDiscountChange={setDiscount}
-            onPaymentChange={setLastPayment}
-            onTaxInvoiceChange={setTaxInvoice}
-            onEditItem={item => {
-              modalState.setEditingItem(item);
-              modalState.setActiveProduct({ id: item.key, name: item.name, category: item.category ?? '', cover: '', tint: '', variants: [] });
+      {/* Main Content */}
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 3fr) minmax(320px, 1fr)' }, gap: 2 }}>
+        <Card sx={{ ...uiCardSx, p: 1.4 }}>
+          <ProductList
+            loading={loading}
+            filtered={filtered}
+            onAddProduct={p => {
+              modalState.setActiveProduct(p);
               modalState.setOpenModal(true);
             }}
-            onDeleteItem={key => setCart(prev => prev.filter(i => i.key !== key))}
           />
-        </Box>
-      </Stack>
+        </Card>
+
+        <CheckoutSidebar
+          cart={cart}
+          total={total}
+          onCheckout={handleCheckout}
+          discount={discount}
+          onDiscountChange={setDiscount}
+          onPaymentChange={setLastPayment}
+          onTaxInvoiceChange={setTaxInvoice}
+          onEditItem={item => {
+            modalState.setEditingItem(item);
+            modalState.setActiveProduct({ id: item.key, name: item.name, category: item.category ?? '', cover: '', tint: '', variants: [] });
+            modalState.setOpenModal(true);
+          }}
+          onDeleteItem={key => setCart(prev => prev.filter(i => i.key !== key))}
+        />
+      </Box>
 
       {/* Modals */}
       {modalState.activeProduct?.category?.trim() === 'นามบัตร' && (

@@ -262,28 +262,28 @@ function StatCard({ title, value, subtitle, icon, tone }: Readonly<StatCardProps
   return (
     <Card
       sx={{
-        borderRadius: 5,
+        borderRadius: 4.5,
         border: '1px solid #E8EDF5',
-        boxShadow: '0 16px 38px rgba(13, 30, 64, 0.07)',
-        background: `linear-gradient(140deg, ${alpha(tone, 0.12)} 0%, #FFFFFF 42%, #FFFFFF 100%)`,
+        boxShadow: '0 12px 30px rgba(13, 30, 64, 0.07)',
+        background: `linear-gradient(140deg, ${alpha(tone, 0.1)} 0%, #FFFFFF 46%, #FFFFFF 100%)`,
       }}>
-      <CardContent sx={{ p: 3 }}>
+      <CardContent sx={{ p: 2.35 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
           <Box>
             <Typography sx={{ color: '#64748B', fontSize: 13, fontWeight: 600 }}>{title}</Typography>
-            <Typography sx={{ mt: 0.9, fontSize: 34, lineHeight: 1.1, fontWeight: 800, color: '#0B1325' }}>{value}</Typography>
-            <Typography sx={{ mt: 0.7, color: '#8A95A7', fontSize: 12 }}>{subtitle}</Typography>
+            <Typography sx={{ mt: 0.8, fontSize: 31, lineHeight: 1.1, fontWeight: 800, color: '#0B1325' }}>{value}</Typography>
+            <Typography sx={{ mt: 0.6, color: '#8A95A7', fontSize: 11.8 }}>{subtitle}</Typography>
           </Box>
           <Box
             sx={{
-              width: 52,
-              height: 52,
-              borderRadius: 3,
+              width: 48,
+              height: 48,
+              borderRadius: 2.6,
               display: 'grid',
               placeItems: 'center',
               color: tone,
-              bgcolor: alpha(tone, 0.16),
-              boxShadow: `0 14px 24px ${alpha(tone, 0.2)}`,
+              bgcolor: alpha(tone, 0.14),
+              boxShadow: `0 10px 20px ${alpha(tone, 0.2)}`,
             }}>
             {icon}
           </Box>
@@ -552,21 +552,21 @@ export default function StoragePage() {
   return (
     <Box
       sx={{
-        px: { xs: 2, md: 3, lg: 4 },
-        py: { xs: 3, md: 4 },
+        px: { xs: 2, md: 3.2, lg: 4.3 },
+        py: { xs: 2.5, md: 3.5 },
         minHeight: '100vh',
-        background: 'radial-gradient(circle at 12% 8%, #F1F6FF 0%, #F8FBFF 36%, #FBFCFF 100%)',
+        background: 'radial-gradient(circle at 10% 6%, #EEF4FF 0%, #F7FAFF 40%, #FBFCFF 100%)',
         fontFamily: 'Plus Jakarta Sans, Prompt, system-ui, sans-serif',
       }}>
-      <Stack spacing={3}>
+      <Stack spacing={2.5}>
         <Card
           sx={{
-            borderRadius: 6,
+            borderRadius: 5.2,
             border: '1px solid #E6EDF8',
-            boxShadow: '0 20px 45px rgba(18, 45, 82, 0.08)',
+            boxShadow: '0 16px 36px rgba(18, 45, 82, 0.08)',
             background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
           }}>
-          <CardContent sx={{ p: { xs: 2.2, md: 3 } }}>
+          <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
             <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.5}>
               <Box>
                 <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Storage</Typography>
@@ -596,6 +596,7 @@ export default function StoragePage() {
                     height: 44,
                     borderRadius: 3,
                     borderColor: '#D7E3F4',
+                    bgcolor: '#FFFFFF',
                     color: '#2A4365',
                     px: 2,
                     textTransform: 'none',
@@ -612,6 +613,7 @@ export default function StoragePage() {
                     height: 44,
                     borderRadius: 3,
                     borderColor: '#D7E3F4',
+                    bgcolor: '#FFFFFF',
                     color: '#2A4365',
                     px: 2,
                     textTransform: 'none',
@@ -651,7 +653,7 @@ export default function StoragePage() {
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(5, minmax(0, 1fr))' },
-            gap: 2,
+            gap: 1.5,
           }}>
           <StatCard title="Total Files" value={String(stats.totalFiles)} subtitle="ไฟล์ทั้งหมดในระบบ" icon={<Inventory2RoundedIcon />} tone="#1E5EFF" />
           <StatCard title="Waiting Download" value={String(stats.waiting)} subtitle="คิวรอดาวน์โหลด" icon={<PendingActionsRoundedIcon />} tone="#8993A4" />
@@ -662,13 +664,13 @@ export default function StoragePage() {
 
         <Card
           sx={{
-            borderRadius: 5,
+            borderRadius: 4.6,
             border: '1px solid #E7EDF7',
-            boxShadow: '0 16px 35px rgba(15, 37, 74, 0.08)',
+            boxShadow: '0 12px 30px rgba(15, 37, 74, 0.08)',
             background: '#FFFFFF',
           }}>
-          <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
-            <Stack spacing={2}>
+          <CardContent sx={{ p: { xs: 1.9, md: 2.3 } }}>
+            <Stack spacing={1.8}>
               <Stack direction="row" alignItems="center" spacing={1}>
                 <FilterAltRoundedIcon sx={{ color: '#3866E8', fontSize: 20 }} />
                 <Typography sx={{ color: '#102A43', fontWeight: 800, fontSize: 15 }}>Filter Toolbar</Typography>
@@ -692,6 +694,7 @@ export default function StoragePage() {
                   sx={{
                     height: 46,
                     borderRadius: 3,
+                    bgcolor: '#FFFFFF',
                     boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)',
                   }}
                 />
@@ -703,7 +706,7 @@ export default function StoragePage() {
                     value={statusFilter}
                     label="สถานะ"
                     onChange={event => setStatusFilter(event.target.value)}
-                    sx={{ borderRadius: 3, height: 46, boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
+                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
                     <MenuItem value="all">ทั้งหมด</MenuItem>
                     <MenuItem value="waiting">Waiting</MenuItem>
                     <MenuItem value="processing">Processing</MenuItem>
@@ -718,7 +721,7 @@ export default function StoragePage() {
                     value={jobTypeFilter}
                     label="ประเภทงาน"
                     onChange={event => setJobTypeFilter(event.target.value)}
-                    sx={{ borderRadius: 3, height: 46, boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
+                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
                     <MenuItem value="all">ทั้งหมด</MenuItem>
                     {jobTypes.map(job => (
                       <MenuItem key={job} value={job}>
@@ -735,7 +738,7 @@ export default function StoragePage() {
                   value={dateFilter}
                   onChange={event => setDateFilter(event.target.value)}
                   slotProps={{ inputLabel: { shrink: true } }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, height: 46, boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' } }}
+                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' } }}
                 />
 
                 <FormControl size="small">
@@ -745,7 +748,7 @@ export default function StoragePage() {
                     value={sortBy}
                     label="Sort"
                     onChange={event => setSortBy(event.target.value)}
-                    sx={{ borderRadius: 3, height: 46, boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
+                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
                     <MenuItem value="newest">ล่าสุดก่อน</MenuItem>
                     <MenuItem value="oldest">เก่าสุดก่อน</MenuItem>
                     <MenuItem value="customer">ชื่อลูกค้า A-Z</MenuItem>
@@ -793,13 +796,13 @@ export default function StoragePage() {
 
         <Card
           sx={{
-            borderRadius: 5,
+            borderRadius: 4.8,
             border: '1px solid #E7EDF8',
-            boxShadow: '0 22px 44px rgba(17, 41, 77, 0.08)',
+            boxShadow: '0 16px 36px rgba(17, 41, 77, 0.08)',
             overflow: 'hidden',
             background: '#FFFFFF',
           }}>
-          <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid #ECF1F8', bgcolor: '#FCFDFF' }}>
+          <Box sx={{ px: 2.3, py: 1.7, borderBottom: '1px solid #ECF1F8', bgcolor: '#FCFDFF' }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Typography sx={{ fontWeight: 800, color: '#102A43' }}>รายการไฟล์ลูกค้าในคลังเอกสาร</Typography>
               <Chip label={`${filteredRows.length} รายการ`} sx={{ borderRadius: 2, bgcolor: '#ECF3FF', color: '#2957D8', fontWeight: 700 }} />
@@ -813,14 +816,14 @@ export default function StoragePage() {
                   <TableCell sx={{ minWidth: 52, bgcolor: '#F8FAFE' }}>
                     <Checkbox checked={allCurrentSelected} onChange={toggleSelectAll} />
                   </TableCell>
-                  <TableCell sx={{ minWidth: 164, bgcolor: '#F8FAFE' }}>Upload Date</TableCell>
-                  <TableCell sx={{ minWidth: 180, bgcolor: '#F8FAFE' }}>Customer Name</TableCell>
-                  <TableCell sx={{ minWidth: 140, bgcolor: '#F8FAFE' }}>Phone Number</TableCell>
-                  <TableCell sx={{ minWidth: 160, bgcolor: '#F8FAFE' }}>Job Type</TableCell>
-                  <TableCell sx={{ minWidth: 260, bgcolor: '#F8FAFE' }}>File Preview</TableCell>
-                  <TableCell sx={{ minWidth: 130, bgcolor: '#F8FAFE' }}>Status</TableCell>
-                  <TableCell sx={{ minWidth: 220, bgcolor: '#F8FAFE' }}>Notes</TableCell>
-                  <TableCell sx={{ minWidth: 172, bgcolor: '#F8FAFE' }}>Actions</TableCell>
+                  <TableCell sx={{ minWidth: 164, bgcolor: '#F7FAFF' }}>Upload Date</TableCell>
+                  <TableCell sx={{ minWidth: 180, bgcolor: '#F7FAFF' }}>Customer Name</TableCell>
+                  <TableCell sx={{ minWidth: 140, bgcolor: '#F7FAFF' }}>Phone Number</TableCell>
+                  <TableCell sx={{ minWidth: 160, bgcolor: '#F7FAFF' }}>Job Type</TableCell>
+                  <TableCell sx={{ minWidth: 260, bgcolor: '#F7FAFF' }}>File Preview</TableCell>
+                  <TableCell sx={{ minWidth: 130, bgcolor: '#F7FAFF' }}>Status</TableCell>
+                  <TableCell sx={{ minWidth: 220, bgcolor: '#F7FAFF' }}>Notes</TableCell>
+                  <TableCell sx={{ minWidth: 172, bgcolor: '#F7FAFF' }}>Actions</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
@@ -854,7 +857,7 @@ export default function StoragePage() {
                           cursor: 'pointer',
                           transition: 'all 180ms ease',
                           '& td': { borderBottomColor: '#EEF2F7' },
-                          '&:hover': { bgcolor: '#FAFCFF' },
+                          '&:hover': { bgcolor: '#F7FAFF' },
                         }}>
                         <TableCell onClick={event => event.stopPropagation()}>
                           <Checkbox checked={selected} onChange={event => handleRowSelectionChange(row.id, event.target.checked)} />
@@ -964,8 +967,8 @@ export default function StoragePage() {
           paper: {
             sx: {
               width: { xs: '100%', sm: 440, md: 500 },
-              borderTopLeftRadius: 24,
-              borderBottomLeftRadius: 24,
+              borderTopLeftRadius: 22,
+              borderBottomLeftRadius: 22,
               background: 'linear-gradient(180deg, #FBFDFF 0%, #FFFFFF 100%)',
             },
           },
@@ -1069,13 +1072,13 @@ export default function StoragePage() {
                 <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                   <CardContent>
                     <Stack spacing={1.3}>
-                      <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>Status และ Notes</Typography>
+                      <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>Status & Note</Typography>
                       <FormControl size="small" fullWidth>
                         <InputLabel id="drawer-status">สถานะงาน</InputLabel>
                         <Select<StorageStatus> labelId="drawer-status" value={drawerStatus} label="สถานะงาน" onChange={event => setDrawerStatus(event.target.value)}>
-                          <MenuItem value="waiting">Waiting</MenuItem>
-                          <MenuItem value="processing">Processing</MenuItem>
-                          <MenuItem value="completed">Completed</MenuItem>
+                          <MenuItem value="waiting">รอการดำเนินการ</MenuItem>
+                          <MenuItem value="processing">กำลังดำเนินการ</MenuItem>
+                          <MenuItem value="completed">เสร็จสิ้น</MenuItem>
                         </Select>
                       </FormControl>
                       <TextField label="Notes" multiline minRows={3} value={drawerNotes} onChange={event => setDrawerNotes(event.target.value)} />
