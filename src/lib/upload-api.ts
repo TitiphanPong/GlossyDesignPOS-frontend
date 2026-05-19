@@ -11,6 +11,13 @@ export interface SignedUrlResponse {
   expiresIn?: number;
 }
 
+export interface UploadPayload {
+  customerName: string;
+  phone: string;
+  jobType: string;
+  note?: string;
+}
+
 function getApiBaseUrl(): string {
   const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
   if (!apiBaseUrl) {
@@ -34,9 +41,16 @@ async function parseErrorResponse(res: Response): Promise<string> {
   return `Request failed with status ${res.status}`;
 }
 
-export async function uploadFile(file: File, signal?: AbortSignal): Promise<UploadResponse> {
+export async function uploadFile(file: File, payload: UploadPayload, signal?: AbortSignal): Promise<UploadResponse> {
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('files', file);
+  formData.append('customerName', payload.customerName);
+  formData.append('phone', payload.phone);
+  formData.append('jobType', payload.jobType);
+
+  if (payload.note) {
+    formData.append('note', payload.note);
+  }
 
   const res = await fetch(`${getApiBaseUrl()}/uploads`, {
     method: 'POST',
