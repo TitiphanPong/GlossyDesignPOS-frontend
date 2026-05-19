@@ -54,7 +54,6 @@ import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
@@ -207,6 +206,36 @@ async function fetchOrderRows(): Promise<OrderRow[]> {
   return payload.map(mapApiOrderToRow);
 }
 
+async function updateOrderStatus(orderId: string, status: PaymentStatus): Promise<void> {
+  const base = process.env.NEXT_PUBLIC_API_URL ?? '';
+  if (!base) {
+    throw new Error('missing_api_base');
+  }
+
+  const endpoints = [`${base}/orders/${orderId}/status`, `${base}/orders/${orderId}`];
+  let lastError: Error | null = null;
+
+  for (const endpoint of endpoints) {
+    try {
+      const response = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        return;
+      }
+
+      lastError = new Error(`failed_with_status_${response.status}`);
+    } catch {
+      lastError = new Error('update_request_failed');
+    }
+  }
+
+  throw lastError ?? new Error('update_request_failed');
+}
+
 const MotionDiv = motion.div;
 
 function formatMoney(amount: number) {
@@ -350,6 +379,7 @@ export default function OrderManagementPage() {
   const [menuOrderId, setMenuOrderId] = React.useState<string | null>(null);
   const [exportAnchor, setExportAnchor] = React.useState<null | HTMLElement>(null);
   const [lastUpdated, setLastUpdated] = React.useState<dayjs.Dayjs | null>(null);
+  const [updatingOrderId, setUpdatingOrderId] = React.useState<string | null>(null);
 
   const loadOrders = React.useCallback(async () => {
     setIsLoading(true);
@@ -440,47 +470,41 @@ export default function OrderManagementPage() {
     setDrawerOpen(false);
   };
 
-  const markAsPaid = React.useCallback((targetId: string) => {
-    setRows(current =>
-      current.map(row => {
-        if (row.id !== targetId) return row;
-        if (row.status === 'cancelled') return row;
-        return {
-          ...row,
-          status: 'paid',
-          paidAmount: row.total,
-          timeline: [
-            ...row.timeline,
-            {
-              title: 'Payment completed',
-              at: dayjs().toISOString(),
-              note: 'Confirmed by admin',
-            },
-          ],
-        };
-      })
-    );
-  }, []);
+  const markAsPaid = React.useCallback(
+    async (targetId: string) => {
+      const target = rows.find(row => row.id === targetId);
+      if (!target || target.status === 'cancelled') return;
 
-  const cancelOrder = React.useCallback((targetId: string) => {
-    setRows(current =>
-      current.map(row => {
-        if (row.id !== targetId) return row;
-        return {
-          ...row,
-          status: 'cancelled',
-          timeline: [
-            ...row.timeline,
-            {
-              title: 'Order cancelled',
-              at: dayjs().toISOString(),
-              note: 'Cancelled by admin panel',
-            },
-          ],
-        };
-      })
-    );
-  }, []);
+      setUpdatingOrderId(targetId);
+      try {
+        await updateOrderStatus(targetId, 'paid');
+        await loadOrders();
+      } catch {
+        setLoadError('อัปเดตสถานะชำระเงินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        setUpdatingOrderId(null);
+      }
+    },
+    [loadOrders, rows]
+  );
+
+  const cancelOrder = React.useCallback(
+    async (targetId: string) => {
+      const target = rows.find(row => row.id === targetId);
+      if (!target) return;
+
+      setUpdatingOrderId(targetId);
+      try {
+        await updateOrderStatus(targetId, 'cancelled');
+        await loadOrders();
+      } catch {
+        setLoadError('ยกเลิกรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        setUpdatingOrderId(null);
+      }
+    },
+    [loadOrders, rows]
+  );
 
   React.useEffect(() => {
     if (!selectedOrder) return;
@@ -911,26 +935,26 @@ export default function OrderManagementPage() {
         </MenuItem>
         <MenuItem
           onClick={() => {
-            if (rowMenuTarget) markAsPaid(rowMenuTarget.id);
+            if (rowMenuTarget) {
+              void markAsPaid(rowMenuTarget.id);
+            }
             closeRowMenu();
-          }}>
+          }}
+          disabled={rowMenuTarget?.status !== 'pending' || updatingOrderId === (rowMenuTarget?.id ?? '')}>
           <Stack direction="row" spacing={1} alignItems="center">
             <CheckCircleRoundedIcon fontSize="small" />
             <Typography sx={{ fontSize: 14 }}>Confirm Payment</Typography>
           </Stack>
         </MenuItem>
-        <MenuItem onClick={closeRowMenu}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <EditRoundedIcon fontSize="small" />
-            <Typography sx={{ fontSize: 14 }}>Edit Order</Typography>
-          </Stack>
-        </MenuItem>
         <MenuItem
           sx={{ color: '#D73A49' }}
           onClick={() => {
-            if (rowMenuTarget) cancelOrder(rowMenuTarget.id);
+            if (rowMenuTarget) {
+              void cancelOrder(rowMenuTarget.id);
+            }
             closeRowMenu();
-          }}>
+          }}
+          disabled={!rowMenuTarget || updatingOrderId === (rowMenuTarget?.id ?? '')}>
           <Stack direction="row" spacing={1} alignItems="center">
             <CancelRoundedIcon fontSize="small" />
             <Typography sx={{ fontSize: 14 }}>Cancel Order</Typography>
@@ -1092,27 +1116,6 @@ export default function OrderManagementPage() {
                 <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                   <CardContent>
                     <Stack spacing={1.1}>
-                      <Typography sx={{ fontWeight: 700 }}>Product List</Typography>
-                      {selectedOrder.products.map((product, index) => (
-                        <Stack
-                          key={`${selectedOrder.id}-${product.name}-${index}`}
-                          direction="row"
-                          justifyContent="space-between"
-                          sx={{ p: 1, border: '1px solid #EAF0F7', borderRadius: 2.2, bgcolor: '#FCFDFF' }}>
-                          <Box>
-                            <Typography sx={{ fontWeight: 600 }}>{product.name}</Typography>
-                            <Typography sx={{ color: '#94A3B8', fontSize: 12 }}>Qty: {product.qty}</Typography>
-                          </Box>
-                          <Typography sx={{ fontWeight: 700 }}>฿{formatMoney(product.price)}</Typography>
-                        </Stack>
-                      ))}
-                    </Stack>
-                  </CardContent>
-                </Card>
-
-                <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
-                  <CardContent>
-                    <Stack spacing={1.1}>
                       <Stack direction="row" spacing={1} alignItems="center">
                         <TimelineRoundedIcon sx={{ color: '#3A73F7', fontSize: 19 }} />
                         <Typography sx={{ fontWeight: 700 }}>Order Timeline</Typography>
@@ -1146,12 +1149,21 @@ export default function OrderManagementPage() {
                 <Button
                   variant="contained"
                   startIcon={<CheckCircleRoundedIcon />}
-                  disabled={selectedOrder.status !== 'pending'}
-                  onClick={() => markAsPaid(selectedOrder.id)}
+                  disabled={selectedOrder.status !== 'pending' || updatingOrderId === selectedOrder.id}
+                  onClick={() => {
+                    void markAsPaid(selectedOrder.id);
+                  }}
                   sx={{ ...commonButtonSx, flex: 1, textTransform: 'none' }}>
                   Confirm Payment
                 </Button>
-                <Button variant="outlined" startIcon={<CancelRoundedIcon />} onClick={() => cancelOrder(selectedOrder.id)} sx={{ ...commonButtonSx, flex: 1, textTransform: 'none' }}>
+                <Button
+                  variant="outlined"
+                  startIcon={<CancelRoundedIcon />}
+                  disabled={updatingOrderId === selectedOrder.id}
+                  onClick={() => {
+                    void cancelOrder(selectedOrder.id);
+                  }}
+                  sx={{ ...commonButtonSx, flex: 1, textTransform: 'none' }}>
                   Cancel Order
                 </Button>
                 <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => printDocument(selectedOrder, 'receipt')} sx={{ ...commonButtonSx, textTransform: 'none' }}>
