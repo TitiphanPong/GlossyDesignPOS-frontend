@@ -10,3 +10,9 @@ dist/
 .env
 .env.local
 .env.production
+
+# local tooling
+.codex/
+__pycache__/
+*.pyc
+yaml.py
