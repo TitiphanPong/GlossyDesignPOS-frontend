@@ -12,7 +12,6 @@ import {
   DialogContent,
   DialogTitle,
   FormControl,
-  Grid,
   IconButton,
   InputLabel,
   LinearProgress,
@@ -24,7 +23,6 @@ import {
   Typography,
 } from '@mui/material';
 import { DataGrid, type GridColDef, type GridRenderCellParams } from '@mui/x-data-grid';
-import RefreshIcon from '@mui/icons-material/Refresh';
 import EditIcon from '@mui/icons-material/Edit';
 import DeleteIcon from '@mui/icons-material/Delete';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
@@ -38,7 +36,8 @@ import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
 import GridOnRoundedIcon from '@mui/icons-material/GridOnRounded';
 import axios from 'axios';
 import AdminPageContainer from '../components/AdminPageContainer';
-import { commonButtonSx, dataGridSx, sectionTitleSx, statusChipSx, topActionBarSx, uiCardSx } from '../components/adminUi';
+import { EmptyState, SearchToolbar } from '../components/dashboardUi';
+import { commonButtonSx, dataGridSx, sectionTitleSx, statusChipSx, uiCardSx } from '../components/adminUi';
 
 type StatusType = 'completed' | 'pending';
 type SortType = 'newest' | 'oldest' | 'customer';
@@ -184,11 +183,15 @@ export default function StoragePage() {
         try {
           const res = await axios.get(`${base}${endpoint}`);
           const payload = res.data as unknown;
-          const list = Array.isArray(payload)
-            ? payload
-            : Array.isArray((payload as { data?: unknown[] })?.data)
-              ? (payload as { data: unknown[] }).data
-              : [];
+          let list: unknown[] = [];
+          if (Array.isArray(payload)) {
+            list = payload;
+          } else {
+            const nestedData = (payload as { data?: unknown[] })?.data;
+            if (Array.isArray(nestedData)) {
+              list = nestedData;
+            }
+          }
 
           const normalized = list
             .filter((item): item is UploadApiRecord => typeof item === 'object' && item !== null)
@@ -282,9 +285,6 @@ export default function StoragePage() {
       const t2 = new Date(b.createdAt).getTime();
       return sort === 'newest' ? t2 - t1 : t1 - t2;
     });
-
-  const completedCount = rows.filter((row) => row.status === 'completed').length;
-  const pendingCount = rows.filter((row) => row.status === 'pending').length;
 
   const columns: GridColDef[] = [
     {
@@ -399,16 +399,11 @@ export default function StoragePage() {
   return (
     <AdminPageContainer
       title="Storage"
-      subtitle="จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร"
-      headerActions={
-        <Button variant="contained" startIcon={<RefreshIcon />} onClick={fetchUploads} disabled={loading} sx={commonButtonSx}>
-          Refresh
-        </Button>
-      }>
+      subtitle="จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร">
       <Stack spacing={2.5}>
         {errorMessage && <Alert severity="warning">{errorMessage}</Alert>}
 
-        <Card sx={topActionBarSx}>
+        <SearchToolbar>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2} alignItems={{ xs: 'stretch', md: 'center' }}>
             <TextField
               size="small"
@@ -419,7 +414,7 @@ export default function StoragePage() {
             />
             <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 170 } }}>
               <InputLabel id="status-filter-label">Filter</InputLabel>
-              <Select labelId="status-filter-label" value={statusFilter} label="Filter" onChange={(event) => setStatusFilter(event.target.value as 'all' | StatusType)}>
+              <Select<'all' | StatusType> labelId="status-filter-label" value={statusFilter} label="Filter" onChange={(event) => setStatusFilter(event.target.value)}>
                 <MenuItem value="all">ทั้งหมด</MenuItem>
                 <MenuItem value="pending">Processing</MenuItem>
                 <MenuItem value="completed">Success</MenuItem>
@@ -427,7 +422,7 @@ export default function StoragePage() {
             </FormControl>
             <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 180 } }}>
               <InputLabel id="sort-label">Sort</InputLabel>
-              <Select labelId="sort-label" value={sort} label="Sort" onChange={(event) => setSort(event.target.value as SortType)}>
+              <Select<SortType> labelId="sort-label" value={sort} label="Sort" onChange={(event) => setSort(event.target.value)}>
                 <MenuItem value="newest">ล่าสุดก่อน</MenuItem>
                 <MenuItem value="oldest">เก่าสุดก่อน</MenuItem>
                 <MenuItem value="customer">ชื่อลูกค้า A-Z</MenuItem>
@@ -435,22 +430,7 @@ export default function StoragePage() {
             </FormControl>
             <Button variant="contained" onClick={fetchUploads} disabled={loading} sx={commonButtonSx}>อัปเดตข้อมูล</Button>
           </Stack>
-        </Card>
-
-        <Grid container spacing={1.5}>
-          {[
-            { label: 'ทั้งหมด', value: rows.length },
-            { label: 'Processing', value: pendingCount },
-            { label: 'Success', value: completedCount },
-          ].map((item) => (
-            <Grid size={{ xs: 12, sm: 4 }} key={item.label}>
-              <Card sx={{ ...uiCardSx, p: 2 }}>
-                <Typography variant="caption" color="text.secondary">{item.label}</Typography>
-                <Typography variant="h5" fontWeight={800}>{item.value}</Typography>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+        </SearchToolbar>
 
         <Card sx={uiCardSx}>
           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} sx={{ px: 2, pt: 2 }}>
@@ -459,6 +439,7 @@ export default function StoragePage() {
           </Stack>
           {loading && <LinearProgress />}
           <Box sx={{ width: '100%', overflowX: 'auto' }}>
+            {filteredRows.length === 0 && !loading ? <EmptyState title="ไม่พบข้อมูลไฟล์" subtitle="ลองปรับคำค้นหา หรือเปลี่ยนตัวกรองสถานะ" /> : null}
             <DataGrid
               rows={filteredRows}
               getRowId={(row) => row._id}
@@ -489,7 +470,7 @@ export default function StoragePage() {
             <TextField label="เบอร์โทร" fullWidth value={phone} onChange={(event) => setPhone(event.target.value)} />
             <FormControl fullWidth>
               <InputLabel id="status-label">สถานะ</InputLabel>
-              <Select labelId="status-label" value={status} label="สถานะ" onChange={(event) => setStatus(event.target.value as StatusType)}>
+              <Select<StatusType> labelId="status-label" value={status} label="สถานะ" onChange={(event) => setStatus(event.target.value)}>
                 <MenuItem value="pending">รอดำเนินการ</MenuItem>
                 <MenuItem value="completed">เสร็จสิ้น</MenuItem>
               </Select>
@@ -505,4 +486,5 @@ export default function StoragePage() {
     </AdminPageContainer>
   );
 }
+
 

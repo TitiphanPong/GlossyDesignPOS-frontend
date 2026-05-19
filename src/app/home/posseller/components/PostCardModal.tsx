@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Stack, Box, Card, TextField, Divider, FormControlLabel, RadioGroup, Radio, CardContent } from '@mui/material';
 import React, { useEffect, useState } from 'react';
 import { CartItem } from '../types/cart';
+import { formatMoneySummary, posSellerLocale } from '../locales/th';
 
 interface VariantOption {
   name: string;
@@ -21,16 +22,16 @@ interface PostCardModalProps {
 }
 
 const variantList: VariantOption[] = [
-  { name: 'A5', width: 5, height: 7, description: 'ขั้นต่ำ 2 รูป' },
-  { name: 'A6', width: 4, height: 6, description: 'ขั้นต่ำ 4 รูป' },
+  { name: 'A5', width: 5, height: 7, description: posSellerLocale.postcard.variantDescriptions.A5 },
+  { name: 'A6', width: 4, height: 6, description: posSellerLocale.postcard.variantDescriptions.A6 },
   { name: 'Custom Size', width: 0, height: 0, custom: true },
 ];
 
-export default function PostCardModal({ open, onClose, onSelect, productName, initialData }: PostCardModalProps) {
+export default function PostCardModal({ open, onClose, onSelect, productName, initialData }: Readonly<PostCardModalProps>) {
   const [selected, setSelected] = useState<VariantOption | null>(null);
   const [material, setMaterial] = useState('other');
   const [quantity, setQuantity] = useState(1);
-  const [setCount, setSetCount] = useState(1); // ✅ จำนวนชุด
+  const [setCount, setSetCount] = useState(1);
   const [productNote, setProductNote] = useState('');
   const [total, setTotal] = useState<number>(0);
   const [deposit, setDeposit] = useState<number>(0);
@@ -38,7 +39,6 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
 
   const remaining = Math.max(total - deposit, 0);
 
-  // state สำหรับ custom size
   const [customWidth, setCustomWidth] = useState<number>(0);
   const [customHeight, setCustomHeight] = useState<number>(0);
 
@@ -55,33 +55,39 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
 
   useEffect(() => {
     if (selected?.name === 'A5') {
-      setSetCount(Math.ceil(quantity / 2)); // A5 ขั้นต่ำ 2 ใบ = 1 ชุด
+      setSetCount(Math.ceil(quantity / 2));
     } else if (selected?.name === 'A6') {
-      setSetCount(Math.ceil(quantity / 4)); // A6 ขั้นต่ำ 4 ใบ = 1 ชุด
+      setSetCount(Math.ceil(quantity / 4));
     } else {
-      setSetCount(quantity); // Custom = 1 ใบ = 1 ชุด
+      setSetCount(quantity);
     }
   }, [quantity, selected]);
 
+  let setLabel = '1 ใบ';
+  if (selected?.name === 'A5') {
+    setLabel = '2 ใบ';
+  } else if (selected?.name === 'A6') {
+    setLabel = '4 ใบ';
+  }
+
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
       <DialogTitle sx={{ fontWeight: 700 }}>{productName}</DialogTitle>
       <DialogContent dividers>
-        {/* การ์ดเลือกขนาด */}
         <Stack direction="row" spacing={0} justifyContent="center" mb={3} flexWrap="wrap" sx={{ gap: 2 }}>
-          {variantList.map((v, i) => {
+          {variantList.map((v) => {
             const isSelected = selected?.name === v.name;
             const isCustom = v.custom;
             return (
               <Card
-                key={i}
+                key={v.name}
                 onClick={() => setSelected(v)}
                 sx={{
                   height: 260,
                   flex: {
-                    xs: '0 0 100%', // มือถือ: 1 การ์ดต่อแถว
-                    sm: '0 0 50%', // tablet: 2 การ์ดต่อแถว
-                    md: '0 0 28%', // desktop: 3 การ์ดต่อแถว
+                    xs: '0 0 100%',
+                    sm: '0 0 50%',
+                    md: '0 0 28%',
                   },
                   border: isSelected ? '2px solid #1976d2' : '1px solid #e0e0e0',
                   borderRadius: 2,
@@ -99,7 +105,6 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
                   boxShadow: isSelected ? '0 6px 20px rgba(25,118,210,0.2)' : '0 3px 10px rgba(0,0,0,0.05)',
                   '&:hover': { boxShadow: '0 6px 20px rgba(0,0,0,0.1)' },
                 }}>
-                {/* preview */}
                 <Box
                   sx={{
                     flex: 1,
@@ -147,11 +152,10 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
                   )}
                 </Box>
 
-                {/* description custom */}
                 {isCustom ? (
                   <Box sx={{ textAlign: 'center', mt: 1 }}>
                     <Typography variant="body2" fontWeight={600}>
-                      Custom Size (นิ้ว)
+                      {posSellerLocale.common.customSizeInches}
                     </Typography>
                     <Stack direction="row" spacing={1} mt={1}>
                       <TextField
@@ -162,10 +166,10 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
                         onClick={e => e.stopPropagation()}
                         onChange={e => {
                           const val = e.target.value.replace(/\D/g, '');
-                          setCustomWidth(val === '' ? 0 : parseInt(val, 10));
+                          setCustomWidth(val === '' ? 0 : Number.parseInt(val, 10));
                         }}
                         sx={{ width: 70 }}
-                        inputProps={{ style: { textAlign: 'center' } }}
+                        slotProps={{ htmlInput: { style: { textAlign: 'center' } } }}
                       />
                       <TextField
                         size="small"
@@ -175,10 +179,10 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
                         onClick={e => e.stopPropagation()}
                         onChange={e => {
                           const val = e.target.value.replace(/\D/g, '');
-                          setCustomHeight(val === '' ? 0 : parseInt(val, 10));
+                          setCustomHeight(val === '' ? 0 : Number.parseInt(val, 10));
                         }}
                         sx={{ width: 70 }}
-                        inputProps={{ style: { textAlign: 'center' } }}
+                        slotProps={{ htmlInput: { style: { textAlign: 'center' } } }}
                       />
                     </Stack>
                   </Box>
@@ -188,7 +192,7 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
                       {v.name}
                     </Typography>
                     <Typography variant="body2" fontWeight={600} mt={1}>
-                      {v.width} × {v.height} นิ้ว
+                      {v.width} × {v.height} {posSellerLocale.postcard.sizeUnit}
                     </Typography>
                     <Typography variant="body2" color="red" fontWeight={600} mt={1}>
                       ** {v.description} **
@@ -201,100 +205,93 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
         </Stack>
 
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          รายละเอียดสินค้า :
+          {posSellerLocale.common.detailsTitle}
         </Typography>
-        <TextField label="รายละเอียดสินค้า" value={productNote} onChange={e => setProductNote(e.target.value)} fullWidth sx={{ mb: 2 }} />
+        <TextField label={posSellerLocale.common.detailsField} value={productNote} onChange={e => setProductNote(e.target.value)} fullWidth sx={{ mb: 2 }} />
 
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          ชนิดกระดาษ :
+          {posSellerLocale.common.paperTypeTitle}
         </Typography>
         <RadioGroup row value={material} onChange={e => setMaterial(e.target.value)} sx={{ justifyContent: 'center', gap: 3 }}>
-          <FormControlLabel value="160g" control={<Radio />} label="160 แกรม" />
-          <FormControlLabel value="260g" control={<Radio />} label="260 แกรม" />
-          <FormControlLabel value="300g" control={<Radio />} label="300 แกรม" />
-          <FormControlLabel value="other" control={<Radio />} label="อื่นๆ" />
+          <FormControlLabel value="160g" control={<Radio />} label={posSellerLocale.postcard.materials['160g']} />
+          <FormControlLabel value="260g" control={<Radio />} label={posSellerLocale.postcard.materials['260g']} />
+          <FormControlLabel value="300g" control={<Radio />} label={posSellerLocale.postcard.materials['300g']} />
+          <FormControlLabel value="other" control={<Radio />} label={posSellerLocale.postcard.materials.other} />
         </RadioGroup>
 
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          จำนวน (ชุด) :
+          {posSellerLocale.postcard.quantitySetTitle}
         </Typography>
 
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="center" alignItems="center">
-          {/* จำนวน */}
           <Typography variant="body1" sx={{ mr: 1, fontWeight: 600 }}>
-            จำนวน (ใบ) :
+            {posSellerLocale.postcard.quantitySheetLabel}
           </Typography>
-          <TextField label="จำนวน (ใบ)" type="string" value={quantity} onChange={e => setQuantity(Number(e.target.value) || 0)} sx={{ width: 120 }} inputProps={{ min: 1 }} />
+          <TextField label={posSellerLocale.postcard.quantitySheetLabel} type="string" value={quantity} onChange={e => setQuantity(Number(e.target.value) || 0)} sx={{ width: 120 }} slotProps={{ htmlInput: { min: 1 } }} />
 
           <Typography variant="body1" sx={{ mr: 1, fontWeight: 600 }}>
-            นับเป็นจำนวน (Set) : {setCount} ชุด
+            {posSellerLocale.postcard.setCountLabel(setCount)}
           </Typography>
-          {/* ราคารวม */}
 
           <Divider orientation="vertical" flexItem />
           <Box display="flex" alignItems="center" gap={1}>
             <Typography variant="body1" fontWeight={600}>
-              ราคารวม :
+              {posSellerLocale.common.totalLabel} :
             </Typography>
             <TextField
               type="string"
-              label="ราคารวม"
+              label={posSellerLocale.common.totalLabel}
               value={total}
               onChange={e => setTotal(Number(e.target.value) || 0)}
               sx={{ width: 150 }}
-              InputProps={{
-                endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
-              }}
+              slotProps={{ input: { endAdornment: '฿' } }}
             />
           </Box>
         </Stack>
 
         <Typography variant="body2" sx={{ mr: 1, fontWeight: 600, mt: 2, color: 'red' }}>
-          *** หมายเหตุ : ถ้าเป็น A5 ขั้นต่ำ 2 ใบต่อ 1 ชุด , A6 ขั้นต่ำ 4 ใบต่อ 1 ชุด || (1 Set = {selected?.name === 'A5' ? '2 ใบ' : selected?.name === 'A6' ? '4 ใบ' : '1 ใบ'})
+          {posSellerLocale.postcard.setNote(setLabel)}
         </Typography>
 
         <Divider sx={{ my: 2 }} />
 
-        {/* มัดจำ/เต็มจำนวน */}
         <Box sx={{ mt: 3 }}>
           <Typography variant="h6" fontWeight={700} gutterBottom>
-            สรุปราคา :
+            {posSellerLocale.common.priceSummaryTitle}
           </Typography>
           <RadioGroup row value={fullPayment ? 'full' : 'deposit'} onChange={e => setFullPayment(e.target.value === 'full')} sx={{ width: '100%' }}>
             <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="stretch" flexWrap="wrap" sx={{ width: '100%' }}>
-              {/* มัดจำ */}
               <Card
                 variant="outlined"
                 sx={{
                   flex: 1,
                   minWidth: 280,
-                  borderColor: !fullPayment ? 'primary.main' : 'grey.300',
+                  borderColor: fullPayment ? 'grey.300' : 'primary.main',
                 }}>
                 <CardContent>
-                  <FormControlLabel value="deposit" control={<Radio />} label={<Typography fontWeight={600}>มัดจำสินค้า</Typography>} />
+                  <FormControlLabel value="deposit" control={<Radio />} label={<Typography fontWeight={600}>{posSellerLocale.common.depositProduct}</Typography>} />
                   <Stack spacing={2} mt={2}>
-                    <TextField label="ยอดรวม" type="number" value={total} onChange={e => setTotal(Number(e.target.value) || 0)} fullWidth disabled={fullPayment} />
+                    <TextField label={posSellerLocale.common.totalLabel} type="number" value={total} onChange={e => setTotal(Number(e.target.value) || 0)} fullWidth disabled={fullPayment} />
                     <TextField
-                      label="ยอดมัดจำ"
+                      label={posSellerLocale.common.depositLabel}
                       type="number"
                       value={deposit}
                       onChange={e => {
                         const val = Number(e.target.value) || 0;
-                        setDeposit(Math.min(Math.max(val, 0), total)); // ✅ clamp ไม่ให้ติดลบ หรือเกิน total
+                        setDeposit(Math.min(Math.max(val, 0), total));
                       }}
                       fullWidth
                       disabled={fullPayment}
                     />
-                    <TextField label="คงค้าง" value={remaining} fullWidth disabled />
+                    <TextField label={posSellerLocale.common.remainingLabel} value={remaining} fullWidth disabled />
                   </Stack>
                 </CardContent>
               </Card>
 
-              {/* เต็มจำนวน */}
               <Card
                 variant="outlined"
                 sx={{
@@ -303,9 +300,9 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
                   borderColor: fullPayment ? 'primary.main' : 'grey.300',
                 }}>
                 <CardContent>
-                  <FormControlLabel value="full" control={<Radio />} label={<Typography fontWeight={600}>ชำระเต็มจำนวน</Typography>} />
+                  <FormControlLabel value="full" control={<Radio />} label={<Typography fontWeight={600}>{posSellerLocale.common.fullPaymentLabel}</Typography>} />
                   <Stack spacing={2} mt={2}>
-                    <TextField label="จำนวนเงิน" type="number" value={total} onChange={e => setTotal(Number(e.target.value) || 0)} fullWidth />
+                    <TextField label={posSellerLocale.common.amountLabel} type="number" value={total} onChange={e => setTotal(Number(e.target.value) || 0)} fullWidth />
                   </Stack>
                 </CardContent>
               </Card>
@@ -314,15 +311,14 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
         </Box>
       </DialogContent>
 
-      {/* แสดงยอดรวมด้านล่าง */}
       <Box sx={{ mt: 2, textAlign: 'right' }}>
         <Typography variant="h6" sx={{ color: 'green', fontWeight: 700, px: 3 }}>
-          {fullPayment ? `ยอดที่ต้องชำระเต็มจำนวน: ${total.toLocaleString()} ฿` : `ยอดที่ต้องชำระมัดจำ: ${deposit.toLocaleString()} ฿`}
+          {formatMoneySummary(fullPayment ? 'full' : 'deposit', fullPayment ? total : deposit)}
         </Typography>
       </Box>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose}>ยกเลิก</Button>
+        <Button onClick={onClose}>{posSellerLocale.common.cancel}</Button>
         <Button
           variant="contained"
           size="large"
@@ -332,7 +328,7 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
             onSelect({
               key: '',
               name: productName,
-              category: 'โพสการ์ด',
+              category: posSellerLocale.postcard.category,
               variant: {
                 ...selected,
                 width: customWidth,
@@ -341,17 +337,19 @@ export default function PostCardModal({ open, onClose, onSelect, productName, in
               productNote,
               material,
               qty: quantity,
-              setCount, // ✅ ส่งจำนวนชุด
+              setCount,
               unitPrice: total / (quantity || 1),
               totalPrice: total,
               deposit: fullPayment ? total : deposit,
               remaining: fullPayment ? 0 : remaining,
               fullPayment,
-            } as CartItem)
+            })
           }>
-          ถัดไป
+          {posSellerLocale.common.next}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
+
+

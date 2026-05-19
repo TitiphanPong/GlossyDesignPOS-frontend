@@ -39,7 +39,10 @@ export function formatFileSize(bytes: number): string {
   const units = ['B', 'KB', 'MB', 'GB'];
   const size = Math.floor(Math.log(bytes) / Math.log(1024));
   const value = bytes / 1024 ** size;
-  return `${value.toFixed(value >= 100 ? 0 : value >= 10 ? 1 : 2)} ${units[size]}`;
+  let precision = 2;
+  if (value >= 100) precision = 0;
+  else if (value >= 10) precision = 1;
+  return `${value.toFixed(precision)} ${units[size]}`;
 }
 
 export function getFileTypeLabel(fileName: string): string {

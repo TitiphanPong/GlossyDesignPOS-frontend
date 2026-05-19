@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import * as React from 'react';
-import { Box, Tabs, Tab, Alert, Button, Card, FormControl, InputLabel, MenuItem, Select, Stack, Typography } from '@mui/material';
+import { Box, Alert, Button, Card, FormControl, InputLabel, MenuItem, Select, Stack } from '@mui/material';
 import { CheckoutSidebar } from './components/CheckoutSidebar';
 import { ProductList } from './components/ProductList';
 import { SearchBar } from './components/SearchBar';
@@ -9,24 +9,18 @@ import { useCart } from './components/useCart';
 import { useProductModals } from './components/useProductModals';
 import SuccessModal from './components/successModal';
 import CustomerInfoModal from './components/customerInfoModal';
-import AdfScannerIcon from '@mui/icons-material/AdfScanner';
-import LocalPrintshopIcon from '@mui/icons-material/LocalPrintshop';
-import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
-import CreditCardRoundedIcon from '@mui/icons-material/CreditCardRounded';
-import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
-import ApprovalRoundedIcon from '@mui/icons-material/ApprovalRounded';
-import MapIcon from '@mui/icons-material/Map';
 import StampModal from './components/StampModal';
 import NameCardModal from './components/NameCardModal';
 import DocumentPrintModal from './components/DocumentPrintModal';
 import PostCardModal from './components/PostCardModal';
-import ColorLensIcon from '@mui/icons-material/ColorLens';
 import InkjetModal from './components/InkjetModal';
+import PlotPlanModal from './components/PlotPlanModal';
 import StickerPVCModal from './components/stickerPVCModal';
 import StickerPPModal from './components/stickerPPModal';
 import PremiumProductModal from './components/premiumProductModal';
 import AdminPageContainer from '../components/AdminPageContainer';
-import { commonButtonSx, topActionBarSx, uiCardSx } from '../components/adminUi';
+import { commonButtonSx, uiCardSx } from '../components/adminUi';
+import { SearchToolbar } from '../components/dashboardUi';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -77,7 +71,7 @@ export default function SellPage() {
   const discount = cartState.discount;
   const setDiscount = cartState.setDiscount;
 
-  const adjustedCart = cart.map((item) => {
+  const adjustedCart = cart.map(item => {
     const itemNet = item.totalPrice || 0;
     const ratio = total > 0 ? itemNet / total : 0;
     const itemNetAfterDiscount = round2(netAfterDiscount * ratio);
@@ -102,7 +96,7 @@ export default function SellPage() {
       return;
     }
     fetch(`${base}/products`)
-      .then(async (res) => {
+      .then(async res => {
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as Product[];
         const fixedData = Array.isArray(data) ? data.map(normalizeProduct) : [];
@@ -115,19 +109,24 @@ export default function SellPage() {
       });
   }, []);
 
-  const filtered = React.useMemo(() => products.filter((p) => (activeCat === 'ทั้งหมด' ? true : p.category === activeCat)).filter((p) => p.name.toLowerCase().includes(qDebounced.toLowerCase())), [products, activeCat, qDebounced]);
+  const filtered = React.useMemo(
+    () => products.filter(p => (activeCat === 'ทั้งหมด' ? true : p.category === activeCat)).filter(p => p.name.toLowerCase().includes(qDebounced.toLowerCase())),
+    [products, activeCat, qDebounced]
+  );
 
   return (
     <AdminPageContainer title="POS Seller" subtitle="หน้าขายหน้าร้านสำหรับแคชเชียร์ ใช้งานเร็ว และจัดการคำสั่งซื้ออย่างเป็นระบบ">
       <Stack spacing={2.5}>
         {errorMsg && <Alert severity="error">{errorMsg}</Alert>}
 
-        <Card sx={topActionBarSx}>
+        <SearchToolbar>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.2}>
-            <Box sx={{ flex: 1 }}><SearchBar q={q} setQ={setQ} /></Box>
+            <Box sx={{ flex: 1 }}>
+              <SearchBar q={q} setQ={setQ} />
+            </Box>
             <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 200 } }}>
               <InputLabel id="category-filter-label">Filter</InputLabel>
-              <Select labelId="category-filter-label" value={activeCat} label="Filter" onChange={(e) => setActiveCat(e.target.value as Category | 'ทั้งหมด')}>
+              <Select labelId="category-filter-label" value={activeCat} label="Filter" onChange={e => setActiveCat(e.target.value as Category | 'ทั้งหมด')}>
                 <MenuItem value="ทั้งหมด">ทั้งหมด</MenuItem>
                 <MenuItem value="นามบัตร">นามบัตร</MenuItem>
                 <MenuItem value="ปริ้นท์เอกสาร">ปริ้นท์เอกสาร</MenuItem>
@@ -138,29 +137,22 @@ export default function SellPage() {
                 <MenuItem value="พล็อตแพลน">พล็อตแพลน</MenuItem>
               </Select>
             </FormControl>
-            <Button variant="contained" sx={commonButtonSx}>เริ่มบิลใหม่</Button>
+            <Button variant="contained" sx={commonButtonSx}>
+              เริ่มบิลใหม่
+            </Button>
           </Stack>
-        </Card>
-
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 1.5 }}>
-          <Card sx={{ ...uiCardSx, p: 2 }}><Typography variant="caption" color="text.secondary">สินค้าแสดงผล</Typography><Typography variant="h6" fontWeight={800}>{filtered.length}</Typography></Card>
-          <Card sx={{ ...uiCardSx, p: 2 }}><Typography variant="caption" color="text.secondary">สินค้าในตะกร้า</Typography><Typography variant="h6" fontWeight={800}>{cart.length}</Typography></Card>
-          <Card sx={{ ...uiCardSx, p: 2 }}><Typography variant="caption" color="text.secondary">ยอดรวม</Typography><Typography variant="h6" fontWeight={800}>฿{total.toLocaleString('th-TH')}</Typography></Card>
-        </Box>
+        </SearchToolbar>
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 3fr) minmax(320px, 1fr)' }, gap: 2 }}>
           <Card sx={{ ...uiCardSx, p: 1.4 }}>
-            <Tabs value={activeCat} onChange={(_, v) => setActiveCat(v)} variant="scrollable" allowScrollButtonsMobile sx={{ mb: 1.5, '& .MuiTabs-indicator': { height: 3 } }}>
-              <Tab value="ทั้งหมด" icon={<LayersRoundedIcon />} iconPosition="start" label="ทั้งหมด" />
-              <Tab value="นามบัตร" icon={<CreditCardRoundedIcon />} iconPosition="start" label="นามบัตร" />
-              <Tab value="ปริ้นท์เอกสาร" icon={<AdfScannerIcon />} iconPosition="start" label="ปริ้นท์เอกสาร" />
-              <Tab value="โพสการ์ด" icon={<ImageRoundedIcon />} iconPosition="start" label="โพสการ์ด" />
-              <Tab value="ตรายาง" icon={<ApprovalRoundedIcon />} iconPosition="start" label="ตรายาง" />
-              <Tab value="อิงค์เจ็ท" icon={<LocalPrintshopIcon />} iconPosition="start" label="อิงค์เจ็ท" />
-              <Tab value="สติ๊กเกอร์" icon={<ColorLensIcon />} iconPosition="start" label="สติ๊กเกอร์" />
-              <Tab value="พล็อตแพลน" icon={<MapIcon />} iconPosition="start" label="พล็อตแพลน" />
-            </Tabs>
-            <ProductList loading={loading} filtered={filtered} onAddProduct={(p) => { modalState.setActiveProduct(p); modalState.setOpenModal(true); }} />
+            <ProductList
+              loading={loading}
+              filtered={filtered}
+              onAddProduct={p => {
+                modalState.setActiveProduct(p);
+                modalState.setOpenModal(true);
+              }}
+            />
           </Card>
 
           <CheckoutSidebar
@@ -171,33 +163,221 @@ export default function SellPage() {
             onDiscountChange={setDiscount}
             onPaymentChange={setLastPayment}
             onTaxInvoiceChange={setTaxInvoice}
-            onEditItem={(item) => {
+            onEditItem={item => {
               modalState.setEditingItem(item);
               modalState.setActiveProduct({ id: item.key, name: item.name, category: item.category ?? '', cover: '', tint: '', variants: [] });
               modalState.setOpenModal(true);
             }}
-            onDeleteItem={(key) => setCart((prev) => prev.filter((i) => i.key !== key))}
+            onDeleteItem={key => setCart(prev => prev.filter(i => i.key !== key))}
           />
         </Box>
       </Stack>
 
       {/* Modals */}
-      {modalState.activeProduct?.category?.trim() === 'นามบัตร' && <NameCardModal open={modalState.openModal} onClose={() => { modalState.setOpenModal(false); modalState.setEditingItem(null); }} productName={modalState.activeProduct?.name || ''} initialData={modalState.editingItem || undefined} onSelect={(item) => { if (modalState.editingItem) { setCart((prev) => prev.map((it) => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it))); modalState.setEditingItem(null); } else { setCart((prev) => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]); } modalState.setOpenModal(false); }} />}
-      {modalState.activeProduct?.category?.trim() === 'ตรายาง' && <StampModal open={modalState.openModal} onClose={() => { modalState.setOpenModal(false); modalState.setEditingItem(null); }} productName={modalState.activeProduct?.name || ''} initialData={modalState.editingItem || undefined} onSelect={(item) => { if (modalState.editingItem) { setCart((prev) => prev.map((it) => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it))); modalState.setEditingItem(null); } else { setCart((prev) => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]); } modalState.setOpenModal(false); }} />}
-      {modalState.activeProduct?.category?.trim() === 'ปริ้นท์เอกสาร' && <DocumentPrintModal open={modalState.openModal} onClose={() => { modalState.setOpenModal(false); modalState.setEditingItem(null); }} productName={modalState.activeProduct?.name || ''} initialData={modalState.editingItem || undefined} onSelect={(item) => { if (modalState.editingItem) { setCart((prev) => prev.map((it) => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it))); modalState.setEditingItem(null); } else { setCart((prev) => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]); } modalState.setOpenModal(false); }} />}
-      {modalState.activeProduct?.category?.trim() === 'โพสการ์ด' && <PostCardModal open={modalState.openModal} onClose={() => { modalState.setOpenModal(false); modalState.setEditingItem(null); }} productName={modalState.activeProduct?.name || ''} initialData={modalState.editingItem || undefined} onSelect={(item) => { if (modalState.editingItem) { setCart((prev) => prev.map((it) => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it))); modalState.setEditingItem(null); } else { setCart((prev) => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]); } modalState.setOpenModal(false); }} />}
-      {modalState.activeProduct?.category?.trim() === 'อิงค์เจ็ท' && <InkjetModal open={modalState.openModal} onClose={() => { modalState.setOpenModal(false); modalState.setEditingItem(null); }} productName={modalState.activeProduct?.name || ''} initialData={modalState.editingItem || undefined} onSelect={(item) => { if (modalState.editingItem) { setCart((prev) => prev.map((it) => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it))); modalState.setEditingItem(null); } else { setCart((prev) => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]); } modalState.setOpenModal(false); }} />}
-      {modalState.activeProduct?.category?.trim() === 'สินค้าพรีเมียม' && <PremiumProductModal open={modalState.openModal} onClose={() => { modalState.setOpenModal(false); modalState.setEditingItem(null); }} productName={modalState.activeProduct?.name || ''} initialData={modalState.editingItem || undefined} onSelect={(item) => { if (modalState.editingItem) { setCart((prev) => prev.map((it) => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it))); modalState.setEditingItem(null); } else { setCart((prev) => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]); } modalState.setOpenModal(false); }} />}
-      {modalState.activeProduct?.name?.includes('สติ๊กเกอร์ PVC Inkjet') && <StickerPVCModal open={modalState.openModal} onClose={() => { modalState.setOpenModal(false); modalState.setEditingItem(null); }} productName={modalState.activeProduct?.name || ''} initialData={modalState.editingItem || undefined} onSelect={(item) => { if (modalState.editingItem) { setCart((prev) => prev.map((it) => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it))); modalState.setEditingItem(null); } else { setCart((prev) => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]); } modalState.setOpenModal(false); }} />}
-      {modalState.activeProduct?.name?.includes('สติ๊กเกอร์ PP Laser') && <StickerPPModal open={modalState.openModal} onClose={() => { modalState.setOpenModal(false); modalState.setEditingItem(null); }} productName={modalState.activeProduct?.name || ''} initialData={modalState.editingItem || undefined} onSelect={(item) => { if (modalState.editingItem) { setCart((prev) => prev.map((it) => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it))); modalState.setEditingItem(null); } else { setCart((prev) => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]); } modalState.setOpenModal(false); }} />}
+      {modalState.activeProduct?.category?.trim() === 'นามบัตร' && (
+        <NameCardModal
+          open={modalState.openModal}
+          onClose={() => {
+            modalState.setOpenModal(false);
+            modalState.setEditingItem(null);
+          }}
+          productName={modalState.activeProduct?.name || ''}
+          initialData={modalState.editingItem || undefined}
+          onSelect={item => {
+            if (modalState.editingItem) {
+              setCart(prev => prev.map(it => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it)));
+              modalState.setEditingItem(null);
+            } else {
+              setCart(prev => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]);
+            }
+            modalState.setOpenModal(false);
+          }}
+        />
+      )}
+      {modalState.activeProduct?.category?.trim() === 'ตรายาง' && (
+        <StampModal
+          open={modalState.openModal}
+          onClose={() => {
+            modalState.setOpenModal(false);
+            modalState.setEditingItem(null);
+          }}
+          productName={modalState.activeProduct?.name || ''}
+          initialData={modalState.editingItem || undefined}
+          onSelect={item => {
+            if (modalState.editingItem) {
+              setCart(prev => prev.map(it => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it)));
+              modalState.setEditingItem(null);
+            } else {
+              setCart(prev => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]);
+            }
+            modalState.setOpenModal(false);
+          }}
+        />
+      )}
+      {modalState.activeProduct?.category?.trim() === 'ปริ้นท์เอกสาร' && (
+        <DocumentPrintModal
+          open={modalState.openModal}
+          onClose={() => {
+            modalState.setOpenModal(false);
+            modalState.setEditingItem(null);
+          }}
+          productName={modalState.activeProduct?.name || ''}
+          initialData={modalState.editingItem || undefined}
+          onSelect={item => {
+            if (modalState.editingItem) {
+              setCart(prev => prev.map(it => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it)));
+              modalState.setEditingItem(null);
+            } else {
+              setCart(prev => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]);
+            }
+            modalState.setOpenModal(false);
+          }}
+        />
+      )}
+      {modalState.activeProduct?.category?.trim() === 'โพสการ์ด' && (
+        <PostCardModal
+          open={modalState.openModal}
+          onClose={() => {
+            modalState.setOpenModal(false);
+            modalState.setEditingItem(null);
+          }}
+          productName={modalState.activeProduct?.name || ''}
+          initialData={modalState.editingItem || undefined}
+          onSelect={item => {
+            if (modalState.editingItem) {
+              setCart(prev => prev.map(it => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it)));
+              modalState.setEditingItem(null);
+            } else {
+              setCart(prev => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]);
+            }
+            modalState.setOpenModal(false);
+          }}
+        />
+      )}
+      {modalState.activeProduct?.category?.trim() === 'อิงค์เจ็ท' && (
+        <InkjetModal
+          open={modalState.openModal}
+          onClose={() => {
+            modalState.setOpenModal(false);
+            modalState.setEditingItem(null);
+          }}
+          productName={modalState.activeProduct?.name || ''}
+          initialData={modalState.editingItem || undefined}
+          onSelect={item => {
+            if (modalState.editingItem) {
+              setCart(prev => prev.map(it => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it)));
+              modalState.setEditingItem(null);
+            } else {
+              setCart(prev => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]);
+            }
+            modalState.setOpenModal(false);
+          }}
+        />
+      )}
+      {modalState.activeProduct?.category?.trim() === 'พล็อตแพลน' && (
+        <PlotPlanModal
+          open={modalState.openModal}
+          onClose={() => {
+            modalState.setOpenModal(false);
+            modalState.setEditingItem(null);
+          }}
+          productName={modalState.activeProduct?.name || ''}
+          initialData={modalState.editingItem || undefined}
+          onSelect={item => {
+            if (modalState.editingItem) {
+              setCart(prev => prev.map(it => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it)));
+              modalState.setEditingItem(null);
+            } else {
+              setCart(prev => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]);
+            }
+            modalState.setOpenModal(false);
+          }}
+        />
+      )}
+      {modalState.activeProduct?.category?.trim() === 'สินค้าพรีเมียม' && (
+        <PremiumProductModal
+          open={modalState.openModal}
+          onClose={() => {
+            modalState.setOpenModal(false);
+            modalState.setEditingItem(null);
+          }}
+          productName={modalState.activeProduct?.name || ''}
+          initialData={modalState.editingItem || undefined}
+          onSelect={item => {
+            if (modalState.editingItem) {
+              setCart(prev => prev.map(it => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it)));
+              modalState.setEditingItem(null);
+            } else {
+              setCart(prev => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]);
+            }
+            modalState.setOpenModal(false);
+          }}
+        />
+      )}
+      {modalState.activeProduct?.name?.includes('สติ๊กเกอร์ PVC Inkjet') && (
+        <StickerPVCModal
+          open={modalState.openModal}
+          onClose={() => {
+            modalState.setOpenModal(false);
+            modalState.setEditingItem(null);
+          }}
+          productName={modalState.activeProduct?.name || ''}
+          initialData={modalState.editingItem || undefined}
+          onSelect={item => {
+            if (modalState.editingItem) {
+              setCart(prev => prev.map(it => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it)));
+              modalState.setEditingItem(null);
+            } else {
+              setCart(prev => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]);
+            }
+            modalState.setOpenModal(false);
+          }}
+        />
+      )}
+      {modalState.activeProduct?.name?.includes('สติ๊กเกอร์ PP Laser') && (
+        <StickerPPModal
+          open={modalState.openModal}
+          onClose={() => {
+            modalState.setOpenModal(false);
+            modalState.setEditingItem(null);
+          }}
+          productName={modalState.activeProduct?.name || ''}
+          initialData={modalState.editingItem || undefined}
+          onSelect={item => {
+            if (modalState.editingItem) {
+              setCart(prev => prev.map(it => (it.key === modalState.editingItem!.key ? { ...item, key: modalState.editingItem!.key } : it)));
+              modalState.setEditingItem(null);
+            } else {
+              setCart(prev => [...prev, { ...item, key: `${modalState.activeProduct?.id}-${Date.now()}` }]);
+            }
+            modalState.setOpenModal(false);
+          }}
+        />
+      )}
 
-      <SuccessModal open={successOpen} payment={lastPayment} onClose={() => { setSuccessOpen(false); localStorage.removeItem('pendingOrder'); }} onPaid={() => { setCart([]); setDiscount(0); }} onNewOrder={() => { setCart([]); setSuccessOpen(false); setDiscount(0); }} />
+      <SuccessModal
+        open={successOpen}
+        payment={lastPayment}
+        onClose={() => {
+          setSuccessOpen(false);
+          localStorage.removeItem('pendingOrder');
+        }}
+        onPaid={() => {
+          setCart([]);
+          setDiscount(0);
+        }}
+        onNewOrder={() => {
+          setCart([]);
+          setSuccessOpen(false);
+          setDiscount(0);
+        }}
+      />
 
       <CustomerInfoModal
         open={customerModalOpen}
         onClose={() => setCustomerModalOpen(false)}
         customer={customer}
-        onSubmit={(data) => {
+        onSubmit={data => {
           setCustomer(data);
           setCustomerModalOpen(false);
           setSuccessOpen(true);
@@ -223,5 +403,3 @@ export default function SellPage() {
     </AdminPageContainer>
   );
 }
-
-

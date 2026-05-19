@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { Box, CircularProgress } from '@mui/material';
+import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { ApiOrder, OrdersSummary } from '../../lib/contracts';
 
@@ -13,6 +13,10 @@ import PaymentDonut from './components/dashboard/PaymentDonut';
 import MonthlyGoal from './components/dashboard/MonthlyGoal';
 import OrderStatusSummary from './components/dashboard/OrderStatusSummary';
 import RecentOrdersTable from './components/dashboard/RecentOrdersTable';
+import AdminPageContainer from './components/AdminPageContainer';
+import { LoadingState } from './components/dashboardUi';
+
+const isApiOrderArray = (value: unknown): value is ApiOrder[] => Array.isArray(value);
 
 export default function DashboardPage() {
   const [summary, setSummary] = useState<OrdersSummary | null>(null);
@@ -26,11 +30,14 @@ export default function DashboardPage() {
       return;
     }
 
-    Promise.all([fetch(`${base}/orders/summary`).then(r => r.json()), fetch(`${base}/orders`).then(r => r.json())])
+    const summaryRequest: Promise<OrdersSummary> = fetch(`${base}/orders/summary`).then((response) => response.json());
+    const ordersRequest: Promise<unknown> = fetch(`${base}/orders`).then((response) => response.json());
+
+    Promise.all([summaryRequest, ordersRequest])
       .then(([summaryData, orders]) => {
         setSummary(summaryData);
-        if (Array.isArray(orders)) {
-          const sorted = [...(orders as ApiOrder[])].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        if (isApiOrderArray(orders)) {
+          const sorted = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           setRecentOrders(sorted.slice(0, 8));
         }
       })
@@ -40,23 +47,14 @@ export default function DashboardPage() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="80vh">
-        <CircularProgress sx={{ color: '#6C4DFF' }} />
-      </Box>
+      <AdminPageContainer title="Dashboard" subtitle="ภาพรวมการขายและสถานะธุรกิจวันนี้">
+        <LoadingState />
+      </AdminPageContainer>
     );
   }
 
   return (
-    <Box
-      sx={{
-        minHeight: '100vh',
-        bgcolor: 'background.default',
-        px: { xs: 2, md: 3 },
-        py: { xs: 2, md: 3 },
-        pb: 6,
-        maxWidth: '1600px',
-        mx: 'auto',
-      }}>
+    <AdminPageContainer title="Dashboard" subtitle="ภาพรวมการขายและสถานะธุรกิจวันนี้">
       <DashboardHeader />
 
       <KPICards salesToday={summary?.salesToday} cashToday={summary?.cashToday} promptPayToday={summary?.promptPayToday} completed={summary?.completed} />
@@ -96,6 +94,7 @@ export default function DashboardPage() {
       <Box className="section-divider" />
 
       <RecentOrdersTable orders={recentOrders} />
-    </Box>
+    </AdminPageContainer>
   );
 }
+

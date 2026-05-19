@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import {
   Dialog,
@@ -21,6 +21,7 @@ import {
 import React, { useState, useEffect } from 'react';
 import { CartItem } from '../types/cart';
 import Delete from '@mui/icons-material/Delete';
+import { formatMoneySummary, posSellerLocale } from '../locales/th';
 
 interface InkjetModalProps {
   open: boolean;
@@ -35,7 +36,7 @@ interface SizeItem {
   width: string;
 }
 
-export default function InkjetModal({ open, onClose, onSelect, productName, initialData }: InkjetModalProps) {
+export default function InkjetModal({ open, onClose, onSelect, productName, initialData }: Readonly<InkjetModalProps>) {
   const [inkjetType, setinkjetType] = useState('');
   const [productNote, setProductNote] = useState('');
   const [sizeFlex, setSizeFlex] = useState<SizeItem[]>([{ height: '', width: '' }]);
@@ -64,11 +65,10 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
 
   useEffect(() => {
     if (initialData) {
-      // preload กรณีแก้ไข
       setinkjetType(initialData.inkjetType || '');
       setProductNote(initialData.productNote || '');
       if (initialData.sizeFlex && Array.isArray(initialData.sizeFlex)) {
-        setSizeFlex(initialData.sizeFlex as SizeItem[]);
+        setSizeFlex(initialData.sizeFlex);
       } else {
         setSizeFlex([{ height: '', width: '' }]);
       }
@@ -78,7 +78,6 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
       setDeposit(initialData.deposit || 0);
       setFullPayment(initialData.fullPayment || false);
     } else {
-      // reset กรณีเปิดใหม่
       setinkjetType('');
       setProductNote('');
       setSizeFlex([{ height: '', width: '' }]);
@@ -90,7 +89,6 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
     }
   }, [initialData, open]);
 
-  // อัปเดตราคาอัตโนมัติ
   useEffect(() => {
     setTotal(price * quantity);
   }, [price, quantity]);
@@ -99,9 +97,8 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
       <DialogTitle sx={{ fontWeight: 700 }}>{productName}</DialogTitle>
       <DialogContent dividers>
-        {/* ประเภทตรายาง */}
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          ประเภท :
+          {posSellerLocale.inkjet.sizeCardsTitle}
         </Typography>
         <DialogContent>
           <Stack
@@ -109,12 +106,12 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
             spacing={0}
             gap={2}
             flexWrap="wrap"
-            justifyContent="center" // 👈 จัดการ์ดให้อยู่ตรงกลาง
-            alignItems="flex-start" // 👈 การ์ดแต่ละแถวชิดบน (กันกระโดด)
+            justifyContent="center"
+            alignItems="flex-start"
           >
             {sizeFlex.map((item, index) => (
               <Card
-                key={index}
+                key={`${item.width}-${item.height}`}
                 sx={{
                   width: 200,
                   p: 2,
@@ -135,7 +132,6 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
                 )}
               </Card>
             ))}
-            {/* ปุ่มเพิ่ม */}
             <Card
               onClick={addCard}
               sx={{
@@ -151,87 +147,82 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
                 '&:hover': { borderColor: 'primary.main', color: 'primary.main' },
               }}>
               <Stack alignItems="center">
-                <Typography>เพิ่ม Size</Typography>
+                <Typography>{posSellerLocale.inkjet.addSize}</Typography>
               </Stack>
             </Card>
           </Stack>
         </DialogContent>
 
         <Divider sx={{ my: 2 }} />
-        {/* ชนิด */}
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          ชนิด :
+          {posSellerLocale.common.kindTitle}
         </Typography>
 
         <RadioGroup row value={inkjetType} onChange={e => setinkjetType(e.target.value)} sx={{ justifyContent: 'center', flexWrap: 'wrap', gap: 2 }}>
           <Stack direction="row" spacing={2}>
-            <FormControlLabel value="paper-gloss" control={<Radio />} label="PAPER GLOSS" />
-            <FormControlLabel value="pp-board" control={<Radio />} label="PP+PP BOARD" />
-            <FormControlLabel value="pp-banner" control={<Radio />} label="PP BANNER" />
-            <FormControlLabel value="vinyl" control={<Radio />} label="VINYL" />
+            <FormControlLabel value="paper-gloss" control={<Radio />} label={posSellerLocale.inkjet.types['paper-gloss']} />
+            <FormControlLabel value="pp-board" control={<Radio />} label={posSellerLocale.inkjet.types['pp-board']} />
+            <FormControlLabel value="pp-banner" control={<Radio />} label={posSellerLocale.inkjet.types['pp-banner']} />
+            <FormControlLabel value="vinyl" control={<Radio />} label={posSellerLocale.inkjet.types.vinyl} />
           </Stack>
 
           <Stack direction="row" spacing={2}>
-            <FormControlLabel value="pp-passwood" control={<Radio />} label="PP+PASSWOOD" />
-            <FormControlLabel value="backlid" control={<Radio />} label="BACKLID" />
-            <FormControlLabel value="canvas" control={<Radio />} label="CANVAS" />
+            <FormControlLabel value="pp-passwood" control={<Radio />} label={posSellerLocale.inkjet.types['pp-passwood']} />
+            <FormControlLabel value="backlid" control={<Radio />} label={posSellerLocale.inkjet.types.backlid} />
+            <FormControlLabel value="canvas" control={<Radio />} label={posSellerLocale.inkjet.types.canvas} />
           </Stack>
         </RadioGroup>
 
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          จำนวนและราคา :
+          {posSellerLocale.common.quantityAndPriceTitle}
         </Typography>
 
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} justifyContent="center" alignItems="center">
-          {/* จำนวน */}
           <Box display="flex" alignItems="center" gap={1}>
             <Typography variant="body1" fontWeight={600}>
-              จำนวน (ชิ้น) :
+              {posSellerLocale.common.quantityLabel} ({posSellerLocale.common.pieces}) :
             </Typography>
-            <TextField type="number" value={quantity} onChange={e => setQuantity(Number(e.target.value) || 0)} sx={{ width: 120 }} inputProps={{ min: 1, style: { textAlign: 'center' } }} />
+            <TextField type="number" value={quantity} onChange={e => setQuantity(Number(e.target.value) || 0)} sx={{ width: 120 }} slotProps={{ htmlInput: { min: 1, style: { textAlign: 'center' } } }} />
           </Box>
 
           <Divider orientation="vertical" flexItem />
 
-          {/* ราคารวม */}
           <Box display="flex" alignItems="center" gap={1}>
             <Typography variant="body1" fontWeight={600}>
-              ราคารวม :
+              {posSellerLocale.common.totalLabel} :
             </Typography>
             <TextField
               type="number"
-              label="ราคารวม"
+              label={posSellerLocale.common.totalLabel}
               value={total}
               onChange={e => setTotal(Number(e.target.value) || 0)}
               sx={{ width: 150 }}
-              InputProps={{
-                endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
-              }}
+              slotProps={{ input: {
+                endAdornment: '฿',
+} }}
             />
           </Box>
         </Stack>
         <Divider sx={{ my: 2 }} />
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          รายละเอียดสินค้า :
+          {posSellerLocale.common.detailsTitle}
         </Typography>
-        <TextField label="รายละเอียดสินค้า" value={productNote} onChange={e => setProductNote(e.target.value)} fullWidth sx={{ mb: 2 }} />
+        <TextField label={posSellerLocale.common.detailsField} value={productNote} onChange={e => setProductNote(e.target.value)} fullWidth sx={{ mb: 2 }} />
         <Divider sx={{ my: 2 }} />
 
-        {/* การชำระเงิน */}
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          สรุปราคา :
+          {posSellerLocale.common.priceSummaryTitle}
         </Typography>
         <RadioGroup row value={fullPayment ? 'full' : 'deposit'} onChange={e => setFullPayment(e.target.value === 'full')} sx={{ width: '100%' }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="stretch" flexWrap="wrap" sx={{ width: '100%' }}>
-            {/* มัดจำ */}
             <Card
               variant="outlined"
               sx={{
                 flex: 1,
                 minWidth: 280,
-                borderColor: !fullPayment ? 'primary.main' : 'grey.300',
+                borderColor: fullPayment ? 'grey.300' : 'primary.main',
               }}>
               <CardContent>
                 <FormControlLabel
@@ -239,28 +230,27 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
                   control={<Radio />}
                   label={
                     <Typography variant="subtitle1" fontWeight={600}>
-                      มัดจำสินค้า
+                      {posSellerLocale.common.depositProduct}
                     </Typography>
                   }
                 />
                 <Stack spacing={2} mt={2}>
                   <TextField
-                    label="ยอดรวม"
+                    label={posSellerLocale.common.totalLabel}
                     value={total}
                     fullWidth
                     onChange={e => {
                       if (!fullPayment) {
-                        // 👈 อนุญาตแก้ไขเฉพาะตอนเลือกมัดจำ
                         setTotal(Number(e.target.value) || 0);
                       }
                     }}
                     disabled={fullPayment}
-                    InputProps={{
-                      endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
-                    }}
+                    slotProps={{ input: {
+                      endAdornment: '฿',
+} }}
                   />
                   <TextField
-                    label="ยอดมัดจำ"
+                    label={posSellerLocale.common.depositLabel}
                     type="number"
                     value={deposit}
                     onChange={e => {
@@ -269,24 +259,23 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
                     }}
                     fullWidth
                     disabled={fullPayment}
-                    InputProps={{
-                      endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
-                    }}
+                    slotProps={{ input: {
+                      endAdornment: '฿',
+} }}
                   />
                   <TextField
-                    label="คงค้าง"
+                    label={posSellerLocale.common.remainingLabel}
                     value={remaining}
                     fullWidth
                     disabled
-                    InputProps={{
-                      endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
-                    }}
+                    slotProps={{ input: {
+                      endAdornment: '฿',
+} }}
                   />
                 </Stack>
               </CardContent>
-            </Card>
+              </Card>
 
-            {/* เต็มจำนวน */}
             <Card
               variant="outlined"
               sx={{
@@ -300,13 +289,13 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
                   control={<Radio />}
                   label={
                     <Typography variant="subtitle1" fontWeight={600}>
-                      ชำระเต็มจำนวน
+                      {posSellerLocale.common.fullPaymentLabel}
                     </Typography>
                   }
                 />
                 <Stack spacing={2} mt={2}>
                   <TextField
-                    label="จำนวนเงิน"
+                    label={posSellerLocale.common.amountLabel}
                     value={total}
                     fullWidth
                     onChange={e => {
@@ -315,9 +304,9 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
                       }
                     }}
                     disabled={!fullPayment}
-                    InputProps={{
-                      endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
-                    }}
+                    slotProps={{ input: {
+                      endAdornment: '฿',
+} }}
                   />
                 </Stack>
               </CardContent>
@@ -328,21 +317,21 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
 
       <Box sx={{ mt: 2, textAlign: 'right' }}>
         <Typography variant="h6" sx={{ color: 'green', fontWeight: 700, px: 3 }}>
-          {fullPayment ? `ยอดที่ต้องชำระเต็มจำนวน: ${total.toLocaleString()} ฿` : `ยอดที่ต้องชำระมัดจำ: ${deposit.toLocaleString()} ฿`}
+          {formatMoneySummary(fullPayment ? 'full' : 'deposit', fullPayment ? total : deposit)}
         </Typography>
       </Box>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose}>ยกเลิก</Button>
+        <Button onClick={onClose}>{posSellerLocale.common.cancel}</Button>
         <Button
           variant="contained"
           size="large"
-          onClick={() =>
-            onSelect({
-              key: '', // จะใส่ตอน add เข้า cart ใน SellPage
+          onClick={() => {
+            const nextItem: CartItem = {
+              key: '',
               name: productName,
-              category: 'อิงค์เจ็ท',
-              inkjetType,
+              category: posSellerLocale.inkjet.category,
+              inkjetType: inkjetType as CartItem['inkjetType'],
               sizeFlex,
               productNote,
               qty: quantity,
@@ -351,11 +340,19 @@ export default function InkjetModal({ open, onClose, onSelect, productName, init
               deposit: fullPayment ? total : deposit,
               remaining: fullPayment ? 0 : remaining,
               fullPayment,
-            } as CartItem)
-          }>
-          ถัดไป
+            };
+            onSelect(nextItem);
+          }}>
+          {posSellerLocale.common.next}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
+
+
+
+
+
+
+

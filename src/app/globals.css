@@ -1,4 +1,4 @@
-@import 'tailwindcss';
+﻿@import 'tailwindcss';
 
 :root {
   --background: #ffffff;
@@ -21,7 +21,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* วงกลม Background */
+
 .bg-circle {
   position: absolute;
   width: 250px;
@@ -31,12 +31,12 @@ body {
   z-index: 0;
 }
 
-/* Loader container */
+
 .loader-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh; /* เต็มจอ */
+  height: 100vh; 
   background: transparent;
 }
 
@@ -47,11 +47,11 @@ body {
   overflow: visible;
 }
 
-/* ============================= */
-/* 🎈 Particle Animations         */
-/* ============================= */
 
-/* From Uiverse.io by Juanes200122 */
+
+
+
+
 
 @keyframes fade-particles {
   0%,
@@ -181,3 +181,4 @@ body {
 .animate-pulse-once {
   animation: pulse-once 2s ease-out;
 }
+

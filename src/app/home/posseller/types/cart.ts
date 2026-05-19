@@ -41,6 +41,7 @@ export type CartItem = {
 
   // Sticker PVC
   stickerPVCType?: string;
+  plotPlanType?: string;
 
   // ✅ การชำระเงิน
   deposit?: number;

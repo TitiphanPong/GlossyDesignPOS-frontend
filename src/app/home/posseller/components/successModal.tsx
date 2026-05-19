@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import React, { useState, useEffect } from 'react';
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Stack, Divider, Box } from '@mui/material';
@@ -12,8 +12,8 @@ type Props = {
   open: boolean;
   payment: PaymentMethod;
   onClose: () => void;
-  onPaid: () => void; // callback หลังอัปเดตเป็น paid สำเร็จ
-  onNewOrder: () => void; // กดทำรายการใหม่
+  onPaid: () => void;
+  onNewOrder: () => void;
 };
 
 export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrder }: Readonly<Props>) {
@@ -27,8 +27,6 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
   useEffect(() => {
     if (open) {
       setIsPaid(false);
-
-      // ✅ โหลดข้อมูล order จาก localStorage
       const orderStr = localStorage.getItem('pendingOrder');
       if (orderStr) {
         const order = JSON.parse(orderStr) as PendingOrderDraft;
@@ -47,7 +45,6 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
   const handleConfirm = async () => {
     try {
       const orderStr = localStorage.getItem('pendingOrder');
-
       if (!orderStr) return;
       const order = JSON.parse(orderStr) as PendingOrderDraft;
       const isPartial = (order.remainingTotal ?? 0) > 0;
@@ -66,12 +63,11 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       });
       if (!res.ok) {
         const text = await res.text();
-        console.error('❌ Backend error:', res.status, text);
+        console.error('Backend error:', res.status, text);
         throw new Error('บันทึกออเดอร์ไม่สำเร็จ');
       }
       await res.json();
 
-      // 👉 update localStorage → paid
       localStorage.setItem(
         'pendingOrder',
         JSON.stringify({
@@ -81,7 +77,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           vatAmount: order.vatAmount,
         })
       );
-      globalThis.dispatchEvent(new Event('storage')); // ✅ บังคับให้ CustomerScreen รับรู้
+      globalThis.dispatchEvent(new Event('storage'));
       setIsPaid(true);
       onPaid();
     } catch (err) {
@@ -91,11 +87,11 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 3, p: 1 } } }}>
+    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 3, p: 0.5 } } }}>
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
           {isPaid ? <CheckCircleIcon color="success" fontSize="large" /> : <HourglassEmptyIcon color="warning" fontSize="large" />}
-          <Typography variant="h6" fontWeight={700}>
+          <Typography variant="h6" fontWeight={800}>
             {isPaid ? 'ชำระเงินเรียบร้อย' : 'รอชำระเงิน'}
           </Typography>
         </Stack>
@@ -108,7 +104,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           </Typography>
 
           {remainingTotal > 0 && (
-            <Typography color="error" fontWeight={600} mt={1}>
+            <Typography color="error" fontWeight={700} mt={1}>
               คงเหลือ: {remainingTotal.toFixed(2)} บาท
             </Typography>
           )}
@@ -120,34 +116,20 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           )}
 
           <Typography variant="body1" color="text.secondary" mt={1}>
-            วิธีชำระเงิน: {payment === 'cash' ? '💵 เงินสด' : '📱 PromptPay'}
+            วิธีชำระเงิน: {payment === 'cash' ? 'เงินสด' : 'PromptPay'}
           </Typography>
         </Box>
-        <Box
-          sx={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}>
+
+        <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <Divider sx={{ my: 2, width: '80%' }} />
         </Box>
 
         <Typography variant="body2" color="text.secondary" align="center">
-          {isPaid ? 'ชำระเงินเสร็จสิ้น ระบบจะปิดอัตโนมัติใน 5 วินาที' : '*โปรดยืนยัน / ตรวจสอบการชำระเงิน'}
+          {isPaid ? 'ชำระเงินเสร็จสิ้น ระบบจะปิดอัตโนมัติใน 5 วินาที' : 'โปรดยืนยันการชำระเงินก่อนปิดบิล'}
         </Typography>
       </DialogContent>
 
-      <DialogActions
-        sx={{
-          display: 'flex',
-          flexWrap: 'wrap',
-          gap: 1,
-          justifyContent: 'space-between',
-          px: 3,
-          pb: 2,
-          pt: 2,
-        }}>
+      <DialogActions sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between', px: 2.5, pb: 2, pt: 2 }}>
         {!isPaid && (
           <Button variant="contained" color={payment === 'cash' ? 'success' : 'warning'} startIcon={<DoneAllIcon />} onClick={handleConfirm}>
             {payment === 'cash' ? 'รับเงินแล้ว' : 'ยืนยันการโอนแล้ว'}
@@ -167,3 +149,4 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
     </Dialog>
   );
 }
+

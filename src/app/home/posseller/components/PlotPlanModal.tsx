@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Stack, Box, Card, TextField, Divider, FormControlLabel, RadioGroup, Radio, CardContent } from '@mui/material';
 import React, { useEffect, useState } from 'react';
@@ -12,49 +12,60 @@ interface VariantOption {
   custom?: boolean;
 }
 
-interface DocumentPrintModalProps {
+interface PlotPlanModalProps {
   open: boolean;
   onClose: () => void;
   onSelect: (item: CartItem) => void;
   productName: string;
-  initialData?: any;
+  initialData?: Partial<CartItem>;
 }
 
 const variantList: VariantOption[] = [
-  { name: 'A4', width: 210, height: 297 },
-  { name: 'A3', width: 297, height: 420 },
   { name: 'A2', width: 420, height: 594 },
   { name: 'A1', width: 594, height: 841 },
   { name: 'A0', width: 841, height: 1189 },
   { name: 'Custom Size', width: 0, height: 0, custom: true },
 ];
 
-export default function DocumentPrintModal({ open, onClose, onSelect, productName, initialData }: Readonly<DocumentPrintModalProps>) {
+export default function PlotPlanModal({ open, onClose, onSelect, productName, initialData }: Readonly<PlotPlanModalProps>) {
   const [selected, setSelected] = useState<VariantOption | null>(null);
-  const [sides, setSides] = useState<'1' | '2'>('1');
-  const [material, setMaterial] = useState('other');
+  const [material, setMaterial] = useState('bond-80g');
   const [quantity, setQuantity] = useState(1);
   const [productNote, setProductNote] = useState('');
   const [colorMode, setColorMode] = useState('bw');
   const [total, setTotal] = useState<number>(0);
   const [deposit, setDeposit] = useState<number>(0);
   const [fullPayment, setFullPayment] = useState<boolean>(false);
-
-  const remaining = Math.max(total - deposit, 0);
-
   const [customWidth, setCustomWidth] = useState<number>(0);
   const [customHeight, setCustomHeight] = useState<number>(0);
+
+  const remaining = Math.max(total - deposit, 0);
 
   useEffect(() => {
     if (initialData) {
       setQuantity(initialData.qty || 1);
       setDeposit(initialData.deposit || 0);
       setFullPayment(initialData.fullPayment || false);
-      setMaterial(initialData.material || '');
-      setSides(initialData.sides || '1');
+      setMaterial(initialData.material || 'bond-80g');
       setColorMode(initialData.colorMode || 'bw');
-      setTotal(initialData.total ?? initialData.totalPrice ?? 0);
-      if (initialData.variant) setSelected(initialData.variant);
+      setProductNote(initialData.productNote || '');
+      setTotal(initialData.totalPrice ?? 0);
+      if (initialData.variant) {
+        setSelected(initialData.variant);
+        setCustomWidth(Number(initialData.variant.width) || 0);
+        setCustomHeight(Number(initialData.variant.height) || 0);
+      }
+    } else {
+      setSelected(null);
+      setMaterial('bond-80g');
+      setQuantity(1);
+      setProductNote('');
+      setColorMode('bw');
+      setTotal(0);
+      setDeposit(0);
+      setFullPayment(false);
+      setCustomWidth(0);
+      setCustomHeight(0);
     }
   }, [initialData, open]);
 
@@ -74,21 +85,18 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
                   height: 260,
                   flex: {
                     xs: '0 0 100%',
-                    sm: '0 0 50%',
-                    md: '0 0 28%',
+                    sm: '0 0 48%',
+                    md: '0 0 23%',
                   },
                   border: isSelected ? '2px solid #1976d2' : '1px solid #e0e0e0',
                   borderRadius: 2,
                   p: 2,
-
                   cursor: 'pointer',
-                  position: 'relative',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'flex-start',
                   transition: '0.25s',
-
                   backgroundColor: isSelected ? '#E3F2FD' : 'white',
                   boxShadow: isSelected ? '0 6px 20px rgba(25,118,210,0.2)' : '0 3px 10px rgba(0,0,0,0.05)',
                   '&:hover': { boxShadow: '0 6px 20px rgba(0,0,0,0.1)' },
@@ -109,11 +117,8 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
                       let previewW = maxSize;
                       let previewH = maxSize;
 
-                      if (aspectRatio > 1) {
-                        previewH = maxSize / aspectRatio;
-                      } else {
-                        previewW = maxSize * aspectRatio;
-                      }
+                      if (aspectRatio > 1) previewH = maxSize / aspectRatio;
+                      else previewW = maxSize * aspectRatio;
 
                       return (
                         <Box
@@ -180,7 +185,7 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
                       {v.name}
                     </Typography>
                     <Typography variant="body2" fontWeight={600} mt={1}>
-                      {v.width} × {v.height} {posSellerLocale.documentPrint.sizeUnit}
+                      {v.width} × {v.height} {posSellerLocale.plotPlan.sizeUnit}
                     </Typography>
                   </Box>
                 )}
@@ -200,24 +205,12 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
           {posSellerLocale.common.optionsTitle}
         </Typography>
 
-        <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
+        <Stack direction="row" spacing={2} justifyContent="space-between" alignItems="center" sx={{ mb: 2, flexWrap: 'wrap' }}>
           <Box display="flex" alignItems="center">
             <Typography variant="body2" sx={{ mr: 1, fontWeight: 600 }}>
-              {posSellerLocale.documentPrint.printSidesLabel}
+              {posSellerLocale.plotPlan.colorModeLabel}
             </Typography>
-            <RadioGroup row value={sides} onChange={e => setSides(e.target.value as '1' | '2')}>
-              <FormControlLabel value="1" control={<Radio />} label={posSellerLocale.common.oneSide} />
-              <FormControlLabel value="2" control={<Radio />} label={posSellerLocale.common.twoSides} />
-            </RadioGroup>
-          </Box>
-
-          <Divider orientation="vertical" flexItem />
-
-          <Box display="flex" alignItems="center">
-            <Typography variant="body2" sx={{ mr: 1, fontWeight: 600 }}>
-              {posSellerLocale.documentPrint.colorModeLabel}
-            </Typography>
-            <RadioGroup row value={colorMode} onChange={e => setColorMode(e.target.value as any)}>
+            <RadioGroup row value={colorMode} onChange={e => setColorMode(e.target.value)}>
               <FormControlLabel value="bw" control={<Radio />} label={posSellerLocale.common.blackAndWhite} />
               <FormControlLabel value="color" control={<Radio />} label={posSellerLocale.common.color} />
             </RadioGroup>
@@ -251,11 +244,11 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
           {posSellerLocale.common.paperTypeTitle}
         </Typography>
         <RadioGroup row value={material} onChange={e => setMaterial(e.target.value)} sx={{ justifyContent: 'center', gap: 3 }}>
-          <FormControlLabel value="80g" control={<Radio />} label={posSellerLocale.documentPrint.materials['80g']} />
-          <FormControlLabel value="100g" control={<Radio />} label={posSellerLocale.documentPrint.materials['100g']} />
-          <FormControlLabel value="120g" control={<Radio />} label={posSellerLocale.documentPrint.materials['120g']} />
-          <FormControlLabel value="150g" control={<Radio />} label={posSellerLocale.documentPrint.materials['150g']} />
-          <FormControlLabel value="other" control={<Radio />} label={posSellerLocale.documentPrint.materials.other} />
+          <FormControlLabel value="bond-80g" control={<Radio />} label={posSellerLocale.plotPlan.materials['bond-80g']} />
+          <FormControlLabel value="bond-100g" control={<Radio />} label={posSellerLocale.plotPlan.materials['bond-100g']} />
+          <FormControlLabel value="tracing-paper" control={<Radio />} label={posSellerLocale.plotPlan.materials['tracing-paper']} />
+          <FormControlLabel value="photo-paper" control={<Radio />} label={posSellerLocale.plotPlan.materials['photo-paper']} />
+          <FormControlLabel value="other" control={<Radio />} label={posSellerLocale.plotPlan.materials.other} />
         </RadioGroup>
 
         <Divider sx={{ my: 2 }} />
@@ -329,16 +322,15 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
             onSelect({
               key: '',
               name: productName,
-              category: posSellerLocale.documentPrint.category,
+              category: posSellerLocale.plotPlan.category,
               variant: {
                 ...selected,
-                width: customWidth,
-                height: customHeight,
+                width: selected.custom ? customWidth : selected.width,
+                height: selected.custom ? customHeight : selected.height,
               },
               productNote,
-              sides,
-              colorMode,
               material,
+              colorMode,
               qty: quantity,
               unitPrice: total / (quantity || 1),
               totalPrice: total,
@@ -353,8 +345,3 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
     </Dialog>
   );
 }
-
-
-
-
-

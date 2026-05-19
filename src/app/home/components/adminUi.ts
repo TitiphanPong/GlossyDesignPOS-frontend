@@ -1,4 +1,4 @@
-import type { SxProps, Theme } from '@mui/material/styles';
+﻿import type { SxProps, Theme } from '@mui/material/styles';
 
 export const adminSurface = {
   pageMaxWidth: '1600px',
@@ -7,9 +7,9 @@ export const adminSurface = {
   cardPadding: { xs: 1.75, md: 2.25 },
   cardBorder: '1px solid',
   cardBorderColor: 'divider',
-  cardShadow: '0 6px 20px rgba(15, 23, 42, 0.06)',
-  cardShadowHover: '0 12px 28px rgba(15, 23, 42, 0.1)',
-  transition: 'all 0.2s ease',
+  cardShadow: '0 8px 26px rgba(15, 23, 42, 0.06)',
+  cardShadowHover: '0 16px 34px rgba(15, 23, 42, 0.12)',
+  transition: 'all 0.22s ease',
   rowHeight: 54,
   headerHeight: 50,
   buttonHeight: 40,
@@ -66,7 +66,7 @@ export const dataGridSx: SxProps<Theme> = {
     transition: adminSurface.transition,
   },
   '& .MuiDataGrid-row:hover': {
-    bgcolor: 'rgba(2, 132, 199, 0.05)',
+    bgcolor: 'rgba(108, 77, 255, 0.06)',
   },
   '& .MuiDataGrid-footerContainer': {
     minHeight: `${adminSurface.headerHeight}px`,
@@ -92,7 +92,7 @@ export const tableShellSx: SxProps<Theme> = {
     height: `${adminSurface.rowHeight}px`,
   },
   '& .MuiTableRow-hover:hover': {
-    bgcolor: 'rgba(2, 132, 199, 0.05)',
+    bgcolor: 'rgba(108, 77, 255, 0.06)',
   },
 };
 
@@ -100,7 +100,7 @@ export const commonButtonSx: SxProps<Theme> = {
   minHeight: adminSurface.buttonHeight,
   borderRadius: adminSurface.buttonRadius,
   px: 1.8,
-  fontWeight: 600,
+  fontWeight: 700,
   whiteSpace: 'nowrap',
 };
 
@@ -109,3 +109,4 @@ export const statusChipSx: SxProps<Theme> = {
   fontWeight: 600,
   '& .MuiChip-label': { px: 1.1 },
 };
+

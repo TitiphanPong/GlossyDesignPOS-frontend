@@ -1,8 +1,9 @@
-'use client';
+﻿'use client';
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Stack, Box, Card, TextField, Divider, FormControlLabel, RadioGroup, Radio, CardContent } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { CartItem } from '../types/cart';
+import { formatMoneySummary, posSellerLocale } from '../locales/th';
 
 type PremiumType = 'roundpin' | 'shirt-screen' | 'coffee-mug' | 'acrylic-sign';
 
@@ -25,10 +26,10 @@ export default function PremiumProductModal({ open, onClose, onSelect, productNa
   const [fullPayment, setFullPayment] = useState(false);
 
   const typeOptions: Array<{ value: PremiumType; label: string; description: string; img: string }> = [
-    { value: 'roundpin', label: 'เข็มกลัด', description: 'ราคาเริ่มต้นที่ ...', img: '/assets/productpremium_roundpin.png' },
-    { value: 'shirt-screen', label: 'สกรีนเสื้อ', description: 'ราคาเริ่มต้นที่ ...', img: '/assets/productpremium_shirtheattransferflex.png' },
-    { value: 'coffee-mug', label: 'สกรีนแก้ว', description: 'ราคาเริ่มต้นที่ ...', img: '/assets/productpremium_coffeemug.png' },
-    { value: 'acrylic-sign', label: 'ป้ายอะคลิลิค', description: 'ราคาเริ่มต้นที่ ...', img: '/assets/productpremium_shirtheattransferflex.png' },
+    { value: 'roundpin', label: posSellerLocale.premiumProduct.types.roundpin.label, description: posSellerLocale.premiumProduct.types.roundpin.description, img: '/assets/productpremium_roundpin.png' },
+    { value: 'shirt-screen', label: posSellerLocale.premiumProduct.types['shirt-screen'].label, description: posSellerLocale.premiumProduct.types['shirt-screen'].description, img: '/assets/productpremium_shirtheattransferflex.png' },
+    { value: 'coffee-mug', label: posSellerLocale.premiumProduct.types['coffee-mug'].label, description: posSellerLocale.premiumProduct.types['coffee-mug'].description, img: '/assets/productpremium_coffeemug.png' },
+    { value: 'acrylic-sign', label: posSellerLocale.premiumProduct.types['acrylic-sign'].label, description: posSellerLocale.premiumProduct.types['acrylic-sign'].description, img: '/assets/productpremium_shirtheattransferflex.png' },
   ];
 
   const remaining = Math.max(total - deposit, 0);
@@ -38,26 +39,24 @@ export default function PremiumProductModal({ open, onClose, onSelect, productNa
       setTypePremium(initialData.typePremium || 'roundpin');
       setProductNote(initialData.productNote || '');
       setSize(initialData.size || '');
-      setPrice(initialData.unitPrice || 0); // 👈 แก้จาก price → unitPrice
-      setQuantity(initialData.qty || 1); // 👈 แก้จาก quantity → qty
-      setTotal(initialData.totalPrice || 0); // 👈 แก้จาก total → totalPrice
+      setPrice(initialData.unitPrice || 0);
+      setQuantity(initialData.qty || 1);
+      setTotal(initialData.totalPrice || 0);
       setDeposit(initialData.deposit || 0);
       setFullPayment(initialData.fullPayment || false);
     }
   }, [initialData, open]);
 
-  // อัปเดตราคาอัตโนมัติ
   useEffect(() => {
     setTotal(price * quantity);
   }, [price, quantity]);
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md">
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
       <DialogTitle sx={{ fontWeight: 700 }}>{productName}</DialogTitle>
       <DialogContent dividers>
-        {/* ประเภทตรายาง */}
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          ประเภท :
+          {posSellerLocale.common.typeTitle}
         </Typography>
         <Stack direction="row" spacing={0} gap={2} justifyContent="center" flexWrap="wrap">
           {typeOptions.map(opt => {
@@ -81,7 +80,6 @@ export default function PremiumProductModal({ open, onClose, onSelect, productNa
                   flexDirection: 'column',
                   p: 2,
                 }}>
-                {/* ดึงรูปจาก public/assets */}
                 <Box
                   component="img"
                   src={opt.img}
@@ -105,32 +103,29 @@ export default function PremiumProductModal({ open, onClose, onSelect, productNa
         <Divider sx={{ my: 2 }} />
 
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          รายละเอียดสินค้า :
+          {posSellerLocale.common.detailsTitle}
         </Typography>
 
-        <TextField label="รายละเอียดสินค้า" value={productNote} onChange={e => setProductNote(e.target.value)} fullWidth sx={{ mb: 2 }} />
+        <TextField label={posSellerLocale.common.detailsField} value={productNote} onChange={e => setProductNote(e.target.value)} fullWidth sx={{ mb: 2 }} />
 
         <Divider sx={{ my: 2 }} />
 
-        {/* ขนาด, ราคา, จำนวน */}
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          ตัวเลือกเพิ่มเติม :
+          {posSellerLocale.common.optionsTitle}
         </Typography>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
-          <TextField label="ขนาด" value={size} onChange={e => setSize(e.target.value)} fullWidth />
-          <TextField label="ราคา" type="number" value={price} onChange={e => setPrice(Number(e.target.value) || 0)} fullWidth />
-          <TextField label="จำนวน" type="number" value={quantity} onChange={e => setQuantity(Number(e.target.value) || 0)} fullWidth />
+          <TextField label={posSellerLocale.common.sizeLabel} value={size} onChange={e => setSize(e.target.value)} fullWidth />
+          <TextField label={posSellerLocale.common.priceLabel} type="number" value={price} onChange={e => setPrice(Number(e.target.value) || 0)} fullWidth />
+          <TextField label={posSellerLocale.common.quantityLabel} type="number" value={quantity} onChange={e => setQuantity(Number(e.target.value) || 0)} fullWidth />
         </Stack>
 
         <Divider sx={{ my: 2 }} />
 
-        {/* การชำระเงิน */}
         <Typography variant="h6" fontWeight={700} gutterBottom>
-          สรุปราคา :
+          {posSellerLocale.common.priceSummaryTitle}
         </Typography>
         <RadioGroup row value={fullPayment ? 'full' : 'deposit'} onChange={e => setFullPayment(e.target.value === 'full')} sx={{ width: '100%' }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="stretch" flexWrap="wrap" sx={{ width: '100%' }}>
-            {/* มัดจำ */}
             <Card
               variant="outlined"
               sx={{
@@ -144,24 +139,24 @@ export default function PremiumProductModal({ open, onClose, onSelect, productNa
                   control={<Radio />}
                   label={
                     <Typography variant="subtitle1" fontWeight={600}>
-                      มัดจำสินค้า
+                      {posSellerLocale.common.depositProduct}
                     </Typography>
                   }
                 />
                 <Stack spacing={2} mt={2}>
                   <TextField
-                    label="ยอดรวม"
+                    label={posSellerLocale.common.totalLabel}
                     value={total}
                     disabled
                     fullWidth
                     slotProps={{
                       input: {
-                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
+                        endAdornment: '฿',
                       },
                     }}
                   />
                   <TextField
-                    label="ยอดมัดจำ"
+                    label={posSellerLocale.common.depositLabel}
                     type="number"
                     value={deposit}
                     onChange={e => {
@@ -172,18 +167,18 @@ export default function PremiumProductModal({ open, onClose, onSelect, productNa
                     disabled={fullPayment}
                     slotProps={{
                       input: {
-                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
+                        endAdornment: '฿',
                       },
                     }}
                   />
                   <TextField
-                    label="คงค้าง"
+                    label={posSellerLocale.common.remainingLabel}
                     value={remaining}
                     fullWidth
                     disabled
                     slotProps={{
                       input: {
-                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
+                        endAdornment: '฿',
                       },
                     }}
                   />
@@ -191,7 +186,6 @@ export default function PremiumProductModal({ open, onClose, onSelect, productNa
               </CardContent>
             </Card>
 
-            {/* เต็มจำนวน */}
             <Card
               variant="outlined"
               sx={{
@@ -205,19 +199,19 @@ export default function PremiumProductModal({ open, onClose, onSelect, productNa
                   control={<Radio />}
                   label={
                     <Typography variant="subtitle1" fontWeight={600}>
-                      ชำระเต็มจำนวน
+                      {posSellerLocale.common.fullPaymentLabel}
                     </Typography>
                   }
                 />
                 <Stack spacing={2} mt={2}>
                   <TextField
-                    label="จำนวนเงิน"
+                    label={posSellerLocale.common.amountLabel}
                     value={total}
                     fullWidth
                     disabled
                     slotProps={{
                       input: {
-                        endAdornment: <Typography sx={{ ml: 1 }}>฿</Typography>,
+                        endAdornment: '฿',
                       },
                     }}
                   />
@@ -230,20 +224,20 @@ export default function PremiumProductModal({ open, onClose, onSelect, productNa
 
       <Box sx={{ mt: 2, textAlign: 'right' }}>
         <Typography variant="h6" sx={{ color: 'green', fontWeight: 700, px: 3 }}>
-          {fullPayment ? `ยอดที่ต้องชำระเต็มจำนวน: ${total.toLocaleString()} ฿` : `ยอดที่ต้องชำระมัดจำ: ${deposit.toLocaleString()} ฿`}
+          {formatMoneySummary(fullPayment ? 'full' : 'deposit', fullPayment ? total : deposit)}
         </Typography>
       </Box>
 
       <DialogActions sx={{ px: 3, py: 2 }}>
-        <Button onClick={onClose}>ยกเลิก</Button>
+        <Button onClick={onClose}>{posSellerLocale.common.cancel}</Button>
         <Button
           variant="contained"
           size="large"
           onClick={() =>
             onSelect({
-              key: '', // จะใส่ตอน add เข้า cart ใน SellPage
+              key: '',
               name: productName,
-              category: 'สินค้าพรีเมียม',
+              category: posSellerLocale.premiumProduct.category,
               typePremium,
               size,
               productNote,
@@ -255,9 +249,11 @@ export default function PremiumProductModal({ open, onClose, onSelect, productNa
               fullPayment,
             })
           }>
-          ถัดไป
+          {posSellerLocale.common.next}
         </Button>
       </DialogActions>
     </Dialog>
   );
 }
+
+

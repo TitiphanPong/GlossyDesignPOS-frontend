@@ -31,11 +31,25 @@ export default function AdminPageContainer({ title, subtitle, headerActions, chi
           spacing={1.5}
           sx={{ mb: 2.5 }}>
           <Box>
-            <Typography variant="h5" fontWeight={800}>
+            <Typography
+              variant="h4"
+              sx={{
+                fontWeight: 800,
+                fontSize: { xs: '2rem', md: '2.35rem' },
+                lineHeight: 1.2,
+                color: '#000',
+              }}>
               {title}
             </Typography>
             {subtitle && (
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              <Typography
+                variant="body1"
+                sx={{
+                  mt: 0.7,
+                  fontSize: { xs: '1.05rem', md: '1.18rem' },
+                  lineHeight: 1.45,
+                  color: '#000',
+                }}>
                 {subtitle}
               </Typography>
             )}

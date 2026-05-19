@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import { Box, IconButton, LinearProgress, Stack, Typography } from '@mui/material';
@@ -11,19 +11,19 @@ interface FilePreviewListProps {
   onRemoveFile: (targetFile: File) => void;
 }
 
-export default function FilePreviewList({ files, uploadProgress, onRemoveFile }: FilePreviewListProps) {
+export default function FilePreviewList({ files, uploadProgress, onRemoveFile }: Readonly<FilePreviewListProps>) {
   if (files.length === 0) {
     return (
       <Box
         sx={{
-          borderRadius: 5,
+          borderRadius: 4,
           p: 3,
           textAlign: 'center',
-          border: '1px solid rgba(148,163,184,0.25)',
-          bgcolor: 'rgba(255,255,255,0.65)',
+          border: '1px solid rgba(148,163,184,0.22)',
+          bgcolor: 'rgba(255,255,255,0.8)',
         }}
       >
-        <Typography color="text.secondary">No files selected yet</Typography>
+        <Typography color="text.secondary">เธขเธฑเธเนเธกเนเธกเธตเนเธเธฅเนเธ—เธตเนเน€เธฅเธทเธญเธ</Typography>
       </Box>
     );
   }
@@ -46,13 +46,14 @@ export default function FilePreviewList({ files, uploadProgress, onRemoveFile }:
           animate={{ opacity: 1, y: 0 }}
           sx={{
             p: 1.5,
-            borderRadius: 4,
-            border: '1px solid rgba(148,163,184,0.25)',
-            bgcolor: 'rgba(255,255,255,0.7)',
+            borderRadius: 3,
+            border: '1px solid rgba(148,163,184,0.2)',
+            bgcolor: 'rgba(255,255,255,0.84)',
             backdropFilter: 'blur(8px)',
             display: 'flex',
             alignItems: 'center',
             gap: 1.5,
+            boxShadow: '0 4px 16px rgba(15,23,42,0.05)',
           }}
         >
           <Box sx={{ display: 'grid', placeItems: 'center', width: 36, height: 36 }}>{getFileIcon(file.name)}</Box>
@@ -72,4 +73,5 @@ export default function FilePreviewList({ files, uploadProgress, onRemoveFile }:
     </Stack>
   );
 }
+
 
