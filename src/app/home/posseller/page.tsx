@@ -126,7 +126,7 @@ export default function SellPage() {
             </Box>
             <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 200 } }}>
               <InputLabel id="category-filter-label">Filter</InputLabel>
-              <Select labelId="category-filter-label" value={activeCat} label="Filter" onChange={e => setActiveCat(e.target.value as Category | 'ทั้งหมด')}>
+              <Select labelId="category-filter-label" value={activeCat} label="Filter" onChange={e => setActiveCat(e.target.value)}>
                 <MenuItem value="ทั้งหมด">ทั้งหมด</MenuItem>
                 <MenuItem value="นามบัตร">นามบัตร</MenuItem>
                 <MenuItem value="ปริ้นท์เอกสาร">ปริ้นท์เอกสาร</MenuItem>
