@@ -6,15 +6,7 @@ import { getSignedUrl, uploadFile, type UploadResponse } from '@/lib/upload-api'
 
 const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024;
 const ACCEPTED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'ai', 'psd', 'zip'];
-const ACCEPTED_MIME_TYPES = new Set([
-  'application/pdf',
-  'image/jpeg',
-  'image/png',
-  'application/postscript',
-  'image/vnd.adobe.photoshop',
-  'application/zip',
-  'application/x-zip-compressed',
-]);
+const ACCEPTED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'application/postscript', 'image/vnd.adobe.photoshop', 'application/zip', 'application/x-zip-compressed']);
 
 function getFileExtension(fileName: string): string {
   const ext = fileName.split('.').pop();
@@ -43,6 +35,15 @@ export default function Uploader() {
   const [successMessage, setSuccessMessage] = React.useState<string | null>(null);
   const [uploadedFile, setUploadedFile] = React.useState<UploadResponse | null>(null);
   const requestIdRef = React.useRef(0);
+  const defaultUploadPayload = React.useMemo(
+    () => ({
+      customerName: 'Walk-in Customer',
+      phone: '0000000000',
+      jobType: 'Other',
+      note: 'Uploaded from quick uploader',
+    }),
+    []
+  );
 
   const envError = React.useMemo(() => {
     if (!process.env.NEXT_PUBLIC_API_URL) {
@@ -89,7 +90,7 @@ export default function Uploader() {
     const requestId = ++requestIdRef.current;
 
     try {
-      const uploaded = await uploadFile(selectedFile);
+      const uploaded = await uploadFile(selectedFile, defaultUploadPayload);
       if (requestId !== requestIdRef.current) return;
 
       setUploadedFile(uploaded);

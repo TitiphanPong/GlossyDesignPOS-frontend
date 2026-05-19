@@ -14,7 +14,6 @@ import InsertDriveFileRounded from '@mui/icons-material/InsertDriveFileRounded';
 import Inventory2Rounded from '@mui/icons-material/Inventory2Rounded';
 import OpenInNewRounded from '@mui/icons-material/OpenInNewRounded';
 import PersonRounded from '@mui/icons-material/PersonRounded';
-import PhoneRounded from '@mui/icons-material/PhoneRounded';
 import StickyNote2Rounded from '@mui/icons-material/StickyNote2Rounded';
 import TableChartRounded from '@mui/icons-material/TableChartRounded';
 import ViewAgendaRounded from '@mui/icons-material/ViewAgendaRounded';
@@ -24,7 +23,6 @@ import { getSignedUrl, uploadFile, type UploadPayload, type UploadResponse } fro
 import { ACCEPTED_EXTENSIONS, MAX_FILE_SIZE_BYTES, formatFileSize, getFileExtension } from './helpers';
 
 type Step = 1 | 2 | 3 | 4;
-type ColorMode = 'color' | 'bw';
 type UploadStatus = 'uploaded' | 'uploading' | 'waiting' | 'error';
 
 type JobOption = {
@@ -107,6 +105,36 @@ function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, '');
 }
 
+function buildUploadNote(customerNote: string, lineId: string, jobNote: string): string {
+  return [customerNote.trim(), lineId.trim() ? `LINE ID: ${lineId.trim()}` : null, jobNote.trim()].filter(Boolean).join('\n');
+}
+
+function getUploadInputError(customerName: string, normalizedPhone: string): { message: string; step: Step } | null {
+  if (!customerName) {
+    return { message: 'กรุณากรอกชื่อลูกค้าและเบอร์โทรศัพท์ก่อนอัปโหลด', step: 1 };
+  }
+
+  if (!normalizedPhone) {
+    return { message: 'กรุณากรอกชื่อลูกค้าและเบอร์โทรศัพท์ก่อนอัปโหลด', step: 1 };
+  }
+
+  if (customerName.length > 120) {
+    return { message: 'ชื่อลูกค้ายาวเกิน 120 ตัวอักษร', step: 1 };
+  }
+
+  if (normalizedPhone.length < 9 || normalizedPhone.length > 20) {
+    return { message: 'เบอร์โทรควรมี 9-20 ตัวเลข', step: 1 };
+  }
+
+  return null;
+}
+
+function getPrimaryActionLabel(isUploading: boolean, currentStep: Step): string {
+  if (isUploading) return 'กำลังอัปโหลด...';
+  if (currentStep < 3) return 'ถัดไป: อัปโหลดไฟล์';
+  return 'เริ่มอัปโหลดไฟล์';
+}
+
 type UploadFileRowProps = {
   readonly item: UploadFileItem;
   readonly disableActions: boolean;
@@ -159,8 +187,6 @@ function UploadFileRow({ item, disableActions, onOpenFile, onRemove, statusPill 
 export default function UploadPage() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [selectedJobType, setSelectedJobType] = useState<string>('document');
-  const [quantity, setQuantity] = useState(1);
-  const [colorMode, setColorMode] = useState<ColorMode>('color');
   const [uploadedFiles, setUploadedFiles] = useState<UploadFileItem[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
@@ -172,12 +198,11 @@ export default function UploadPage() {
   const [phone, setPhone] = useState('');
   const [lineId, setLineId] = useState('');
   const [customerNote, setCustomerNote] = useState('');
-  const [sizeOption, setSizeOption] = useState('A4');
   const [jobNote, setJobNote] = useState('');
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const selectedJobLabel = useMemo(() => jobOptions.find(item => item.id === selectedJobType)?.label ?? '-', [selectedJobType]);
-  const envError = !process.env.NEXT_PUBLIC_API_URL ? 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL ก่อนใช้งานอัปโหลดไฟล์' : null;
+  const envError = process.env.NEXT_PUBLIC_API_URL ? null : 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL ก่อนใช้งานอัปโหลดไฟล์';
 
   const uploadedCount = uploadedFiles.filter(item => item.status === 'uploaded').length;
   const errorItems = uploadedFiles.filter(item => item.status === 'error');
@@ -277,23 +302,30 @@ export default function UploadPage() {
     event.target.value = '';
   };
 
-  const handleDragOver = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDragOver = (event: React.DragEvent<HTMLElement>) => {
     event.preventDefault();
     if (!isUploading) {
       setIsDragOver(true);
     }
   };
 
-  const handleDragLeave = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDragLeave = (event: React.DragEvent<HTMLElement>) => {
     event.preventDefault();
     setIsDragOver(false);
   };
 
-  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+  const handleDrop = (event: React.DragEvent<HTMLElement>) => {
     event.preventDefault();
     setIsDragOver(false);
     if (isUploading) return;
     handleFileSelection(event.dataTransfer.files);
+  };
+
+  const handleDropzoneKeyDown = (event: React.KeyboardEvent<HTMLElement>) => {
+    if (disableFileActions) return;
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    handleBrowseClick();
   };
 
   const handleOpenFile = async (item: UploadFileItem) => {
@@ -320,24 +352,13 @@ export default function UploadPage() {
 
     const trimmedCustomerName = customerName.trim();
     const normalizedPhone = normalizePhone(phone);
-    const note = [customerNote.trim(), lineId.trim() ? `LINE ID: ${lineId.trim()}` : null, jobNote.trim()].filter(Boolean).join('\n');
+    const note = buildUploadNote(customerNote, lineId, jobNote);
     const jobType = uploadJobTypeMap[selectedJobType] ?? 'Other';
 
-    if (!trimmedCustomerName || !normalizedPhone) {
-      setGlobalError('กรุณากรอกชื่อลูกค้าและเบอร์โทรศัพท์ก่อนอัปโหลด');
-      setCurrentStep(1);
-      return;
-    }
-
-    if (trimmedCustomerName.length > 120) {
-      setGlobalError('ชื่อลูกค้ายาวเกิน 120 ตัวอักษร');
-      setCurrentStep(1);
-      return;
-    }
-
-    if (normalizedPhone.length < 9 || normalizedPhone.length > 20) {
-      setGlobalError('เบอร์โทรควรมี 9-20 ตัวเลข');
-      setCurrentStep(1);
+    const inputError = getUploadInputError(trimmedCustomerName, normalizedPhone);
+    if (inputError) {
+      setGlobalError(inputError.message);
+      setCurrentStep(inputError.step);
       return;
     }
 
@@ -538,11 +559,14 @@ export default function UploadPage() {
                   เลือกไฟล์จากเครื่อง
                 </button>
               </div>
-              <div
+              <button
+                type="button"
                 onDragOver={handleDragOver}
                 onDragLeave={handleDragLeave}
                 onDrop={handleDrop}
                 onClick={handleBrowseClick}
+                onKeyDown={handleDropzoneKeyDown}
+                disabled={disableFileActions}
                 className={`rounded-3xl border-2 border-dashed p-6 text-center transition ${
                   isDragOver ? 'border-indigo-400 bg-indigo-50/80 shadow-md' : 'border-indigo-200 bg-gradient-to-br from-white to-indigo-50/80 hover:border-indigo-300 hover:shadow-md'
                 } ${disableFileActions ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
@@ -551,7 +575,7 @@ export default function UploadPage() {
                 <p className="mt-1 text-sm text-slate-500">หรือกดเลือกไฟล์จากอุปกรณ์ของคุณ</p>
                 <p className="mt-3 text-xs text-slate-500">รองรับไฟล์: {ACCEPTED_EXTENSIONS.map(extension => extension.toUpperCase()).join(', ')}</p>
                 <p className="text-xs text-slate-500">ขนาดไฟล์สูงสุด 100MB / ไฟล์</p>
-              </div>
+              </button>
 
               <div className="mt-4 space-y-2.5">
                 {uploadedFiles.length === 0 ? (
@@ -688,7 +712,7 @@ export default function UploadPage() {
               onClick={currentStep < 3 ? () => setCurrentStep(prev => (prev < 4 ? ((prev + 1) as Step) : prev)) : handleUploadAll}
               disabled={Boolean(envError) || isUploading || (currentStep >= 3 && uploadedFiles.length === 0)}
               className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50">
-              {isUploading ? 'กำลังอัปโหลด...' : currentStep < 3 ? 'ถัดไป: อัปโหลดไฟล์' : 'เริ่มอัปโหลดไฟล์'}
+              {getPrimaryActionLabel(isUploading, currentStep)}
               <ExpandMoreRounded className="h-4 w-4 -rotate-90" />
             </button>
           </div>

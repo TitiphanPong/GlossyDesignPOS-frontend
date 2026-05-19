@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Card } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
-export function PremiumCard({ children }: React.PropsWithChildren) {
+export function PremiumCard({ children }: Readonly<React.PropsWithChildren>) {
   return (
     <Card
       sx={{
