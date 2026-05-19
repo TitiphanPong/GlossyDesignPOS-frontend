@@ -646,7 +646,7 @@ export default function LandingPage() {
                 <Stack direction="row" spacing={1} alignItems="center">
                   <ChatRoundedIcon fontSize="small" />
                   <Typography component="a" href={lineUrl} target="_blank" rel="noopener noreferrer" sx={{ color: 'inherit', textDecoration: 'none' }}>
-                    LINE: @glossycopyprint
+                    LINE : @glossydesign
                   </Typography>
                 </Stack>
                 <Stack direction="row" spacing={1} alignItems="center">

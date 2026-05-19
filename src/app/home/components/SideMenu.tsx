@@ -2,257 +2,154 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { alpha, styled } from '@mui/material/styles';
-import { Avatar, Box, Divider, Drawer, IconButton, List, ListItemButton, ListItemIcon, ListItemText, ListSubheader, Stack, Tooltip, Typography, useTheme } from '@mui/material';
+import { Avatar, Box, Drawer, List, ListItemButton, Stack, Tooltip, Typography } from '@mui/material';
+import { alpha } from '@mui/material/styles';
 import { drawerClasses } from '@mui/material/Drawer';
-import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
-import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
-import StarRoundedIcon from '@mui/icons-material/StarRounded';
-import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
-import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
+import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
+import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
+import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
+import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
+import StarRoundedIcon from '@mui/icons-material/StarRounded';
 
 export type NavItem = {
-  section: string;
   label: string;
   href: string;
   icon: React.ReactNode;
-  badge?: string | number;
 };
 
 export interface SideMenuProps {
   width?: number;
-  miniWidth?: number;
   currentPath?: string;
   items?: NavItem[];
-  defaultCollapsed?: boolean;
-  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 const DEFAULT_ITEMS: NavItem[] = [
-  { section: 'งานหลัก', label: 'แดชบอร์ด', href: '/home', icon: <HomeRoundedIcon fontSize="small" /> },
-  { section: 'งานหลัก', label: 'จุดขาย (POS)', href: '/home/posseller', icon: <PointOfSaleRoundedIcon fontSize="small" />, badge: 7 },
-  { section: 'งานหลัก', label: 'ไฟล์ลูกค้า', href: '/home/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
-  { section: 'ออเดอร์', label: 'รายการออเดอร์', href: '/home/saleListPage', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
+  { label: 'Dashboard', href: '/home', icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
+  { label: 'Orders', href: '/home/saleListPage', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
+  { label: 'Printing Jobs', href: '/home/posseller', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
+  { label: 'Storage', href: '/home/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
 ];
 
-const StyledDrawer = styled(Drawer)(({ theme }) => ({
-  [`& .${drawerClasses.paper}`]: {
-    borderRight: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
-    background: '#ffffff',
-    boxSizing: 'border-box',
-    transition: theme.transitions.create(['width'], { duration: 240 }),
-  },
-}));
-
 function isActivePath(currentPath: string, href: string) {
+  if (href === '#') return false;
   if (href === '/home') return currentPath === '/home';
   return currentPath === href || currentPath.startsWith(`${href}/`);
 }
 
-function Brand({ collapsed }: Readonly<{ collapsed: boolean }>) {
-  const theme = useTheme();
+function Brand() {
   return (
-    <Stack direction="row" alignItems="center" sx={{ px: 2, pt: 2, pb: 1.5, minHeight: 62 }}>
+    <Stack direction="row" spacing={1.1} alignItems="center" sx={{ px: 2.2, py: 2.3 }}>
       <Box
         sx={{
-          width: 34,
-          height: 34,
-          borderRadius: 2,
+          width: 38,
+          height: 38,
+          borderRadius: 2.4,
+          bgcolor: alpha('#FFFFFF', 0.14),
+          border: '1px solid rgba(255,255,255,0.22)',
           display: 'grid',
           placeItems: 'center',
-          bgcolor: alpha(theme.palette.primary.main, 0.12),
-          border: `1px solid ${alpha(theme.palette.primary.main, 0.22)}`,
-          mr: collapsed ? 0 : 1.2,
         }}>
-        <StarRoundedIcon sx={{ fontSize: 18, color: 'primary.main' }} />
+        <StarRoundedIcon sx={{ color: '#D8E6FF', fontSize: 18 }} />
       </Box>
-      {!collapsed && (
-        <Box sx={{ minWidth: 0 }}>
-          <Typography fontWeight={700} sx={{ fontSize: 14, lineHeight: 1.2 }}>
-            GLOSSY DESIGN
-          </Typography>
-          <Typography variant="caption" color="text.secondary">
-            ระบบจัดการหลังบ้าน
-          </Typography>
-        </Box>
-      )}
+      <Box>
+        <Typography sx={{ color: '#F8FAFC', fontWeight: 800, fontSize: 14.5, letterSpacing: 0.2 }}>GLOSSY DESIGN</Typography>
+        <Typography sx={{ color: 'rgba(235,244,255,0.75)', fontSize: 11.5 }}>ระบบการจัดการหน้าแอดมิน</Typography>
+      </Box>
     </Stack>
   );
 }
 
-function MenuRow({ item, active, collapsed }: Readonly<{ item: NavItem; active: boolean; collapsed: boolean }>) {
-  const node = (
-    <ListItemButton
-      component={Link}
-      href={item.href}
-      sx={theme => ({
-        height: 40,
-        px: collapsed ? 1.6 : 1.8,
-        mx: 1.2,
-        mb: 0.75,
-        borderRadius: 2,
-        alignItems: 'center',
-        transition: theme.transitions.create(['background-color', 'transform', 'box-shadow'], { duration: 160 }),
-        bgcolor: active ? alpha(theme.palette.primary.main, 0.1) : 'transparent',
-        '&:hover': {
-          bgcolor: alpha(theme.palette.primary.main, 0.07),
-          transform: 'translateY(-1px)',
-          boxShadow: `0 6px 14px ${alpha(theme.palette.primary.main, 0.12)}`,
-        },
-      })}>
-      <Box
-        sx={theme => ({
-          position: 'absolute',
-          left: -1,
-          top: 8,
-          bottom: 8,
-          width: 3,
-          borderRadius: 2,
-          bgcolor: 'primary.main',
-          opacity: active ? 1 : 0,
-          transition: theme.transitions.create('opacity', { duration: 180 }),
-        })}
-      />
-      <ListItemIcon sx={{ minWidth: 28, color: active ? 'primary.main' : 'text.secondary', display: 'grid', placeItems: 'center' }}>{item.icon}</ListItemIcon>
-      {!collapsed && (
-        <ListItemText
-          primary={item.label}
-          slotProps={{
-            primary: {
-              fontSize: 14,
-              fontWeight: active ? 600 : 500,
-              color: active ? 'text.primary' : 'text.secondary',
-            },
-          }}
-        />
-      )}
-    </ListItemButton>
-  );
-
-  return collapsed ? (
-    <Tooltip title={item.label} placement="right">
-      {node}
-    </Tooltip>
-  ) : (
-    node
-  );
-}
-
-function SidebarContent({ items, currentPath, collapsed, onToggle }: Readonly<{ items: NavItem[]; currentPath: string; collapsed: boolean; onToggle?: () => void }>) {
-  const grouped = React.useMemo(() => {
-    const map = new Map<string, NavItem[]>();
-    items.forEach(item => {
-      if (!map.has(item.section)) map.set(item.section, []);
-      map.get(item.section)?.push(item);
-    });
-    return Array.from(map.entries());
-  }, [items]);
-
+export default function SideMenu({ width = 286, currentPath = '/', items = DEFAULT_ITEMS }: Readonly<SideMenuProps>) {
   return (
-    <Stack sx={{ height: '100%' }}>
-      <Stack direction="row" alignItems="center" sx={{ pr: 1 }}>
-        <Brand collapsed={collapsed} />
-        <Box sx={{ ml: 'auto' }}>
-          <Tooltip title={collapsed ? 'ขยาย' : 'ย่อ'}>
-            <IconButton size="small" onClick={onToggle}>
-              {collapsed ? <ChevronRightRoundedIcon fontSize="small" /> : <ChevronLeftRoundedIcon fontSize="small" />}
-            </IconButton>
-          </Tooltip>
-        </Box>
-      </Stack>
-
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', pb: 1 }}>
-        {grouped.map(([section, sectionItems], index) => (
-          <List
-            key={section}
-            disablePadding
-            subheader={
-              collapsed ? undefined : (
-                <ListSubheader
-                  component="div"
-                  disableSticky
-                  sx={{
-                    bgcolor: 'transparent',
-                    px: 2.4,
-                    pt: index === 0 ? 0.5 : 2.1,
-                    pb: 0.9,
-                    fontSize: 11,
-                    fontWeight: 700,
-                    letterSpacing: 1.1,
-                    color: 'text.disabled',
-                    lineHeight: 1.2,
-                  }}>
-                  {section}
-                </ListSubheader>
-              )
-            }>
-            {sectionItems.map(item => (
-              <MenuRow key={item.href} item={item} active={isActivePath(currentPath, item.href)} collapsed={collapsed} />
-            ))}
-          </List>
-        ))}
-      </Box>
-
-      <Divider />
-      <Stack direction="row" alignItems="center" spacing={1.1} sx={{ p: 1.5 }}>
-        <Avatar sx={{ width: 32, height: 32 }}>A</Avatar>
-        {!collapsed && (
-          <Box sx={{ minWidth: 0 }}>
-            <Typography variant="body2" fontWeight={600} noWrap>
-              ผู้ดูแลระบบ
-            </Typography>
-            <Typography variant="caption" color="text.secondary" noWrap>
-              glossydesign
-            </Typography>
-          </Box>
-        )}
-      </Stack>
-    </Stack>
-  );
-}
-
-export default function SideMenu({ width = 272, miniWidth = 84, currentPath = '/', items = DEFAULT_ITEMS, defaultCollapsed = false, onCollapsedChange }: Readonly<SideMenuProps>) {
-  const [collapsed, setCollapsed] = React.useState(defaultCollapsed);
-
-  React.useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const withCmd = e.ctrlKey || e.metaKey;
-      if (withCmd && e.key.toLowerCase() === 'b') {
-        e.preventDefault();
-        setCollapsed(prev => {
-          const next = !prev;
-          onCollapsedChange?.(next);
-          return next;
-        });
-      }
-    };
-    globalThis.addEventListener('keydown', onKey);
-    return () => globalThis.removeEventListener('keydown', onKey);
-  }, [onCollapsedChange]);
-
-  const drawerWidth = collapsed ? miniWidth : width;
-  const toggleDesktop = () => {
-    setCollapsed(prev => {
-      const next = !prev;
-      onCollapsedChange?.(next);
-      return next;
-    });
-  };
-
-  return (
-    <StyledDrawer
+    <Drawer
       variant="permanent"
       sx={{
         display: { xs: 'none', md: 'block' },
-        width: drawerWidth,
+        width,
         flexShrink: 0,
         [`& .${drawerClasses.paper}`]: {
-          width: drawerWidth,
+          width,
+          borderRight: '1px solid rgba(255,255,255,0.08)',
+          boxSizing: 'border-box',
+          color: '#E5EEFF',
+          background: 'linear-gradient(180deg, #0A1233 0%, #0E1E4F 55%, #15295C 100%)',
+          boxShadow: 'inset -1px 0 0 rgba(255,255,255,0.08), 14px 0 36px rgba(9, 16, 37, 0.32)',
         },
       }}>
-      <SidebarContent items={items} currentPath={currentPath} collapsed={collapsed} onToggle={toggleDesktop} />
-    </StyledDrawer>
+      <Stack sx={{ height: '100%' }}>
+        <Brand />
+
+        <List sx={{ px: 1.3, py: 0.8, flex: 1 }}>
+          {items.map(item => {
+            const active = isActivePath(currentPath, item.href);
+
+            return (
+              <Tooltip key={item.label} title={item.href === '#' ? 'Coming soon' : item.label} placement="right">
+                <ListItemButton
+                  component={Link}
+                  href={item.href}
+                  sx={{
+                    mb: 0.8,
+                    minHeight: 46,
+                    px: 1.35,
+                    borderRadius: 3,
+                    color: active ? '#FFFFFF' : 'rgba(229, 238, 255, 0.86)',
+                    bgcolor: active ? 'rgba(86, 141, 255, 0.26)' : 'transparent',
+                    border: active ? '1px solid rgba(139, 181, 255, 0.55)' : '1px solid transparent',
+                    boxShadow: active ? '0 16px 26px rgba(32, 97, 222, 0.32)' : 'none',
+                    transition: 'all 170ms ease',
+                    '&:hover': {
+                      bgcolor: active ? 'rgba(86, 141, 255, 0.3)' : 'rgba(255,255,255,0.09)',
+                      transform: 'translateY(-1px)',
+                    },
+                  }}>
+                  <Box
+                    sx={{
+                      width: 28,
+                      height: 28,
+                      borderRadius: 2,
+                      display: 'grid',
+                      placeItems: 'center',
+                      color: active ? '#FFFFFF' : 'rgba(229, 238, 255, 0.88)',
+                      bgcolor: active ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)',
+                      mr: 1.2,
+                    }}>
+                    {item.icon}
+                  </Box>
+                  <Typography sx={{ fontSize: 14, fontWeight: active ? 700 : 500 }}>{item.label}</Typography>
+                </ListItemButton>
+              </Tooltip>
+            );
+          })}
+        </List>
+
+        <Box sx={{ p: 1.6, pt: 0.8 }}>
+          <Box
+            sx={{
+              borderRadius: 3.5,
+              p: 1.35,
+              border: '1px solid rgba(147, 173, 233, 0.26)',
+              bgcolor: 'rgba(255,255,255,0.07)',
+              backdropFilter: 'blur(6px)',
+            }}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Avatar sx={{ width: 34, height: 34, bgcolor: '#6999FF', fontWeight: 700 }}>A</Avatar>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography noWrap sx={{ color: '#F8FAFC', fontWeight: 700, fontSize: 13.4 }}>
+                  Admin User
+                </Typography>
+                <Typography noWrap sx={{ color: 'rgba(232,240,255,0.8)', fontSize: 11.4 }}>
+                  Printing Shop Staff
+                </Typography>
+              </Box>
+            </Stack>
+          </Box>
+        </Box>
+      </Stack>
+    </Drawer>
   );
 }
