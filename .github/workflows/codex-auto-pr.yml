@@ -1,0 +1,220 @@
+name: Codex Auto PR
+
+on:
+  schedule:
+    - cron: '0 */3 * * *'
+  workflow_dispatch:
+    inputs:
+      task_id:
+        description: Optional task ID override, for example QW-01
+        required: false
+        type: string
+      openai_model:
+        description: Optional OpenAI model override
+        required: false
+        default: gpt-5
+        type: string
+      daily_usd_limit:
+        description: Optional 24h spend limit in USD
+        required: false
+        type: string
+      monthly_usd_limit:
+        description: Optional month-to-date spend limit in USD
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: codex-auto-pr
+  cancel-in-progress: false
+
+jobs:
+  automate-task:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Collect open automation PR task IDs
+        id: open-prs
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const { data: pulls } = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+
+            const taskIds = [];
+            for (const pull of pulls) {
+              const fromTitle = pull.title.match(/\[([A-Z]{2}-\d{2})\]/)?.[1];
+              const fromBranch = pull.head.ref.match(/([a-z]{2}-\d{2})/i)?.[1]?.toUpperCase();
+              const taskId = fromTitle || fromBranch;
+              if (taskId && pull.head.ref.startsWith('codex-auto/')) {
+                taskIds.push(taskId);
+              }
+            }
+
+            core.setOutput('task_ids', taskIds.join(','));
+
+      - name: Select next queued task
+        id: select
+        env:
+          OPEN_PR_TASK_IDS: ${{ steps.open-prs.outputs.task_ids }}
+          TASK_ID_OVERRIDE: ${{ github.event.inputs.task_id || '' }}
+        run: node scripts/codex-select-task.cjs --output selected-task.json
+
+      - name: Stop when queue is empty
+        if: steps.select.outputs.has_task != 'true'
+        run: |
+          echo "No eligible task found in TODO.md"
+          node scripts/codex-write-summary.cjs --mode no-task
+
+      - name: Update Codex Queue issue when queue is empty
+        if: steps.select.outputs.has_task != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Codex Queue';
+            const { owner, repo } = context.repo;
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const issue = issues.find(item => item.title === title);
+            if (!issue) {
+              core.info('Codex Queue issue was not found.');
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issue.number,
+              body: [
+                '<!-- codex-auto-pr:no-task -->',
+                'No eligible task was found for this run.',
+                'All unfinished tasks may already be claimed by open automation PRs.',
+              ].join('\n'),
+            });
+
+      - name: Check OpenAI quota guard
+        if: steps.select.outputs.has_task == 'true'
+        id: quota
+        env:
+          OPENAI_ADMIN_API_KEY: ${{ secrets.OPENAI_ADMIN_API_KEY }}
+          OPENAI_PROJECT_ID: ${{ secrets.OPENAI_PROJECT_ID }}
+          OPENAI_DAILY_USD_LIMIT: ${{ github.event.inputs.daily_usd_limit || vars.OPENAI_DAILY_USD_LIMIT || '' }}
+          OPENAI_MONTHLY_USD_LIMIT: ${{ github.event.inputs.monthly_usd_limit || vars.OPENAI_MONTHLY_USD_LIMIT || '' }}
+        run: node scripts/codex-check-quota.cjs
+
+      - name: Generate bounded AI change set
+        if: steps.select.outputs.has_task == 'true' && steps.quota.outputs.quota_ok == 'true'
+        id: ai
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_MODEL: ${{ github.event.inputs.openai_model || 'gpt-5' }}
+        run: node scripts/codex-run-task.cjs --task selected-task.json --result ai-result.json
+
+      - name: Install dependencies
+        if: steps.ai.outputs.has_changes == 'true'
+        run: npm ci
+
+      - name: Check UTF-8
+        if: steps.ai.outputs.has_changes == 'true'
+        run: npm run check:utf8
+
+      - name: Run lint
+        if: steps.ai.outputs.has_changes == 'true'
+        run: npm run lint
+
+      - name: Run build
+        if: steps.ai.outputs.has_changes == 'true'
+        run: npm run build
+
+      - name: Create or update draft PR
+        if: steps.ai.outputs.has_changes == 'true'
+        id: cpr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: ${{ steps.select.outputs.branch_name }}
+          commit-message: ${{ steps.ai.outputs.commit_message }}
+          title: ${{ steps.ai.outputs.pr_title }}
+          body: ${{ steps.ai.outputs.pr_body }}
+          draft: true
+          delete-branch: false
+
+      - name: Write success summary
+        if: steps.ai.outputs.has_changes == 'true'
+        run: |
+          node scripts/codex-write-summary.cjs --mode pr-opened --task-id "${{ steps.select.outputs.task_id }}" --task-title "${{ steps.select.outputs.task_title }}" --branch-name "${{ steps.select.outputs.branch_name }}" --pr-title "${{ steps.ai.outputs.pr_title }}"
+
+      - name: Report skipped automation
+        if: steps.select.outputs.has_task == 'true' && (steps.quota.outputs.quota_ok != 'true' || steps.ai.outputs.has_changes != 'true')
+        run: |
+          if [ "${{ steps.quota.outputs.quota_ok }}" != "true" ]; then
+            echo "Task was skipped by quota guard."
+            echo "Reason: ${{ steps.quota.outputs.quota_reason }}"
+            echo "24h spend (USD): ${{ steps.quota.outputs.daily_spend_usd }}"
+            echo "Month-to-date spend (USD): ${{ steps.quota.outputs.monthly_spend_usd }}"
+            node scripts/codex-write-summary.cjs --mode quota-blocked --task-id "${{ steps.select.outputs.task_id }}" --task-title "${{ steps.select.outputs.task_title }}" --quota-reason "${{ steps.quota.outputs.quota_reason }}" --daily-spend "${{ steps.quota.outputs.daily_spend_usd }}" --monthly-spend "${{ steps.quota.outputs.monthly_spend_usd }}"
+          else
+            echo "Task was skipped or produced no safe change."
+            echo "Reason: ${{ steps.ai.outputs.skip_reason }}"
+            node scripts/codex-write-summary.cjs --mode ai-skipped --task-id "${{ steps.select.outputs.task_id }}" --task-title "${{ steps.select.outputs.task_title }}" --skip-reason "${{ steps.ai.outputs.skip_reason }}"
+          fi
+
+      - name: Comment on Codex Queue when quota blocks automation
+        if: steps.select.outputs.has_task == 'true' && steps.quota.outputs.quota_ok != 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const title = 'Codex Queue';
+            const { owner, repo } = context.repo;
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const issue = issues.find(item => item.title === title);
+            if (!issue) {
+              core.info('Codex Queue issue was not found.');
+              return;
+            }
+            await github.rest.issues.createComment({
+              owner,
+              repo,
+              issue_number: issue.number,
+              body: [
+                `<!-- codex-auto-pr:quota:${context.runId} -->`,
+                `Skipped automation for ${process.env.TASK_ID} ${process.env.TASK_TITLE}`,
+                ``,
+                `Reason: ${process.env.QUOTA_REASON}`,
+                `24h spend (USD): ${process.env.DAILY_SPEND || '-'}`,
+                `Month-to-date spend (USD): ${process.env.MONTHLY_SPEND || '-'}`,
+              ].join('\n'),
+            });
+        env:
+          TASK_ID: ${{ steps.select.outputs.task_id }}
+          TASK_TITLE: ${{ steps.select.outputs.task_title }}
+          QUOTA_REASON: ${{ steps.quota.outputs.quota_reason }}
+          DAILY_SPEND: ${{ steps.quota.outputs.daily_spend_usd }}
+          MONTHLY_SPEND: ${{ steps.quota.outputs.monthly_spend_usd }}
