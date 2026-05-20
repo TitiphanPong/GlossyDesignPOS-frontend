@@ -131,8 +131,17 @@ function getUploadInputError(customerName: string, normalizedPhone: string): { m
 
 function getPrimaryActionLabel(isUploading: boolean, currentStep: Step): string {
   if (isUploading) return 'กำลังอัปโหลด...';
-  if (currentStep < 3) return 'ถัดไป: อัปโหลดไฟล์';
+  if (currentStep === 1) return 'ถัดไป: รายละเอียดงาน';
+  if (currentStep === 2) return 'ถัดไป: อัปโหลดไฟล์';
   return 'เริ่มอัปโหลดไฟล์';
+}
+
+function getPreviousStep(currentStep: Step): Step {
+  return currentStep > 1 ? ((currentStep - 1) as Step) : currentStep;
+}
+
+function getNextStep(currentStep: Step): Step {
+  return currentStep < 4 ? ((currentStep + 1) as Step) : currentStep;
 }
 
 type UploadFileRowProps = {
@@ -212,6 +221,9 @@ export default function UploadPage() {
   const showUploadProgress = isUploading || uploadedCount > 0;
   const showSuccess = !isUploading && uploadedCount > 0;
   const showError = errorItems.length > 0 || Boolean(globalError) || Boolean(envError);
+  const canAdvanceStep = currentStep < 3;
+  const canSubmitUploads = currentStep >= 3 && uploadedFiles.length > 0;
+  const primaryActionDisabled = Boolean(envError) || isUploading || (!canAdvanceStep && !canSubmitUploads);
 
   const statusPill = (status: UploadStatus) => {
     if (status === 'uploaded') {
@@ -425,7 +437,7 @@ export default function UploadPage() {
   const disableFileActions = isUploading || Boolean(envError) || Boolean(openingFileId);
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-indigo-50/40 px-4 py-5 sm:px-6 sm:py-8">
+    <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-indigo-50/40 px-4 py-5 pb-28 sm:px-6 sm:py-8 sm:pb-32 md:pb-8">
       <input ref={inputRef} type="file" accept={ACCEPT_ATTRIBUTE} multiple hidden onChange={handleInputChange} />
 
       <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
@@ -509,7 +521,7 @@ export default function UploadPage() {
               <button
                 type="button"
                 onClick={() => setCurrentStep(2)}
-                className="mt-4 inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-indigo-200">
+                className="mt-4 hidden items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-indigo-200 md:inline-flex">
                 ถัดไป
                 <ExpandMoreRounded className="h-4 w-4 rotate-[-90deg]" />
               </button>
@@ -698,20 +710,36 @@ export default function UploadPage() {
           </aside>
         </section>
 
-        <footer className="sticky bottom-2 z-20 hidden rounded-2xl border border-indigo-100 bg-white/90 p-3 shadow-xl backdrop-blur md:block">
-          <div className="flex items-center justify-end gap-2">
+        <footer className="sticky bottom-2 z-20 rounded-2xl border border-indigo-100 bg-white/95 p-3 shadow-xl backdrop-blur">
+          <div className="mb-3 flex items-start justify-between gap-3 md:hidden">
+            <div className="min-w-0">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-500">ขั้นตอน {currentStep}/4</p>
+              <p className="mt-1 text-sm font-semibold text-slate-900">{steps[currentStep - 1]}</p>
+              <p className="mt-1 text-xs text-slate-500">
+                {totalFiles > 0 ? `เลือกแล้ว ${totalFiles} ไฟล์ • สำเร็จ ${uploadedCount} ไฟล์` : `ประเภทงาน ${selectedJobLabel}`}
+              </p>
+            </div>
+            {showUploadProgress ? (
+              <div className="rounded-2xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-right">
+                <p className="text-[11px] font-medium text-indigo-600">ความคืบหน้า</p>
+                <p className="text-sm font-semibold text-indigo-800">{uploadProgress}%</p>
+              </div>
+            ) : null}
+          </div>
+
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
             <button
               type="button"
-              onClick={() => setCurrentStep(prev => (prev > 1 ? ((prev - 1) as Step) : prev))}
-              className="inline-flex items-center gap-1 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-200">
+              onClick={() => setCurrentStep(prev => getPreviousStep(prev))}
+              className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-200">
               <ExpandMoreRounded className="h-4 w-4 rotate-90" />
               ย้อนกลับ
             </button>
             <button
               type="button"
-              onClick={currentStep < 3 ? () => setCurrentStep(prev => (prev < 4 ? ((prev + 1) as Step) : prev)) : handleUploadAll}
-              disabled={Boolean(envError) || isUploading || (currentStep >= 3 && uploadedFiles.length === 0)}
-              className="inline-flex items-center gap-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50">
+              onClick={canAdvanceStep ? () => setCurrentStep(prev => getNextStep(prev)) : handleUploadAll}
+              disabled={primaryActionDisabled}
+              className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-[220px]">
               {getPrimaryActionLabel(isUploading, currentStep)}
               <ExpandMoreRounded className="h-4 w-4 -rotate-90" />
             </button>
