@@ -3,8 +3,8 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Alert, Snackbar } from '@mui/material';
 import LoginForm from './components/loginForm';
-import { Snackbar, Alert } from '@mui/material';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -17,7 +17,7 @@ export default function LoginPage() {
 
     if (username === 'glossydesign' && password === 'glossygmail') {
       localStorage.setItem('auth_token', 'glossy-secret');
-      router.push('/home'); // เปลี่ยน path ตามที่ต้องการ
+      router.push('/dashboard');
     } else {
       setSnackbarOpen(true);
     }
@@ -27,12 +27,7 @@ export default function LoginPage() {
     <>
       <LoginForm username={username} password={password} onUsernameChange={e => setUsername(e.target.value)} onPasswordChange={e => setPassword(e.target.value)} onSubmit={handleLogin} />
 
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: 'top', horizontal: 'right' }} // 🟢 ขวาบน
-      >
+      <Snackbar open={snackbarOpen} autoHideDuration={3000} onClose={() => setSnackbarOpen(false)} anchorOrigin={{ vertical: 'top', horizontal: 'right' }}>
         <Alert onClose={() => setSnackbarOpen(false)} severity="error" variant="filled" sx={{ width: '100%' }}>
           ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง
         </Alert>

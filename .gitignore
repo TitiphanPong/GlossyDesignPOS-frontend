@@ -16,3 +16,5 @@ dist/
 __pycache__/
 *.pyc
 yaml.py
+selected-task.json
+ai-result.json

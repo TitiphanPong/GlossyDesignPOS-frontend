@@ -2,13 +2,13 @@ name: Codex Queue
 
 on:
   schedule:
-    - cron: '0 */6 * * *'
-
+    - cron: '0 */3 * * *'
   workflow_dispatch:
 
 permissions:
   contents: read
   issues: write
+  pull-requests: read
 
 concurrency:
   group: codex-queue
@@ -22,34 +22,56 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Sync queue issue from TODO.md
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Collect open automation PR task IDs
+        id: open-prs
         uses: actions/github-script@v7
         with:
           script: |
-            const fs = require('fs');
+            const { owner, repo } = context.repo;
+            const { data: pulls } = await github.rest.pulls.list({
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
 
-            const todo = fs.readFileSync('TODO.md', 'utf8');
-            const scheduleMatch = todo.match(/## Codex Queue Schedule[\s\S]*?(?=\n## 1\. Quick Wins)/);
-            const queueSchedule = scheduleMatch ? scheduleMatch[0].trim() : 'Codex queue schedule section was not found in TODO.md.';
-            const detailSections = [...todo.matchAll(/### Task ([A-Z]{2}-\d{2}): ([^\n]+)\n([\s\S]*?)(?=\n### Task [A-Z]{2}-\d{2}:|\n*$)/g)];
-            const taskDetails = new Map(
-              detailSections.map(match => {
-                const [, id, title, block] = match;
-                const findField = label => block.match(new RegExp(`- ${label}: ([^\\n]+)`))?.[1]?.trim() ?? '';
-                return [
-                  id,
-                  {
-                    id,
-                    title: title.trim(),
-                    why: findField('Why it matters'),
-                    files: findField('Affected files'),
-                    risk: findField('Risk level'),
-                    effort: findField('Estimated effort'),
-                    prompt: findField('Suggested Codex prompt').replace(/^"|"$/g, ''),
-                  },
-                ];
-              })
-            );
+            const taskIds = [];
+            for (const pull of pulls) {
+              if (!pull.head.ref.startsWith('codex-auto/')) {
+                continue;
+              }
+              const fromTitle = pull.title.match(/\[([A-Z]{2}-\d{2})\]/)?.[1];
+              const fromBranch = pull.head.ref.match(/([a-z]{2}-\d{2})/i)?.[1]?.toUpperCase();
+              const taskId = fromTitle || fromBranch;
+              if (taskId) {
+                taskIds.push(taskId);
+              }
+            }
+
+            core.setOutput('task_ids', taskIds.join(','));
+
+      - name: Select next queued task
+        id: select
+        env:
+          OPEN_PR_TASK_IDS: ${{ steps.open-prs.outputs.task_ids }}
+        run: node scripts/codex-select-task.cjs --output selected-task.json
+
+      - name: Sync queue issue
+        uses: actions/github-script@v7
+        env:
+          OPEN_TASK_IDS: ${{ steps.open-prs.outputs.task_ids }}
+          HAS_TASK: ${{ steps.select.outputs.has_task }}
+          TASK_ID: ${{ steps.select.outputs.task_id }}
+          TASK_TITLE: ${{ steps.select.outputs.task_title }}
+          AFFECTED_FILES: ${{ steps.select.outputs.affected_files }}
+        with:
+          script: |
+            const fs = require('fs');
 
             const parts = new Intl.DateTimeFormat('en-CA', {
               timeZone: 'Asia/Bangkok',
@@ -64,32 +86,71 @@ jobs:
             const getPart = type => parts.find(part => part.type === type)?.value ?? '';
             const localDate = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
             const localTime = `${getPart('hour')}:${getPart('minute')}`;
-            const startHour = Math.floor(Number(getPart('hour')) / 6) * 6;
-            const endHour = (startHour + 6) % 24;
-            const currentSlot = `${String(startHour).padStart(2, '0')}:00-${String(endHour).padStart(2, '0')}:00 Asia/Bangkok`;
-            const cycleNumber = Math.floor(startHour / 6) + 1;
-            const cycleHourStart = cycleNumber === 1 ? '0' : String(startHour);
-            const cycleHourEnd = String(startHour + 6);
-            const currentCycle = `Cycle ${cycleNumber} (Hours ${cycleHourStart}-${cycleHourEnd})`;
-            const cycleSectionRegex = new RegExp(`### ${currentCycle.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}[\\s\\S]*?(?=\\n### Cycle |\\n## Per-Cycle Rule|$)`);
-            const cycleSection = todo.match(cycleSectionRegex)?.[0] ?? '';
-            const cycleTaskIds = [...cycleSection.matchAll(/- ([A-Z]{2}-\d{2}) /g)].map(match => match[1]);
-            const primaryTask = cycleTaskIds[0] ? taskDetails.get(cycleTaskIds[0]) : null;
-            const fallbackTask = cycleTaskIds[1] ? taskDetails.get(cycleTaskIds[1]) : null;
-            const commentMarker = `<!-- codex-queue:${localDate}:${currentSlot} -->`;
+            const claimedTasks = String(process.env.OPEN_TASK_IDS || '')
+              .split(',')
+              .map(item => item.trim())
+              .filter(Boolean);
+
+            const todo = fs.readFileSync('TODO.md', 'utf8');
+            const detailSections = [...todo.matchAll(/### Task ([A-Z]{2}-\d{2}): ([^\n]+)\n([\s\S]*?)(?=\n### Task [A-Z]{2}-\d{2}:|\n*$)/g)];
+            const taskDetails = new Map(
+              detailSections.map(match => {
+                const [, id, title, block] = match;
+                const findField = label => block.match(new RegExp(`- ${label}: ([^\\n]+)`))?.[1]?.trim() ?? '';
+                return [
+                  id,
+                  {
+                    id,
+                    title: title.trim(),
+                    status: findField('Status'),
+                    why: findField('Why it matters'),
+                    files: findField('Affected files'),
+                    risk: findField('Risk level'),
+                    effort: findField('Estimated effort'),
+                    prompt: findField('Suggested Codex prompt').replace(/^"|"$/g, ''),
+                  },
+                ];
+              })
+            );
+
+            const nextTask = process.env.HAS_TASK === 'true'
+              ? taskDetails.get(process.env.TASK_ID)
+              : null;
+
+            const claimedLines = claimedTasks.length > 0
+              ? claimedTasks.map(taskId => {
+                  const task = taskDetails.get(taskId);
+                  return `- ${taskId} ${task ? task.title : ''}`.trimEnd();
+                })
+              : ['- None'];
 
             const body = [
               '# Codex Queue',
               '',
-              `Last sync: ${localDate} ${localTime} (${currentSlot})`,
-              `Current cycle: ${currentCycle}`,
+              `Last sync: ${localDate} ${localTime} (Asia/Bangkok)`,
+              'Automation cadence: every 3 hours',
               '',
-              'This issue is refreshed automatically every 6 hours from `TODO.md`.',
+              'This issue tracks the real automation queue used by the draft PR workflow.',
               '',
-              queueSchedule,
+              '## Next Task',
+              nextTask
+                ? `- ${nextTask.id} ${nextTask.title}`
+                : '- No eligible task is currently available.',
+              nextTask?.risk ? `- Risk: ${nextTask.risk}` : '',
+              nextTask?.effort ? `- Effort: ${nextTask.effort}` : '',
+              nextTask?.why ? `- Why it matters: ${nextTask.why}` : '',
+              nextTask?.files ? `- Affected files: ${nextTask.files}` : '',
+              '',
+              '## Claimed By Open Automation PRs',
+              ...claimedLines,
+              '',
+              '## Workflow Behavior',
+              '- The auto-PR workflow selects the first unfinished task in `TODO.md` that is not already claimed by an open automation PR.',
+              '- The AI step is skipped if quota guard blocks the run or if the model cannot produce a safe bounded patch.',
+              '- A draft PR is opened only after `check:utf8`, `lint`, and `build` pass.',
               '',
               'Source of truth: `TODO.md` in the repository root.',
-            ].join('\n');
+            ].filter(Boolean).join('\n');
 
             const owner = context.repo.owner;
             const repo = context.repo.repo;
@@ -121,58 +182,4 @@ jobs:
               });
               existing = created;
               core.info(`Created issue #${created.number}`);
-            }
-
-            if (existing && primaryTask) {
-              const { data: comments } = await github.rest.issues.listComments({
-                owner,
-                repo,
-                issue_number: existing.number,
-                per_page: 100,
-              });
-
-              const alreadyCommented = comments.some(comment => comment.body?.includes(commentMarker));
-              if (!alreadyCommented) {
-                const commentBody = [
-                  commentMarker,
-                  `## Semi-Auto Task Prompt`,
-                  '',
-                  `Cycle: ${currentCycle}`,
-                  `Slot: ${currentSlot}`,
-                  `Primary task: ${primaryTask.id} ${primaryTask.title}`,
-                  `Fallback task: ${fallbackTask ? `${fallbackTask.id} ${fallbackTask.title}` : 'None'}`,
-                  '',
-                  `Primary risk: ${primaryTask.risk || 'unknown'}`,
-                  `Primary effort: ${primaryTask.effort || 'unknown'}`,
-                  '',
-                  `Why it matters: ${primaryTask.why || '-'}`,
-                  `Affected files: ${primaryTask.files || '-'}`,
-                  '',
-                  `Suggested Codex prompt:`,
-                  '```text',
-                  primaryTask.prompt || `Implement only ${primaryTask.id} from TODO.md. Keep scope narrow. Run lint/build and summarize results.`,
-                  '```',
-                  '',
-                  `Fallback Codex prompt:`,
-                  '```text',
-                  fallbackTask?.prompt || (fallbackTask ? `Implement only ${fallbackTask.id} from TODO.md. Keep scope narrow. Run lint/build and summarize results.` : 'No fallback task assigned for this cycle.'),
-                  '```',
-                  '',
-                  `Verification checklist:`,
-                  '- Run `npm run lint`',
-                  '- Run `npm run build`',
-                  '- Run available tests if the repo defines them',
-                  '- Post a short summary with scope, results, and blockers',
-                ].join('\n');
-
-                await github.rest.issues.createComment({
-                  owner,
-                  repo,
-                  issue_number: existing.number,
-                  body: commentBody,
-                });
-                core.info(`Posted semi-auto comment for ${currentCycle}`);
-              } else {
-                core.info(`Skipped comment because ${currentCycle} for ${currentSlot} was already posted.`);
-              }
             }
