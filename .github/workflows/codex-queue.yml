@@ -48,11 +48,16 @@ jobs:
             const startHour = Math.floor(Number(getPart('hour')) / 6) * 6;
             const endHour = (startHour + 6) % 24;
             const currentSlot = `${String(startHour).padStart(2, '0')}:00-${String(endHour).padStart(2, '0')}:00 Asia/Bangkok`;
+            const cycleNumber = Math.floor(startHour / 6) + 1;
+            const cycleHourStart = cycleNumber === 1 ? '0' : String(startHour);
+            const cycleHourEnd = String(startHour + 6);
+            const currentCycle = `Cycle ${cycleNumber} (Hours ${cycleHourStart}-${cycleHourEnd})`;
 
             const body = [
               '# Codex Queue',
               '',
               `Last sync: ${localDate} ${localTime} (${currentSlot})`,
+              `Current cycle: ${currentCycle}`,
               '',
               'This issue is refreshed automatically every 6 hours from `TODO.md`.',
               '',
