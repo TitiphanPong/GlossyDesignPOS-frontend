@@ -32,6 +32,8 @@ import {
   TextField,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
@@ -295,6 +297,9 @@ function StatCard({ title, value, subtitle, icon, tone }: Readonly<StatCardProps
 }
 
 export default function StoragePage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+
   const [rows, setRows] = React.useState<StorageRow[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
@@ -966,15 +971,17 @@ export default function StoragePage() {
       </Menu>
 
       <Drawer
+        anchor={isMobile ? 'bottom' : 'right'}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        anchor="right"
         slotProps={{
           paper: {
             sx: {
-              width: { xs: '100%', sm: 440, md: 500 },
-              borderTopLeftRadius: 22,
-              borderBottomLeftRadius: 22,
+              width: isMobile ? '100%' : { sm: 460, md: 540 },
+              maxHeight: isMobile ? '92vh' : '100vh',
+              borderTopLeftRadius: isMobile ? 18 : 22,
+              borderTopRightRadius: isMobile ? 18 : 0,
+              borderBottomLeftRadius: isMobile ? 0 : 22,
               background: 'linear-gradient(180deg, #FBFDFF 0%, #FFFFFF 100%)',
             },
           },

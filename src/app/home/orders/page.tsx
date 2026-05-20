@@ -1152,7 +1152,7 @@ export default function OrderManagementPage() {
                 borderTop: '1px solid #E8EFF8',
                 bgcolor: '#FFFFFF',
               }}>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+              <Stack direction="row" flexWrap="wrap" gap={1}>
                 <Button
                   variant="contained"
                   startIcon={<CheckCircleRoundedIcon />}
@@ -1160,7 +1160,7 @@ export default function OrderManagementPage() {
                   onClick={() => {
                     void markAsPaid(selectedOrder.id);
                   }}
-                  sx={{ ...commonButtonSx, flex: 1, textTransform: 'none' }}>
+                  sx={{ ...commonButtonSx, flex: '1 1 auto', textTransform: 'none' }}>
                   Confirm Payment
                 </Button>
                 <Button
@@ -1170,14 +1170,8 @@ export default function OrderManagementPage() {
                   onClick={() => {
                     void cancelOrder(selectedOrder.id);
                   }}
-                  sx={{ ...commonButtonSx, flex: 1, textTransform: 'none' }}>
+                  sx={{ ...commonButtonSx, flex: '1 1 auto', textTransform: 'none' }}>
                   Cancel Order
-                </Button>
-                <Button variant="outlined" startIcon={<PrintRoundedIcon />} onClick={() => printDocument(selectedOrder, 'receipt')} sx={{ ...commonButtonSx, textTransform: 'none' }}>
-                  Print Receipt
-                </Button>
-                <Button variant="outlined" startIcon={<ReceiptRoundedIcon />} onClick={() => printDocument(selectedOrder, 'invoice')} sx={{ ...commonButtonSx, textTransform: 'none' }}>
-                  Print Tax Invoice
                 </Button>
               </Stack>
             </Box>
