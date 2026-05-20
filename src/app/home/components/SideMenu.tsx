@@ -24,15 +24,14 @@ export interface SideMenuProps {
 }
 
 const DEFAULT_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/home', icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
-  { label: 'Orders', href: '/home/saleListPage', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
-  { label: 'POS Seller', href: '/home/posseller', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
-  { label: 'Storage', href: '/home/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
+  { label: 'Dashboard', href: '/dashboard', icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
+  { label: 'Orders', href: '/orders', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
+  { label: 'POS Seller', href: '/pos', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
+  { label: 'Storage', href: '/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
 ];
 
 function isActivePath(currentPath: string, href: string) {
   if (href === '#') return false;
-  if (href === '/home') return currentPath === '/home';
   return currentPath === href || currentPath.startsWith(`${href}/`);
 }
 

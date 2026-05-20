@@ -105,8 +105,8 @@ function normalizePhone(phone: string): string {
   return phone.replace(/\D/g, '');
 }
 
-function buildUploadNote(customerNote: string, lineId: string, jobNote: string): string {
-  return [customerNote.trim(), lineId.trim() ? `LINE ID: ${lineId.trim()}` : null, jobNote.trim()].filter(Boolean).join('\n');
+function buildUploadNote(customerNote: string, jobNote: string): string {
+  return [customerNote.trim(), jobNote.trim()].filter(Boolean).join('\n');
 }
 
 function getUploadInputError(customerName: string, normalizedPhone: string): { message: string; step: Step } | null {
@@ -205,7 +205,6 @@ export default function UploadPage() {
 
   const [customerName, setCustomerName] = useState('');
   const [phone, setPhone] = useState('');
-  const [lineId, setLineId] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const [jobNote, setJobNote] = useState('');
 
@@ -364,7 +363,7 @@ export default function UploadPage() {
 
     const trimmedCustomerName = customerName.trim();
     const normalizedPhone = normalizePhone(phone);
-    const note = buildUploadNote(customerNote, lineId, jobNote);
+    const note = buildUploadNote(customerNote, jobNote);
     const jobType = uploadJobTypeMap[selectedJobType] ?? 'Other';
 
     const inputError = getUploadInputError(trimmedCustomerName, normalizedPhone);
@@ -441,12 +440,54 @@ export default function UploadPage() {
       <input ref={inputRef} type="file" accept={ACCEPT_ATTRIBUTE} multiple hidden onChange={handleInputChange} />
 
       <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
-        <header className={`${glassCard()} px-4 py-4 sm:px-6`}>
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex items-center gap-2.5">
-              <p className="text-lg font-bold text-slate-900">Glossy Design</p>
+        <header className={`${glassCard('relative overflow-hidden')} px-4 py-4 sm:px-6 sm:py-5`}>
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-40 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.18),transparent_68%)] sm:w-56" />
+          <div className="pointer-events-none absolute -left-8 top-0 h-20 w-20 rounded-full bg-indigo-100/70 blur-2xl" />
+          <div className="pointer-events-none absolute bottom-0 left-1/3 h-16 w-32 rounded-full bg-violet-100/70 blur-2xl" />
+
+          <div className="relative flex flex-wrap items-center justify-between gap-4">
+            <div className="min-w-0 max-w-3xl">
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-600">
+                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+                Upload Portal
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <p className="text-xl font-black tracking-[-0.02em] text-slate-900 sm:text-2xl">Glossy Design</p>
+                <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white/90">Fast file intake</span>
+              </div>
+              <p className="mt-1 text-sm text-slate-500">ส่งไฟล์งาน พร้อมรายละเอียดครบในหน้าเดียว</p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-[15px]">
+                อัปโหลดงานพิมพ์ได้เร็วขึ้น ตรวจข้อมูลได้ครบก่อนส่งต่อให้ทีมผลิต เหมาะกับทั้งงานด่วน งานเอกสาร และไฟล์พร้อมพิมพ์
+              </p>
+
+              <div className="mt-3 flex flex-wrap gap-2">
+                <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">รองรับไฟล์สูงสุด 100MB</span>
+                <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700">อัปโหลดหลายไฟล์ได้</span>
+                <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-600">ตรวจสอบสถานะได้ทันที</span>
+              </div>
             </div>
-            <p className="text-right text-sm font-medium text-slate-600">ส่งงานง่าย ได้งานไว ไว้ใจ Glossy Design</p>
+
+            <div className="flex items-center gap-2 self-start sm:self-center">
+              <div className="hidden min-w-[220px] rounded-2xl border border-white/70 bg-white/75 px-3 py-3 shadow-sm sm:block">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Ready for production</p>
+                <p className="mt-1 text-sm font-medium text-slate-600">ส่งงานง่าย ได้งานไว ไว้ใจ Glossy Design</p>
+                <div className="mt-3 grid grid-cols-2 gap-2">
+                  <div className="rounded-xl bg-slate-50 px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Step</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">{currentStep}/4</p>
+                  </div>
+                  <div className="rounded-xl bg-slate-50 px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Files</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">{totalFiles}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-1.5">
+                <span className="h-2.5 w-2.5 rounded-full bg-indigo-500/80" />
+                <span className="h-2.5 w-2.5 rounded-full bg-violet-400/80" />
+                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
+              </div>
+            </div>
           </div>
         </header>
 
@@ -498,15 +539,6 @@ export default function UploadPage() {
                     className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
                   />
                 </label>
-                <label className="space-y-1 sm:col-span-1">
-                  <span className="text-sm font-medium text-slate-700">LINE ID (ถ้ามี)</span>
-                  <input
-                    value={lineId}
-                    onChange={e => setLineId(e.target.value)}
-                    placeholder="กรุณาระบุ LINE ID"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
-                  />
-                </label>
                 <label className="space-y-1 sm:col-span-2">
                   <span className="text-sm font-medium text-slate-700">หมายเหตุเพิ่มเติม</span>
                   <textarea
@@ -555,7 +587,8 @@ export default function UploadPage() {
                   value={jobNote}
                   onChange={e => setJobNote(e.target.value)}
                   rows={3}
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                  placeholder="กรุณาระบุหมายเหตุเพิ่มเติม"
+                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
                 />
               </label>
             </article>
@@ -579,7 +612,7 @@ export default function UploadPage() {
                 onClick={handleBrowseClick}
                 onKeyDown={handleDropzoneKeyDown}
                 disabled={disableFileActions}
-                className={`rounded-3xl border-2 border-dashed p-6 text-center transition ${
+                className={`rounded-3xl border-2 border-dashed p-6 w-full h-60 text-center transition ${
                   isDragOver ? 'border-indigo-400 bg-indigo-50/80 shadow-md' : 'border-indigo-200 bg-gradient-to-br from-white to-indigo-50/80 hover:border-indigo-300 hover:shadow-md'
                 } ${disableFileActions ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
                 <CloudUploadRounded className="mx-auto mb-2 h-10 w-10 text-indigo-600" />
@@ -715,9 +748,7 @@ export default function UploadPage() {
             <div className="min-w-0">
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-500">ขั้นตอน {currentStep}/4</p>
               <p className="mt-1 text-sm font-semibold text-slate-900">{steps[currentStep - 1]}</p>
-              <p className="mt-1 text-xs text-slate-500">
-                {totalFiles > 0 ? `เลือกแล้ว ${totalFiles} ไฟล์ • สำเร็จ ${uploadedCount} ไฟล์` : `ประเภทงาน ${selectedJobLabel}`}
-              </p>
+              <p className="mt-1 text-xs text-slate-500">{totalFiles > 0 ? `เลือกแล้ว ${totalFiles} ไฟล์ • สำเร็จ ${uploadedCount} ไฟล์` : `ประเภทงาน ${selectedJobLabel}`}</p>
             </div>
             {showUploadProgress ? (
               <div className="rounded-2xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-right">

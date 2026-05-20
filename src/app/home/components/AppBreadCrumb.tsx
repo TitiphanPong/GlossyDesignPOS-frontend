@@ -1,24 +1,41 @@
 'use client';
 
-import { Breadcrumbs, Link, Typography, Box, useTheme, alpha, useMediaQuery, IconButton, Drawer, Stack, Avatar, Divider, ListItemButton, List, ListItemIcon, ListItemText } from '@mui/material';
+import React from 'react';
+import {
+  alpha,
+  Avatar,
+  Box,
+  Breadcrumbs,
+  Divider,
+  Drawer,
+  IconButton,
+  Link,
+  List,
+  ListItemButton,
+  ListItemIcon,
+  ListItemText,
+  Stack,
+  Typography,
+  useMediaQuery,
+  useTheme,
+} from '@mui/material';
 import HomeIcon from '@mui/icons-material/Home';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
-import { usePathname, useRouter } from 'next/navigation';
-import ButtonLogout from './LogoutOutline';
-import React from 'react';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
+import { usePathname, useRouter } from 'next/navigation';
+import ButtonLogout from './LogoutOutline';
 
 const Brand = () => {
   const theme = useTheme();
+
   return (
     <Stack direction="row" alignItems="center" sx={{ p: 2, pb: 1.5, mt: 2 }}>
-      {/* กล่องไอคอน */}
       <Box
         sx={{
           width: 40,
@@ -34,7 +51,6 @@ const Brand = () => {
         <StarRoundedIcon fontSize="small" />
       </Box>
 
-      {/* ข้อความ */}
       <Box
         sx={{
           minWidth: 0,
@@ -59,22 +75,22 @@ const Brand = () => {
   );
 };
 
+const drawerItems = [
+  { href: '/dashboard', label: 'หน้าแรก', icon: <HomeRoundedIcon /> },
+  { href: '/pos', label: 'เมนูชำระสินค้า', icon: <ShoppingCartRoundedIcon /> },
+  { href: '/orders', label: 'ใบรายการขาย', icon: <ReceiptLongRoundedIcon /> },
+  { href: '/storage', label: 'ไฟล์ลูกค้า', icon: <InsertDriveFileRoundedIcon /> },
+];
+
 function DrawerMenu({ onClose }: { onClose: () => void }) {
   return (
     <Box sx={{ width: 280, display: 'flex', flexDirection: 'column', height: '100%' }}>
-      {/* Header */}
       <Brand />
 
-      {/* Main Menu */}
       <List sx={{ flexGrow: 1, px: 1.5, pt: 0 }}>
-        {[
-          { href: '/', label: 'หน้าแรก', icon: <HomeRoundedIcon /> },
-          { href: '/home/posseller', label: 'เมนูชำระสินค้า', icon: <ShoppingCartRoundedIcon /> },
-          { href: '/home/saleListPage', label: 'ใบรายการขาย', icon: <ReceiptLongRoundedIcon /> },
-          { href: '/home/storage', label: 'ไฟล์ลูกค้า', icon: <InsertDriveFileRoundedIcon /> },
-        ].map((item, idx) => (
+        {drawerItems.map(item => (
           <ListItemButton
-            key={idx}
+            key={item.href}
             component="a"
             href={item.href}
             onClick={onClose}
@@ -87,16 +103,6 @@ function DrawerMenu({ onClose }: { onClose: () => void }) {
               '&:hover': {
                 bgcolor: 'action.hover',
                 transform: 'translateX(4px)',
-              },
-              '&.Mui-selected': {
-                bgcolor: theme => `linear-gradient(90deg, ${theme.palette.primary.light}, transparent)`,
-                '& .MuiListItemIcon-root': {
-                  color: 'primary.main',
-                },
-                '& .MuiTypography-root': {
-                  fontWeight: 600,
-                  color: 'primary.main',
-                },
               },
             }}>
             <ListItemIcon sx={{ minWidth: 36, color: 'text.secondary' }}>{item.icon}</ListItemIcon>
@@ -114,7 +120,6 @@ function DrawerMenu({ onClose }: { onClose: () => void }) {
 
       <Divider />
 
-      {/* User Profile */}
       <Stack direction="row" alignItems="center" spacing={1.5} sx={{ p: 2, bgcolor: 'background.paper' }}>
         <Avatar src={`https://api.dicebear.com/7.x/bottts/svg?seed=${Math.random()}`} sx={{ width: 36, height: 36 }} />
         <Box>
@@ -135,17 +140,17 @@ export default function AppBreadCrumb() {
   const pathname = usePathname();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  let pathnames = pathname.split('/').filter(x => x);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
+
+  let pathnames = pathname.split('/').filter(Boolean);
+  if (pathnames[0] === 'home') {
+    pathnames = pathnames.slice(1);
+  }
 
   const handleLogout = () => {
     localStorage.removeItem('auth_token');
     router.push('/');
   };
-
-  if (pathnames[0] === 'home') {
-    pathnames = pathnames.slice(1);
-  }
 
   return (
     <Box
@@ -156,7 +161,6 @@ export default function AppBreadCrumb() {
         px: 3,
         py: 2,
       }}>
-      {/* ✅ Hamburger (เฉพาะ Mobile/Tablet) */}
       {isMobile && (
         <>
           <IconButton onClick={() => setDrawerOpen(true)} sx={{ mr: 0 }}>
@@ -167,14 +171,15 @@ export default function AppBreadCrumb() {
           </Drawer>
         </>
       )}
+
       <Breadcrumbs separator={<NavigateNextIcon fontSize="small" />} aria-label="breadcrumb">
-        <Link color="inherit" href="/" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
+        <Link color="inherit" href="/dashboard" underline="hover" sx={{ display: 'flex', alignItems: 'center' }}>
           <HomeIcon sx={{ mr: 0.5 }} fontSize="inherit" />
           หน้าหลัก
         </Link>
 
         {pathnames.map((value, index) => {
-          const href = '/' + pathnames.slice(0, index + 1).join('/');
+          const href = `/${pathnames.slice(0, index + 1).join('/')}`;
           const isLast = index === pathnames.length - 1;
 
           return isLast ? (
@@ -188,6 +193,7 @@ export default function AppBreadCrumb() {
           );
         })}
       </Breadcrumbs>
+
       <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
         <ButtonLogout onLogout={handleLogout} />
       </Box>
@@ -195,13 +201,15 @@ export default function AppBreadCrumb() {
   );
 }
 
-// ✅ Map slug → label ภาษาไทย
 const labelMap: Record<string, string> = {
-  saleListPage: 'ใบรายการขาย',
-  storage: 'ไฟล์ลูกค้า',
-  posseller: 'เมนูชำระสินค้า',
-  checkout: 'ชำระเงิน',
   dashboard: 'แดชบอร์ด',
+  orders: 'ใบรายการขาย',
+  saleListPage: 'ใบรายการขาย',
+  pos: 'เมนูชำระสินค้า',
+  posseller: 'เมนูชำระสินค้า',
+  storage: 'ไฟล์ลูกค้า',
+  invoice: 'ใบแจ้งหนี้',
+  checkout: 'ชำระเงิน',
 };
 
 function getLabel(value: string) {

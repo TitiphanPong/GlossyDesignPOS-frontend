@@ -85,7 +85,7 @@ export default function RecentOrdersTable({ orders }: Readonly<RecentOrdersTable
           </Box>
           <Box
             component={Link}
-            href="/home/saleListPage"
+            href="/orders"
             sx={{
               fontSize: 13,
               fontWeight: 700,
@@ -149,7 +149,7 @@ export default function RecentOrdersTable({ orders }: Readonly<RecentOrdersTable
                     <TableCell>
                       <Typography
                         component={Link}
-                        href={`/home/invoice/${order._id}`}
+                        href={`/invoice/${order._id}`}
                         sx={{
                           fontSize: 13,
                           fontWeight: 700,

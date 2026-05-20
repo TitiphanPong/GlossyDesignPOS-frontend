@@ -12,7 +12,7 @@ const ACTIONS = [
   {
     label: 'พิมพ์ใบเสร็จ',
     description: 'ออกเอกสาร',
-    href: '/home/saleListPage',
+    href: '/orders',
     icon: PrintRoundedIcon,
     iconGrad: 'linear-gradient(135deg, #6C4DFF, #8A5CFF)',
     bgHover: '#F5F0FF',
@@ -20,7 +20,7 @@ const ACTIONS = [
   {
     label: 'เพิ่มสินค้า',
     description: 'จัดการสินค้า',
-    href: '/home/posseller',
+    href: '/pos',
     icon: AddBoxRoundedIcon,
     iconGrad: 'linear-gradient(135deg, #10B981, #34D399)',
     bgHover: '#F0FDF4',
@@ -28,7 +28,7 @@ const ACTIONS = [
   {
     label: 'จัดการลูกค้า',
     description: 'ข้อมูลลูกค้า',
-    href: '/home/saleListPage',
+    href: '/orders',
     icon: PeopleAltRoundedIcon,
     iconGrad: 'linear-gradient(135deg, #3B82F6, #60A5FA)',
     bgHover: '#EFF6FF',
@@ -36,7 +36,7 @@ const ACTIONS = [
   {
     label: 'ดูรายงาน',
     description: 'สรุปยอดขาย',
-    href: '/home/saleListPage',
+    href: '/orders',
     icon: BarChartRoundedIcon,
     iconGrad: 'linear-gradient(135deg, #EC4899, #F472B6)',
     bgHover: '#FDF2F8',

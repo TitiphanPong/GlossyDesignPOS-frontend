@@ -136,7 +136,7 @@ export default function DashboardHeader() {
         {/* New Order CTA */}
         <Button
           component={Link}
-          href="/home/posseller"
+          href="/pos"
           variant="contained"
           startIcon={<AddRoundedIcon />}
           sx={{
