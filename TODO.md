@@ -109,6 +109,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 ### Task QW-04: Fix mobile footer/action responsiveness on upload flow
 - Task ID: QW-04
 - Title: Fix mobile footer/action responsiveness on upload flow
+- Status: completed on 2026-05-20
 - Why it matters: the sticky action footer exists only on medium-plus screens, which leaves mobile users with less obvious progress and action affordance late in the flow.
 - Affected files: `src/app/upload/page.tsx`
 - Risk level: low
