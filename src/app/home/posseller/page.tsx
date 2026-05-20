@@ -25,6 +25,7 @@ import StickerPPModal from './components/stickerPPModal';
 import PremiumProductModal from './components/premiumProductModal';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
+import { MissingApiConfigState } from '../components/dashboardUi';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -218,11 +219,17 @@ export default function SellPage() {
       </Box>
 
       {/* Error Message */}
-      {errorMsg && (
+      {errorMsg === 'ยังไม่ได้ตั้งค่า NEXT_PUBLIC_API_URL ใน .env' ? (
+        <Box sx={{ mb: 2 }}>
+          <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้าขายดึงรายการสินค้าและบันทึกออเดอร์ได้" />
+        </Box>
+      ) : null}
+
+      {errorMsg && errorMsg !== 'ยังไม่ได้ตั้งค่า NEXT_PUBLIC_API_URL ใน .env' ? (
         <Alert severity="error" sx={{ mb: 2 }}>
           {errorMsg}
         </Alert>
-      )}
+      ) : null}
 
       {/* Main Content */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 3fr) minmax(320px, 1fr)' }, gap: 2 }}>

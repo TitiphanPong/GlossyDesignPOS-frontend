@@ -1,0 +1,93 @@
+name: Codex Queue
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+concurrency:
+  group: codex-queue
+  cancel-in-progress: false
+
+jobs:
+  sync-queue:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Sync queue issue from TODO.md
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+
+            const todo = fs.readFileSync('TODO.md', 'utf8');
+            const scheduleMatch = todo.match(/## Codex Queue Schedule[\s\S]*?(?=\n## 1\. Quick Wins)/);
+            const queueSchedule = scheduleMatch ? scheduleMatch[0].trim() : 'Codex queue schedule section was not found in TODO.md.';
+
+            const parts = new Intl.DateTimeFormat('en-CA', {
+              timeZone: 'Asia/Bangkok',
+              year: 'numeric',
+              month: '2-digit',
+              day: '2-digit',
+              hour: '2-digit',
+              minute: '2-digit',
+              hour12: false,
+            }).formatToParts(new Date());
+
+            const getPart = type => parts.find(part => part.type === type)?.value ?? '';
+            const localDate = `${getPart('year')}-${getPart('month')}-${getPart('day')}`;
+            const localTime = `${getPart('hour')}:${getPart('minute')}`;
+            const startHour = Math.floor(Number(getPart('hour')) / 6) * 6;
+            const endHour = (startHour + 6) % 24;
+            const currentSlot = `${String(startHour).padStart(2, '0')}:00-${String(endHour).padStart(2, '0')}:00 Asia/Bangkok`;
+
+            const body = [
+              '# Codex Queue',
+              '',
+              `Last sync: ${localDate} ${localTime} (${currentSlot})`,
+              '',
+              'This issue is refreshed automatically every 6 hours from `TODO.md`.',
+              '',
+              queueSchedule,
+              '',
+              'Source of truth: `TODO.md` in the repository root.',
+            ].join('\n');
+
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const title = 'Codex Queue';
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              per_page: 100,
+            });
+
+            const existing = issues.find(issue => issue.title === title);
+
+            if (existing) {
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: existing.number,
+                body,
+              });
+              core.info(`Updated issue #${existing.number}`);
+            } else {
+              const { data: created } = await github.rest.issues.create({
+                owner,
+                repo,
+                title,
+                body,
+              });
+              core.info(`Created issue #${created.number}`);
+            }

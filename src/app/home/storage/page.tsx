@@ -56,6 +56,7 @@ import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
 import axios from 'axios';
+import { MissingApiConfigState } from '../components/dashboardUi';
 
 type StorageStatus = 'waiting' | 'processing' | 'completed';
 type SortType = 'newest' | 'oldest' | 'customer' | 'status';
@@ -641,11 +642,16 @@ export default function StoragePage() {
               </Stack>
             </Stack>
 
-            {errorMessage && (
-              <Alert severity="warning" sx={{ mt: 2.2, borderRadius: 3 }}>
-                {errorMessage}
-              </Alert>
-            )}
+            {errorMessage &&
+              (errorMessage === 'ไม่พบ NEXT_PUBLIC_API_URL กรุณาตรวจสอบการตั้งค่า environment' ? (
+                <Box sx={{ mt: 2.2 }}>
+                  <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้าคลังไฟล์เชื่อมต่อรายการอัปโหลดได้" />
+                </Box>
+              ) : (
+                <Alert severity="warning" sx={{ mt: 2.2, borderRadius: 3 }}>
+                  {errorMessage}
+                </Alert>
+              ))}
           </CardContent>
         </Card>
 

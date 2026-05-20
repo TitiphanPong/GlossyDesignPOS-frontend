@@ -3,6 +3,7 @@
 import { use, useEffect, useState } from 'react';
 import { Box, Button, Card, CircularProgress, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
+import { MissingApiConfigState } from '../../components/dashboardUi';
 
 interface CartItem {
   name: string;
@@ -68,11 +69,19 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
   const { orderId } = use(params);
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
+  const [missingApiBase, setMissingApiBase] = useState(false);
 
   useEffect(() => {
     const fetchOrder = async () => {
+      const base = process.env.NEXT_PUBLIC_API_URL ?? '';
+      if (!base) {
+        setMissingApiBase(true);
+        setLoading(false);
+        return;
+      }
+
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/orders/${orderId}`);
+        const res = await fetch(`${base}/orders/${orderId}`);
         if (!res.ok) throw new Error('โหลดออเดอร์ไม่สำเร็จ');
         const data = await res.json();
         setOrder(data);
@@ -84,6 +93,14 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
     };
     fetchOrder();
   }, [orderId]);
+
+  if (missingApiBase) {
+    return (
+      <Box sx={{ minHeight: '80vh', maxWidth: 960, mx: 'auto', px: { xs: 2, md: 3 }, py: { xs: 3, md: 4 } }}>
+        <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้าใบกำกับภาษีดึงข้อมูลออเดอร์ได้" />
+      </Box>
+    );
+  }
 
   if (loading) {
     return (

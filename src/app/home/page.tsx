@@ -14,7 +14,7 @@ import MonthlyGoal from './components/dashboard/MonthlyGoal';
 import OrderStatusSummary from './components/dashboard/OrderStatusSummary';
 import RecentOrdersTable from './components/dashboard/RecentOrdersTable';
 import AdminPageContainer from './components/AdminPageContainer';
-import { LoadingState } from './components/dashboardUi';
+import { LoadingState, MissingApiConfigState } from './components/dashboardUi';
 
 const isApiOrderArray = (value: unknown): value is ApiOrder[] => Array.isArray(value);
 
@@ -22,10 +22,12 @@ export default function DashboardPage() {
   const [summary, setSummary] = useState<OrdersSummary | null>(null);
   const [recentOrders, setRecentOrders] = useState<ApiOrder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [missingApiBase, setMissingApiBase] = useState(false);
 
   useEffect(() => {
     const base = process.env.NEXT_PUBLIC_API_URL ?? '';
     if (!base) {
+      setMissingApiBase(true);
       setLoading(false);
       return;
     }
@@ -49,6 +51,14 @@ export default function DashboardPage() {
     return (
       <AdminPageContainer title="Dashboard" subtitle="ภาพรวมการขายและสถานะธุรกิจวันนี้">
         <LoadingState />
+      </AdminPageContainer>
+    );
+  }
+
+  if (missingApiBase) {
+    return (
+      <AdminPageContainer title="Dashboard" subtitle="ภาพรวมการขายและสถานะธุรกิจวันนี้">
+        <MissingApiConfigState />
       </AdminPageContainer>
     );
   }

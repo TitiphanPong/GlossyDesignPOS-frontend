@@ -36,6 +36,7 @@ import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { commonButtonSx, statusChipSx, tableShellSx, uiCardSx } from '../components/adminUi';
+import { MissingApiConfigState } from '../components/dashboardUi';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
@@ -524,12 +525,18 @@ export default function OrderManagementPage() {
               background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
             }}>
             <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
+              {loadError === 'ไม่พบ NEXT_PUBLIC_API_URL สำหรับเชื่อมต่อ API' ? (
+                <Box sx={{ mb: 2.2 }}>
+                  <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้ารายการออเดอร์ดึงข้อมูลจากระบบได้" />
+                </Box>
+              ) : null}
+
               <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2}>
                 <Box>
                   <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Orders</Typography>
                   <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>ติดตามออเดอร์ลูกค้า สถานะการชำระเงิน งานพิมพ์ และจัดการเอกสารการขายแบบครบวงจร</Typography>
                   <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>Last synced {lastUpdated ? lastUpdated.format('DD/MM/YYYY HH:mm') : '-'}</Typography>
-                  {loadError ? <Typography sx={{ mt: 0.8, color: '#C62828', fontSize: 12.5 }}>{loadError}</Typography> : null}
+                  {loadError && loadError !== 'ไม่พบ NEXT_PUBLIC_API_URL สำหรับเชื่อมต่อ API' ? <Typography sx={{ mt: 0.8, color: '#C62828', fontSize: 12.5 }}>{loadError}</Typography> : null}
                 </Box>
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }}>

@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { Box, Card, Skeleton, Stack, Typography } from '@mui/material';
+import { Alert, Box, Card, Skeleton, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { interactiveCardSx, sectionTitleSx, topActionBarSx, uiCardSx } from './adminUi';
 
@@ -41,6 +41,22 @@ export function LoadingState() {
       <Skeleton variant="rounded" height={52} />
       <Skeleton variant="rounded" height={52} />
     </Stack>
+  );
+}
+
+export function MissingApiConfigState({
+  title = 'ไม่พบการตั้งค่า API',
+  subtitle = 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อเชื่อมต่อข้อมูลจากระบบหลังบ้าน',
+}: Readonly<{ title?: string; subtitle?: string }>) {
+  return (
+    <Alert severity="warning" sx={{ borderRadius: 3, alignItems: 'flex-start' }}>
+      <Typography variant="subtitle1" fontWeight={700}>
+        {title}
+      </Typography>
+      <Typography variant="body2" sx={{ mt: 0.5 }}>
+        {subtitle}
+      </Typography>
+    </Alert>
   );
 }
 
