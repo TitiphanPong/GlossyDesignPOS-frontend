@@ -10,3 +10,4 @@ Rules:
 - If the task cannot be completed safely from the provided context, return `"decision": "skip"` and explain why.
 - Do not include Markdown fences, commentary, or extra keys outside the schema.
 - When you do proceed, make the PR title and commit message concise and task-specific.
+- If a file is marked as partial-context only, avoid full-file rewrites and prefer precise search/replace edits.
