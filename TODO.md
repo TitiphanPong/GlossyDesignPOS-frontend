@@ -159,6 +159,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Refactor cart/payment total computation so the POS and customer display share one source of truth for discount, VAT, deposit, and remaining calculations. Preserve existing output fields."
 
 ### Task RC-04: Extract upload file-validation utilities into one reusable module
+- Status: completed on 2026-05-21
 - Task ID: RC-04
 - Title: Extract upload file-validation utilities into one reusable module
 - Why it matters: `src/app/upload/page.tsx` and `src/components/upload/uploader.tsx` duplicate accepted extensions, file-size rules, and status logic. A shared utility is a clean low-risk refactor.
