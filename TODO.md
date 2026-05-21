@@ -237,6 +237,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Refactor the customer display page into smaller presentational components and isolate polling/state logic, without changing visuals or kiosk behavior."
 
 ### Task PF-02: Memoize derived list rows on heavy admin pages where practical
+- Status: completed on 2026-05-21
 - Task ID: PF-02
 - Title: Memoize derived list rows on heavy admin pages where practical
 - Why it matters: orders and storage pages do a lot of filtering, sorting, and row mapping in the same component. Some of this is already memoized, but expensive derived sections and handlers are still crowded into one render path.

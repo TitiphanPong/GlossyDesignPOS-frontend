@@ -401,24 +401,33 @@ export default function StoragePage() {
       });
   }, [dateFilter, jobTypeFilter, rows, search, sortBy, statusFilter]);
 
+  const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
+  const selectedIdSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
+
   const selectedRows = React.useMemo(() => {
-    const selectedSet = new Set(selectedIds);
-    return filteredRows.filter(row => selectedSet.has(row.id));
-  }, [filteredRows, selectedIds]);
+    return filteredRows.filter(row => selectedIdSet.has(row.id));
+  }, [filteredRows, selectedIdSet]);
 
   const stats = React.useMemo(() => {
-    const waiting = rows.filter(row => row.status === 'waiting').length;
-    const processing = rows.filter(row => row.status === 'processing').length;
-    const completed = rows.filter(row => row.status === 'completed').length;
-    const totalFiles = rows.reduce((acc, row) => acc + row.files.length, 0);
-
     const today = new Date();
     const todayText = today.toISOString().slice(0, 10);
-    const uploadedToday = rows.filter(row => {
+    let waiting = 0;
+    let processing = 0;
+    let completed = 0;
+    let totalFiles = 0;
+    let uploadedToday = 0;
+
+    rows.forEach(row => {
+      if (row.status === 'waiting') waiting += 1;
+      if (row.status === 'processing') processing += 1;
+      if (row.status === 'completed') completed += 1;
+      totalFiles += row.files.length;
+
       const date = new Date(row.uploadDate);
-      if (Number.isNaN(date.getTime())) return false;
-      return date.toISOString().slice(0, 10) === todayText;
-    }).length;
+      if (!Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === todayText) {
+        uploadedToday += 1;
+      }
+    });
 
     return { waiting, processing, completed, totalFiles, uploadedToday };
   }, [rows]);
@@ -486,15 +495,15 @@ export default function StoragePage() {
     }
   }, [activeRecord, selectedIds]);
 
-  const allCurrentSelected = filteredRows.length > 0 && filteredRows.every(row => selectedIds.includes(row.id));
+  const allCurrentSelected = React.useMemo(() => filteredRows.length > 0 && filteredRows.every(row => selectedIdSet.has(row.id)), [filteredRows, selectedIdSet]);
 
-  const toggleSelectAll = () => {
+  const toggleSelectAll = React.useCallback(() => {
     if (allCurrentSelected) {
       setSelectedIds([]);
       return;
     }
     setSelectedIds(filteredRows.map(row => row.id));
-  };
+  }, [allCurrentSelected, filteredRows]);
 
   const openDrawer = (row: StorageRow) => {
     setActiveRecord(row);
@@ -554,7 +563,7 @@ export default function StoragePage() {
     setRowMenuId(null);
   };
 
-  const rowMenuTarget = React.useMemo(() => rows.find(row => row.id === rowMenuId) ?? null, [rowMenuId, rows]);
+  const rowMenuTarget = React.useMemo(() => (rowMenuId ? rowsById.get(rowMenuId) ?? null : null), [rowMenuId, rowsById]);
 
   return (
     <Box

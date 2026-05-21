@@ -407,6 +407,8 @@ export default function OrderManagementPage() {
     return unique.sort((a, b) => b.localeCompare(a));
   }, [rows]);
 
+  const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
+
   const filteredRows = React.useMemo(() => {
     return rows
       .filter(row => {
@@ -437,15 +439,31 @@ export default function OrderManagementPage() {
   const stats = React.useMemo(() => {
     const todayKey = dayjs().format('YYYY-MM-DD');
     const totalSales = rows.reduce((acc, row) => acc + row.total, 0);
-    const pendingPayments = rows.filter(row => row.status === 'pending').reduce((acc, row) => acc + Math.max(row.total - row.paidAmount, 0), 0);
-    const paidOrders = rows.filter(row => row.status === 'paid').length;
-    const ordersToday = rows.filter(row => dayjs(row.date).format('YYYY-MM-DD') === todayKey).length;
     const currentMonth = dayjs().format('YYYY-MM');
-    const ordersThisMonth = rows.filter(row => row.month === currentMonth).length;
+    let pendingPayments = 0;
+    let paidOrders = 0;
+    let ordersToday = 0;
+    let ordersThisMonth = 0;
+
+    rows.forEach(row => {
+      if (row.status === 'pending') {
+        pendingPayments += Math.max(row.total - row.paidAmount, 0);
+      }
+      if (row.status === 'paid') {
+        paidOrders += 1;
+      }
+      if (dayjs(row.date).format('YYYY-MM-DD') === todayKey) {
+        ordersToday += 1;
+      }
+      if (row.month === currentMonth) {
+        ordersThisMonth += 1;
+      }
+    });
+
     return { totalSales, pendingPayments, paidOrders, ordersToday, ordersThisMonth };
   }, [rows]);
 
-  const rowMenuTarget = React.useMemo(() => rows.find(row => row.id === menuOrderId) ?? null, [menuOrderId, rows]);
+  const rowMenuTarget = React.useMemo(() => (menuOrderId ? rowsById.get(menuOrderId) ?? null : null), [menuOrderId, rowsById]);
 
   const openRowMenu = (event: React.MouseEvent<HTMLButtonElement>, orderId: string) => {
     event.stopPropagation();
@@ -469,7 +487,7 @@ export default function OrderManagementPage() {
 
   const markAsPaid = React.useCallback(
     async (targetId: string) => {
-      const target = rows.find(row => row.id === targetId);
+      const target = rowsById.get(targetId);
       if (!target || target.status === 'cancelled') return;
 
       setUpdatingOrderId(targetId);
@@ -482,12 +500,12 @@ export default function OrderManagementPage() {
         setUpdatingOrderId(null);
       }
     },
-    [loadOrders, rows]
+    [loadOrders, rowsById]
   );
 
   const cancelOrder = React.useCallback(
     async (targetId: string) => {
-      const target = rows.find(row => row.id === targetId);
+      const target = rowsById.get(targetId);
       if (!target) return;
 
       setUpdatingOrderId(targetId);
@@ -500,14 +518,14 @@ export default function OrderManagementPage() {
         setUpdatingOrderId(null);
       }
     },
-    [loadOrders, rows]
+    [loadOrders, rowsById]
   );
 
   React.useEffect(() => {
     if (!selectedOrder) return;
-    const latest = rows.find(row => row.id === selectedOrder.id) ?? null;
+    const latest = rowsById.get(selectedOrder.id) ?? null;
     setSelectedOrder(latest);
-  }, [rows, selectedOrder]);
+  }, [rowsById, selectedOrder]);
 
   return (
     <AdminPageContainer>
