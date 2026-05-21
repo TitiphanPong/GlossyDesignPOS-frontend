@@ -46,7 +46,6 @@ const jobOptions: JobOption[] = [
   { id: 'namecard', label: 'นามบัตร', icon: PersonRounded },
   { id: 'sticker', label: 'สติกเกอร์', icon: StickyNote2Rounded },
   { id: 'banner', label: 'ป้าย / ไวนิล', icon: ViewAgendaRounded },
-  { id: 'poster', label: 'โปสเตอร์', icon: ImageRounded },
   { id: 'binding', label: 'เข้าเล่ม', icon: Inventory2Rounded },
   { id: 'other', label: 'อื่นๆ', icon: DescriptionRounded },
 ];
@@ -462,25 +461,22 @@ export default function UploadPage() {
             <div className="min-w-0 max-w-3xl">
               <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-600">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Upload Portal
+                Upload Status
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <p className="text-xl font-black tracking-[-0.02em] text-slate-900 sm:text-2xl">Glossy Design</p>
                 <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white/90">Fast file intake</span>
               </div>
-              <p className="mt-1 text-sm text-slate-500">ส่งไฟล์งาน พร้อมรายละเอียดครบในหน้าเดียว</p>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-[15px]">
-                อัปโหลดงานพิมพ์ได้เร็วขึ้น ตรวจข้อมูลได้ครบก่อนส่งต่อให้ทีมผลิต เหมาะกับทั้งงานด่วน งานเอกสาร และไฟล์พร้อมพิมพ์
-              </p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-[15px]">อัปโหลดงานพิมพ์ได้เร็วขึ้น เหมาะกับทั้งงานด่วน งานเอกสาร และไฟล์พร้อมพิมพ์</p>
 
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">รองรับไฟล์สูงสุด 100MB</span>
-                <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700">อัปโหลดหลายไฟล์ได้</span>
+                <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700">อัปโหลดได้หลายไฟล์</span>
                 <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-600">ตรวจสอบสถานะได้ทันที</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 self-start sm:self-center">
+            <div className="flex items-center gap-4 self-start sm:self-center">
               <div className="hidden min-w-[220px] rounded-2xl border border-white/70 bg-white/75 px-3 py-3 shadow-sm sm:block">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Ready for production</p>
                 <p className="mt-1 text-sm font-medium text-slate-600">ส่งงานง่าย ได้งานไว ไว้ใจ Glossy Design</p>
@@ -495,7 +491,7 @@ export default function UploadPage() {
                   </div>
                 </div>
               </div>
-              <div className="flex gap-1.5">
+              <div className="flex gap-2">
                 <span className="h-2.5 w-2.5 rounded-full bg-indigo-500/80" />
                 <span className="h-2.5 w-2.5 rounded-full bg-violet-400/80" />
                 <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
@@ -575,7 +571,7 @@ export default function UploadPage() {
             <article className={`${glassCard()} p-4 sm:p-5`}>
               <h2 className="mb-4 text-base font-semibold text-slate-900">รายละเอียดงาน</h2>
               <p className="mb-3 text-sm font-medium text-slate-700">ประเภทงาน *</p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2">
                 {jobOptions.map(job => {
                   const Icon = job.icon;
                   const selected = selectedJobType === job.id;
@@ -649,22 +645,24 @@ export default function UploadPage() {
 
           <aside className="space-y-4 xl:col-span-4">
             <article className={`${glassCard()} p-4 sm:p-5`}>
-              <h3 className="mb-3 text-base font-semibold text-slate-900">ส่งงานได้จากทุกที่</h3>
+              <h3 className="mb-1 text-base font-semibold text-slate-900">ส่งงานได้จากทุกที่</h3>
 
               <p className="mb-3 text-sm leading-6 text-slate-600">
                 อัปโหลดไฟล์ สรุปรายละเอียดงาน และส่งต่อให้ทีมผลิตได้ในหน้าเดียว เหมาะทั้งงานด่วน งานพิมพ์ทั่วไป และงานที่ต้องการตรวจข้อมูลให้ครบก่อนเริ่มผลิต
               </p>
 
-              <h4 className="mb-1 text-sm font-semibold text-slate-800">สิ่งที่คุณจะได้รับ</h4>
-              <ul className="space-y-1.5 text-sm text-slate-600">
+              <h3 className="mb-1 text-base font-semibold text-slate-900">สิ่งที่คุณจะได้รับ</h3>
+              <ul className="leading-6 text-sm text-slate-600">
                 <li>ส่งไฟล์และรายละเอียดงานได้ครบในครั้งเดียว</li>
                 <li>รองรับไฟล์งานขนาดใหญ่สูงสุด 100MB ต่อไฟล์</li>
                 <li>ตรวจสอบสถานะการอัปโหลดได้ทันทีบนหน้าจอ</li>
               </ul>
               <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-3 text-sm">
                 <p className="font-semibold text-slate-800">ต้องการให้ช่วยเช็กไฟล์ก่อนผลิต?</p>
-                <p className="mt-1 text-slate-600">ทักหาเราได้ทาง LINE เพื่อสอบถามราคา ระยะเวลา และความพร้อมของไฟล์งาน</p>
+                <p className="mt-1 text-slate-600">ทักหาเราได้ทาง LINE หรือ Facebook เพื่อสอบถามราคา</p>
+                <p className="mt-1 text-slate-600">ระยะเวลาและความพร้อมของไฟล์งานที่จะใช้งาน</p>
                 <p className="mt-2 text-slate-600">LINE : @glossydesign</p>
+                <p className="mt-1 text-slate-600">Facebook : Glossy Design</p>
               </div>
             </article>
 

@@ -3,17 +3,16 @@
 import * as React from 'react';
 import Link from 'next/link';
 import { Avatar, Box, Button, Drawer, IconButton, List, ListItemButton, Stack, Tooltip, Typography } from '@mui/material';
-import { alpha } from '@mui/material/styles';
 import { drawerClasses } from '@mui/material/Drawer';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
 import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
-import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import { useRouter } from 'next/navigation';
+import Face2Icon from '@mui/icons-material/Face2';
 
 export type NavItem = {
   label: string;
@@ -51,16 +50,19 @@ function Brand({ collapsed = false, onToggleCollapsed }: Readonly<{ collapsed?: 
       <Stack direction="row" spacing={1.1} alignItems="center" sx={{ minWidth: 0, justifyContent: collapsed ? 'center' : 'flex-start' }}>
         <Box
           sx={{
-            width: 38,
-            height: 38,
-            borderRadius: 2.4,
-            bgcolor: alpha('#FFFFFF', 0.14),
-            border: '1px solid rgba(255,255,255,0.22)',
-            display: 'grid',
-            placeItems: 'center',
-            flexShrink: 0,
+            position: 'relative',
+            width: 50,
+            height: 50,
           }}>
-          <StarRoundedIcon sx={{ color: '#D8E6FF', fontSize: 18 }} />
+          <img
+            src="logo/logo.png"
+            alt="Company Logo"
+            style={{
+              objectFit: 'contain',
+              borderRadius: 15,
+              display: 'block',
+            }}
+          />
         </Box>
         {!collapsed && (
           <Box sx={{ minWidth: 0 }}>
@@ -194,8 +196,62 @@ export default function SideMenu({
             );
           })}
         </List>
+
+        <Box sx={{ p: showCollapsedState ? 1.1 : 1.6, pt: 0.8 }}>
+          <Box
+            sx={{
+              borderRadius: 3.5,
+              p: showCollapsedState ? 1 : 1.35,
+              border: '1px solid rgba(147, 173, 233, 0.26)',
+              bgcolor: 'rgba(255,255,255,0.07)',
+              backdropFilter: 'blur(6px)',
+            }}>
+            <Stack direction="row" spacing={1} alignItems="center" justifyContent={showCollapsedState ? 'center' : 'flex-start'}>
+              <Avatar sx={{ width: 34, height: 34, bgcolor: '#6999FF', fontWeight: 700 }}>
+                <Face2Icon fontSize="small" />
+              </Avatar>
+              {!showCollapsedState && (
+                <Box sx={{ minWidth: 0 }}>
+                  <Typography noWrap sx={{ color: '#F8FAFC', fontWeight: 700, fontSize: 13.4 }}>
+                    Admin User
+                  </Typography>
+                  <Typography noWrap sx={{ color: 'rgba(232,240,255,0.8)', fontSize: 11.4 }}>
+                    Printing Shop Staff
+                  </Typography>
+                </Box>
+              )}
+            </Stack>
+          </Box>
+          {!showCollapsedState && (
+            <Button
+              onClick={handleLogout}
+              fullWidth
+              variant="contained"
+              startIcon={<LogoutRoundedIcon fontSize="small" />}
+              sx={{
+                mt: 1.2,
+                minWidth: 0,
+                minHeight: 36,
+                px: 1.4,
+                borderRadius: 2.4,
+                textTransform: 'none',
+                fontWeight: 700,
+                fontSize: 12.5,
+                color: '#FFF5F5',
+                bgcolor: 'rgba(255, 107, 107, 0.92)',
+                boxShadow: 'none',
+                justifyContent: 'center',
+                '&:hover': {
+                  bgcolor: 'rgba(239, 68, 68, 0.98)',
+                  boxShadow: 'none',
+                },
+              }}>
+              Logout
+            </Button>
+          )}
+        </Box>
         {showCollapsedState && (
-          <Box sx={{ px: 1, pb: 0.4 }}>
+          <Box sx={{ px: 1, pb: 1 }}>
             <Tooltip title="Logout" placement="right">
               <Button
                 onClick={handleLogout}
@@ -204,8 +260,8 @@ export default function SideMenu({
                   minWidth: 0,
                   width: '100%',
                   minHeight: 42,
-                  px: 0,
-                  borderRadius: 2.8,
+                  px: 1.4,
+                  borderRadius: 3,
                   textTransform: 'none',
                   color: '#FFF5F5',
                   bgcolor: 'rgba(255, 107, 107, 0.92)',
@@ -220,58 +276,6 @@ export default function SideMenu({
             </Tooltip>
           </Box>
         )}
-
-        <Box sx={{ p: showCollapsedState ? 1.1 : 1.6, pt: 0.8 }}>
-          <Box
-            sx={{
-              borderRadius: 3.5,
-              p: showCollapsedState ? 1 : 1.35,
-              border: '1px solid rgba(147, 173, 233, 0.26)',
-              bgcolor: 'rgba(255,255,255,0.07)',
-              backdropFilter: 'blur(6px)',
-            }}>
-            <Stack direction="row" spacing={1} alignItems="center" justifyContent={showCollapsedState ? 'center' : 'flex-start'}>
-              <Avatar sx={{ width: 34, height: 34, bgcolor: '#6999FF', fontWeight: 700 }}>A</Avatar>
-              {!showCollapsedState && (
-                <Box sx={{ minWidth: 0 }}>
-                  <Typography noWrap sx={{ color: '#F8FAFC', fontWeight: 700, fontSize: 13.4 }}>
-                    Admin User
-                  </Typography>
-                  <Typography noWrap sx={{ color: 'rgba(232,240,255,0.8)', fontSize: 11.4 }}>
-                    Printing Shop Staff
-                  </Typography>
-                </Box>
-              )}
-            </Stack>
-            {!showCollapsedState && (
-              <Button
-                onClick={handleLogout}
-                fullWidth
-                variant="contained"
-                startIcon={<LogoutRoundedIcon fontSize="small" />}
-                sx={{
-                  mt: 1.2,
-                  minWidth: 0,
-                  minHeight: 36,
-                  px: 1.4,
-                  borderRadius: 2.4,
-                  textTransform: 'none',
-                  fontWeight: 700,
-                  fontSize: 12.5,
-                  color: '#FFF5F5',
-                  bgcolor: 'rgba(255, 107, 107, 0.92)',
-                  boxShadow: 'none',
-                  justifyContent: 'center',
-                  '&:hover': {
-                    bgcolor: 'rgba(239, 68, 68, 0.98)',
-                    boxShadow: 'none',
-                  },
-                }}>
-                Logout
-              </Button>
-            )}
-          </Box>
-        </Box>
       </Stack>
     </Drawer>
   );
