@@ -28,10 +28,24 @@ export const ACCEPTED_EXTENSIONS = [
 ];
 
 export const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024;
+export const QUICK_UPLOADER_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'ai', 'psd', 'zip'] as const;
+export const QUICK_UPLOADER_MIME_TYPES = new Set([
+  'application/pdf',
+  'image/jpeg',
+  'image/png',
+  'application/postscript',
+  'image/vnd.adobe.photoshop',
+  'application/zip',
+  'application/x-zip-compressed',
+]);
 
 export function getFileExtension(fileName: string): string {
   const ext = fileName.split('.').pop();
   return (ext ?? '').toLowerCase();
+}
+
+export function buildAcceptAttribute(extensions: readonly string[]): string {
+  return extensions.map(extension => `.${extension}`).join(',');
 }
 
 export function formatFileSize(bytes: number): string {
@@ -66,4 +80,32 @@ export function getFileIcon(fileName: string): ReactElement {
 export function isValidUploadFile(file: File): boolean {
   const ext = getFileExtension(file.name);
   return ACCEPTED_EXTENSIONS.includes(ext);
+}
+
+export function validateUploadFile(
+  file: File,
+  {
+    acceptedExtensions = ACCEPTED_EXTENSIONS,
+    maxFileSizeBytes = MAX_FILE_SIZE_BYTES,
+    acceptedMimeTypes,
+  }: Readonly<{
+    acceptedExtensions?: readonly string[];
+    maxFileSizeBytes?: number;
+    acceptedMimeTypes?: ReadonlySet<string>;
+  }> = {}
+): { valid: true } | { valid: false; reason: 'extension' | 'mime' | 'size' } {
+  const ext = getFileExtension(file.name);
+  if (!acceptedExtensions.includes(ext)) {
+    return { valid: false, reason: 'extension' };
+  }
+
+  if (acceptedMimeTypes && file.type && !acceptedMimeTypes.has(file.type)) {
+    return { valid: false, reason: 'mime' };
+  }
+
+  if (file.size > maxFileSizeBytes) {
+    return { valid: false, reason: 'size' };
+  }
+
+  return { valid: true };
 }

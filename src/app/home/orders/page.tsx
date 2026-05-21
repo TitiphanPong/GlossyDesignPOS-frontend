@@ -356,6 +356,7 @@ function StatCard({ title, value, subtitle, tone, icon }: Readonly<StatCardProps
 export default function OrderManagementPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isCompactDrawer = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [rows, setRows] = React.useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
@@ -406,6 +407,8 @@ export default function OrderManagementPage() {
     return unique.sort((a, b) => b.localeCompare(a));
   }, [rows]);
 
+  const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
+
   const filteredRows = React.useMemo(() => {
     return rows
       .filter(row => {
@@ -436,15 +439,31 @@ export default function OrderManagementPage() {
   const stats = React.useMemo(() => {
     const todayKey = dayjs().format('YYYY-MM-DD');
     const totalSales = rows.reduce((acc, row) => acc + row.total, 0);
-    const pendingPayments = rows.filter(row => row.status === 'pending').reduce((acc, row) => acc + Math.max(row.total - row.paidAmount, 0), 0);
-    const paidOrders = rows.filter(row => row.status === 'paid').length;
-    const ordersToday = rows.filter(row => dayjs(row.date).format('YYYY-MM-DD') === todayKey).length;
     const currentMonth = dayjs().format('YYYY-MM');
-    const ordersThisMonth = rows.filter(row => row.month === currentMonth).length;
+    let pendingPayments = 0;
+    let paidOrders = 0;
+    let ordersToday = 0;
+    let ordersThisMonth = 0;
+
+    rows.forEach(row => {
+      if (row.status === 'pending') {
+        pendingPayments += Math.max(row.total - row.paidAmount, 0);
+      }
+      if (row.status === 'paid') {
+        paidOrders += 1;
+      }
+      if (dayjs(row.date).format('YYYY-MM-DD') === todayKey) {
+        ordersToday += 1;
+      }
+      if (row.month === currentMonth) {
+        ordersThisMonth += 1;
+      }
+    });
+
     return { totalSales, pendingPayments, paidOrders, ordersToday, ordersThisMonth };
   }, [rows]);
 
-  const rowMenuTarget = React.useMemo(() => rows.find(row => row.id === menuOrderId) ?? null, [menuOrderId, rows]);
+  const rowMenuTarget = React.useMemo(() => (menuOrderId ? rowsById.get(menuOrderId) ?? null : null), [menuOrderId, rowsById]);
 
   const openRowMenu = (event: React.MouseEvent<HTMLButtonElement>, orderId: string) => {
     event.stopPropagation();
@@ -468,7 +487,7 @@ export default function OrderManagementPage() {
 
   const markAsPaid = React.useCallback(
     async (targetId: string) => {
-      const target = rows.find(row => row.id === targetId);
+      const target = rowsById.get(targetId);
       if (!target || target.status === 'cancelled') return;
 
       setUpdatingOrderId(targetId);
@@ -481,12 +500,12 @@ export default function OrderManagementPage() {
         setUpdatingOrderId(null);
       }
     },
-    [loadOrders, rows]
+    [loadOrders, rowsById]
   );
 
   const cancelOrder = React.useCallback(
     async (targetId: string) => {
-      const target = rows.find(row => row.id === targetId);
+      const target = rowsById.get(targetId);
       if (!target) return;
 
       setUpdatingOrderId(targetId);
@@ -499,14 +518,14 @@ export default function OrderManagementPage() {
         setUpdatingOrderId(null);
       }
     },
-    [loadOrders, rows]
+    [loadOrders, rowsById]
   );
 
   React.useEffect(() => {
     if (!selectedOrder) return;
-    const latest = rows.find(row => row.id === selectedOrder.id) ?? null;
+    const latest = rowsById.get(selectedOrder.id) ?? null;
     setSelectedOrder(latest);
-  }, [rows, selectedOrder]);
+  }, [rowsById, selectedOrder]);
 
   return (
     <AdminPageContainer>
@@ -986,19 +1005,29 @@ export default function OrderManagementPage() {
         slotProps={{
           paper: {
             sx: {
-              width: isMobile ? '100%' : { sm: 460, md: 540 },
-              maxHeight: isMobile ? '92vh' : '100vh',
+              width: isMobile ? '100%' : { sm: 420, md: 480, lg: 560 },
+              maxHeight: isMobile ? '94vh' : '100vh',
+              height: isMobile ? 'min(94vh, 860px)' : '100%',
               borderTopLeftRadius: isMobile ? 18 : 22,
               borderTopRightRadius: isMobile ? 18 : 0,
               borderBottomLeftRadius: isMobile ? 0 : 22,
+              borderBottomRightRadius: 0,
               background: 'linear-gradient(180deg, #FBFDFF 0%, #FFFFFF 100%)',
+              overflow: 'hidden',
             },
           },
         }}>
         {selectedOrder ? (
           <Stack sx={{ height: '100%' }}>
-            <Box sx={{ p: 2.4, borderBottom: '1px solid #E8EFF8' }}>
-              <Stack direction="row" justifyContent="space-between" alignItems="center">
+            <Box
+              sx={{
+                px: { xs: 2, sm: 2.5, md: 3 },
+                py: { xs: 1.8, sm: 2.2 },
+                borderBottom: '1px solid #E8EFF8',
+                bgcolor: 'rgba(255, 255, 255, 0.94)',
+                backdropFilter: 'blur(10px)',
+              }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1}>
                 <Box>
                   <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>Order Detail</Typography>
                   <Typography sx={{ mt: 0.4, color: '#64748B' }}>
@@ -1009,8 +1038,15 @@ export default function OrderManagementPage() {
               </Stack>
             </Box>
 
-            <Box sx={{ p: 2.4, overflowY: 'auto', flex: 1 }}>
-              <Stack spacing={1.5}>
+            <Box
+              sx={{
+                px: { xs: 2, sm: 2.5, md: 3 },
+                py: { xs: 2, sm: 2.3 },
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                flex: 1,
+              }}>
+              <Stack spacing={isCompactDrawer ? 1.25 : 1.5}>
                 {selectedOrder.status === 'pending' ? (
                   <Card sx={{ borderRadius: 3, border: '1px solid #FFD8A8', bgcolor: '#FFF8ED', boxShadow: 'none' }}>
                     <CardContent sx={{ py: 1.2 }}>
@@ -1158,11 +1194,13 @@ export default function OrderManagementPage() {
               sx={{
                 position: 'sticky',
                 bottom: 0,
-                p: 2,
+                px: { xs: 2, sm: 2.5, md: 3 },
+                py: { xs: 1.5, sm: 1.8 },
                 borderTop: '1px solid #E8EFF8',
-                bgcolor: '#FFFFFF',
+                bgcolor: 'rgba(255, 255, 255, 0.96)',
+                backdropFilter: 'blur(10px)',
               }}>
-              <Stack direction="row" flexWrap="wrap" gap={1}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} flexWrap="wrap" gap={1}>
                 <Button
                   variant="contained"
                   startIcon={<CheckCircleRoundedIcon />}
@@ -1170,7 +1208,7 @@ export default function OrderManagementPage() {
                   onClick={() => {
                     void markAsPaid(selectedOrder.id);
                   }}
-                  sx={{ ...commonButtonSx, flex: '1 1 auto', textTransform: 'none' }}>
+                  sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
                   Confirm Payment
                 </Button>
                 <Button
@@ -1180,7 +1218,7 @@ export default function OrderManagementPage() {
                   onClick={() => {
                     void cancelOrder(selectedOrder.id);
                   }}
-                  sx={{ ...commonButtonSx, flex: '1 1 auto', textTransform: 'none' }}>
+                  sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
                   Cancel Order
                 </Button>
               </Stack>

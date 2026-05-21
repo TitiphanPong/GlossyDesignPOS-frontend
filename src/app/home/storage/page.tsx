@@ -296,6 +296,7 @@ function StatCard({ title, value, subtitle, icon, tone }: Readonly<StatCardProps
 export default function StoragePage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const isCompactDrawer = useMediaQuery(theme.breakpoints.down('lg'));
 
   const [rows, setRows] = React.useState<StorageRow[]>([]);
   const [loading, setLoading] = React.useState(false);
@@ -400,24 +401,33 @@ export default function StoragePage() {
       });
   }, [dateFilter, jobTypeFilter, rows, search, sortBy, statusFilter]);
 
+  const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
+  const selectedIdSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
+
   const selectedRows = React.useMemo(() => {
-    const selectedSet = new Set(selectedIds);
-    return filteredRows.filter(row => selectedSet.has(row.id));
-  }, [filteredRows, selectedIds]);
+    return filteredRows.filter(row => selectedIdSet.has(row.id));
+  }, [filteredRows, selectedIdSet]);
 
   const stats = React.useMemo(() => {
-    const waiting = rows.filter(row => row.status === 'waiting').length;
-    const processing = rows.filter(row => row.status === 'processing').length;
-    const completed = rows.filter(row => row.status === 'completed').length;
-    const totalFiles = rows.reduce((acc, row) => acc + row.files.length, 0);
-
     const today = new Date();
     const todayText = today.toISOString().slice(0, 10);
-    const uploadedToday = rows.filter(row => {
+    let waiting = 0;
+    let processing = 0;
+    let completed = 0;
+    let totalFiles = 0;
+    let uploadedToday = 0;
+
+    rows.forEach(row => {
+      if (row.status === 'waiting') waiting += 1;
+      if (row.status === 'processing') processing += 1;
+      if (row.status === 'completed') completed += 1;
+      totalFiles += row.files.length;
+
       const date = new Date(row.uploadDate);
-      if (Number.isNaN(date.getTime())) return false;
-      return date.toISOString().slice(0, 10) === todayText;
-    }).length;
+      if (!Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === todayText) {
+        uploadedToday += 1;
+      }
+    });
 
     return { waiting, processing, completed, totalFiles, uploadedToday };
   }, [rows]);
@@ -485,15 +495,15 @@ export default function StoragePage() {
     }
   }, [activeRecord, selectedIds]);
 
-  const allCurrentSelected = filteredRows.length > 0 && filteredRows.every(row => selectedIds.includes(row.id));
+  const allCurrentSelected = React.useMemo(() => filteredRows.length > 0 && filteredRows.every(row => selectedIdSet.has(row.id)), [filteredRows, selectedIdSet]);
 
-  const toggleSelectAll = () => {
+  const toggleSelectAll = React.useCallback(() => {
     if (allCurrentSelected) {
       setSelectedIds([]);
       return;
     }
     setSelectedIds(filteredRows.map(row => row.id));
-  };
+  }, [allCurrentSelected, filteredRows]);
 
   const openDrawer = (row: StorageRow) => {
     setActiveRecord(row);
@@ -553,7 +563,7 @@ export default function StoragePage() {
     setRowMenuId(null);
   };
 
-  const rowMenuTarget = React.useMemo(() => rows.find(row => row.id === rowMenuId) ?? null, [rowMenuId, rows]);
+  const rowMenuTarget = React.useMemo(() => (rowMenuId ? rowsById.get(rowMenuId) ?? null : null), [rowMenuId, rowsById]);
 
   return (
     <Box
@@ -984,24 +994,41 @@ export default function StoragePage() {
         slotProps={{
           paper: {
             sx: {
-              width: isMobile ? '100%' : { sm: 460, md: 540 },
-              maxHeight: isMobile ? '92vh' : '100vh',
+              width: isMobile ? '100%' : { sm: 420, md: 480, lg: 560 },
+              maxHeight: isMobile ? '94vh' : '100vh',
+              height: isMobile ? 'min(94vh, 860px)' : '100%',
               borderTopLeftRadius: isMobile ? 18 : 22,
               borderTopRightRadius: isMobile ? 18 : 0,
               borderBottomLeftRadius: isMobile ? 0 : 22,
+              borderBottomRightRadius: 0,
               background: 'linear-gradient(180deg, #FBFDFF 0%, #FFFFFF 100%)',
+              overflow: 'hidden',
             },
           },
         }}>
         {activeRecord ? (
           <Stack sx={{ height: '100%' }}>
-            <Box sx={{ p: 2.5, borderBottom: '1px solid #E8EFF8' }}>
+            <Box
+              sx={{
+                px: { xs: 2, sm: 2.5, md: 3 },
+                py: { xs: 1.8, sm: 2.2 },
+                borderBottom: '1px solid #E8EFF8',
+                bgcolor: 'rgba(255, 255, 255, 0.94)',
+                backdropFilter: 'blur(10px)',
+              }}>
               <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>รายละเอียดงานพิมพ์</Typography>
               <Typography sx={{ mt: 0.5, color: '#64748B' }}>ลูกค้า: {activeRecord.customerName}</Typography>
             </Box>
 
-            <Box sx={{ p: 2.5, overflowY: 'auto', flex: 1 }}>
-              <Stack spacing={1.6}>
+            <Box
+              sx={{
+                px: { xs: 2, sm: 2.5, md: 3 },
+                py: { xs: 2, sm: 2.3 },
+                overflowY: 'auto',
+                overflowX: 'hidden',
+                flex: 1,
+              }}>
+              <Stack spacing={isCompactDrawer ? 1.35 : 1.6}>
                 <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                   <CardContent>
                     <Stack spacing={1.3}>
@@ -1079,6 +1106,7 @@ export default function StoragePage() {
                         sx={{
                           mt: 1,
                           borderRadius: 3,
+                          width: { xs: '100%', sm: 'auto' },
                           textTransform: 'none',
                           fontWeight: 700,
                           bgcolor: '#1F5CE6',
@@ -1102,9 +1130,6 @@ export default function StoragePage() {
                         </Select>
                       </FormControl>
                       <TextField label="Notes" multiline minRows={3} value={drawerNotes} onChange={event => setDrawerNotes(event.target.value)} />
-                      <Button variant="outlined" onClick={handleDrawerSave} sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
-                        บันทึกข้อมูล
-                      </Button>
                     </Stack>
                   </CardContent>
                 </Card>
@@ -1129,10 +1154,24 @@ export default function StoragePage() {
             </Box>
 
             <Divider />
-            <Box sx={{ p: 2.5 }}>
-              <Button fullWidth variant="contained" onClick={() => setDrawerOpen(false)} sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
-                ปิดรายละเอียด
-              </Button>
+            <Box
+              sx={{
+                position: 'sticky',
+                bottom: 0,
+                px: { xs: 2, sm: 2.5, md: 3 },
+                py: { xs: 1.5, sm: 1.8 },
+                borderTop: '1px solid #E8EFF8',
+                bgcolor: 'rgba(255, 255, 255, 0.96)',
+                backdropFilter: 'blur(10px)',
+              }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} gap={1}>
+                <Button fullWidth variant="contained" onClick={handleDrawerSave} sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
+                  บันทึกข้อมูล
+                </Button>
+                <Button fullWidth variant="outlined" onClick={() => setDrawerOpen(false)} sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
+                  ปิดรายละเอียด
+                </Button>
+              </Stack>
             </Box>
           </Stack>
         ) : null}

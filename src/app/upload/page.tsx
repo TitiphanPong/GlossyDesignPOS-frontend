@@ -20,7 +20,7 @@ import ViewAgendaRounded from '@mui/icons-material/ViewAgendaRounded';
 import type { ReactElement } from 'react';
 import { useMemo, useRef, useState } from 'react';
 import { getSignedUrl, uploadFile, type UploadPayload, type UploadResponse } from '@/lib/upload-api';
-import { ACCEPTED_EXTENSIONS, MAX_FILE_SIZE_BYTES, formatFileSize, getFileExtension } from './helpers';
+import { ACCEPTED_EXTENSIONS, buildAcceptAttribute, formatFileSize, getFileExtension, validateUploadFile } from './helpers';
 
 type Step = 1 | 2 | 3 | 4;
 type UploadStatus = 'uploaded' | 'uploading' | 'waiting' | 'error';
@@ -61,7 +61,7 @@ const uploadJobTypeMap: Record<string, UploadPayload['jobType']> = {
   other: 'Other',
 };
 
-const ACCEPT_ATTRIBUTE = ACCEPTED_EXTENSIONS.map(extension => `.${extension}`).join(',');
+const ACCEPT_ATTRIBUTE = buildAcceptAttribute(ACCEPTED_EXTENSIONS);
 
 function fileIconByName(name: string) {
   const ext = getFileExtension(name);
@@ -89,12 +89,12 @@ function buildFileId(file: File): string {
 }
 
 function getValidationError(file: File): string | null {
-  const extension = getFileExtension(file.name);
-  if (!ACCEPTED_EXTENSIONS.includes(extension)) {
+  const validation = validateUploadFile(file);
+  if (!validation.valid && validation.reason === 'extension') {
     return `ไฟล์ ${file.name} ไม่รองรับนามสกุลนี้`;
   }
 
-  if (file.size > MAX_FILE_SIZE_BYTES) {
+  if (!validation.valid && validation.reason === 'size') {
     return `ไฟล์ ${file.name} มีขนาดเกิน 100MB`;
   }
 

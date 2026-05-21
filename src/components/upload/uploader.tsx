@@ -3,29 +3,16 @@
 import * as React from 'react';
 import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
 import { getSignedUrl, uploadFile, type UploadResponse } from '@/lib/upload-api';
+import {
+  QUICK_UPLOADER_EXTENSIONS,
+  QUICK_UPLOADER_MIME_TYPES,
+  MAX_FILE_SIZE_BYTES,
+  buildAcceptAttribute,
+  formatFileSize,
+  validateUploadFile,
+} from '@/app/upload/helpers';
 
-const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024;
-const ACCEPTED_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'ai', 'psd', 'zip'];
-const ACCEPTED_MIME_TYPES = new Set(['application/pdf', 'image/jpeg', 'image/png', 'application/postscript', 'image/vnd.adobe.photoshop', 'application/zip', 'application/x-zip-compressed']);
-
-function getFileExtension(fileName: string): string {
-  const ext = fileName.split('.').pop();
-  return (ext ?? '').toLowerCase();
-}
-
-function formatBytes(bytes: number): string {
-  const mb = bytes / (1024 * 1024);
-  if (mb >= 1) return `${mb.toFixed(2)} MB`;
-  const kb = bytes / 1024;
-  return `${kb.toFixed(2)} KB`;
-}
-
-function isAllowedFile(file: File): boolean {
-  const ext = getFileExtension(file.name);
-  if (!ACCEPTED_EXTENSIONS.includes(ext)) return false;
-  if (!file.type) return true;
-  return ACCEPTED_MIME_TYPES.has(file.type);
-}
+const ACCEPT_ATTRIBUTE = buildAcceptAttribute(QUICK_UPLOADER_EXTENSIONS);
 
 export default function Uploader() {
   const [selectedFile, setSelectedFile] = React.useState<File | null>(null);
@@ -67,13 +54,19 @@ export default function Uploader() {
       return;
     }
 
-    if (!isAllowedFile(file)) {
+    const validation = validateUploadFile(file, {
+      acceptedExtensions: QUICK_UPLOADER_EXTENSIONS,
+      acceptedMimeTypes: QUICK_UPLOADER_MIME_TYPES,
+      maxFileSizeBytes: MAX_FILE_SIZE_BYTES,
+    });
+
+    if (!validation.valid && (validation.reason === 'extension' || validation.reason === 'mime')) {
       setSelectedFile(null);
-      setErrorMessage(`Unsupported file type. Allowed: ${ACCEPTED_EXTENSIONS.join(', ').toUpperCase()}`);
+      setErrorMessage(`Unsupported file type. Allowed: ${QUICK_UPLOADER_EXTENSIONS.join(', ').toUpperCase()}`);
       return;
     }
 
-    if (file.size > MAX_FILE_SIZE_BYTES) {
+    if (!validation.valid && validation.reason === 'size') {
       setSelectedFile(null);
       setErrorMessage('File size exceeds 100MB. Please select a smaller file.');
       return;
@@ -152,14 +145,14 @@ export default function Uploader() {
       {successMessage && <Alert severity="success">{successMessage}</Alert>}
 
       <Box>
-        <input type="file" accept=".pdf,.jpg,.jpeg,.png,.ai,.psd,.zip" onChange={handleFileChange} disabled={disableActions} />
+        <input type="file" accept={ACCEPT_ATTRIBUTE} onChange={handleFileChange} disabled={disableActions} />
       </Box>
 
       {selectedFile && (
         <Box>
           <Typography variant="body2">Selected: {selectedFile.name}</Typography>
           <Typography variant="body2" color="text.secondary">
-            Size: {formatBytes(selectedFile.size)}
+            Size: {formatFileSize(selectedFile.size)}
           </Typography>
         </Box>
       )}

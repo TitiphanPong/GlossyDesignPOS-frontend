@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { Alert, Box, Card, Skeleton, Stack, Typography } from '@mui/material';
+import { Alert, Box, Card, CardActions, CardContent, Skeleton, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
 import { interactiveCardSx, sectionTitleSx, topActionBarSx, uiCardSx } from './adminUi';
 
@@ -90,12 +90,133 @@ export function EmptyState({
 
 export function LoadingState() {
   return (
-    <Stack spacing={1.25} sx={{ p: 2.25 }}>
-      <Skeleton variant="rounded" height={30} width="40%" />
-      <Skeleton variant="rounded" height={52} />
-      <Skeleton variant="rounded" height={52} />
-      <Skeleton variant="rounded" height={52} />
+    <Stack spacing={3}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: { xs: '1fr', md: 'repeat(4, minmax(0, 1fr))' },
+          gap: 2,
+        }}>
+        {['dashboard-kpi-1', 'dashboard-kpi-2', 'dashboard-kpi-3', 'dashboard-kpi-4'].map(key => (
+          <DashboardCard key={key} sx={{ p: 2.25 }}>
+            <Stack spacing={1.2}>
+              <Skeleton variant="text" width="42%" height={18} />
+              <Skeleton variant="text" width="64%" height={34} />
+              <Skeleton variant="rounded" height={16} width="56%" />
+            </Stack>
+          </DashboardCard>
+        ))}
+      </Box>
+
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: {
+            xs: '1fr',
+            lg: 'minmax(0, 1.45fr) minmax(320px, 0.9fr)',
+          },
+          gap: 3,
+          alignItems: 'start',
+        }}>
+        <Stack spacing={3}>
+          <DashboardCard sx={{ p: 2.25 }}>
+            <Stack spacing={1.5}>
+              <Skeleton variant="text" width="28%" height={28} />
+              <Skeleton variant="text" width="44%" height={18} />
+              <Skeleton variant="rounded" height={260} />
+            </Stack>
+          </DashboardCard>
+
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' },
+              gap: 3,
+            }}>
+            {['dashboard-panel-1', 'dashboard-panel-2'].map(key => (
+              <DashboardCard key={key} sx={{ p: 2.25 }}>
+                <Stack spacing={1.3}>
+                  <Skeleton variant="text" width="38%" height={26} />
+                  <Skeleton variant="rounded" height={140} />
+                </Stack>
+              </DashboardCard>
+            ))}
+          </Box>
+        </Stack>
+
+        <Stack spacing={3}>
+          {['dashboard-side-1', 'dashboard-side-2', 'dashboard-side-3'].map(key => (
+            <DashboardCard key={key} sx={{ p: 2.25 }}>
+              <Stack spacing={1.4}>
+                <Skeleton variant="text" width="44%" height={26} />
+                <Skeleton variant="rounded" height={key === 'dashboard-side-1' ? 210 : 120} />
+              </Stack>
+            </DashboardCard>
+          ))}
+        </Stack>
+      </Box>
+
+      <DashboardCard sx={{ p: 2.25 }}>
+        <Stack spacing={1.4}>
+          <Skeleton variant="text" width="24%" height={26} />
+          <Skeleton variant="text" width="36%" height={18} />
+          {['dashboard-row-1', 'dashboard-row-2', 'dashboard-row-3', 'dashboard-row-4'].map(key => (
+            <Skeleton key={key} variant="rounded" height={46} />
+          ))}
+        </Stack>
+      </DashboardCard>
     </Stack>
+  );
+}
+
+export function ProductGridLoadingState({ count = 8 }: Readonly<{ count?: number }>) {
+  return (
+    <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: 'repeat(2, minmax(140px, 1fr))', sm: 'repeat(3, minmax(180px, 1fr))', xl: 'repeat(4, minmax(180px, 1fr))' } }}>
+      {Array.from({ length: count }, (_, index) => (
+        <Card key={`product-skeleton-${index}`} variant="outlined" sx={{ ...interactiveCardSx, borderRadius: 3.5, borderColor: '#E5EBF5', boxShadow: '0 10px 22px rgba(15, 23, 42, 0.06)', overflow: 'hidden' }}>
+          <Skeleton variant="rectangular" width="100%" height={210} />
+          <CardContent sx={{ pb: 1.1, px: 1.7, pt: 1.6 }}>
+            <Stack spacing={1}>
+              <Skeleton width="78%" height={26} />
+              <Skeleton width="42%" />
+            </Stack>
+          </CardContent>
+          <CardActions sx={{ p: 1.5, pt: 0.1 }}>
+            <Skeleton variant="rounded" width="100%" height={38} />
+          </CardActions>
+        </Card>
+      ))}
+    </Box>
+  );
+}
+
+export function InvoiceLoadingState() {
+  return (
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', px: { xs: 2, md: 3 }, py: { xs: 3, md: 4 } }}>
+      <Box sx={{ maxWidth: 1280, mx: 'auto' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" sx={{ mb: 2 }}>
+          <Skeleton variant="text" width={220} height={52} />
+          <Skeleton variant="rounded" width={170} height={40} />
+        </Stack>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+          {['invoice-copy-1', 'invoice-copy-2'].map(key => (
+            <Card key={key} sx={{ p: 2.2, borderRadius: 3 }}>
+              <Stack spacing={1.5}>
+                <Skeleton variant="text" width="48%" height={34} />
+                <Skeleton variant="text" width="36%" />
+                <Skeleton variant="text" width="44%" />
+                <Skeleton variant="text" width="34%" />
+                <Skeleton variant="rounded" height={198} />
+                <Skeleton variant="text" width="42%" />
+                <Skeleton variant="text" width="36%" />
+                <Skeleton variant="text" width="52%" height={30} />
+              </Stack>
+            </Card>
+          ))}
+        </Box>
+      </Box>
+    </Box>
   );
 }
 

@@ -100,6 +100,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Create a small shared empty-state pattern for list and table screens, then apply it to orders, storage, POS product list, and upload queue without changing any fetching behavior."
 
 ### Task QW-03: Tighten loading-state consistency for dashboard and invoice screens
+- Status: completed on 2026-05-21
 - Task ID: QW-03
 - Title: Tighten loading-state consistency for dashboard and invoice screens
 - Why it matters: some screens use explicit loading placeholders while others fall back to minimal text or nothing. Better loading states improve perceived quality and are safe to ship.
@@ -119,6 +120,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Improve the upload page’s mobile action layout and step navigation without changing upload logic. Keep the current visual language and make the primary action easier to reach on small screens."
 
 ### Task QW-05: Improve drawer behavior on smaller admin screens
+- Status: completed on 2026-05-21
 - Task ID: QW-05
 - Title: Improve drawer behavior on smaller admin screens
 - Why it matters: storage and orders both use heavy detail drawers with dense content that may be cramped on tablets and small laptops. Responsive spacing and sticky action cleanup are low-risk usability wins.
@@ -157,6 +159,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Refactor cart/payment total computation so the POS and customer display share one source of truth for discount, VAT, deposit, and remaining calculations. Preserve existing output fields."
 
 ### Task RC-04: Extract upload file-validation utilities into one reusable module
+- Status: completed on 2026-05-21
 - Task ID: RC-04
 - Title: Extract upload file-validation utilities into one reusable module
 - Why it matters: `src/app/upload/page.tsx` and `src/components/upload/uploader.tsx` duplicate accepted extensions, file-size rules, and status logic. A shared utility is a clean low-risk refactor.
@@ -204,6 +207,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Align customer-display order/payment typings with shared contracts while preserving its UI-specific extensions. Add safe handling for unsupported or unexpected status values."
 
 ### Task BR-04: Replace silent fetch failures with user-visible errors on dashboard
+- Status: completed on 2026-05-21
 - Task ID: BR-04
 - Title: Replace silent fetch failures with user-visible errors on dashboard
 - Why it matters: the dashboard swallows fetch errors with an empty catch block, which can render partial or misleading data without explanation.
@@ -233,6 +237,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Refactor the customer display page into smaller presentational components and isolate polling/state logic, without changing visuals or kiosk behavior."
 
 ### Task PF-02: Memoize derived list rows on heavy admin pages where practical
+- Status: completed on 2026-05-21
 - Task ID: PF-02
 - Title: Memoize derived list rows on heavy admin pages where practical
 - Why it matters: orders and storage pages do a lot of filtering, sorting, and row mapping in the same component. Some of this is already memoized, but expensive derived sections and handlers are still crowded into one render path.

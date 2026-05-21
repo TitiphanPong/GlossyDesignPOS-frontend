@@ -1,10 +1,10 @@
 ﻿import * as React from 'react';
-import { Box, Card, CardContent, CardActions, Button, Chip, Skeleton, Typography, Stack } from '@mui/material';
+import { Box, Card, CardContent, CardActions, Button, Chip, Typography, Stack } from '@mui/material';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import Image from 'next/image';
 import type { Product } from '../page';
 import { commonButtonSx, interactiveCardSx } from '../../components/adminUi';
-import { EmptyState } from '../../components/dashboardUi';
+import { EmptyState, ProductGridLoadingState } from '../../components/dashboardUi';
 
 type ProductListProps = Readonly<{
   loading: boolean;
@@ -17,19 +17,11 @@ const skeletonKeys = ['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5', 'sk-6', 'sk-7', 's
 export function ProductList({ loading, filtered, onAddProduct }: ProductListProps) {
   return (
     <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: 'repeat(2, minmax(140px, 1fr))', sm: 'repeat(3, minmax(180px, 1fr))', xl: 'repeat(4, minmax(180px, 1fr))' } }}>
-      {loading &&
-        skeletonKeys.map(key => (
-          <Card key={key} variant="outlined" sx={{ borderRadius: 3.5, borderColor: '#E5EBF5', boxShadow: '0 10px 22px rgba(15, 23, 42, 0.06)', overflow: 'hidden' }}>
-            <Skeleton variant="rectangular" width="100%" height={120} />
-            <CardContent>
-              <Skeleton width="80%" />
-              <Skeleton width="40%" />
-            </CardContent>
-            <CardActions sx={{ p: 1.5, pt: 0.5 }}>
-              <Skeleton variant="rectangular" width="100%" height={36} />
-            </CardActions>
-          </Card>
-        ))}
+      {loading && (
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <ProductGridLoadingState count={skeletonKeys.length} />
+        </Box>
+      )}
       {!loading && filtered.length === 0 && (
         <Box sx={{ gridColumn: '1 / -1' }}>
           <EmptyState
