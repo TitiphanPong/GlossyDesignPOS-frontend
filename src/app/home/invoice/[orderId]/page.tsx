@@ -4,7 +4,7 @@ import { use, useEffect, useState } from 'react';
 import { Box, Button, Card, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import { InvoiceLoadingState, MissingApiConfigState } from '../../components/dashboardUi';
-import { getApiBaseUrl, isMissingApiBaseError } from '../../../../lib/api';
+import { fetchApiJson, isMissingApiBaseError } from '../../../../lib/api';
 
 interface CartItem {
   name: string;
@@ -71,20 +71,20 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const [missingApiBase, setMissingApiBase] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const base = getApiBaseUrl();
-        const res = await fetch(`${base}/orders/${orderId}`);
-        if (!res.ok) throw new Error('โหลดออเดอร์ไม่สำเร็จ');
-        const data = await res.json();
+        const data = await fetchApiJson<Order>(`/orders/${orderId}`);
         setOrder(data);
+        setLoadError(null);
       } catch (error) {
         if (isMissingApiBaseError(error)) {
           setMissingApiBase(true);
         } else {
           console.error('Error:', error);
+          setLoadError(error instanceof Error && error.message ? error.message : 'โหลดออเดอร์ไม่สำเร็จ');
         }
       } finally {
         setLoading(false);
@@ -108,7 +108,7 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
   if (!order) {
     return (
       <Box sx={{ minHeight: '80vh', display: 'grid', placeItems: 'center' }}>
-        <Typography>ไม่พบข้อมูลออเดอร์</Typography>
+        <Typography>{loadError ?? 'ไม่พบข้อมูลออเดอร์'}</Typography>
       </Box>
     );
   }

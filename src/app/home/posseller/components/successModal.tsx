@@ -7,6 +7,7 @@ import ReplayIcon from '@mui/icons-material/Replay';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import { PaymentMethod, PendingOrderDraft } from '../../../../lib/contracts';
+import { fetchApiJson, isMissingApiBaseError } from '../../../../lib/api';
 
 type Props = {
   open: boolean;
@@ -49,8 +50,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       const order = JSON.parse(orderStr) as PendingOrderDraft;
       const isPartial = (order.remainingTotal ?? 0) > 0;
 
-      const base = process.env.NEXT_PUBLIC_API_URL ?? '';
-      const res = await fetch(`${base}/orders`, {
+      await fetchApiJson<PendingOrderDraft>('/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -61,12 +61,6 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           grandTotal: order.grandTotal,
         }),
       });
-      if (!res.ok) {
-        const text = await res.text();
-        console.error('Backend error:', res.status, text);
-        throw new Error('บันทึกออเดอร์ไม่สำเร็จ');
-      }
-      await res.json();
 
       localStorage.setItem(
         'pendingOrder',
@@ -80,9 +74,14 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       globalThis.dispatchEvent(new Event('storage'));
       setIsPaid(true);
       onPaid();
-    } catch (err) {
-      console.error(err);
-      alert('เกิดข้อผิดพลาดในการยืนยันการชำระเงิน');
+    } catch (error) {
+      console.error(error);
+      const message = isMissingApiBaseError(error)
+        ? 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL ก่อนยืนยันการชำระเงิน'
+        : error instanceof Error && error.message
+          ? error.message
+          : 'เกิดข้อผิดพลาดในการยืนยันการชำระเงิน';
+      alert(message);
     }
   };
 

@@ -1,3 +1,5 @@
+import { fetchApiJson } from './api';
+
 export interface UploadResponse {
   id: string;
   originalName: string;
@@ -18,29 +20,6 @@ export interface UploadPayload {
   note?: string;
 }
 
-function getApiBaseUrl(): string {
-  const apiBaseUrl = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiBaseUrl) {
-    throw new Error('Missing NEXT_PUBLIC_API_URL. Please set it in your environment variables.');
-  }
-  return apiBaseUrl;
-}
-
-async function parseErrorResponse(res: Response): Promise<string> {
-  try {
-    const body = await res.json();
-    if (typeof body?.message === 'string' && body.message.trim().length > 0) {
-      return body.message;
-    }
-  } catch {
-    // no-op: fallback to text below
-  }
-
-  const text = await res.text().catch(() => '');
-  if (text.trim()) return text;
-  return `Request failed with status ${res.status}`;
-}
-
 export async function uploadFile(file: File, payload: UploadPayload, signal?: AbortSignal): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('files', file);
@@ -52,28 +31,16 @@ export async function uploadFile(file: File, payload: UploadPayload, signal?: Ab
     formData.append('note', payload.note);
   }
 
-  const res = await fetch(`${getApiBaseUrl()}/uploads`, {
+  return fetchApiJson<UploadResponse>('/uploads', {
     method: 'POST',
     body: formData,
     signal,
   });
-
-  if (!res.ok) {
-    throw new Error(await parseErrorResponse(res));
-  }
-
-  return (await res.json()) as UploadResponse;
 }
 
 export async function getSignedUrl(id: string, signal?: AbortSignal): Promise<SignedUrlResponse> {
-  const res = await fetch(`${getApiBaseUrl()}/uploads/${encodeURIComponent(id)}/signed-url`, {
+  return fetchApiJson<SignedUrlResponse>(`/uploads/${encodeURIComponent(id)}/signed-url`, {
     method: 'GET',
     signal,
   });
-
-  if (!res.ok) {
-    throw new Error(await parseErrorResponse(res));
-  }
-
-  return (await res.json()) as SignedUrlResponse;
 }

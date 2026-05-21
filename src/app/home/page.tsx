@@ -3,7 +3,7 @@
 import { Alert, Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { ApiOrder, OrdersSummary } from '../../lib/contracts';
-import { getApiBaseUrl, hasApiBaseUrl } from '../../lib/api';
+import { fetchApiJson, hasApiBaseUrl } from '../../lib/api';
 
 import DashboardHeader from './components/dashboard/DashboardHeader';
 import KPICards from './components/dashboard/KPICards';
@@ -19,14 +19,6 @@ import { LoadingState, MissingApiConfigState } from './components/dashboardUi';
 
 const isApiOrderArray = (value: unknown): value is ApiOrder[] => Array.isArray(value);
 
-async function fetchJson<T>(input: string): Promise<T> {
-  const response = await fetch(input);
-  if (!response.ok) {
-    throw new Error(`request_failed_${response.status}`);
-  }
-  return response.json() as Promise<T>;
-}
-
 export default function DashboardPage() {
   const [summary, setSummary] = useState<OrdersSummary | null>(null);
   const [recentOrders, setRecentOrders] = useState<ApiOrder[]>([]);
@@ -40,10 +32,8 @@ export default function DashboardPage() {
       setLoading(false);
       return;
     }
-    const base = getApiBaseUrl();
-
-    const summaryRequest = fetchJson<OrdersSummary>(`${base}/orders/summary`);
-    const ordersRequest = fetchJson<unknown>(`${base}/orders`);
+    const summaryRequest = fetchApiJson<OrdersSummary>('/orders/summary');
+    const ordersRequest = fetchApiJson<unknown>('/orders');
 
     Promise.all([summaryRequest, ordersRequest])
       .then(([summaryData, orders]) => {
@@ -58,7 +48,7 @@ export default function DashboardPage() {
         console.error('Dashboard load failed:', error);
         setSummary(null);
         setRecentOrders([]);
-        setLoadError('ไม่สามารถโหลดข้อมูลสรุปของแดชบอร์ดได้ในขณะนี้ กรุณาลองรีเฟรชอีกครั้ง');
+        setLoadError(error instanceof Error && error.message ? error.message : 'ไม่สามารถโหลดข้อมูลสรุปของแดชบอร์ดได้ในขณะนี้ กรุณาลองรีเฟรชอีกครั้ง');
       })
       .finally(() => setLoading(false));
   }, []);
