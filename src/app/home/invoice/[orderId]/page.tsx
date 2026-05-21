@@ -1,9 +1,9 @@
 ﻿'use client';
 
 import { use, useEffect, useState } from 'react';
-import { Box, Button, Card, CircularProgress, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
+import { Box, Button, Card, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
-import { MissingApiConfigState } from '../../components/dashboardUi';
+import { InvoiceLoadingState, MissingApiConfigState } from '../../components/dashboardUi';
 import { getApiBaseUrl, isMissingApiBaseError } from '../../../../lib/api';
 
 interface CartItem {
@@ -102,14 +102,7 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
   }
 
   if (loading) {
-    return (
-      <Box sx={{ minHeight: '80vh', display: 'grid', placeItems: 'center' }}>
-        <Stack spacing={1} alignItems="center">
-          <CircularProgress />
-          <Typography>กำลังโหลดข้อมูล...</Typography>
-        </Stack>
-      </Box>
-    );
+    return <InvoiceLoadingState />;
   }
 
   if (!order) {

@@ -100,6 +100,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Create a small shared empty-state pattern for list and table screens, then apply it to orders, storage, POS product list, and upload queue without changing any fetching behavior."
 
 ### Task QW-03: Tighten loading-state consistency for dashboard and invoice screens
+- Status: completed on 2026-05-21
 - Task ID: QW-03
 - Title: Tighten loading-state consistency for dashboard and invoice screens
 - Why it matters: some screens use explicit loading placeholders while others fall back to minimal text or nothing. Better loading states improve perceived quality and are safe to ship.
