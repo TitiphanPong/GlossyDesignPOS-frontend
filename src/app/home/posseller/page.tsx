@@ -18,6 +18,7 @@ import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
 import { MissingApiConfigState } from '../components/dashboardUi';
 import { fetchApiJson, isMissingApiBaseError } from '../../../lib/api';
+import { computeTotals } from '../../utils/computeTotal';
 import { ActiveProduct, CartItem } from './types/cart';
 
 type Variant = { name: string; price: number; note?: string };
@@ -105,27 +106,12 @@ export default function SellPage() {
   const [lastPayment, setLastPayment] = React.useState<'cash' | 'promptpay'>('cash');
   const [taxInvoice, setTaxInvoice] = React.useState<'yes' | 'no'>('no');
 
-  const round2 = (n: number) => Math.round(n * 100) / 100;
-  const vatAmount = taxInvoice === 'yes' ? round2(cartState.netAfterDiscount * 0.07) : 0;
-  const grossTotal = round2(cartState.netAfterDiscount + vatAmount);
   const total = cartState.total;
-  const netAfterDiscount = cartState.netAfterDiscount;
   const cart = cartState.cart;
   const setCart = cartState.setCart;
   const discount = cartState.discount;
   const setDiscount = cartState.setDiscount;
-
-  const adjustedCart = cart.map(item => {
-    const itemNet = item.totalPrice || 0;
-    const ratio = total > 0 ? itemNet / total : 0;
-    const itemNetAfterDiscount = round2(netAfterDiscount * ratio);
-    const itemVat = taxInvoice === 'yes' ? round2(itemNetAfterDiscount * 0.07) : 0;
-    const itemGross = round2(itemNetAfterDiscount + itemVat);
-    if (item.fullPayment) return { ...item, deposit: itemGross, remaining: 0, totalPrice: itemNetAfterDiscount };
-    const safeBase = itemNet || 1;
-    const scale = itemGross / safeBase;
-    return { ...item, deposit: round2((item.deposit || 0) * scale), remaining: round2((item.remaining || 0) * scale), totalPrice: itemNetAfterDiscount };
-  });
+  const totals = React.useMemo(() => computeTotals(cart, discount, taxInvoice), [cart, discount, taxInvoice]);
 
   const handleCheckout = (payment: 'cash' | 'promptpay') => {
     setLastPayment(payment);
@@ -159,14 +145,12 @@ export default function SellPage() {
 
   const summaryStats = React.useMemo(() => {
     const itemCount = cart.reduce((acc, item) => acc + Number(item.qty || 0), 0);
-    const vat = taxInvoice === 'yes' ? netAfterDiscount * 0.07 : 0;
-    const amountDue = netAfterDiscount + vat;
     return {
       itemCount,
-      net: netAfterDiscount,
-      amountDue,
+      net: totals.finalTotal,
+      amountDue: totals.grandTotal,
     };
-  }, [cart, netAfterDiscount, taxInvoice]);
+  }, [cart, totals.finalTotal, totals.grandTotal]);
 
   const handleModalClose = React.useCallback(() => {
     closeModal();
@@ -315,15 +299,15 @@ export default function SellPage() {
             orderId: Date.now().toString(),
             ...data,
             payment: lastPayment,
-            total: netAfterDiscount,
+            total: totals.total,
             discount,
             status: 'pending',
-            depositTotal: adjustedCart.reduce((s, i) => s + (i.deposit || 0), 0),
-            remainingTotal: adjustedCart.reduce((s, i) => s + (i.remaining || 0), 0),
-            cart: adjustedCart,
+            depositTotal: totals.depositTotal,
+            remainingTotal: totals.remainingTotal,
+            cart: totals.adjustedCart,
             taxInvoice,
-            vatAmount,
-            grandTotal: grossTotal,
+            vatAmount: totals.vatAmount,
+            grandTotal: totals.grandTotal,
           };
           localStorage.setItem('pendingOrder', JSON.stringify(order));
           setCustomerModalOpen(false);

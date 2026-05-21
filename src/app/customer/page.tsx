@@ -9,6 +9,7 @@ import { Autoplay } from 'swiper/modules';
 import { motion } from 'framer-motion';
 import 'swiper/css';
 import './customer.css';
+import { computeOrderPaymentSummary, type PaymentSummaryResult } from '../utils/computeTotal';
 
 type PaymentMethod = 'cash' | 'promptpay' | 'transfer' | 'card';
 type OrderStatus = 'pending' | 'paid' | 'partial';
@@ -41,18 +42,6 @@ type Order = {
   taxInvoice?: 'yes' | 'no';
   vatAmount?: number;
   remainingTotal: number;
-};
-
-type PaymentSummary = {
-  subtotal: number;
-  discount: number;
-  netTotal: number;
-  vat: number;
-  grandTotal: number;
-  deposit: number;
-  remaining: number;
-  hasDeposit: boolean;
-  amountToPay: number;
 };
 
 type StatusMeta = {
@@ -125,30 +114,6 @@ function getOrderStatusMeta(status: OrderStatus): StatusMeta {
     border: 'rgba(0,200,100,0.45)',
     color: '#69F0AE',
     label: '• ชำระแล้ว',
-  };
-}
-
-function computePaymentSummary(order: Order): PaymentSummary {
-  const subtotal = order.total ?? 0;
-  const discount = order.discount ?? 0;
-  const netTotal = subtotal - discount;
-  const vat = order.taxInvoice === 'yes' ? (order.vatAmount ?? netTotal * 0.07) : 0;
-  const grandTotal = netTotal + vat;
-  const deposit = order.cart.reduce((sum, item) => sum + (item.deposit ?? 0), 0);
-  const remaining = order.cart.reduce((sum, item) => sum + (item.remaining ?? 0), 0);
-  const hasDeposit = order.cart.some(item => !item.fullPayment && (item.deposit ?? 0) > 0);
-  const amountToPay = hasDeposit && deposit > 0 ? deposit : grandTotal;
-
-  return {
-    subtotal,
-    discount,
-    netTotal,
-    vat,
-    grandTotal,
-    deposit,
-    remaining,
-    hasDeposit,
-    amountToPay,
   };
 }
 
@@ -744,7 +709,7 @@ function ActiveOrderScreen({
   promptpayId,
 }: Readonly<{
   order: Order;
-  summary: PaymentSummary;
+  summary: PaymentSummaryResult;
   currentStep: number;
   statusLabel: string;
   promptpayId: string;
@@ -1207,7 +1172,7 @@ export default function CustomerScreen() {
     return () => clearTimeout(timeoutId);
   }, [order]);
 
-  const summary = useMemo(() => (order ? computePaymentSummary(order) : null), [order]);
+  const summary = useMemo(() => (order ? computeOrderPaymentSummary(order) : null), [order]);
   const currentStep = order ? getWorkflowStep(order.status) : 3;
   const isPaid = order ? order.status === 'paid' || (order.status === 'partial' && order.remainingTotal === 0) : false;
   const statusLabel = STATUS_MESSAGES[currentStep] ?? 'กำลังดำเนินการ...';

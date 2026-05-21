@@ -152,6 +152,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Refactor duplicated POS modal wiring in `posseller/page.tsx` into a safer shared pattern without changing category matching, cart payload shape, or checkout behavior."
 
 ### Task RC-03: Unify cart total calculations around one source of truth
+- Status: completed on 2026-05-21
 - Task ID: RC-03
 - Title: Unify cart total calculations around one source of truth
 - Why it matters: totals are calculated in `useCart`, `posseller/page.tsx`, `customer/page.tsx`, and `computeTotal.ts`, which raises regression risk for discount, VAT, deposit, and remaining-balance logic.
