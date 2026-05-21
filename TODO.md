@@ -277,6 +277,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 ## 5. Test Suggestions
 
 ### Task TS-01: Add pure unit tests for total/payment calculations
+- Status: completed on 2026-05-21
 - Task ID: TS-01
 - Title: Add pure unit tests for total/payment calculations
 - Why it matters: discount, VAT, deposit, and remaining-balance math appears in multiple places and directly affects billing correctness.

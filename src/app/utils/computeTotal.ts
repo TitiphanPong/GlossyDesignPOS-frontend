@@ -1,6 +1,6 @@
 // src/utils/computeTotals.ts
 
-import { CartItem } from '../home/posseller/types/cart';
+import type { CartItem } from '../home/posseller/types/cart.ts';
 
 export interface TotalsResult {
   total: number; // ราคาก่อนส่วนลด
