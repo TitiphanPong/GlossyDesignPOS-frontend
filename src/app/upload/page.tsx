@@ -193,6 +193,19 @@ function UploadFileRow({ item, disableActions, onOpenFile, onRemove, statusPill 
   );
 }
 
+function UploadQueueEmptyState() {
+  return (
+    <div className="rounded-3xl border border-dashed border-indigo-200 bg-gradient-to-br from-white to-indigo-50/80 px-4 py-6 text-center shadow-[0_16px_36px_rgba(79,70,229,0.08)]">
+      <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-indigo-100 text-indigo-600">
+        <CloudUploadRounded className="h-6 w-6" />
+      </div>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-500">Upload queue</p>
+      <p className="mt-2 text-base font-semibold text-slate-800">ยังไม่มีไฟล์ในคิวอัปโหลด</p>
+      <p className="mt-1 text-sm text-slate-500">ลากไฟล์มาวาง หรือกดเลือกไฟล์จากเครื่องเพื่อเริ่มสร้างคิวงานได้ทันที</p>
+    </div>
+  );
+}
+
 export default function UploadPage() {
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [selectedJobType, setSelectedJobType] = useState<string>('document');
@@ -624,7 +637,7 @@ export default function UploadPage() {
 
               <div className="mt-4 space-y-2.5">
                 {uploadedFiles.length === 0 ? (
-                  <div className="rounded-2xl border border-slate-200 bg-white/80 px-4 py-5 text-center text-sm text-slate-500">ยังไม่มีไฟล์ในคิวอัปโหลด</div>
+                  <UploadQueueEmptyState />
                 ) : (
                   uploadedFiles.map(item => (
                     <UploadFileRow key={item.id} item={item} disableActions={disableFileActions} onOpenFile={handleOpenFile} onRemove={handleRemoveUploadedFile} statusPill={statusPill} />

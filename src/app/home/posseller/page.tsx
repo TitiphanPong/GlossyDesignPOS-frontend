@@ -96,8 +96,8 @@ function useDebouncedValue<T>(value: T, ms = 250) {
 }
 
 export default function SellPage() {
-  const [activeCat, setActiveCat] = React.useState<Category | 'ทั้งหมด'>('ทั้งหมด');
-  const [q, setQ] = React.useState('');
+  const [activeCat] = React.useState<Category | 'ทั้งหมด'>('ทั้งหมด');
+  const [q] = React.useState('');
   const qDebounced = useDebouncedValue(q, 200);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);

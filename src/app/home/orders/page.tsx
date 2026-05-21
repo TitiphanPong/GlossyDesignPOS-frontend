@@ -36,7 +36,7 @@ import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { commonButtonSx, statusChipSx, tableShellSx, uiCardSx } from '../components/adminUi';
-import { MissingApiConfigState } from '../components/dashboardUi';
+import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
@@ -743,7 +743,16 @@ export default function OrderManagementPage() {
 
           {isMobile ? (
             <Stack spacing={1.2} sx={{ p: 1.4 }}>
-              {pagedRows.length === 0 ? <Typography sx={{ py: 5, textAlign: 'center', color: '#94A3B8' }}>ไม่พบข้อมูลจากเงื่อนไขที่เลือก</Typography> : null}
+              {pagedRows.length === 0 ? (
+                <EmptyState
+                  compact
+                  icon={<SearchRoundedIcon fontSize="small" />}
+                  eyebrow="Orders"
+                  title="ไม่พบรายการออเดอร์ที่ตรงกับเงื่อนไข"
+                  subtitle="ลองเปลี่ยนคำค้นหา ตัวกรอง หรือช่วงเวลาเพื่อดูรายการเพิ่มเติม"
+                  sx={{ py: 4.5 }}
+                />
+              ) : null}
 
               {pagedRows.map(row => (
                 <Card key={row.id} variant="outlined" sx={{ borderRadius: 3, borderColor: '#E8EDF5' }}>
@@ -790,7 +799,13 @@ export default function OrderManagementPage() {
                   {pagedRows.length === 0 ? (
                     <TableRow>
                       <TableCell colSpan={7}>
-                        <Typography sx={{ py: 5, textAlign: 'center', color: '#94A3B8' }}>ไม่พบข้อมูลจากเงื่อนไขที่เลือก</Typography>
+                        <EmptyState
+                          compact
+                          icon={<SearchRoundedIcon fontSize="small" />}
+                          eyebrow="Orders"
+                          title="ไม่พบรายการออเดอร์ที่ตรงกับเงื่อนไข"
+                          subtitle="ลองเปลี่ยนคำค้นหา ตัวกรอง หรือช่วงเวลาเพื่อดูรายการเพิ่มเติม"
+                        />
                       </TableCell>
                     </TableRow>
                   ) : null}

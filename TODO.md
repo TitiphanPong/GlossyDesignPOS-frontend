@@ -90,6 +90,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Add a consistent low-risk API-base missing state across admin pages. Reuse existing UI patterns, avoid backend contract changes, and keep behavior identical except for clearer user-facing error handling."
 
 ### Task QW-02: Add shared empty-state copy for table/list pages
+- Status: completed on 2026-05-21
 - Task ID: QW-02
 - Title: Add shared empty-state copy for table/list pages
 - Why it matters: orders, storage, product list, and upload queue all show different empty-state language and styling. Unifying empty states improves polish without changing data logic.

@@ -58,7 +58,7 @@ import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
 import axios from 'axios';
-import { MissingApiConfigState } from '../components/dashboardUi';
+import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
 
 type StorageStatus = 'waiting' | 'processing' | 'completed';
@@ -850,7 +850,13 @@ export default function StoragePage() {
                 {!loading && filteredRows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={9}>
-                      <Typography sx={{ py: 5, textAlign: 'center', color: '#94A3B8' }}>ไม่พบข้อมูลจากเงื่อนไขที่เลือก</Typography>
+                      <EmptyState
+                        compact
+                        icon={<SearchRoundedIcon fontSize="small" />}
+                        eyebrow="Storage"
+                        title="ไม่พบงานอัปโหลดที่ตรงกับเงื่อนไข"
+                        subtitle="ลองเปลี่ยนคำค้นหา ตัวกรองสถานะ หรือวันที่อัปโหลดอีกครั้ง"
+                      />
                     </TableCell>
                   </TableRow>
                 ) : null}
