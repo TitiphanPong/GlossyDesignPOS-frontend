@@ -373,14 +373,14 @@ async function callOpenAI(task, systemPrompt, userPrompt) {
                 items: {
                   type: 'object',
                   additionalProperties: false,
-                  required: ['path', 'operation', 'format'],
+                  required: ['path', 'operation', 'format', 'content', 'search', 'replace'],
                   properties: {
                     path: { type: 'string' },
                     operation: { type: 'string', enum: ['create', 'update'] },
                     format: { type: 'string', enum: ['full', 'search_replace'] },
-                    content: { type: 'string' },
-                    search: { type: 'string' },
-                    replace: { type: 'string' },
+                    content: { type: ['string', 'null'] },
+                    search: { type: ['string', 'null'] },
+                    replace: { type: ['string', 'null'] },
                   },
                 },
               },
