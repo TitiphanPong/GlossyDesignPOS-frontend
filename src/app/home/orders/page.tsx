@@ -37,7 +37,7 @@ import dayjs from 'dayjs';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { commonButtonSx, statusChipSx, tableShellSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
-import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
+import { fetchApi, fetchApiJson, isMissingApiBaseError } from '../../../lib/api';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
@@ -190,13 +190,7 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
 }
 
 async function fetchOrderRows(): Promise<OrderRow[]> {
-  const base = getApiBaseUrl();
-  const response = await fetch(`${base}/orders`, { cache: 'no-store' });
-  if (!response.ok) {
-    throw new Error(`failed_with_status_${response.status}`);
-  }
-
-  const payload: unknown = await response.json();
+  const payload = await fetchApiJson<unknown>('/orders', { cache: 'no-store' });
   if (!isApiOrderArray(payload)) {
     throw new Error('invalid_orders_payload');
   }
@@ -205,25 +199,19 @@ async function fetchOrderRows(): Promise<OrderRow[]> {
 }
 
 async function updateOrderStatus(orderId: string, status: PaymentStatus): Promise<void> {
-  const base = getApiBaseUrl();
-  const endpoints = [`${base}/orders/${orderId}/status`, `${base}/orders/${orderId}`];
+  const endpoints = [`/orders/${orderId}/status`, `/orders/${orderId}`];
   let lastError: Error | null = null;
 
   for (const endpoint of endpoints) {
     try {
-      const response = await fetch(endpoint, {
+      await fetchApi(endpoint, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status }),
       });
-
-      if (response.ok) {
-        return;
-      }
-
-      lastError = new Error(`failed_with_status_${response.status}`);
-    } catch {
-      lastError = new Error('update_request_failed');
+      return;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('update_request_failed');
     }
   }
 
@@ -391,7 +379,7 @@ export default function OrderManagementPage() {
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
       } else {
-        setLoadError('โหลดรายการออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        setLoadError(error instanceof Error && error.message ? error.message : 'โหลดรายการออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
       }
     } finally {
       setIsLoading(false);
@@ -494,8 +482,8 @@ export default function OrderManagementPage() {
       try {
         await updateOrderStatus(targetId, 'paid');
         await loadOrders();
-      } catch {
-        setLoadError('อัปเดตสถานะชำระเงินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      } catch (error) {
+        setLoadError(error instanceof Error && error.message ? error.message : 'อัปเดตสถานะชำระเงินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
       } finally {
         setUpdatingOrderId(null);
       }
@@ -512,8 +500,8 @@ export default function OrderManagementPage() {
       try {
         await updateOrderStatus(targetId, 'cancelled');
         await loadOrders();
-      } catch {
-        setLoadError('ยกเลิกรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      } catch (error) {
+        setLoadError(error instanceof Error && error.message ? error.message : 'ยกเลิกรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
       } finally {
         setUpdatingOrderId(null);
       }

@@ -26,7 +26,7 @@ import PremiumProductModal from './components/premiumProductModal';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
 import { MissingApiConfigState } from '../components/dashboardUi';
-import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
+import { fetchApiJson, isMissingApiBaseError } from '../../../lib/api';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -141,17 +141,14 @@ export default function SellPage() {
   React.useEffect(() => {
     const loadProducts = async () => {
       try {
-        const base = getApiBaseUrl();
-        const res = await fetch(`${base}/products`);
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const data = (await res.json()) as Product[];
+        const data = await fetchApiJson<Product[]>('/products');
         const fixedData = Array.isArray(data) ? data.map(normalizeProduct) : [];
         setProducts(fixedData);
       } catch (error) {
         if (isMissingApiBaseError(error)) {
           setMissingApiBase(true);
         } else {
-          setErrorMsg('โหลดสินค้าล้มเหลว กรุณาลองใหม่');
+          setErrorMsg(error instanceof Error && error.message ? error.message : 'โหลดสินค้าล้มเหลว กรุณาลองใหม่');
         }
       } finally {
         setLoading(false);

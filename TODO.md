@@ -132,6 +132,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 ## 2. Refactor Candidates
 
 ### Task RC-01: Extract shared admin fetch helper with better error parsing
+- Status: completed on 2026-05-21
 - Task ID: RC-01
 - Title: Extract shared admin fetch helper with better error parsing
 - Why it matters: raw `fetch` logic is repeated across dashboard, orders, POS, invoice, and success modal, while `src/lib/api.ts` is too thin and inconsistent with `upload-api.ts`. A shared helper would reduce duplicate error handling safely.
