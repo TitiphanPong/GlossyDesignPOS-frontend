@@ -120,6 +120,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Improve the upload page’s mobile action layout and step navigation without changing upload logic. Keep the current visual language and make the primary action easier to reach on small screens."
 
 ### Task QW-05: Improve drawer behavior on smaller admin screens
+- Status: completed on 2026-05-21
 - Task ID: QW-05
 - Title: Improve drawer behavior on smaller admin screens
 - Why it matters: storage and orders both use heavy detail drawers with dense content that may be cramped on tablets and small laptops. Responsive spacing and sticky action cleanup are low-risk usability wins.
@@ -205,6 +206,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Align customer-display order/payment typings with shared contracts while preserving its UI-specific extensions. Add safe handling for unsupported or unexpected status values."
 
 ### Task BR-04: Replace silent fetch failures with user-visible errors on dashboard
+- Status: completed on 2026-05-21
 - Task ID: BR-04
 - Title: Replace silent fetch failures with user-visible errors on dashboard
 - Why it matters: the dashboard swallows fetch errors with an empty catch block, which can render partial or misleading data without explanation.

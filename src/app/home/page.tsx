@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { Box } from '@mui/material';
+import { Alert, Box, Typography } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { ApiOrder, OrdersSummary } from '../../lib/contracts';
 import { getApiBaseUrl, hasApiBaseUrl } from '../../lib/api';
@@ -19,11 +19,20 @@ import { LoadingState, MissingApiConfigState } from './components/dashboardUi';
 
 const isApiOrderArray = (value: unknown): value is ApiOrder[] => Array.isArray(value);
 
+async function fetchJson<T>(input: string): Promise<T> {
+  const response = await fetch(input);
+  if (!response.ok) {
+    throw new Error(`request_failed_${response.status}`);
+  }
+  return response.json() as Promise<T>;
+}
+
 export default function DashboardPage() {
   const [summary, setSummary] = useState<OrdersSummary | null>(null);
   const [recentOrders, setRecentOrders] = useState<ApiOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [missingApiBase, setMissingApiBase] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!hasApiBaseUrl()) {
@@ -33,18 +42,24 @@ export default function DashboardPage() {
     }
     const base = getApiBaseUrl();
 
-    const summaryRequest: Promise<OrdersSummary> = fetch(`${base}/orders/summary`).then((response) => response.json());
-    const ordersRequest: Promise<unknown> = fetch(`${base}/orders`).then((response) => response.json());
+    const summaryRequest = fetchJson<OrdersSummary>(`${base}/orders/summary`);
+    const ordersRequest = fetchJson<unknown>(`${base}/orders`);
 
     Promise.all([summaryRequest, ordersRequest])
       .then(([summaryData, orders]) => {
+        setLoadError(null);
         setSummary(summaryData);
         if (isApiOrderArray(orders)) {
           const sorted = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
           setRecentOrders(sorted.slice(0, 8));
         }
       })
-      .catch(() => {})
+      .catch(error => {
+        console.error('Dashboard load failed:', error);
+        setSummary(null);
+        setRecentOrders([]);
+        setLoadError('ไม่สามารถโหลดข้อมูลสรุปของแดชบอร์ดได้ในขณะนี้ กรุณาลองรีเฟรชอีกครั้ง');
+      })
       .finally(() => setLoading(false));
   }, []);
 
@@ -66,6 +81,17 @@ export default function DashboardPage() {
 
   return (
     <AdminPageContainer title="Dashboard" subtitle="ภาพรวมการขายและสถานะธุรกิจวันนี้">
+      {loadError ? (
+        <Alert severity="warning" sx={{ mb: 2.5, borderRadius: 3, alignItems: 'flex-start' }}>
+          <Typography variant="subtitle2" fontWeight={700}>
+            ข้อมูลแดชบอร์ดอาจไม่ครบถ้วน
+          </Typography>
+          <Typography variant="body2" sx={{ mt: 0.5 }}>
+            {loadError}
+          </Typography>
+        </Alert>
+      ) : null}
+
       <DashboardHeader />
 
       <KPICards salesToday={summary?.salesToday} cashToday={summary?.cashToday} promptPayToday={summary?.promptPayToday} completed={summary?.completed} />
