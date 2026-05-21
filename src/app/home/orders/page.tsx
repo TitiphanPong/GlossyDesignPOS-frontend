@@ -37,6 +37,7 @@ import dayjs from 'dayjs';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { commonButtonSx, statusChipSx, tableShellSx, uiCardSx } from '../components/adminUi';
 import { MissingApiConfigState } from '../components/dashboardUi';
+import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
@@ -189,11 +190,7 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
 }
 
 async function fetchOrderRows(): Promise<OrderRow[]> {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? '';
-  if (!base) {
-    throw new Error('missing_api_base');
-  }
-
+  const base = getApiBaseUrl();
   const response = await fetch(`${base}/orders`, { cache: 'no-store' });
   if (!response.ok) {
     throw new Error(`failed_with_status_${response.status}`);
@@ -208,11 +205,7 @@ async function fetchOrderRows(): Promise<OrderRow[]> {
 }
 
 async function updateOrderStatus(orderId: string, status: PaymentStatus): Promise<void> {
-  const base = process.env.NEXT_PUBLIC_API_URL ?? '';
-  if (!base) {
-    throw new Error('missing_api_base');
-  }
-
+  const base = getApiBaseUrl();
   const endpoints = [`${base}/orders/${orderId}/status`, `${base}/orders/${orderId}`];
   let lastError: Error | null = null;
 
@@ -367,6 +360,7 @@ export default function OrderManagementPage() {
   const [rows, setRows] = React.useState<OrderRow[]>([]);
   const [isLoading, setIsLoading] = React.useState(false);
   const [loadError, setLoadError] = React.useState<string | null>(null);
+  const [missingApiBase, setMissingApiBase] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'all' | PaymentStatus>('all');
   const [monthFilter, setMonthFilter] = React.useState<string>('all');
@@ -385,6 +379,7 @@ export default function OrderManagementPage() {
   const loadOrders = React.useCallback(async () => {
     setIsLoading(true);
     setLoadError(null);
+    setMissingApiBase(false);
 
     try {
       const mappedRows = await fetchOrderRows();
@@ -392,8 +387,8 @@ export default function OrderManagementPage() {
       setLastUpdated(dayjs());
     } catch (error) {
       setRows([]);
-      if (error instanceof Error && error.message === 'missing_api_base') {
-        setLoadError('ไม่พบ NEXT_PUBLIC_API_URL สำหรับเชื่อมต่อ API');
+      if (isMissingApiBaseError(error)) {
+        setMissingApiBase(true);
       } else {
         setLoadError('โหลดรายการออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
       }
@@ -525,7 +520,7 @@ export default function OrderManagementPage() {
               background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
             }}>
             <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
-              {loadError === 'ไม่พบ NEXT_PUBLIC_API_URL สำหรับเชื่อมต่อ API' ? (
+              {missingApiBase ? (
                 <Box sx={{ mb: 2.2 }}>
                   <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้ารายการออเดอร์ดึงข้อมูลจากระบบได้" />
                 </Box>
@@ -536,7 +531,7 @@ export default function OrderManagementPage() {
                   <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Orders</Typography>
                   <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>ติดตามออเดอร์ลูกค้า สถานะการชำระเงิน งานพิมพ์ และจัดการเอกสารการขายแบบครบวงจร</Typography>
                   <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>Last synced {lastUpdated ? lastUpdated.format('DD/MM/YYYY HH:mm') : '-'}</Typography>
-                  {loadError && loadError !== 'ไม่พบ NEXT_PUBLIC_API_URL สำหรับเชื่อมต่อ API' ? <Typography sx={{ mt: 0.8, color: '#C62828', fontSize: 12.5 }}>{loadError}</Typography> : null}
+                  {loadError ? <Typography sx={{ mt: 0.8, color: '#C62828', fontSize: 12.5 }}>{loadError}</Typography> : null}
                 </Box>
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }}>

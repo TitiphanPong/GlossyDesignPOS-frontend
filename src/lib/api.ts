@@ -1,7 +1,17 @@
+export const MISSING_API_BASE_ERROR = 'missing_api_base';
+
+export function hasApiBaseUrl(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_API_URL);
+}
+
+export function isMissingApiBaseError(error: unknown): boolean {
+  return error instanceof Error && error.message === MISSING_API_BASE_ERROR;
+}
+
 export function getApiBaseUrl(): string {
   const apiBase = process.env.NEXT_PUBLIC_API_URL;
   if (!apiBase) {
-    throw new Error('Missing NEXT_PUBLIC_API_URL. Please configure environment variables before making API requests.');
+    throw new Error(MISSING_API_BASE_ERROR);
   }
   return apiBase;
 }

@@ -59,6 +59,7 @@ import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
 import axios from 'axios';
 import { MissingApiConfigState } from '../components/dashboardUi';
+import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
 
 type StorageStatus = 'waiting' | 'processing' | 'completed';
 type SortType = 'newest' | 'oldest' | 'customer' | 'status';
@@ -121,10 +122,6 @@ type StorageRow = {
 const endpointCandidates = ['/uploads', '/upload'];
 
 const softBlue = '#3778FF';
-
-function getBaseUrl() {
-  return process.env.NEXT_PUBLIC_API_URL ?? '';
-}
 
 function inferStatus(rawStatus?: string): StorageStatus {
   const status = (rawStatus ?? '').toLowerCase();
@@ -303,6 +300,7 @@ export default function StoragePage() {
   const [rows, setRows] = React.useState<StorageRow[]>([]);
   const [loading, setLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
+  const [missingApiBase, setMissingApiBase] = React.useState(false);
 
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'all' | StorageStatus>('all');
@@ -321,17 +319,12 @@ export default function StoragePage() {
   const [rowMenuId, setRowMenuId] = React.useState<string | null>(null);
 
   const fetchUploads = React.useCallback(async () => {
-    const base = getBaseUrl();
-    if (!base) {
-      setRows([]);
-      setErrorMessage('ไม่พบ NEXT_PUBLIC_API_URL กรุณาตรวจสอบการตั้งค่า environment');
-      return;
-    }
-
     setLoading(true);
     setErrorMessage(null);
+    setMissingApiBase(false);
 
     try {
+      const base = getApiBaseUrl();
       let loaded = false;
 
       for (const endpoint of endpointCandidates) {
@@ -359,6 +352,13 @@ export default function StoragePage() {
 
       if (!loaded) {
         setRows([]);
+        setErrorMessage('ไม่สามารถโหลดข้อมูลจาก API ได้ กรุณาตรวจสอบ endpoint /uploads หรือ /upload');
+      }
+    } catch (error) {
+      setRows([]);
+      if (isMissingApiBaseError(error)) {
+        setMissingApiBase(true);
+      } else {
         setErrorMessage('ไม่สามารถโหลดข้อมูลจาก API ได้ กรุณาตรวจสอบ endpoint /uploads หรือ /upload');
       }
     } finally {
@@ -647,16 +647,17 @@ export default function StoragePage() {
               </Stack>
             </Stack>
 
-            {errorMessage &&
-              (errorMessage === 'ไม่พบ NEXT_PUBLIC_API_URL กรุณาตรวจสอบการตั้งค่า environment' ? (
-                <Box sx={{ mt: 2.2 }}>
-                  <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้าคลังไฟล์เชื่อมต่อรายการอัปโหลดได้" />
-                </Box>
-              ) : (
-                <Alert severity="warning" sx={{ mt: 2.2, borderRadius: 3 }}>
-                  {errorMessage}
-                </Alert>
-              ))}
+            {missingApiBase ? (
+              <Box sx={{ mt: 2.2 }}>
+                <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้าคลังไฟล์เชื่อมต่อรายการอัปโหลดได้" />
+              </Box>
+            ) : null}
+
+            {errorMessage ? (
+              <Alert severity="warning" sx={{ mt: 2.2, borderRadius: 3 }}>
+                {errorMessage}
+              </Alert>
+            ) : null}
           </CardContent>
         </Card>
 
