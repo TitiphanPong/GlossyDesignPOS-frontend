@@ -5,6 +5,20 @@ export type SizeItem = {
   width: string;
 };
 
+export type ActiveProduct = {
+  id: string;
+  name: string;
+  category?: string;
+};
+
+export type ProductModalComponentProps = {
+  open: boolean;
+  onClose: () => void;
+  onSelect: (item: CartItem) => void;
+  productName: string;
+  initialData?: Partial<CartItem>;
+};
+
 export type CartItem = {
   key: string;
   name: string;
