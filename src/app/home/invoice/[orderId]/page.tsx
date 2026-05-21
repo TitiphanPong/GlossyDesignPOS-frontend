@@ -4,6 +4,7 @@ import { use, useEffect, useState } from 'react';
 import { Box, Button, Card, CircularProgress, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import { MissingApiConfigState } from '../../components/dashboardUi';
+import { getApiBaseUrl, isMissingApiBaseError } from '../../../../lib/api';
 
 interface CartItem {
   name: string;
@@ -73,20 +74,18 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
 
   useEffect(() => {
     const fetchOrder = async () => {
-      const base = process.env.NEXT_PUBLIC_API_URL ?? '';
-      if (!base) {
-        setMissingApiBase(true);
-        setLoading(false);
-        return;
-      }
-
       try {
+        const base = getApiBaseUrl();
         const res = await fetch(`${base}/orders/${orderId}`);
         if (!res.ok) throw new Error('โหลดออเดอร์ไม่สำเร็จ');
         const data = await res.json();
         setOrder(data);
-      } catch (err) {
-        console.error('Error:', err);
+      } catch (error) {
+        if (isMissingApiBaseError(error)) {
+          setMissingApiBase(true);
+        } else {
+          console.error('Error:', error);
+        }
       } finally {
         setLoading(false);
       }

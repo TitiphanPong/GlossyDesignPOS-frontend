@@ -80,6 +80,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 ## 1. Quick Wins
 
 ### Task QW-01: Standardize missing API-base error states on admin pages
+- Status: completed on 2026-05-21
 - Task ID: QW-01
 - Title: Standardize missing API-base error states on admin pages
 - Why it matters: `NEXT_PUBLIC_API_URL` is handled differently across dashboard, orders, storage, POS, invoice, and upload flows. A consistent visible fallback is a safe improvement that reduces blank or misleading screens.

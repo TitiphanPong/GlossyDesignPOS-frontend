@@ -17,4 +17,7 @@ __pycache__/
 *.pyc
 yaml.py
 selected-task.json
+selected-task-prompt.md
 ai-result.json
+codex-last-message.txt
+codex-cycle-summary.json

@@ -9,7 +9,11 @@
     "start": "next start",
     "lint": "eslint .",
     "check:utf8": "node scripts/check-utf8.cjs",
-    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
+    "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
+    "codex:todo:select": "node scripts/codex-select-task.cjs --output selected-task.json",
+    "codex:todo:prepare": "node scripts/codex-prepare-local-task.cjs --output selected-task.json --prompt-output selected-task-prompt.md",
+    "codex:todo:complete": "node scripts/codex-complete-local-task.cjs --task selected-task.json",
+    "codex:todo:cycle": "node scripts/codex-cycle-local-task.cjs"
   },
   "dependencies": {
     "@emotion/react": "^11.14.0",

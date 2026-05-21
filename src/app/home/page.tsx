@@ -3,6 +3,7 @@
 import { Box } from '@mui/material';
 import { useEffect, useState } from 'react';
 import { ApiOrder, OrdersSummary } from '../../lib/contracts';
+import { getApiBaseUrl, hasApiBaseUrl } from '../../lib/api';
 
 import DashboardHeader from './components/dashboard/DashboardHeader';
 import KPICards from './components/dashboard/KPICards';
@@ -25,12 +26,12 @@ export default function DashboardPage() {
   const [missingApiBase, setMissingApiBase] = useState(false);
 
   useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? '';
-    if (!base) {
+    if (!hasApiBaseUrl()) {
       setMissingApiBase(true);
       setLoading(false);
       return;
     }
+    const base = getApiBaseUrl();
 
     const summaryRequest: Promise<OrdersSummary> = fetch(`${base}/orders/summary`).then((response) => response.json());
     const ordersRequest: Promise<unknown> = fetch(`${base}/orders`).then((response) => response.json());

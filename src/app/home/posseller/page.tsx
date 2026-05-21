@@ -26,6 +26,7 @@ import PremiumProductModal from './components/premiumProductModal';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
 import { MissingApiConfigState } from '../components/dashboardUi';
+import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -101,6 +102,7 @@ export default function SellPage() {
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
+  const [missingApiBase, setMissingApiBase] = React.useState(false);
   const cartState = useCart();
   const modalState = useProductModals();
   const [customer, setCustomer] = React.useState({ customerName: '', phoneNumber: '', note: '' });
@@ -137,24 +139,26 @@ export default function SellPage() {
   };
 
   React.useEffect(() => {
-    const base = process.env.NEXT_PUBLIC_API_URL ?? '';
-    if (!base) {
-      setErrorMsg('ยังไม่ได้ตั้งค่า NEXT_PUBLIC_API_URL ใน .env');
-      setLoading(false);
-      return;
-    }
-    fetch(`${base}/products`)
-      .then(async res => {
+    const loadProducts = async () => {
+      try {
+        const base = getApiBaseUrl();
+        const res = await fetch(`${base}/products`);
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = (await res.json()) as Product[];
         const fixedData = Array.isArray(data) ? data.map(normalizeProduct) : [];
         setProducts(fixedData);
+      } catch (error) {
+        if (isMissingApiBaseError(error)) {
+          setMissingApiBase(true);
+        } else {
+          setErrorMsg('โหลดสินค้าล้มเหลว กรุณาลองใหม่');
+        }
+      } finally {
         setLoading(false);
-      })
-      .catch(() => {
-        setErrorMsg('โหลดสินค้าล้มเหลว กรุณาลองใหม่');
-        setLoading(false);
-      });
+      }
+    };
+
+    void loadProducts();
   }, []);
 
   const filtered = React.useMemo(
@@ -219,13 +223,13 @@ export default function SellPage() {
       </Box>
 
       {/* Error Message */}
-      {errorMsg === 'ยังไม่ได้ตั้งค่า NEXT_PUBLIC_API_URL ใน .env' ? (
+      {missingApiBase ? (
         <Box sx={{ mb: 2 }}>
           <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้าขายดึงรายการสินค้าและบันทึกออเดอร์ได้" />
         </Box>
       ) : null}
 
-      {errorMsg && errorMsg !== 'ยังไม่ได้ตั้งค่า NEXT_PUBLIC_API_URL ใน .env' ? (
+      {errorMsg ? (
         <Alert severity="error" sx={{ mb: 2 }}>
           {errorMsg}
         </Alert>

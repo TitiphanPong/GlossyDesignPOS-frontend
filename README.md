@@ -72,6 +72,63 @@ Notes:
 - if no spend limits are configured, the quota guard stays disabled and the workflow proceeds normally
 - each run writes a GitHub Actions summary, and quota-blocked or no-task runs also leave a note on the `Codex Queue` issue
 
+## Use Codex Session Quota Locally
+
+If you want Codex to pick the next TODO during an interactive Codex session, use the local queue helper instead of the GitHub Actions flow.
+
+```bash
+npm run codex:todo:prepare
+```
+
+That command does two things:
+
+- writes the next eligible task to `selected-task.json`
+- writes a ready-to-use Codex prompt to `selected-task-prompt.md`
+
+Suggested local loop:
+
+1. Run `npm run codex:todo:prepare`
+2. Ask Codex to open `selected-task-prompt.md` and implement the task
+3. After verification passes, run `npm run codex:todo:complete`
+
+One-command local cycle:
+
+```bash
+npm run codex:todo:cycle
+```
+
+What it does:
+
+- selects the next eligible task from `TODO.md`
+- switches to the task branch
+- runs `codex exec` with the generated prompt
+- runs `npm run check:utf8`, `npm run lint`, and `npm run build`
+- marks the task as completed in `TODO.md`
+- commits the result
+- pushes the task branch
+- tries to open a draft PR through the GitHub REST API when `GITHUB_TOKEN`, `GH_TOKEN`, or `GIT_TOKEN` is available
+
+Useful flags:
+
+- `node scripts/codex-cycle-local-task.cjs --task-id QW-01`
+- `node scripts/codex-cycle-local-task.cjs --allow-dirty`
+- `node scripts/codex-cycle-local-task.cjs --skip-push --skip-pr`
+- `node scripts/codex-cycle-local-task.cjs --model gpt-5.5`
+
+Recommended Codex prompt:
+
+```txt
+Open `selected-task-prompt.md` and `selected-task.json`, then implement the task end-to-end.
+```
+
+Notes:
+
+- this local path is meant for Codex sessions like the one you are using now, so it fits the "use Codex quota" workflow better than the GitHub Action
+- the GitHub Actions workflow still uses `OPENAI_API_KEY`, so it is separate from your interactive Codex session quota
+- if you want a specific task, run `node scripts/codex-prepare-local-task.cjs --task-id QW-01`
+- `npm run codex:todo:complete` reads `selected-task.json` and marks that task as completed in `TODO.md`
+- `npm run codex:todo:cycle` expects a clean working tree by default; use `--allow-dirty` only when you intentionally want current changes included in the branch
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:
