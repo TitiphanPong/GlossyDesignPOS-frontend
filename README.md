@@ -44,6 +44,14 @@ Optional repository secret and variables for quota guard:
 - `OPENAI_DAILY_USD_LIMIT`
 - `OPENAI_MONTHLY_USD_LIMIT`
 
+Recommended GitHub Actions setup:
+
+- add `OPENAI_API_KEY` in `Settings > Secrets and variables > Actions > Secrets`
+- add `OPENAI_ADMIN_API_KEY` only if you want the quota guard to enforce spend limits
+- add `OPENAI_PROJECT_ID` if your costs endpoint should be scoped to one OpenAI project
+- add `OPENAI_DAILY_USD_LIMIT` and `OPENAI_MONTHLY_USD_LIMIT` in `Settings > Secrets and variables > Actions > Variables`
+- if `OPENAI_API_KEY` is missing, the workflow now skips cleanly and leaves a readable note in the Actions summary and `Codex Queue` issue instead of failing deep in the AI step
+
 Optional manual trigger inputs:
 
 - `task_id` to force a specific TODO task

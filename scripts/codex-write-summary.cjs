@@ -33,6 +33,7 @@ function main() {
   const mode = args.mode || 'generic';
   const taskId = args['task-id'] || '-';
   const taskTitle = args['task-title'] || '-';
+  const configReason = args['config-reason'] || '';
   const quotaReason = args['quota-reason'] || '';
   const skipReason = args['skip-reason'] || '';
   const branchName = args['branch-name'] || '-';
@@ -44,6 +45,11 @@ function main() {
 
   if (mode === 'no-task') {
     lines.push('Status: no eligible task found in `TODO.md`.');
+  } else if (mode === 'config-blocked') {
+    lines.push('Status: skipped by automation config check.');
+    lines.push('');
+    lines.push(`Task: ${taskId} ${taskTitle}`);
+    lines.push(`Reason: ${configReason || '-'}`);
   } else if (mode === 'quota-blocked') {
     lines.push('Status: skipped by quota guard.');
     lines.push('');

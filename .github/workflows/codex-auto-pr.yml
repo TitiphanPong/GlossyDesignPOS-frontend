@@ -124,8 +124,15 @@ jobs:
           OPENAI_MONTHLY_USD_LIMIT: ${{ github.event.inputs.monthly_usd_limit || vars.OPENAI_MONTHLY_USD_LIMIT || '' }}
         run: node scripts/codex-check-quota.cjs
 
-      - name: Generate bounded AI change set
+      - name: Check automation config
         if: steps.select.outputs.has_task == 'true' && steps.quota.outputs.quota_ok == 'true'
+        id: config
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: node scripts/codex-check-config.cjs
+
+      - name: Generate bounded AI change set
+        if: steps.select.outputs.has_task == 'true' && steps.quota.outputs.quota_ok == 'true' && steps.config.outputs.config_ok == 'true'
         id: ai
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -167,7 +174,7 @@ jobs:
           node scripts/codex-write-summary.cjs --mode pr-opened --task-id "${{ steps.select.outputs.task_id }}" --task-title "${{ steps.select.outputs.task_title }}" --branch-name "${{ steps.select.outputs.branch_name }}" --pr-title "${{ steps.ai.outputs.pr_title }}"
 
       - name: Report skipped automation
-        if: steps.select.outputs.has_task == 'true' && (steps.quota.outputs.quota_ok != 'true' || steps.ai.outputs.has_changes != 'true')
+        if: steps.select.outputs.has_task == 'true' && (steps.quota.outputs.quota_ok != 'true' || steps.config.outputs.config_ok != 'true' || steps.ai.outputs.has_changes != 'true')
         run: |
           if [ "${{ steps.quota.outputs.quota_ok }}" != "true" ]; then
             echo "Task was skipped by quota guard."
@@ -175,14 +182,18 @@ jobs:
             echo "24h spend (USD): ${{ steps.quota.outputs.daily_spend_usd }}"
             echo "Month-to-date spend (USD): ${{ steps.quota.outputs.monthly_spend_usd }}"
             node scripts/codex-write-summary.cjs --mode quota-blocked --task-id "${{ steps.select.outputs.task_id }}" --task-title "${{ steps.select.outputs.task_title }}" --quota-reason "${{ steps.quota.outputs.quota_reason }}" --daily-spend "${{ steps.quota.outputs.daily_spend_usd }}" --monthly-spend "${{ steps.quota.outputs.monthly_spend_usd }}"
+          elif [ "${{ steps.config.outputs.config_ok }}" != "true" ]; then
+            echo "Task was skipped by automation config check."
+            echo "Reason: ${{ steps.config.outputs.config_reason }}"
+            node scripts/codex-write-summary.cjs --mode config-blocked --task-id "${{ steps.select.outputs.task_id }}" --task-title "${{ steps.select.outputs.task_title }}" --config-reason "${{ steps.config.outputs.config_reason }}"
           else
             echo "Task was skipped or produced no safe change."
             echo "Reason: ${{ steps.ai.outputs.skip_reason }}"
             node scripts/codex-write-summary.cjs --mode ai-skipped --task-id "${{ steps.select.outputs.task_id }}" --task-title "${{ steps.select.outputs.task_title }}" --skip-reason "${{ steps.ai.outputs.skip_reason }}"
           fi
 
-      - name: Comment on Codex Queue when quota blocks automation
-        if: steps.select.outputs.has_task == 'true' && steps.quota.outputs.quota_ok != 'true'
+      - name: Comment on Codex Queue when automation is blocked
+        if: steps.select.outputs.has_task == 'true' && (steps.quota.outputs.quota_ok != 'true' || steps.config.outputs.config_ok != 'true')
         uses: actions/github-script@v7
         with:
           script: |
@@ -203,18 +214,27 @@ jobs:
               owner,
               repo,
               issue_number: issue.number,
-              body: [
-                `<!-- codex-auto-pr:quota:${context.runId} -->`,
-                `Skipped automation for ${process.env.TASK_ID} ${process.env.TASK_TITLE}`,
-                ``,
-                `Reason: ${process.env.QUOTA_REASON}`,
-                `24h spend (USD): ${process.env.DAILY_SPEND || '-'}`,
-                `Month-to-date spend (USD): ${process.env.MONTHLY_SPEND || '-'}`,
-              ].join('\n'),
+              body: process.env.CONFIG_REASON
+                ? [
+                    `<!-- codex-auto-pr:config:${context.runId} -->`,
+                    `Skipped automation for ${process.env.TASK_ID} ${process.env.TASK_TITLE}`,
+                    ``,
+                    `Reason: ${process.env.CONFIG_REASON}`,
+                    'Fix: add the required `OPENAI_API_KEY` repository secret in GitHub Actions settings.',
+                  ].join('\n')
+                : [
+                    `<!-- codex-auto-pr:quota:${context.runId} -->`,
+                    `Skipped automation for ${process.env.TASK_ID} ${process.env.TASK_TITLE}`,
+                    ``,
+                    `Reason: ${process.env.QUOTA_REASON}`,
+                    `24h spend (USD): ${process.env.DAILY_SPEND || '-'}`,
+                    `Month-to-date spend (USD): ${process.env.MONTHLY_SPEND || '-'}`,
+                  ].join('\n'),
             });
         env:
           TASK_ID: ${{ steps.select.outputs.task_id }}
           TASK_TITLE: ${{ steps.select.outputs.task_title }}
+          CONFIG_REASON: ${{ steps.config.outputs.config_reason }}
           QUOTA_REASON: ${{ steps.quota.outputs.quota_reason }}
           DAILY_SPEND: ${{ steps.quota.outputs.daily_spend_usd }}
           MONTHLY_SPEND: ${{ steps.quota.outputs.monthly_spend_usd }}
