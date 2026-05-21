@@ -142,6 +142,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Refactor duplicated frontend fetch logic into a shared helper with safer API-base checks and readable error messages. Keep request/response contracts the same and migrate only obvious call sites."
 
 ### Task RC-02: Consolidate POS modal open/select/update boilerplate
+- Status: completed on 2026-05-21
 - Task ID: RC-02
 - Title: Consolidate POS modal open/select/update boilerplate
 - Why it matters: `posseller/page.tsx` repeats nearly identical modal wiring for every product type. This increases maintenance cost and makes safe category additions harder.
