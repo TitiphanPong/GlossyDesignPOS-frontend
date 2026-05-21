@@ -24,11 +24,66 @@ export function SearchToolbar({ children }: Readonly<{ children: ReactNode }>) {
   return <Card sx={topActionBarSx}>{children}</Card>;
 }
 
-export function EmptyState({ title, subtitle }: Readonly<{ title: string; subtitle?: string }>) {
+export function EmptyState({
+  title,
+  subtitle,
+  icon,
+  eyebrow = 'No results',
+  compact = false,
+  sx = {},
+}: Readonly<{
+  title: string;
+  subtitle?: string;
+  icon?: ReactNode;
+  eyebrow?: string;
+  compact?: boolean;
+  sx?: object;
+}>) {
   return (
-    <Box sx={{ py: 6, textAlign: 'center' }}>
-      <Typography variant="h6" fontWeight={700}>{title}</Typography>
-      {subtitle ? <Typography color="text.secondary" sx={{ mt: 0.75 }}>{subtitle}</Typography> : null}
+    <Box
+      sx={{
+        py: compact ? 4 : 6,
+        px: compact ? 2.5 : 3,
+        textAlign: 'center',
+        borderRadius: compact ? 3 : 4,
+        border: '1px dashed #D9E3F2',
+        background: 'linear-gradient(180deg, #FCFDFF 0%, #F7FAFF 100%)',
+        ...sx,
+      }}>
+      {icon ? (
+        <Box
+          sx={{
+            width: compact ? 44 : 54,
+            height: compact ? 44 : 54,
+            mx: 'auto',
+            mb: 1.5,
+            display: 'grid',
+            placeItems: 'center',
+            borderRadius: compact ? 2.5 : 3,
+            bgcolor: '#EAF1FF',
+            color: '#2957D8',
+          }}>
+          {icon}
+        </Box>
+      ) : null}
+      <Typography
+        sx={{
+          fontSize: 11,
+          fontWeight: 800,
+          letterSpacing: '0.18em',
+          textTransform: 'uppercase',
+          color: '#5B7BE2',
+        }}>
+        {eyebrow}
+      </Typography>
+      <Typography variant="h6" fontWeight={700} sx={{ mt: 1 }}>
+        {title}
+      </Typography>
+      {subtitle ? (
+        <Typography color="text.secondary" sx={{ mt: 0.75, maxWidth: 440, mx: 'auto' }}>
+          {subtitle}
+        </Typography>
+      ) : null}
     </Box>
   );
 }

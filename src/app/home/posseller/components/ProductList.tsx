@@ -1,8 +1,10 @@
 ﻿import * as React from 'react';
 import { Box, Card, CardContent, CardActions, Button, Chip, Skeleton, Typography, Stack } from '@mui/material';
+import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import Image from 'next/image';
 import type { Product } from '../page';
 import { commonButtonSx, interactiveCardSx } from '../../components/adminUi';
+import { EmptyState } from '../../components/dashboardUi';
 
 type ProductListProps = Readonly<{
   loading: boolean;
@@ -29,8 +31,14 @@ export function ProductList({ loading, filtered, onAddProduct }: ProductListProp
           </Card>
         ))}
       {!loading && filtered.length === 0 && (
-        <Box p={4} width="100%" textAlign="center" color="text.secondary">
-          <Typography>ไม่พบสินค้าในหมวดหรือคำค้นหานี้</Typography>
+        <Box sx={{ gridColumn: '1 / -1' }}>
+          <EmptyState
+            compact
+            icon={<SearchRoundedIcon fontSize="small" />}
+            eyebrow="Products"
+            title="ไม่พบสินค้าที่ตรงกับหมวดหรือคำค้นหานี้"
+            subtitle="ลองเลือกหมวดอื่นหรือเคลียร์คำค้นหาเพื่อดูรายการสินค้าเพิ่มเติม"
+          />
         </Box>
       )}
       {!loading &&
