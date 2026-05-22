@@ -64,9 +64,9 @@ import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
-import { ApiOrder } from '../../../lib/contracts';
+import { ApiOrder, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, type OrderStatus, type PaymentMethod } from '../../../lib/contracts';
 
-type PaymentStatus = 'paid' | 'pending' | 'cancelled';
+type PaymentStatus = OrderStatus;
 type SortOrder = 'newest' | 'oldest' | 'high' | 'low';
 type ExportType = 'excel' | 'pdf' | 'sales';
 
@@ -100,7 +100,7 @@ type OrderRow = {
   vat: number;
   total: number;
   paidAmount: number;
-  paymentMethod: 'Cash' | 'PromptPay' | 'Bank Transfer';
+  paymentMethod: PaymentMethod;
   products: OrderProduct[];
   timeline: TimelineEvent[];
 };
@@ -118,18 +118,6 @@ function toNumber(value: unknown): number {
     }
   }
   return 0;
-}
-
-function toPaymentStatus(status: ApiOrder['status']): PaymentStatus {
-  if (status === 'paid') return 'paid';
-  if (status === 'cancelled') return 'cancelled';
-  return 'pending';
-}
-
-function toPaymentMethod(payment: ApiOrder['payment']): OrderRow['paymentMethod'] {
-  if (payment === 'cash') return 'Cash';
-  if (payment === 'promptpay') return 'PromptPay';
-  return 'Bank Transfer';
 }
 
 function mapApiOrderToRow(order: ApiOrder): OrderRow {
@@ -152,7 +140,7 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
   const total = toNumber(order.grandTotal ?? order.total) || fallbackTotal;
   const remaining = Math.max(toNumber(order.remainingTotal), 0);
   const paidAmount = Math.min(total, Math.max(total - remaining, 0));
-  const status = toPaymentStatus(order.status);
+  const status = order.status;
   const timeline: TimelineEvent[] = [{ title: 'Order created', at: createdAt }];
 
   if (status === 'paid') {
@@ -160,6 +148,9 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
   }
   if (status === 'pending') {
     timeline.push({ title: 'Pending payment', at: createdAt });
+  }
+  if (status === 'partial') {
+    timeline.push({ title: 'Partial payment received', at: createdAt });
   }
   if (status === 'cancelled') {
     timeline.push({ title: 'Order cancelled', at: createdAt });
@@ -183,7 +174,7 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
     vat,
     total,
     paidAmount,
-    paymentMethod: toPaymentMethod(order.payment),
+    paymentMethod: order.payment,
     products,
     timeline,
   };
@@ -226,17 +217,20 @@ function formatMoney(amount: number) {
 
 function statusChip(status: PaymentStatus) {
   if (status === 'paid') {
-    return <Chip label="Paid" color="success" size="small" sx={statusChipSx} />;
+    return <Chip label={ORDER_STATUS_LABELS[status]} color="success" size="small" sx={statusChipSx} />;
   }
   if (status === 'pending') {
-    return <Chip label="Pending" color="warning" size="small" sx={statusChipSx} />;
+    return <Chip label={ORDER_STATUS_LABELS[status]} color="warning" size="small" sx={statusChipSx} />;
   }
-  return <Chip label="Cancelled" color="error" size="small" sx={statusChipSx} />;
+  if (status === 'partial') {
+    return <Chip label={ORDER_STATUS_LABELS[status]} color="info" size="small" sx={statusChipSx} />;
+  }
+  return <Chip label={ORDER_STATUS_LABELS[status]} color="error" size="small" sx={statusChipSx} />;
 }
 
 function downloadCsv(rows: OrderRow[], label: ExportType) {
   const headers = ['Order ID', 'Customer', 'Phone', 'Date', 'Status', 'Total'];
-  const lines = rows.map(row => [row.orderId, row.customerName, row.phoneNumber, dayjs(row.date).format('DD/MM/YYYY HH:mm'), row.status, row.total]);
+  const lines = rows.map(row => [row.orderId, row.customerName, row.phoneNumber, dayjs(row.date).format('DD/MM/YYYY HH:mm'), ORDER_STATUS_LABELS[row.status], row.total]);
   const csv = [headers, ...lines].map(line => line.map(item => `"${String(item).replaceAll('"', '""')}"`).join(',')).join('\n');
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -434,7 +428,7 @@ export default function OrderManagementPage() {
     let ordersThisMonth = 0;
 
     rows.forEach(row => {
-      if (row.status === 'pending') {
+      if (row.status === 'pending' || row.status === 'partial') {
         pendingPayments += Math.max(row.total - row.paidAmount, 0);
       }
       if (row.status === 'paid') {
@@ -685,9 +679,10 @@ export default function OrderManagementPage() {
                     onChange={event => setStatusFilter(event.target.value)}
                     sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
                     <MenuItem value="all">All</MenuItem>
-                    <MenuItem value="paid">Paid</MenuItem>
-                    <MenuItem value="pending">Pending</MenuItem>
-                    <MenuItem value="cancelled">Cancelled</MenuItem>
+                    <MenuItem value="paid">{ORDER_STATUS_LABELS.paid}</MenuItem>
+                    <MenuItem value="pending">{ORDER_STATUS_LABELS.pending}</MenuItem>
+                    <MenuItem value="partial">{ORDER_STATUS_LABELS.partial}</MenuItem>
+                    <MenuItem value="cancelled">{ORDER_STATUS_LABELS.cancelled}</MenuItem>
                   </Select>
                 </FormControl>
 
@@ -964,7 +959,7 @@ export default function OrderManagementPage() {
             }
             closeRowMenu();
           }}
-          disabled={rowMenuTarget?.status !== 'pending' || updatingOrderId === (rowMenuTarget?.id ?? '')}>
+          disabled={!rowMenuTarget || rowMenuTarget.status === 'paid' || rowMenuTarget.status === 'cancelled' || updatingOrderId === (rowMenuTarget?.id ?? '')}>
           <Stack direction="row" spacing={1} alignItems="center">
             <CheckCircleRoundedIcon fontSize="small" />
             <Typography sx={{ fontSize: 14 }}>Confirm Payment</Typography>
@@ -1035,10 +1030,12 @@ export default function OrderManagementPage() {
                 flex: 1,
               }}>
               <Stack spacing={isCompactDrawer ? 1.25 : 1.5}>
-                {selectedOrder.status === 'pending' ? (
+                {selectedOrder.status === 'pending' || selectedOrder.status === 'partial' ? (
                   <Card sx={{ borderRadius: 3, border: '1px solid #FFD8A8', bgcolor: '#FFF8ED', boxShadow: 'none' }}>
                     <CardContent sx={{ py: 1.2 }}>
-                      <Typography sx={{ color: '#B9650A', fontWeight: 700 }}>Pending payment order: Remaining ฿{formatMoney(Math.max(selectedOrder.total - selectedOrder.paidAmount, 0))}</Typography>
+                      <Typography sx={{ color: '#B9650A', fontWeight: 700 }}>
+                        {selectedOrder.status === 'partial' ? 'Partial payment order' : 'Pending payment order'}: Remaining ฿{formatMoney(Math.max(selectedOrder.total - selectedOrder.paidAmount, 0))}
+                      </Typography>
                     </CardContent>
                   </Card>
                 ) : null}
@@ -1149,7 +1146,7 @@ export default function OrderManagementPage() {
                         </Avatar>
                         <Typography sx={{ fontWeight: 700 }}>Payment Method</Typography>
                       </Stack>
-                      <Chip label={selectedOrder.paymentMethod} sx={{ ...statusChipSx, width: 'fit-content', bgcolor: '#EEF8FF', color: '#1D4ED8' }} />
+                      <Chip label={PAYMENT_METHOD_LABELS[selectedOrder.paymentMethod]} sx={{ ...statusChipSx, width: 'fit-content', bgcolor: '#EEF8FF', color: '#1D4ED8' }} />
                     </Stack>
                   </CardContent>
                 </Card>
@@ -1192,7 +1189,7 @@ export default function OrderManagementPage() {
                 <Button
                   variant="contained"
                   startIcon={<CheckCircleRoundedIcon />}
-                  disabled={selectedOrder.status !== 'pending' || updatingOrderId === selectedOrder.id}
+                  disabled={!['pending', 'partial'].includes(selectedOrder.status) || updatingOrderId === selectedOrder.id}
                   onClick={() => {
                     void markAsPaid(selectedOrder.id);
                   }}
