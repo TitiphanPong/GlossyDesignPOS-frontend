@@ -1,6 +1,26 @@
 export type PaymentMethod = 'cash' | 'promptpay';
 
+export type CustomerDisplayPaymentMethod = PaymentMethod | 'transfer' | 'card';
+
 export type OrderStatus = 'pending' | 'paid' | 'cancelled' | 'partial';
+
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+  cash: 'Cash',
+  promptpay: 'PromptPay',
+};
+
+export const CUSTOMER_DISPLAY_PAYMENT_METHOD_LABELS: Record<CustomerDisplayPaymentMethod, string> = {
+  ...PAYMENT_METHOD_LABELS,
+  transfer: 'Bank Transfer',
+  card: 'Card',
+};
+
+export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
+  pending: 'Pending',
+  partial: 'Partial Payment',
+  paid: 'Paid',
+  cancelled: 'Cancelled',
+};
 
 export type ApiCartItem = {
   name: string;

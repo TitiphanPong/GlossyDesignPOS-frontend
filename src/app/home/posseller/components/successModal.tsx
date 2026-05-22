@@ -6,7 +6,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ReplayIcon from '@mui/icons-material/Replay';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import { PaymentMethod, PendingOrderDraft } from '../../../../lib/contracts';
+import { PAYMENT_METHOD_LABELS, PaymentMethod, PendingOrderDraft } from '../../../../lib/contracts';
 import { fetchApiJson, isMissingApiBaseError } from '../../../../lib/api';
 
 type Props = {
@@ -115,7 +115,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           )}
 
           <Typography variant="body1" color="text.secondary" mt={1}>
-            วิธีชำระเงิน: {payment === 'cash' ? 'เงินสด' : 'PromptPay'}
+            วิธีชำระเงิน: {payment === 'cash' ? 'เงินสด' : PAYMENT_METHOD_LABELS[payment]}
           </Typography>
         </Box>
 

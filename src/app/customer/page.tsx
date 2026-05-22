@@ -9,9 +9,7 @@ import { Autoplay } from 'swiper/modules';
 import { motion } from 'framer-motion';
 import './customer.css';
 import { computeOrderPaymentSummary, type PaymentSummaryResult } from '../utils/computeTotal';
-
-type PaymentMethod = 'cash' | 'promptpay' | 'transfer' | 'card';
-type OrderStatus = 'pending' | 'paid' | 'partial';
+import { type CustomerDisplayPaymentMethod, type OrderStatus } from '../../lib/contracts';
 
 type CartItem = {
   name: string;
@@ -35,7 +33,7 @@ type Order = {
   total: number;
   discount: number;
   grandTotal: number;
-  payment: PaymentMethod;
+  payment: CustomerDisplayPaymentMethod;
   status: OrderStatus;
   cart: CartItem[];
   taxInvoice?: 'yes' | 'no';
@@ -86,6 +84,7 @@ function formatMoney(value: number): string {
 function getWorkflowStep(status: OrderStatus): number {
   if (status === 'paid') return 5;
   if (status === 'partial') return 4;
+  if (status === 'cancelled') return 3;
   return 3;
 }
 
@@ -105,6 +104,15 @@ function getOrderStatusMeta(status: OrderStatus): StatusMeta {
       border: 'rgba(41,121,255,0.45)',
       color: '#64B5F6',
       label: '• มัดจำแล้ว',
+    };
+  }
+
+  if (status === 'cancelled') {
+    return {
+      bg: 'rgba(255,82,82,0.15)',
+      border: 'rgba(255,82,82,0.45)',
+      color: '#FF8A80',
+      label: 'Order cancelled',
     };
   }
 
@@ -572,7 +580,7 @@ function PaidScreen() {
   );
 }
 
-function PaymentCard({ payment, promptpayId, amountToPay }: Readonly<{ payment: PaymentMethod; promptpayId: string; amountToPay: number }>) {
+function PaymentCard({ payment, promptpayId, amountToPay }: Readonly<{ payment: CustomerDisplayPaymentMethod; promptpayId: string; amountToPay: number }>) {
   if (payment === 'promptpay') {
     return (
       <Box
