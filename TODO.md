@@ -184,6 +184,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 ## 3. Bug Risk Areas
 
 ### Task BR-01: Persist storage status/note changes instead of local-only edits
+- Status: completed on 2026-05-24
 - Task ID: BR-01
 - Title: Persist storage status/note changes instead of local-only edits
 - Why it matters: storage bulk status changes, drawer saves, and row actions currently update only local React state. Users can think they saved work when nothing was sent to the backend.
