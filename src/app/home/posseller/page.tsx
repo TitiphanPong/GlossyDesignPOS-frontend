@@ -23,6 +23,7 @@ import { ActiveProduct, CartItem } from './types/cart';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
+type PendingOrderSyncStatus = 'pending' | 'submitting' | 'submitted';
 export type Product = {
   id: string;
   name: string;
@@ -274,7 +275,6 @@ export default function SellPage() {
         payment={lastPayment}
         onClose={() => {
           setSuccessOpen(false);
-          localStorage.removeItem('pendingOrder');
         }}
         onPaid={() => {
           setCart([]);
@@ -297,11 +297,14 @@ export default function SellPage() {
           setSuccessOpen(true);
           const order = {
             orderId: Date.now().toString(),
+            clientDraftId: globalThis.crypto.randomUUID(),
             ...data,
             payment: lastPayment,
             total: totals.total,
             discount,
             status: 'pending',
+            orderSyncStatus: 'pending' as PendingOrderSyncStatus,
+            lastSubmissionError: null,
             depositTotal: totals.depositTotal,
             remainingTotal: totals.remainingTotal,
             cart: totals.adjustedCart,
