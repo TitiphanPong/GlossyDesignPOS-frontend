@@ -224,6 +224,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Remove silent dashboard fetch failures and add a visible non-disruptive error state while keeping the current layout and summary logic intact."
 
 ### Task BR-05: Tighten form validation boundaries for customer and upload inputs
+- Status: completed on 2026-05-24
 - Task ID: BR-05
 - Title: Tighten form validation boundaries for customer and upload inputs
 - Why it matters: upload validation is fairly defensive, but POS customer info and some modal flows still rely on weaker assumptions. Safer validation prevents bad drafts from reaching payment and invoice flows.

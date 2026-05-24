@@ -24,6 +24,7 @@ import { ActiveProduct, CartItem } from './types/cart';
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
 type PendingOrderSyncStatus = 'pending' | 'submitting' | 'submitted';
+type CustomerInfo = { customerName: string; phoneNumber: string; note: string };
 export type Product = {
   id: string;
   name: string;
@@ -37,6 +38,11 @@ export type Product = {
 const normalizeVariant = (variant: Variant): Variant => ({ ...variant, price: Number(variant.price) });
 const normalizeProduct = (product: Product): Product => ({ ...product, variants: product.variants.map(normalizeVariant) });
 const toActiveProduct = (product: Product): ActiveProduct => ({ id: product.id, name: product.name, category: product.category });
+const sanitizeCustomerInfo = (customer: CustomerInfo): CustomerInfo => ({
+  customerName: customer.customerName.trim(),
+  phoneNumber: customer.phoneNumber.trim(),
+  note: customer.note.trim(),
+});
 
 type PosStatCardProps = {
   title: string;
@@ -101,7 +107,7 @@ export default function SellPage() {
   const cartState = useCart();
   const modalState = useProductModals();
   const { activeModal, activeProduct, closeModal, editingItem, openForEdit, openForProduct, openModal } = modalState;
-  const [customer, setCustomer] = React.useState({ customerName: '', phoneNumber: '', note: '' });
+  const [customer, setCustomer] = React.useState<CustomerInfo>({ customerName: '', phoneNumber: '', note: '' });
   const [customerModalOpen, setCustomerModalOpen] = React.useState(false);
   const [successOpen, setSuccessOpen] = React.useState(false);
   const [lastPayment, setLastPayment] = React.useState<'cash' | 'promptpay'>('cash');
@@ -292,13 +298,18 @@ export default function SellPage() {
         onClose={() => setCustomerModalOpen(false)}
         customer={customer}
         onSubmit={data => {
-          setCustomer(data);
+          const sanitizedCustomer = sanitizeCustomerInfo(data);
+          if (!sanitizedCustomer.customerName || !sanitizedCustomer.phoneNumber) {
+            return;
+          }
+
+          setCustomer(sanitizedCustomer);
           setCustomerModalOpen(false);
           setSuccessOpen(true);
           const order = {
             orderId: Date.now().toString(),
             clientDraftId: globalThis.crypto.randomUUID(),
-            ...data,
+            ...sanitizedCustomer,
             payment: lastPayment,
             total: totals.total,
             discount,

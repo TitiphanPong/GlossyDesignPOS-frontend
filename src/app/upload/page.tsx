@@ -39,6 +39,13 @@ type UploadFileItem = {
   errorMessage?: string;
 };
 
+type UploadFieldErrors = {
+  customerName: string;
+  phone: string;
+  customerNote: string;
+  jobNote: string;
+};
+
 const steps = ['ข้อมูลลูกค้า', 'รายละเอียดงาน', 'อัปโหลดไฟล์', 'ตรวจสอบและส่ง'];
 
 const jobOptions: JobOption[] = [
@@ -61,6 +68,11 @@ const uploadJobTypeMap: Record<string, UploadPayload['jobType']> = {
 };
 
 const ACCEPT_ATTRIBUTE = buildAcceptAttribute(ACCEPTED_EXTENSIONS);
+const CUSTOMER_NAME_MAX_LENGTH = 120;
+const CUSTOMER_NOTE_MAX_LENGTH = 500;
+const JOB_NOTE_MAX_LENGTH = 500;
+const PHONE_MIN_DIGITS = 9;
+const PHONE_MAX_DIGITS = 20;
 
 function fileIconByName(name: string) {
   const ext = getFileExtension(name);
@@ -108,21 +120,30 @@ function buildUploadNote(customerNote: string, jobNote: string): string {
   return [customerNote.trim(), jobNote.trim()].filter(Boolean).join('\n');
 }
 
-function getUploadInputError(customerName: string, normalizedPhone: string): { message: string; step: Step } | null {
-  if (!customerName) {
-    return { message: 'กรุณากรอกชื่อลูกค้าและเบอร์โทรศัพท์ก่อนอัปโหลด', step: 1 };
+function getUploadFieldErrors(customerName: string, normalizedPhone: string, customerNote: string, jobNote: string): UploadFieldErrors {
+  return {
+    customerName: !customerName
+      ? 'กรุณากรอกชื่อลูกค้า'
+      : customerName.length > CUSTOMER_NAME_MAX_LENGTH
+        ? `ชื่อลูกค้ายาวได้ไม่เกิน ${CUSTOMER_NAME_MAX_LENGTH} ตัวอักษร`
+        : '',
+    phone: !normalizedPhone
+      ? 'กรุณากรอกเบอร์โทรศัพท์'
+      : normalizedPhone.length < PHONE_MIN_DIGITS || normalizedPhone.length > PHONE_MAX_DIGITS
+        ? `เบอร์โทรควรมี ${PHONE_MIN_DIGITS}-${PHONE_MAX_DIGITS} ตัวเลข`
+        : '',
+    customerNote: customerNote.length > CUSTOMER_NOTE_MAX_LENGTH ? `หมายเหตุลูกค้ายาวได้ไม่เกิน ${CUSTOMER_NOTE_MAX_LENGTH} ตัวอักษร` : '',
+    jobNote: jobNote.length > JOB_NOTE_MAX_LENGTH ? `รายละเอียดงานยาวได้ไม่เกิน ${JOB_NOTE_MAX_LENGTH} ตัวอักษร` : '',
+  };
+}
+
+function getUploadInputError(errors: UploadFieldErrors): { message: string; step: Step } | null {
+  if (errors.customerName || errors.phone || errors.customerNote) {
+    return { message: errors.customerName || errors.phone || errors.customerNote, step: 1 };
   }
 
-  if (!normalizedPhone) {
-    return { message: 'กรุณากรอกชื่อลูกค้าและเบอร์โทรศัพท์ก่อนอัปโหลด', step: 1 };
-  }
-
-  if (customerName.length > 120) {
-    return { message: 'ชื่อลูกค้ายาวเกิน 120 ตัวอักษร', step: 1 };
-  }
-
-  if (normalizedPhone.length < 9 || normalizedPhone.length > 20) {
-    return { message: 'เบอร์โทรควรมี 9-20 ตัวเลข', step: 1 };
+  if (errors.jobNote) {
+    return { message: errors.jobNote, step: 2 };
   }
 
   return null;
@@ -219,10 +240,24 @@ export default function UploadPage() {
   const [phone, setPhone] = useState('');
   const [customerNote, setCustomerNote] = useState('');
   const [jobNote, setJobNote] = useState('');
+  const [touchedFields, setTouchedFields] = useState({
+    customerName: false,
+    phone: false,
+    customerNote: false,
+    jobNote: false,
+  });
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const selectedJobLabel = useMemo(() => jobOptions.find(item => item.id === selectedJobType)?.label ?? '-', [selectedJobType]);
   const envError = process.env.NEXT_PUBLIC_API_URL ? null : 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL ก่อนใช้งานอัปโหลดไฟล์';
+  const trimmedCustomerName = customerName.trim();
+  const trimmedCustomerNote = customerNote.trim();
+  const trimmedJobNote = jobNote.trim();
+  const normalizedPhone = normalizePhone(phone);
+  const fieldErrors = useMemo(
+    () => getUploadFieldErrors(trimmedCustomerName, normalizedPhone, trimmedCustomerNote, trimmedJobNote),
+    [normalizedPhone, trimmedCustomerName, trimmedCustomerNote, trimmedJobNote]
+  );
 
   const uploadedCount = uploadedFiles.filter(item => item.status === 'uploaded').length;
   const errorItems = uploadedFiles.filter(item => item.status === 'error');
@@ -235,6 +270,8 @@ export default function UploadPage() {
   const canAdvanceStep = currentStep < 3;
   const canSubmitUploads = currentStep >= 3 && uploadedFiles.length > 0;
   const primaryActionDisabled = Boolean(envError) || isUploading || (!canAdvanceStep && !canSubmitUploads);
+  const customerStepValid = !fieldErrors.customerName && !fieldErrors.phone && !fieldErrors.customerNote;
+  const jobStepValid = !fieldErrors.jobNote;
 
   const statusPill = (status: UploadStatus) => {
     if (status === 'uploaded') {
@@ -268,6 +305,46 @@ export default function UploadPage() {
   const clearFeedback = () => {
     setGlobalError(null);
     setSuccessMessage(null);
+  };
+
+  const markCustomerFieldsTouched = () => {
+    setTouchedFields(prev => ({
+      ...prev,
+      customerName: true,
+      phone: true,
+      customerNote: true,
+    }));
+  };
+
+  const markJobFieldsTouched = () => {
+    setTouchedFields(prev => ({
+      ...prev,
+      jobNote: true,
+    }));
+  };
+
+  const handleAdvanceStep = () => {
+    clearFeedback();
+
+    if (currentStep === 1 && !customerStepValid) {
+      markCustomerFieldsTouched();
+      const inputError = getUploadInputError(fieldErrors);
+      if (inputError) {
+        setGlobalError(inputError.message);
+        setCurrentStep(inputError.step);
+      }
+      return;
+    }
+
+    if (currentStep === 2 && !jobStepValid) {
+      markJobFieldsTouched();
+      if (fieldErrors.jobNote) {
+        setGlobalError(fieldErrors.jobNote);
+      }
+      return;
+    }
+
+    setCurrentStep(prev => getNextStep(prev));
   };
 
   const mergeFilesIntoState = (incomingFiles: File[]) => {
@@ -373,12 +450,13 @@ export default function UploadPage() {
   const handleUploadAll = async () => {
     if (isUploading || envError) return;
 
-    const trimmedCustomerName = customerName.trim();
-    const normalizedPhone = normalizePhone(phone);
-    const note = buildUploadNote(customerNote, jobNote);
+    const note = buildUploadNote(trimmedCustomerNote, trimmedJobNote);
     const jobType = uploadJobTypeMap[selectedJobType] ?? 'Other';
 
-    const inputError = getUploadInputError(trimmedCustomerName, normalizedPhone);
+    markCustomerFieldsTouched();
+    markJobFieldsTouched();
+
+    const inputError = getUploadInputError(fieldErrors);
     if (inputError) {
       setGlobalError(inputError.message);
       setCurrentStep(inputError.step);
@@ -535,33 +613,62 @@ export default function UploadPage() {
                   <input
                     value={customerName}
                     onChange={e => setCustomerName(e.target.value)}
+                    onBlur={() => setTouchedFields(prev => ({ ...prev, customerName: true }))}
                     placeholder="กรุณาระบุชื่อลูกค้า"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                    maxLength={CUSTOMER_NAME_MAX_LENGTH}
+                    aria-invalid={touchedFields.customerName && Boolean(fieldErrors.customerName)}
+                    className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:ring-4 ${
+                      touchedFields.customerName && fieldErrors.customerName
+                        ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
+                        : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
+                    }`}
                   />
+                  <span className={`text-xs ${touchedFields.customerName && fieldErrors.customerName ? 'text-rose-600' : 'text-slate-500'}`}>
+                    {touchedFields.customerName && fieldErrors.customerName ? fieldErrors.customerName : `${trimmedCustomerName.length}/${CUSTOMER_NAME_MAX_LENGTH}`}
+                  </span>
                 </label>
                 <label className="space-y-1 sm:col-span-1">
                   <span className="text-sm font-medium text-slate-700">เบอร์โทรศัพท์ *</span>
                   <input
                     value={phone}
                     onChange={e => setPhone(e.target.value)}
+                    onBlur={() => setTouchedFields(prev => ({ ...prev, phone: true }))}
                     placeholder="กรุณาระบุเบอร์โทรศัพท์"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                    inputMode="tel"
+                    maxLength={PHONE_MAX_DIGITS + 4}
+                    aria-invalid={touchedFields.phone && Boolean(fieldErrors.phone)}
+                    className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:ring-4 ${
+                      touchedFields.phone && fieldErrors.phone ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
+                    }`}
                   />
+                  <span className={`text-xs ${touchedFields.phone && fieldErrors.phone ? 'text-rose-600' : 'text-slate-500'}`}>
+                    {touchedFields.phone && fieldErrors.phone ? fieldErrors.phone : 'รองรับตัวเลข 9-20 หลัก'}
+                  </span>
                 </label>
                 <label className="space-y-1 sm:col-span-2">
                   <span className="text-sm font-medium text-slate-700">หมายเหตุเพิ่มเติม</span>
                   <textarea
                     value={customerNote}
                     onChange={e => setCustomerNote(e.target.value)}
+                    onBlur={() => setTouchedFields(prev => ({ ...prev, customerNote: true }))}
                     rows={3}
                     placeholder="กรุณาระบุหมายเหตุเพิ่มเติม"
-                    className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                    maxLength={CUSTOMER_NOTE_MAX_LENGTH}
+                    aria-invalid={touchedFields.customerNote && Boolean(fieldErrors.customerNote)}
+                    className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:ring-4 ${
+                      touchedFields.customerNote && fieldErrors.customerNote
+                        ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
+                        : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
+                    }`}
                   />
+                  <span className={`text-xs ${touchedFields.customerNote && fieldErrors.customerNote ? 'text-rose-600' : 'text-slate-500'}`}>
+                    {touchedFields.customerNote && fieldErrors.customerNote ? fieldErrors.customerNote : `${trimmedCustomerNote.length}/${CUSTOMER_NOTE_MAX_LENGTH}`}
+                  </span>
                 </label>
               </div>
               <button
                 type="button"
-                onClick={() => setCurrentStep(2)}
+                onClick={handleAdvanceStep}
                 className="mt-4 hidden items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-indigo-200 md:inline-flex">
                 ถัดไป
                 <ExpandMoreRounded className="h-4 w-4 rotate-[-90deg]" />
@@ -595,10 +702,18 @@ export default function UploadPage() {
                 <textarea
                   value={jobNote}
                   onChange={e => setJobNote(e.target.value)}
+                  onBlur={() => setTouchedFields(prev => ({ ...prev, jobNote: true }))}
                   rows={3}
                   placeholder="กรุณาระบุหมายเหตุเพิ่มเติม"
-                  className="w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100"
+                  maxLength={JOB_NOTE_MAX_LENGTH}
+                  aria-invalid={touchedFields.jobNote && Boolean(fieldErrors.jobNote)}
+                  className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:ring-4 ${
+                    touchedFields.jobNote && fieldErrors.jobNote ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
+                  }`}
                 />
+                <span className={`mt-1 block text-xs ${touchedFields.jobNote && fieldErrors.jobNote ? 'text-rose-600' : 'text-slate-500'}`}>
+                  {touchedFields.jobNote && fieldErrors.jobNote ? fieldErrors.jobNote : `${trimmedJobNote.length}/${JOB_NOTE_MAX_LENGTH}`}
+                </span>
               </label>
             </article>
 
@@ -779,7 +894,7 @@ export default function UploadPage() {
             </button>
             <button
               type="button"
-              onClick={canAdvanceStep ? () => setCurrentStep(prev => getNextStep(prev)) : handleUploadAll}
+              onClick={canAdvanceStep ? handleAdvanceStep : handleUploadAll}
               disabled={primaryActionDisabled}
               className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-[220px]">
               {getPrimaryActionLabel(isUploading, currentStep)}
