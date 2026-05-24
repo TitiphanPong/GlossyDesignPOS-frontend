@@ -1,4 +1,4 @@
-import { CartItem } from '../home/posseller/types/cart';
+import type { CartItem } from '../home/posseller/types/cart';
 
 type TaxInvoiceValue = 'yes' | 'no';
 
