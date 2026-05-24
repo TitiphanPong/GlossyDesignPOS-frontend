@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Snackbar } from '@mui/material';
 import LoginForm from './components/loginForm';
+import { ADMIN_AUTH_STORAGE_KEY, ADMIN_AUTH_TOKEN, ADMIN_LOGIN_REDIRECT_PATH, canAdminLogin } from '@/lib/admin-auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -15,9 +16,9 @@ export default function LoginPage() {
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (username === 'glossydesign' && password === 'glossygmail') {
-      localStorage.setItem('auth_token', 'glossy-secret');
-      router.push('/dashboard');
+    if (canAdminLogin(username, password)) {
+      localStorage.setItem(ADMIN_AUTH_STORAGE_KEY, ADMIN_AUTH_TOKEN);
+      router.push(ADMIN_LOGIN_REDIRECT_PATH);
     } else {
       setSnackbarOpen(true);
     }

@@ -322,6 +322,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Extract storage normalization helpers if needed and add tests for mixed backend payload shapes, missing fields, string file arrays, and alternate id keys."
 
 ### Task TS-05: Add guardrail tests for auth and route protection assumptions
+- Status: completed on 2026-05-24
 - Task ID: TS-05
 - Title: Add guardrail tests for auth and route protection assumptions
 - Why it matters: auth currently relies on local storage tokens and client-side guards. Even lightweight tests would help catch accidental regressions in admin access flow.
