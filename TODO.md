@@ -236,6 +236,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 ## 4. Performance Improvements
 
 ### Task PF-01: Split the oversized customer display page into focused subcomponents
+- Status: completed on 2026-05-24
 - Task ID: PF-01
 - Title: Split the oversized customer display page into focused subcomponents
 - Why it matters: `src/app/customer/page.tsx` is very large and mixes state polling, payment math, animation, and multiple screen modes. Smaller components will make future work safer and reduce accidental re-renders.

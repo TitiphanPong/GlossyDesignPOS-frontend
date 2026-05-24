@@ -1,48 +1,71 @@
 'use client';
 
-import { Typography, Paper, Stack } from '@mui/material';
-import { cartFieldConfigs } from './cartFieldConfigs';
-
-type CartItem = {
-  name: string;
-  category?: string;
-  qty: number;
-  totalPrice: number;
-  fullPayment?: boolean;
-  deposit?: number;
-  remaining?: number;
-  [key: string]: any; // dynamic fields
-};
+import { Box, Typography } from '@mui/material';
+import { getCartItemDetailLines } from './cartFieldConfigs';
+import type { CartItem } from './customerDisplayTypes';
 
 type CartItemDetailsProps = Readonly<{ item: CartItem }>;
 
+function formatMoney(value: number): string {
+  return Math.round(value).toLocaleString('th-TH');
+}
+
 export default function CartItemDetails({ item }: CartItemDetailsProps) {
-  const fields = cartFieldConfigs[item.category || ''] || [];
+  const detailLines = getCartItemDetailLines(item);
 
   return (
-    <Paper elevation={2} sx={{ p: 2, mb: 2, borderRadius: 3, bgcolor: '#fafafa' }}>
-      <Stack spacing={1}>
-        <Typography variant="h5" fontWeight="bold">
-          {item.name} × {item.qty} ชิ้น
+    <Box
+      sx={{
+        p: { xs: 1.5, md: 2 },
+        borderRadius: '12px',
+        background: 'rgba(255,255,255,0.035)',
+        border: '1px solid rgba(255,255,255,0.065)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'flex-start',
+        gap: 2,
+        transition: 'background 0.2s',
+        '&:hover': { background: 'rgba(255,255,255,0.065)' },
+      }}
+    >
+      <Box sx={{ flex: 1, minWidth: 0 }}>
+        <Typography sx={{ fontSize: { xs: '0.92rem', md: '1.05rem' }, fontWeight: 600, color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {item.name}
         </Typography>
-        <Typography variant="h5" color="primary" fontWeight="bold">
-          {Math.round(item.totalPrice).toLocaleString('th-TH')} บาท
-        </Typography>
-
-        {fields.map(({ key, label, format }) =>
-          item[key] ? (
-            <Typography key={key} variant="body2" color="text.secondary">
-              {label}: {format ? format(item[key]) : item[key]}
-            </Typography>
-          ) : null
-        )}
-
-        {item.note && (
-          <Typography variant="body2" color="text.secondary">
-            ✏️ {item.note}
+        {detailLines.map(line => (
+          <Typography
+            key={line}
+            sx={{
+              fontSize: '0.68rem',
+              color: 'rgba(255,255,255,0.38)',
+              mt: 0.3,
+              whiteSpace: 'nowrap',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {line}
           </Typography>
-        )}
-      </Stack>
-    </Paper>
+        ))}
+        {item.note ? (
+          <Typography
+            sx={{
+              fontSize: '0.68rem',
+              color: 'rgba(255,255,255,0.48)',
+              mt: 0.45,
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+            }}
+          >
+            {item.note}
+          </Typography>
+        ) : null}
+      </Box>
+
+      <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+        <Typography sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.38)' }}>ร— {item.qty}</Typography>
+        <Typography sx={{ fontSize: { xs: '1rem', md: '1.15rem' }, fontWeight: 700, color: '#00E5FF', mt: 0.15 }}>เธฟ{formatMoney(item.totalPrice)}</Typography>
+      </Box>
+    </Box>
   );
 }
