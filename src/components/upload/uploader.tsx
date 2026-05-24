@@ -11,6 +11,7 @@ import {
   formatFileSize,
   validateUploadFile,
 } from '@/app/upload/helpers';
+import { openSignedUrlWithRetry } from '@/app/upload/upload-flow';
 
 const ACCEPT_ATTRIBUTE = buildAcceptAttribute(QUICK_UPLOADER_EXTENSIONS);
 
@@ -98,23 +99,6 @@ export default function Uploader() {
     }
   };
 
-  const openSignedUrlWithRetry = async (id: string) => {
-    let retryCount = 0;
-
-    while (retryCount < 2) {
-      const signed = await getSignedUrl(id);
-      const openedWindow = window.open(signed.signedUrl, '_blank', 'noopener,noreferrer');
-      if (openedWindow) {
-        return;
-      }
-
-      retryCount += 1;
-      if (retryCount >= 2) {
-        throw new Error('Unable to open file automatically. Please allow popups and try again.');
-      }
-    }
-  };
-
   const handleOpenFile = async () => {
     if (!uploadedFile || opening || envError) return;
 
@@ -123,7 +107,11 @@ export default function Uploader() {
     const requestId = ++requestIdRef.current;
 
     try {
-      await openSignedUrlWithRetry(uploadedFile.id);
+      await openSignedUrlWithRetry({
+        id: uploadedFile.id,
+        getSignedUrl,
+        openWindow: signedUrl => window.open(signedUrl, '_blank', 'noopener,noreferrer'),
+      });
       if (requestId !== requestIdRef.current) return;
       setSuccessMessage('Opened file with signed URL.');
     } catch (error) {

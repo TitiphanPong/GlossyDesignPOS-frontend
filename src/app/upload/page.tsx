@@ -19,11 +19,11 @@ import TableChartRounded from '@mui/icons-material/TableChartRounded';
 import ViewAgendaRounded from '@mui/icons-material/ViewAgendaRounded';
 import type { ReactElement } from 'react';
 import { useMemo, useRef, useState } from 'react';
-import { getSignedUrl, uploadFile, type UploadPayload, type UploadResponse } from '@/lib/upload-api';
+import { getSignedUrl, uploadFile, type UploadPayload } from '@/lib/upload-api';
 import { ACCEPTED_EXTENSIONS, buildAcceptAttribute, formatFileSize, getFileExtension, validateUploadFile } from './helpers';
+import { createUploadQueueItems, openSignedUrlWithRetry, uploadPendingFiles, type UploadQueueItem, type UploadStatus } from './upload-flow';
 
 type Step = 1 | 2 | 3 | 4;
-type UploadStatus = 'uploaded' | 'uploading' | 'waiting' | 'error';
 
 type JobOption = {
   id: string;
@@ -31,13 +31,7 @@ type JobOption = {
   icon: typeof DescriptionRounded;
 };
 
-type UploadFileItem = {
-  id: string;
-  file: File;
-  status: UploadStatus;
-  uploaded?: UploadResponse;
-  errorMessage?: string;
-};
+type UploadFileItem = UploadQueueItem;
 
 type UploadFieldErrors = {
   customerName: string;
@@ -298,10 +292,6 @@ export default function UploadPage() {
     return 'bg-slate-200 text-slate-600';
   };
 
-  const setUploadStatus = (id: string, updater: (item: UploadFileItem) => UploadFileItem) => {
-    setUploadedFiles(prev => prev.map(item => (item.id === id ? updater(item) : item)));
-  };
-
   const clearFeedback = () => {
     setGlobalError(null);
     setSuccessMessage(null);
@@ -349,37 +339,24 @@ export default function UploadPage() {
 
   const mergeFilesIntoState = (incomingFiles: File[]) => {
     clearFeedback();
+    setUploadedFiles(prev => {
+      const queueState = createUploadQueueItems({
+        incomingFiles,
+        existingIds: new Set(prev.map(item => item.id)),
+        buildFileId,
+        getValidationError,
+      });
 
-    const nextItems: UploadFileItem[] = [];
-    const validationMessages: string[] = [];
-
-    for (const file of incomingFiles) {
-      const error = getValidationError(file);
-      if (error) {
-        validationMessages.push(error);
-        continue;
+      if (queueState.validationMessages.length > 0) {
+        setGlobalError(queueState.validationMessages.join(' | '));
       }
 
-      nextItems.push({
-        id: buildFileId(file),
-        file,
-        status: 'waiting',
-      });
-    }
+      if (queueState.shouldMoveToUploadStep) {
+        setCurrentStep(3);
+      }
 
-    setUploadedFiles(prev => {
-      const existingIds = new Set(prev.map(item => item.id));
-      const dedupedItems = nextItems.filter(item => !existingIds.has(item.id));
-      return [...prev, ...dedupedItems];
+      return [...prev, ...queueState.items];
     });
-
-    if (validationMessages.length > 0) {
-      setGlobalError(validationMessages.join(' | '));
-    }
-
-    if (nextItems.length > 0) {
-      setCurrentStep(3);
-    }
   };
 
   const handleFileSelection = (fileList: FileList | null) => {
@@ -435,11 +412,11 @@ export default function UploadPage() {
     setOpeningFileId(item.id);
 
     try {
-      const signed = await getSignedUrl(item.uploaded.id);
-      const openedWindow = window.open(signed.signedUrl, '_blank', 'noopener,noreferrer');
-      if (!openedWindow) {
-        throw new Error('ไม่สามารถเปิดไฟล์อัตโนมัติได้ กรุณาอนุญาต popup แล้วลองใหม่');
-      }
+      await openSignedUrlWithRetry({
+        id: item.uploaded.id,
+        getSignedUrl,
+        openWindow: signedUrl => window.open(signedUrl, '_blank', 'noopener,noreferrer'),
+      });
     } catch (error) {
       setGlobalError(error instanceof Error ? error.message : 'ไม่สามารถเปิดไฟล์ได้');
     } finally {
@@ -474,45 +451,25 @@ export default function UploadPage() {
     setIsUploading(true);
     setCurrentStep(4);
 
-    let successCount = 0;
+    const uploadResult = await uploadPendingFiles({
+      items: uploadedFiles,
+      payload: {
+        customerName: trimmedCustomerName,
+        phone: normalizedPhone,
+        jobType,
+        note,
+      },
+      upload: uploadFile,
+    });
 
-    for (const item of pendingFiles) {
-      setUploadStatus(item.id, current => ({
-        ...current,
-        status: 'uploading',
-        errorMessage: undefined,
-      }));
-
-      try {
-        const uploaded = await uploadFile(item.file, {
-          customerName: trimmedCustomerName,
-          phone: normalizedPhone,
-          jobType,
-          note,
-        });
-        successCount += 1;
-        setUploadStatus(item.id, current => ({
-          ...current,
-          status: 'uploaded',
-          uploaded,
-          errorMessage: undefined,
-        }));
-      } catch (error) {
-        setUploadStatus(item.id, current => ({
-          ...current,
-          status: 'error',
-          errorMessage: error instanceof Error ? error.message : 'อัปโหลดไม่สำเร็จ',
-        }));
-      }
-    }
-
+    setUploadedFiles(uploadResult.items);
     setIsUploading(false);
 
-    if (successCount > 0) {
-      setSuccessMessage(`อัปโหลดสำเร็จ ${successCount} ไฟล์`);
+    if (uploadResult.successCount > 0) {
+      setSuccessMessage(`อัปโหลดสำเร็จ ${uploadResult.successCount} ไฟล์`);
     }
 
-    if (successCount !== pendingFiles.length) {
+    if (uploadResult.failureCount > 0) {
       setGlobalError('บางไฟล์อัปโหลดไม่สำเร็จ กรุณาตรวจสอบรายการแล้วลองใหม่');
     }
   };

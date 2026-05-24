@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import Image from 'next/image';
 import Link from 'next/link';
 import { Avatar, Box, Button, Drawer, IconButton, List, ListItemButton, Stack, Tooltip, Typography } from '@mui/material';
 import { drawerClasses } from '@mui/material/Drawer';
@@ -54,9 +55,11 @@ function Brand({ collapsed = false, onToggleCollapsed }: Readonly<{ collapsed?: 
             width: 50,
             height: 50,
           }}>
-          <img
+          <Image
             src="logo/logo.png"
             alt="Company Logo"
+            fill
+            sizes="50px"
             style={{
               objectFit: 'contain',
               borderRadius: 15,

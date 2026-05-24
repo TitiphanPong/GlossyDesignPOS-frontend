@@ -236,6 +236,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 ## 4. Performance Improvements
 
 ### Task PF-01: Split the oversized customer display page into focused subcomponents
+- Status: completed on 2026-05-24
 - Task ID: PF-01
 - Title: Split the oversized customer display page into focused subcomponents
 - Why it matters: `src/app/customer/page.tsx` is very large and mixes state polling, payment math, animation, and multiple screen modes. Smaller components will make future work safer and reduce accidental re-renders.
@@ -255,6 +256,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Review orders and storage pages for unnecessary re-renders and expensive derived computations. Apply targeted memoization or component extraction only where it materially simplifies render work."
 
 ### Task PF-03: Replace plain `img` usage on asset-heavy screens with audited Next image usage
+- Status: completed on 2026-05-24
 - Task ID: PF-03
 - Title: Replace plain `img` usage on asset-heavy screens with audited Next image usage
 - Why it matters: banner-heavy and file-preview-heavy screens likely miss out on image optimization. A careful audit can improve loading without disturbing visual composition.
@@ -273,6 +275,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Identify shared structure across POS product modals and extract reusable form sections or helpers to reduce duplication without changing product-specific pricing behavior."
 
 ### Task PF-05: Audit unused dependencies and heavy client-only libraries
+- Status: completed on 2026-05-24
 - Task ID: PF-05
 - Title: Audit unused dependencies and heavy client-only libraries
 - Why it matters: the repo ships several visually heavy libraries and may also have unused dependencies. A dependency audit is a contained way to find future bundle-size wins.
@@ -294,6 +297,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Set up a lightweight test path for pure pricing logic and add unit tests covering discount, VAT, full payment, partial payment, and zero-value edge cases."
 
 ### Task TS-02: Add integration tests for public upload flow
+- Status: completed on 2026-05-24
 - Task ID: TS-02
 - Title: Add integration tests for public upload flow
 - Why it matters: the upload flow has multiple steps, client-side validation, retry paths, and signed URL opening. It is one of the safest high-value surfaces to test because contracts are already fairly explicit.
