@@ -4,6 +4,12 @@ export type CustomerDisplayPaymentMethod = PaymentMethod | 'transfer' | 'card';
 
 export type OrderStatus = 'pending' | 'paid' | 'cancelled' | 'partial';
 
+export const PAYMENT_METHOD_VALUES = ['cash', 'promptpay'] as const;
+
+export const CUSTOMER_DISPLAY_PAYMENT_METHOD_VALUES = ['cash', 'promptpay', 'transfer', 'card'] as const;
+
+export const ORDER_STATUS_VALUES = ['pending', 'paid', 'cancelled', 'partial'] as const;
+
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: 'Cash',
   promptpay: 'PromptPay',
@@ -21,6 +27,26 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   paid: 'Paid',
   cancelled: 'Cancelled',
 };
+
+export function isPaymentMethod(value: unknown): value is PaymentMethod {
+  return typeof value === 'string' && PAYMENT_METHOD_VALUES.includes(value as PaymentMethod);
+}
+
+export function isCustomerDisplayPaymentMethod(value: unknown): value is CustomerDisplayPaymentMethod {
+  return typeof value === 'string' && CUSTOMER_DISPLAY_PAYMENT_METHOD_VALUES.includes(value as CustomerDisplayPaymentMethod);
+}
+
+export function isOrderStatus(value: unknown): value is OrderStatus {
+  return typeof value === 'string' && ORDER_STATUS_VALUES.includes(value as OrderStatus);
+}
+
+export function normalizeCustomerDisplayPaymentMethod(value: unknown, fallback: CustomerDisplayPaymentMethod = 'cash'): CustomerDisplayPaymentMethod {
+  return isCustomerDisplayPaymentMethod(value) ? value : fallback;
+}
+
+export function normalizeOrderStatus(value: unknown, fallback: OrderStatus = 'pending'): OrderStatus {
+  return isOrderStatus(value) ? value : fallback;
+}
 
 export type ApiCartItem = {
   name: string;
