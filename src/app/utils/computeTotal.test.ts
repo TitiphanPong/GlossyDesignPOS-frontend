@@ -7,7 +7,7 @@ import {
   getCartSubtotal,
   getDiscountedTotal,
   roundCurrency,
-} from './computeTotal.ts';
+} from './computeTotal';
 
 test('getCartSubtotal sums item quantities and unit prices', () => {
   const subtotal = getCartSubtotal([

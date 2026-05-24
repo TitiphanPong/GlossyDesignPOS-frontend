@@ -7,7 +7,7 @@
     "prebuild": "npm run check:utf8",
     "build": "next build",
     "start": "next start",
-    "test": "node --test --experimental-strip-types src/**/*.test.ts",
+    "test": "node --import tsx --test src/**/*.test.ts",
     "lint": "eslint .",
     "check:utf8": "node scripts/check-utf8.cjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
@@ -21,7 +21,6 @@
     "@emotion/styled": "^11.14.1",
     "@mui/icons-material": "^7.3.1",
     "@mui/material": "^7.3.1",
-    "@mui/system": "^7.3.1",
     "axios": "^1.11.0",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.23.12",
@@ -45,6 +44,7 @@
     "eslint-config-next": "15.4.6",
     "prettier": "^3.6.2",
     "tailwindcss": "^4",
+    "tsx": "^4.22.3",
     "typescript": "^5"
   }
 }

@@ -1,13 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { computeTotals } from '../app/utils/computeTotal.ts';
+import { computeTotals } from '../app/utils/computeTotal';
 import {
   buildPendingOrderDraft,
   buildPendingOrderPayload,
   getPendingOrderFinalStatus,
   isPendingOrderSettled,
   isPendingOrderSubmitted,
-} from './pending-order.ts';
+} from './pending-order';
 
 const pricingCart = [
   { name: 'Business Card', qty: 2, unitPrice: 50, totalPrice: 100, fullPayment: true, deposit: 0, remaining: 0 },

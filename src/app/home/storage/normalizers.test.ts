@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { inferStatus, normalizeFiles, normalizeRecord } from './normalizers.ts';
+import { inferStatus, normalizeFiles, normalizeRecord } from './normalizers';
 
 test('inferStatus maps backend status variants into storage statuses', () => {
   assert.equal(inferStatus('completed'), 'completed');

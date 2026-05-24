@@ -11,7 +11,7 @@ import {
   canAdminLogin,
   isValidAdminToken,
   resolveAdminGuardRedirect,
-} from './admin-auth.ts';
+} from './admin-auth';
 
 test('admin auth constants keep the current local-storage guard contract stable', () => {
   assert.equal(ADMIN_AUTH_STORAGE_KEY, 'auth_token');

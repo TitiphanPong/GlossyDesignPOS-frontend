@@ -29,7 +29,7 @@ export type UploadApiRecord = {
   note?: string;
   category?: string;
   jobType?: string;
-  files?: UploadApiFile[] | string[];
+  files?: Array<UploadApiFile | string>;
   createdAt?: string;
   status?: string;
 };

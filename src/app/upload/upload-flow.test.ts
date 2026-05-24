@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createUploadQueueItems, openSignedUrlWithRetry, uploadPendingFiles, type UploadQueueItem } from './upload-flow.ts';
+import { createUploadQueueItems, openSignedUrlWithRetry, uploadPendingFiles, type UploadQueueItem } from './upload-flow';
 
 function createFile(name: string, size: number, type = 'application/pdf'): File {
   return new File(['x'.repeat(Math.min(size, 8))], name, { type, lastModified: 1 });
