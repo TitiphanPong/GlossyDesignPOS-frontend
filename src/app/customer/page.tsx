@@ -9,7 +9,12 @@ import { Autoplay } from 'swiper/modules';
 import { motion } from 'framer-motion';
 import './customer.css';
 import { computeOrderPaymentSummary, type PaymentSummaryResult } from '../utils/computeTotal';
-import { type CustomerDisplayPaymentMethod, type OrderStatus } from '../../lib/contracts';
+import {
+  normalizeCustomerDisplayPaymentMethod,
+  normalizeOrderStatus,
+  type CustomerDisplayPaymentMethod,
+  type OrderStatus,
+} from '../../lib/contracts';
 
 type CartItem = {
   name: string;
@@ -28,6 +33,10 @@ type CartItem = {
 type Order = {
   orderId: string;
   clientDraftId?: string;
+  rawPayment?: string | null;
+  rawStatus?: string | null;
+  hasUnsupportedPayment?: boolean;
+  hasUnsupportedStatus?: boolean;
   customerName?: string;
   phoneNumber?: string;
   note?: string;
@@ -75,6 +84,10 @@ const STATUS_MESSAGES: Record<number, string> = {
 
 const PAYMENT_CONFIRMING_MESSAGE = 'กำลังยืนยันการชำระเงิน กรุณารอสักครู่';
 
+const UNKNOWN_STATUS_MESSAGE = 'กำลังตรวจสอบสถานะคำสั่งซื้อ';
+const CANCELLED_STATUS_MESSAGE = 'คำสั่งซื้อนี้ถูกยกเลิกแล้ว กรุณาติดต่อเจ้าหน้าที่';
+const UNKNOWN_PAYMENT_MESSAGE = 'เจ้าหน้าที่กำลังตรวจสอบวิธีชำระเงินสำหรับออเดอร์นี้';
+
 const BANNERS = [
   { title: 'Glossy Design', sub: 'Premium Printing Services', img: '/banners/Banner1.png' },
   { title: 'งานสติกเกอร์ครบวงจร', sub: 'Sticker & Label Printing', img: '/banners/Banner8.png' },
@@ -86,6 +99,87 @@ function formatMoney(value: number): string {
   return Math.round(value).toLocaleString('th-TH');
 }
 
+function readOptionalString(value: unknown): string | undefined {
+  return typeof value === 'string' && value.trim() ? value : undefined;
+}
+
+function readOptionalNullableString(value: unknown): string | null | undefined {
+  if (value === null) return null;
+  return readOptionalString(value);
+}
+
+function readNumber(value: unknown, fallback = 0): number {
+  const numeric = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : Number.NaN;
+  return Number.isFinite(numeric) ? numeric : fallback;
+}
+
+function readTaxInvoice(value: unknown): 'yes' | 'no' | undefined {
+  return value === 'yes' || value === 'no' ? value : undefined;
+}
+
+function readOrderSyncStatus(value: unknown): Order['orderSyncStatus'] {
+  return value === 'pending' || value === 'submitting' || value === 'submitted' ? value : undefined;
+}
+
+function normalizeCartItem(value: unknown): CartItem | null {
+  if (!value || typeof value !== 'object') return null;
+
+  const item = value as Record<string, unknown>;
+  const name = readOptionalString(item.name);
+  if (!name) return null;
+
+  const variantName = item.variant && typeof item.variant === 'object' ? readOptionalString((item.variant as { name?: unknown }).name) : undefined;
+
+  return {
+    name,
+    category: readOptionalString(item.category),
+    qty: Math.max(0, readNumber(item.qty)),
+    totalPrice: readNumber(item.totalPrice),
+    fullPayment: typeof item.fullPayment === 'boolean' ? item.fullPayment : undefined,
+    deposit: readNumber(item.deposit, 0),
+    remaining: readNumber(item.remaining, 0),
+    material: readOptionalString(item.material),
+    variant: variantName ? { name: variantName } : undefined,
+    size: readOptionalString(item.size),
+    note: readOptionalString(item.note),
+  };
+}
+
+function normalizeStoredOrder(value: unknown): Order | null {
+  if (!value || typeof value !== 'object') return null;
+
+  const raw = value as Record<string, unknown>;
+  const orderId = readOptionalString(raw.orderId);
+  if (!orderId) return null;
+
+  const rawPayment = typeof raw.payment === 'string' ? raw.payment : null;
+  const rawStatus = typeof raw.status === 'string' ? raw.status : null;
+  const cart = Array.isArray(raw.cart) ? raw.cart.map(normalizeCartItem).filter((item): item is CartItem => Boolean(item)) : [];
+
+  return {
+    orderId,
+    clientDraftId: readOptionalString(raw.clientDraftId),
+    rawPayment,
+    rawStatus,
+    hasUnsupportedPayment: Boolean(rawPayment) && rawPayment !== normalizeCustomerDisplayPaymentMethod(rawPayment),
+    hasUnsupportedStatus: Boolean(rawStatus) && rawStatus !== normalizeOrderStatus(rawStatus),
+    customerName: readOptionalString(raw.customerName),
+    phoneNumber: readOptionalString(raw.phoneNumber),
+    note: readOptionalString(raw.note),
+    total: readNumber(raw.total),
+    discount: readNumber(raw.discount),
+    grandTotal: readNumber(raw.grandTotal, readNumber(raw.total)),
+    payment: normalizeCustomerDisplayPaymentMethod(raw.payment),
+    status: normalizeOrderStatus(raw.status),
+    cart,
+    taxInvoice: readTaxInvoice(raw.taxInvoice),
+    vatAmount: readNumber(raw.vatAmount, 0),
+    remainingTotal: readNumber(raw.remainingTotal, 0),
+    orderSyncStatus: readOrderSyncStatus(raw.orderSyncStatus),
+    lastSubmissionError: readOptionalNullableString(raw.lastSubmissionError),
+  };
+}
+
 function getWorkflowStep(status: OrderStatus): number {
   if (status === 'paid') return 5;
   if (status === 'partial') return 4;
@@ -93,7 +187,16 @@ function getWorkflowStep(status: OrderStatus): number {
   return 3;
 }
 
-function getOrderStatusMeta(status: OrderStatus): StatusMeta {
+function getOrderStatusMeta(status: OrderStatus, hasUnsupportedStatus = false): StatusMeta {
+  if (hasUnsupportedStatus) {
+    return {
+      bg: 'rgba(148,163,184,0.15)',
+      border: 'rgba(148,163,184,0.4)',
+      color: '#CBD5E1',
+      label: 'กำลังตรวจสอบสถานะ',
+    };
+  }
+
   if (status === 'pending') {
     return {
       bg: 'rgba(255,152,0,0.15)',
@@ -117,7 +220,7 @@ function getOrderStatusMeta(status: OrderStatus): StatusMeta {
       bg: 'rgba(255,82,82,0.15)',
       border: 'rgba(255,82,82,0.45)',
       color: '#FF8A80',
-      label: 'Order cancelled',
+      label: 'ยกเลิกคำสั่งซื้อ',
     };
   }
 
@@ -127,6 +230,14 @@ function getOrderStatusMeta(status: OrderStatus): StatusMeta {
     color: '#69F0AE',
     label: '• ชำระแล้ว',
   };
+}
+
+function getStatusMessage(status: OrderStatus, hasUnsupportedStatus = false): string {
+  if (hasUnsupportedStatus) return UNKNOWN_STATUS_MESSAGE;
+  if (status === 'cancelled') return CANCELLED_STATUS_MESSAGE;
+  if (status === 'partial') return 'ชำระมัดจำแล้ว กำลังเตรียมผลิตงานของท่าน';
+  if (status === 'paid') return 'ชำระเงินเรียบร้อยแล้ว';
+  return 'รอการชำระเงิน Please Proceed to Payment';
 }
 
 function getCartKey(item: CartItem): string {
@@ -585,7 +696,42 @@ function PaidScreen() {
   );
 }
 
-function PaymentCard({ payment, promptpayId, amountToPay }: Readonly<{ payment: CustomerDisplayPaymentMethod; promptpayId: string; amountToPay: number }>) {
+function PaymentCard({
+  payment,
+  promptpayId,
+  amountToPay,
+  hasUnsupportedPayment,
+}: Readonly<{
+  payment: CustomerDisplayPaymentMethod;
+  promptpayId: string;
+  amountToPay: number;
+  hasUnsupportedPayment?: boolean;
+}>) {
+  if (hasUnsupportedPayment) {
+    return (
+      <Box
+        sx={{
+          flex: 1,
+          p: { xs: 2.5, md: 3 },
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg,rgba(148,163,184,0.12) 0%,rgba(71,85,105,0.08) 100%)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(148,163,184,0.2)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          textAlign: 'center',
+        }}
+      >
+        <Typography sx={{ fontSize: '1.2rem', fontWeight: 700, color: '#fff' }}>กำลังตรวจสอบวิธีชำระเงิน</Typography>
+        <Typography sx={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)' }}>{UNKNOWN_PAYMENT_MESSAGE}</Typography>
+      </Box>
+    );
+  }
+
   if (payment === 'promptpay') {
     return (
       <Box
@@ -670,6 +816,31 @@ function PaymentCard({ payment, promptpayId, amountToPay }: Readonly<{ payment: 
     );
   }
 
+  if (payment === 'card') {
+    return (
+      <Box
+        sx={{
+          flex: 1,
+          p: { xs: 2.5, md: 3 },
+          borderRadius: '20px',
+          background: 'linear-gradient(135deg,rgba(168,85,247,0.12) 0%,rgba(79,70,229,0.08) 100%)',
+          backdropFilter: 'blur(24px)',
+          WebkitBackdropFilter: 'blur(24px)',
+          border: '1px solid rgba(168,85,247,0.22)',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 2,
+          textAlign: 'center',
+        }}
+      >
+        <Typography sx={{ fontSize: '1.3rem', fontWeight: 700, color: '#fff' }}>ชำระผ่านบัตร</Typography>
+        <Typography sx={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)' }}>กรุณาชำระผ่านเครื่องรับบัตรที่เคาน์เตอร์</Typography>
+      </Box>
+    );
+  }
+
   return (
     <Box
       sx={{
@@ -726,7 +897,7 @@ function ActiveOrderScreen({
   statusLabel: string;
   promptpayId: string;
 }>) {
-  const statusMeta = getOrderStatusMeta(order.status);
+  const statusMeta = getOrderStatusMeta(order.status, order.hasUnsupportedStatus);
 
   return (
     <Box
@@ -1088,7 +1259,7 @@ function ActiveOrderScreen({
           </motion.div>
 
           <motion.div initial={{ opacity: 0, x: 40 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: 0.65, delay: 0.28, ease: [0.22, 1, 0.36, 1] }} style={{ flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
-            <PaymentCard payment={order.payment} promptpayId={promptpayId} amountToPay={summary.amountToPay} />
+            <PaymentCard payment={order.payment} promptpayId={promptpayId} amountToPay={summary.amountToPay} hasUnsupportedPayment={order.hasUnsupportedPayment} />
           </motion.div>
         </Box>
       </Box>
@@ -1154,7 +1325,7 @@ export default function CustomerScreen() {
       }
 
       try {
-        setOrder(JSON.parse(str) as Order);
+        setOrder(normalizeStoredOrder(JSON.parse(str)));
       } catch {
         setOrder(null);
       }
@@ -1190,7 +1361,12 @@ export default function CustomerScreen() {
   const isPaid = order ? order.status === 'paid' || (order.status === 'partial' && order.remainingTotal === 0) : false;
   const statusLabel = STATUS_MESSAGES[currentStep] ?? 'กำลังดำเนินการ...';
 
-  const displayStatusLabel = order?.orderSyncStatus === 'submitting' ? PAYMENT_CONFIRMING_MESSAGE : statusLabel;
+  const displayStatusLabel =
+    order?.orderSyncStatus === 'submitting'
+      ? PAYMENT_CONFIRMING_MESSAGE
+      : order
+        ? getStatusMessage(order.status, order.hasUnsupportedStatus)
+        : statusLabel;
 
   if (!order) return <IdleScreen />;
   if (isPaid) return <PaidScreen />;

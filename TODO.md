@@ -204,6 +204,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Review the POS success modal for duplicate-submit and stale-localStorage risks, then add safe client-side guards without changing the checkout contract."
 
 ### Task BR-03: Reconcile payment/status logic between shared contracts and customer display
+- Status: completed on 2026-05-24
 - Task ID: BR-03
 - Title: Reconcile payment/status logic between shared contracts and customer display
 - Why it matters: shared contracts allow `cancelled`, but `customer/page.tsx` defines a narrower status union and broader payment union. This mismatch can hide real backend states or cause brittle assumptions.
