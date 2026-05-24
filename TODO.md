@@ -274,6 +274,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Identify shared structure across POS product modals and extract reusable form sections or helpers to reduce duplication without changing product-specific pricing behavior."
 
 ### Task PF-05: Audit unused dependencies and heavy client-only libraries
+- Status: completed on 2026-05-24
 - Task ID: PF-05
 - Title: Audit unused dependencies and heavy client-only libraries
 - Why it matters: the repo ships several visually heavy libraries and may also have unused dependencies. A dependency audit is a contained way to find future bundle-size wins.
