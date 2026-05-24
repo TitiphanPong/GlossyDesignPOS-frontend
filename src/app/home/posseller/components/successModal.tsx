@@ -9,6 +9,14 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import { PAYMENT_METHOD_LABELS, PaymentMethod, PendingOrderDraft } from '../../../../lib/contracts';
 import { fetchApiJson, isMissingApiBaseError } from '../../../../lib/api';
 
+type OrderSyncStatus = 'pending' | 'submitting' | 'submitted';
+
+type StoredPendingOrderDraft = PendingOrderDraft & {
+  clientDraftId?: string;
+  orderSyncStatus?: OrderSyncStatus;
+  lastSubmissionError?: string | null;
+};
+
 type Props = {
   open: boolean;
   payment: PaymentMethod;
@@ -17,9 +25,48 @@ type Props = {
   onNewOrder: () => void;
 };
 
+const PENDING_ORDER_KEY = 'pendingOrder';
+
+function readPendingOrder(): StoredPendingOrderDraft | null {
+  const orderStr = localStorage.getItem(PENDING_ORDER_KEY);
+  if (!orderStr) return null;
+
+  try {
+    return JSON.parse(orderStr) as StoredPendingOrderDraft;
+  } catch {
+    return null;
+  }
+}
+
+function persistPendingOrder(order: StoredPendingOrderDraft | null) {
+  if (order) {
+    localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(order));
+  } else {
+    localStorage.removeItem(PENDING_ORDER_KEY);
+  }
+
+  globalThis.dispatchEvent(new Event('storage'));
+}
+
+function buildOrderPayload(order: StoredPendingOrderDraft, status: 'partial' | 'paid'): PendingOrderDraft {
+  const payload = { ...order };
+  delete payload.clientDraftId;
+  delete payload.orderSyncStatus;
+  delete payload.lastSubmissionError;
+
+  return {
+    ...payload,
+    status,
+    taxInvoice: payload.taxInvoice,
+    vatAmount: payload.vatAmount,
+    grandTotal: payload.grandTotal,
+  };
+}
+
 export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrder }: Readonly<Props>) {
   const [isPaid, setIsPaid] = useState(false);
-  const [orderData, setOrderData] = useState<PendingOrderDraft | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [orderData, setOrderData] = useState<StoredPendingOrderDraft | null>(null);
   const remainingTotal = orderData?.remainingTotal ?? 0;
   const depositTotal = orderData?.depositTotal ?? 0;
   const grandTotal = orderData?.grandTotal ?? 0;
@@ -27,11 +74,15 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
 
   useEffect(() => {
     if (open) {
-      setIsPaid(false);
-      const orderStr = localStorage.getItem('pendingOrder');
-      if (orderStr) {
-        const order = JSON.parse(orderStr) as PendingOrderDraft;
+      setIsSubmitting(false);
+      const order = readPendingOrder();
+
+      if (order) {
         setOrderData(order);
+        setIsPaid(order.orderSyncStatus === 'submitted' || order.status === 'paid' || order.status === 'partial');
+      } else {
+        setOrderData(null);
+        setIsPaid(false);
       }
     }
   }, [open]);
@@ -44,34 +95,62 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
   }, [isPaid, onClose]);
 
   const handleConfirm = async () => {
+    if (isSubmitting || isPaid) return;
+
     try {
-      const orderStr = localStorage.getItem('pendingOrder');
-      if (!orderStr) return;
-      const order = JSON.parse(orderStr) as PendingOrderDraft;
+      const order = readPendingOrder();
+      if (!order) {
+        alert('ไม่พบข้อมูลออเดอร์ที่กำลังรอชำระเงิน');
+        return;
+      }
+
+      if (orderData?.clientDraftId && order.clientDraftId && order.clientDraftId !== orderData.clientDraftId) {
+        alert('พบออเดอร์ใหม่ในระบบแล้ว กรุณาปิดหน้าต่างนี้และตรวจสอบรายการล่าสุดก่อนยืนยันอีกครั้ง');
+        return;
+      }
+
+      if (order.orderSyncStatus === 'submitting') {
+        alert('ระบบกำลังยืนยันออเดอร์นี้อยู่แล้ว กรุณารอสักครู่ก่อนลองใหม่');
+        return;
+      }
+
       const isPartial = (order.remainingTotal ?? 0) > 0;
+      const nextStatus = isPartial ? 'partial' : 'paid';
+
+      if (order.orderSyncStatus === 'submitted' || order.status === 'paid' || order.status === 'partial') {
+        setOrderData(order);
+        setIsPaid(true);
+        onPaid();
+        return;
+      }
+
+      const draftId = order.clientDraftId ?? globalThis.crypto.randomUUID();
+      const submittingOrder: StoredPendingOrderDraft = {
+        ...order,
+        clientDraftId: draftId,
+        orderSyncStatus: 'submitting',
+        lastSubmissionError: null,
+      };
+
+      persistPendingOrder(submittingOrder);
+      setOrderData(submittingOrder);
+      setIsSubmitting(true);
 
       await fetchApiJson<PendingOrderDraft>('/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...order,
-          status: isPartial ? 'partial' : 'paid',
-          taxInvoice: order.taxInvoice,
-          vatAmount: order.vatAmount,
-          grandTotal: order.grandTotal,
-        }),
+        body: JSON.stringify(buildOrderPayload(submittingOrder, nextStatus)),
       });
 
-      localStorage.setItem(
-        'pendingOrder',
-        JSON.stringify({
-          ...order,
-          status: isPartial ? 'partial' : 'paid',
-          taxInvoice: order.taxInvoice,
-          vatAmount: order.vatAmount,
-        })
-      );
-      globalThis.dispatchEvent(new Event('storage'));
+      const submittedOrder: StoredPendingOrderDraft = {
+        ...submittingOrder,
+        status: nextStatus,
+        orderSyncStatus: 'submitted',
+        lastSubmissionError: null,
+      };
+
+      persistPendingOrder(submittedOrder);
+      setOrderData(submittedOrder);
       setIsPaid(true);
       onPaid();
     } catch (error) {
@@ -81,17 +160,39 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         : error instanceof Error && error.message
           ? error.message
           : 'เกิดข้อผิดพลาดในการยืนยันการชำระเงิน';
+
+      const latestOrder = readPendingOrder();
+      if (latestOrder && (!orderData?.clientDraftId || latestOrder.clientDraftId === orderData.clientDraftId)) {
+        const resetOrder: StoredPendingOrderDraft = {
+          ...latestOrder,
+          orderSyncStatus: 'pending',
+          lastSubmissionError: message,
+        };
+        persistPendingOrder(resetOrder);
+        setOrderData(resetOrder);
+      }
+
       alert(message);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: 3, p: 0.5 } } }}>
+    <Dialog
+      open={open}
+      onClose={(_event, reason) => {
+        if (isSubmitting && (reason === 'backdropClick' || reason === 'escapeKeyDown')) return;
+        onClose();
+      }}
+      maxWidth="sm"
+      fullWidth
+      slotProps={{ paper: { sx: { borderRadius: 3, p: 0.5 } } }}>
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
-          {isPaid ? <CheckCircleIcon color="success" fontSize="large" /> : <HourglassEmptyIcon color="warning" fontSize="large" />}
+          {isPaid ? <CheckCircleIcon color="success" fontSize="large" /> : <HourglassEmptyIcon color={isSubmitting ? 'info' : 'warning'} fontSize="large" />}
           <Typography variant="h6" fontWeight={800}>
-            {isPaid ? 'ชำระเงินเรียบร้อย' : 'รอชำระเงิน'}
+            {isPaid ? 'ชำระเงินเรียบร้อย' : isSubmitting ? 'กำลังยืนยันการชำระเงิน' : 'รอชำระเงิน'}
           </Typography>
         </Stack>
       </DialogTitle>
@@ -124,22 +225,28 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         </Box>
 
         <Typography variant="body2" color="text.secondary" align="center">
-          {isPaid ? 'ชำระเงินเสร็จสิ้น ระบบจะปิดอัตโนมัติใน 5 วินาที' : 'โปรดยืนยันการชำระเงินก่อนปิดบิล'}
+          {isPaid ? 'ชำระเงินเสร็จสิ้น ระบบจะปิดอัตโนมัติใน 5 วินาที' : isSubmitting ? 'ระบบกำลังบันทึกออเดอร์ กรุณารอสักครู่และอย่าปิดหน้าต่างนี้' : 'โปรดยืนยันการชำระเงินก่อนปิดบิล'}
         </Typography>
       </DialogContent>
 
       <DialogActions sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between', px: 2.5, pb: 2, pt: 2 }}>
         {!isPaid && (
-          <Button variant="contained" color={payment === 'cash' ? 'success' : 'warning'} startIcon={<DoneAllIcon />} onClick={handleConfirm}>
-            {payment === 'cash' ? 'รับเงินแล้ว' : 'ยืนยันการโอนแล้ว'}
+          <Button
+            variant="contained"
+            color={payment === 'cash' ? 'success' : 'warning'}
+            startIcon={<DoneAllIcon />}
+            onClick={handleConfirm}
+            disabled={isSubmitting || !orderData}>
+            {isSubmitting ? 'กำลังบันทึก...' : payment === 'cash' ? 'รับเงินแล้ว' : 'ยืนยันการโอนแล้ว'}
           </Button>
         )}
         <Button
           variant="outlined"
           color="primary"
           startIcon={<ReplayIcon />}
+          disabled={isSubmitting}
           onClick={() => {
-            localStorage.removeItem('pendingOrder');
+            persistPendingOrder(null);
             onNewOrder();
           }}>
           ทำรายการใหม่
