@@ -172,7 +172,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Deduplicate upload validation and file metadata helpers between the public upload page and the quick uploader component, keeping the current accepted file rules unchanged."
 
 ### Task RC-05: Normalize inconsistent naming for order/payment display types
-- Status: completed on 2026-05-22
+- Status: completed on 2026-05-24
 - Task ID: RC-05
 - Title: Normalize inconsistent naming for order/payment display types
 - Why it matters: the repo mixes backend-facing values like `cash` and `promptpay` with UI-only labels like `Cash`, `PromptPay`, and extra values like `Bank Transfer`, `transfer`, and `card`. Naming cleanup will reduce accidental mismatches.
