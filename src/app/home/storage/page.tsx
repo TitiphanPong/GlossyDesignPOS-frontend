@@ -119,6 +119,11 @@ type StorageRow = {
   activities: string[];
 };
 
+type StorageRowPatch = {
+  status?: StorageStatus;
+  notes?: string;
+};
+
 const endpointCandidates = ['/uploads', '/upload'];
 
 const softBlue = '#3778FF';
@@ -142,6 +147,34 @@ function formatBytes(value?: number) {
   const mb = value / (1024 * 1024);
   if (mb >= 1) return `${mb.toFixed(1)} MB`;
   return `${(value / 1024).toFixed(0)} KB`;
+}
+
+function readErrorMessage(value: unknown): string | null {
+  if (typeof value === 'string' && value.trim()) return value.trim();
+
+  if (Array.isArray(value)) {
+    const messages = value.map(readErrorMessage).filter((item): item is string => Boolean(item));
+    return messages.length > 0 ? messages.join(', ') : null;
+  }
+
+  if (value && typeof value === 'object') {
+    const objectValue = value as { message?: unknown; error?: unknown };
+    return readErrorMessage(objectValue.message) ?? readErrorMessage(objectValue.error);
+  }
+
+  return null;
+}
+
+function getRequestErrorMessage(error: unknown, fallback: string): string {
+  if (axios.isAxiosError(error)) {
+    return readErrorMessage(error.response?.data) ?? error.message ?? fallback;
+  }
+
+  if (error instanceof Error && error.message.trim()) {
+    return error.message;
+  }
+
+  return fallback;
 }
 
 function normalizeFiles(rawFiles: UploadApiRecord['files']): FileItem[] {
@@ -302,6 +335,11 @@ export default function StoragePage() {
   const [loading, setLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [missingApiBase, setMissingApiBase] = React.useState(false);
+  const [actionMessage, setActionMessage] = React.useState<{ severity: 'success' | 'error'; text: string } | null>(null);
+  const [persistingIds, setPersistingIds] = React.useState<string[]>([]);
+  const [bulkUpdating, setBulkUpdating] = React.useState(false);
+  const [bulkDeleting, setBulkDeleting] = React.useState(false);
+  const [drawerSaving, setDrawerSaving] = React.useState(false);
 
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'all' | StorageStatus>('all');
@@ -370,6 +408,81 @@ export default function StoragePage() {
   React.useEffect(() => {
     fetchUploads();
   }, [fetchUploads]);
+
+  const trackPersistingIds = React.useCallback((targetIds: string[], active: boolean) => {
+    setPersistingIds(current => {
+      const next = new Set(current);
+      targetIds.forEach(id => {
+        if (active) {
+          next.add(id);
+        } else {
+          next.delete(id);
+        }
+      });
+      return Array.from(next);
+    });
+  }, []);
+
+  const applyRowPatch = React.useCallback((targetIds: string[], patch: StorageRowPatch) => {
+    setRows(current =>
+      current.map(row => {
+        if (!targetIds.includes(row.id)) return row;
+        return {
+          ...row,
+          ...(patch.status ? { status: patch.status } : {}),
+          ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+        };
+      }),
+    );
+
+    setActiveRecord(current => {
+      if (!current || !targetIds.includes(current.id)) return current;
+      return {
+        ...current,
+        ...(patch.status ? { status: patch.status } : {}),
+        ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+      };
+    });
+
+    if (activeRecord && targetIds.includes(activeRecord.id) && patch.status) {
+      setDrawerStatus(patch.status);
+    }
+
+    if (activeRecord && targetIds.includes(activeRecord.id) && patch.notes !== undefined) {
+      setDrawerNotes(patch.notes);
+    }
+  }, [activeRecord]);
+
+  const removeRows = React.useCallback((targetIds: string[]) => {
+    setRows(current => current.filter(row => !targetIds.includes(row.id)));
+    setSelectedIds(current => current.filter(id => !targetIds.includes(id)));
+
+    if (activeRecord && targetIds.includes(activeRecord.id)) {
+      setDrawerOpen(false);
+      setActiveRecord(null);
+    }
+  }, [activeRecord]);
+
+  const persistUploadMutation = React.useCallback(async (rowId: string, method: 'patch' | 'delete', payload?: Record<string, unknown>) => {
+    const base = getApiBaseUrl();
+    let lastError: unknown = null;
+
+    for (const endpoint of endpointCandidates) {
+      try {
+        const url = `${base}${endpoint}/${encodeURIComponent(rowId)}`;
+        if (method === 'patch') {
+          await axios.patch(url, payload);
+        } else {
+          await axios.delete(url);
+        }
+        return;
+      } catch (error) {
+        lastError = error;
+      }
+    }
+
+    throw lastError ?? new Error('storage_request_failed');
+  }, []);
 
   const jobTypes = React.useMemo(() => {
     const set = new Set(rows.map(row => row.jobType));
@@ -465,35 +578,81 @@ export default function StoragePage() {
     URL.revokeObjectURL(href);
   }, [filteredRows]);
 
-  const updateLocalStatus = React.useCallback(
-    (targetIds: string[], status: StorageStatus) => {
-      setRows(current => current.map(row => (targetIds.includes(row.id) ? { ...row, status } : row)));
-
-      if (activeRecord && targetIds.includes(activeRecord.id)) {
-        setActiveRecord({ ...activeRecord, status });
-        setDrawerStatus(status);
-      }
-    },
-    [activeRecord]
-  );
-
-  const handleBulkStatus = React.useCallback(() => {
+  const handleBulkStatus = React.useCallback(async () => {
     if (selectedIds.length === 0) return;
-    updateLocalStatus(selectedIds, 'processing');
-  }, [selectedIds, updateLocalStatus]);
 
-  const handleBulkDelete = React.useCallback(() => {
+    const targetIds = [...selectedIds];
+    setActionMessage(null);
+    setBulkUpdating(true);
+    trackPersistingIds(targetIds, true);
+
+    try {
+      const results = await Promise.allSettled(targetIds.map(rowId => persistUploadMutation(rowId, 'patch', { status: 'processing' })));
+      const succeeded = targetIds.filter((_, index) => results[index]?.status === 'fulfilled');
+      const failed = targetIds.length - succeeded.length;
+
+      if (succeeded.length > 0) {
+        applyRowPatch(succeeded, { status: 'processing' });
+      }
+
+      if (failed > 0) {
+        setActionMessage({
+          severity: 'error',
+          text: `อัปเดตสถานะสำเร็จ ${succeeded.length} จาก ${targetIds.length} รายการ กรุณาลองใหม่สำหรับรายการที่ยังไม่สำเร็จ`,
+        });
+      } else {
+        setActionMessage({ severity: 'success', text: `อัปเดตสถานะ ${targetIds.length} รายการแล้ว` });
+      }
+    } catch (error) {
+      if (isMissingApiBaseError(error)) {
+        setMissingApiBase(true);
+      } else {
+        setActionMessage({ severity: 'error', text: getRequestErrorMessage(error, 'ไม่สามารถอัปเดตสถานะงานได้') });
+      }
+    } finally {
+      trackPersistingIds(targetIds, false);
+      setBulkUpdating(false);
+    }
+  }, [applyRowPatch, persistUploadMutation, selectedIds, trackPersistingIds]);
+
+  const handleBulkDelete = React.useCallback(async () => {
     if (selectedIds.length === 0) return;
     if (!confirm('ยืนยันการลบรายการที่เลือก?')) return;
 
-    setRows(current => current.filter(row => !selectedIds.includes(row.id)));
-    setSelectedIds([]);
+    const targetIds = [...selectedIds];
+    setActionMessage(null);
+    setBulkDeleting(true);
+    trackPersistingIds(targetIds, true);
 
-    if (activeRecord && selectedIds.includes(activeRecord.id)) {
-      setDrawerOpen(false);
-      setActiveRecord(null);
+    try {
+      const results = await Promise.allSettled(targetIds.map(rowId => persistUploadMutation(rowId, 'delete')));
+      const succeeded = targetIds.filter((_, index) => results[index]?.status === 'fulfilled');
+      const failed = targetIds.length - succeeded.length;
+
+      if (succeeded.length > 0) {
+        removeRows(succeeded);
+      }
+
+      if (failed > 0) {
+        setActionMessage({
+          severity: 'error',
+          text: `ลบสำเร็จ ${succeeded.length} จาก ${targetIds.length} รายการ กรุณาลองใหม่สำหรับรายการที่ยังไม่สำเร็จ`,
+        });
+      } else {
+        setActionMessage({ severity: 'success', text: `ลบ ${targetIds.length} รายการแล้ว` });
+      }
+    } catch (error) {
+      if (isMissingApiBaseError(error)) {
+        setMissingApiBase(true);
+      } else {
+        setActionMessage({ severity: 'error', text: getRequestErrorMessage(error, 'ไม่สามารถลบรายการที่เลือกได้') });
+      }
+    } finally {
+      trackPersistingIds(targetIds, false);
+      setBulkDeleting(false);
     }
-  }, [activeRecord, selectedIds]);
+    return;
+  }, [persistUploadMutation, removeRows, selectedIds, trackPersistingIds]);
 
   const allCurrentSelected = React.useMemo(() => filteredRows.length > 0 && filteredRows.every(row => selectedIdSet.has(row.id)), [filteredRows, selectedIdSet]);
 
@@ -536,21 +695,31 @@ export default function StoragePage() {
     [downloadUrl]
   );
 
-  const handleDrawerSave = () => {
+  const handleDrawerSave = React.useCallback(async () => {
     if (!activeRecord) return;
-    setRows(current =>
-      current.map(row => {
-        if (row.id !== activeRecord.id) return row;
-        return {
-          ...row,
-          status: drawerStatus,
-          notes: drawerNotes,
-        };
-      })
-    );
+    setActionMessage(null);
+    setDrawerSaving(true);
+    trackPersistingIds([activeRecord.id], true);
 
-    setActiveRecord(current => (current ? { ...current, status: drawerStatus, notes: drawerNotes } : current));
-  };
+    try {
+      await persistUploadMutation(activeRecord.id, 'patch', {
+        status: drawerStatus,
+        note: drawerNotes,
+      });
+      applyRowPatch([activeRecord.id], { status: drawerStatus, notes: drawerNotes });
+      setActionMessage({ severity: 'success', text: 'บันทึกสถานะและหมายเหตุเรียบร้อยแล้ว' });
+    } catch (error) {
+      if (isMissingApiBaseError(error)) {
+        setMissingApiBase(true);
+      } else {
+        setActionMessage({ severity: 'error', text: getRequestErrorMessage(error, 'ไม่สามารถบันทึกสถานะและหมายเหตุได้') });
+      }
+    } finally {
+      trackPersistingIds([activeRecord.id], false);
+      setDrawerSaving(false);
+    }
+    return;
+  }, [activeRecord, applyRowPatch, drawerNotes, drawerStatus, persistUploadMutation, trackPersistingIds]);
 
   const openRowMenu = (event: React.MouseEvent<HTMLButtonElement>, rowId: string) => {
     event.stopPropagation();
@@ -572,7 +741,7 @@ export default function StoragePage() {
         py: { xs: 2.5, md: 3.5 },
         minHeight: '100vh',
         background: 'radial-gradient(circle at 10% 6%, #EEF4FF 0%, #F7FAFF 40%, #FBFCFF 100%)',
-        fontFamily: 'Plus Jakarta Sans, Prompt, system-ui, sans-serif',
+        fontFamily: 'var(--font-sans), "Prompt", "Noto Sans Thai", sans-serif',
       }}>
       <Stack spacing={2.5}>
         <Card
@@ -666,6 +835,12 @@ export default function StoragePage() {
             {errorMessage ? (
               <Alert severity="warning" sx={{ mt: 2.2, borderRadius: 3 }}>
                 {errorMessage}
+              </Alert>
+            ) : null}
+
+            {actionMessage ? (
+              <Alert severity={actionMessage.severity} sx={{ mt: 2.2, borderRadius: 3 }}>
+                {actionMessage.text}
               </Alert>
             ) : null}
           </CardContent>
@@ -795,21 +970,25 @@ export default function StoragePage() {
                   Download Selected
                 </Button>
                 <Button
-                  onClick={handleBulkStatus}
-                  disabled={selectedRows.length === 0}
+                  onClick={() => {
+                    void handleBulkStatus();
+                  }}
+                  disabled={selectedRows.length === 0 || bulkUpdating || bulkDeleting}
                   variant="outlined"
                   startIcon={<EditNoteRoundedIcon />}
                   sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
-                  Change Status
+                  {bulkUpdating ? 'Updating...' : 'Change Status'}
                 </Button>
                 <Button
-                  onClick={handleBulkDelete}
-                  disabled={selectedRows.length === 0}
+                  onClick={() => {
+                    void handleBulkDelete();
+                  }}
+                  disabled={selectedRows.length === 0 || bulkDeleting || bulkUpdating}
                   variant="outlined"
                   color="error"
                   startIcon={<DeleteOutlineRoundedIcon />}
                   sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
-                  Delete Selected
+                  {bulkDeleting ? 'Deleting...' : 'Delete Selected'}
                 </Button>
               </Stack>
             </Stack>
@@ -980,7 +1159,27 @@ export default function StoragePage() {
         </MenuItem>
         <MenuItem
           onClick={() => {
-            if (rowMenuTarget) updateLocalStatus([rowMenuTarget.id], 'completed');
+            if (rowMenuTarget) {
+              void (async () => {
+                const targetId = rowMenuTarget.id;
+                setActionMessage(null);
+                trackPersistingIds([targetId], true);
+
+                try {
+                  await persistUploadMutation(targetId, 'patch', { status: 'completed' });
+                  applyRowPatch([targetId], { status: 'completed' });
+                  setActionMessage({ severity: 'success', text: 'อัปเดตสถานะรายการแล้ว' });
+                } catch (error) {
+                  if (isMissingApiBaseError(error)) {
+                    setMissingApiBase(true);
+                  } else {
+                    setActionMessage({ severity: 'error', text: getRequestErrorMessage(error, 'ไม่สามารถอัปเดตสถานะรายการได้') });
+                  }
+                } finally {
+                  trackPersistingIds([targetId], false);
+                }
+              })();
+            }
             closeRowMenu();
           }}>
           เปลี่ยนสถานะเป็น Completed
@@ -1165,7 +1364,14 @@ export default function StoragePage() {
                 backdropFilter: 'blur(10px)',
               }}>
               <Stack direction={{ xs: 'column', sm: 'row' }} gap={1}>
-                <Button fullWidth variant="contained" onClick={handleDrawerSave} sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
+                <Button
+                  fullWidth
+                  variant="contained"
+                  onClick={() => {
+                    void handleDrawerSave();
+                  }}
+                  disabled={drawerSaving || persistingIds.includes(activeRecord.id)}
+                  sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
                   บันทึกข้อมูล
                 </Button>
                 <Button fullWidth variant="outlined" onClick={() => setDrawerOpen(false)} sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
