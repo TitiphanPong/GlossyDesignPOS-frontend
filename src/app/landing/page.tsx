@@ -23,13 +23,6 @@ type WorkflowStep = {
   description: string;
 };
 
-type PortfolioItem = {
-  title: string;
-  category: string;
-  image: string;
-  tone: string;
-};
-
 type Testimonial = {
   name: string;
   role: string;

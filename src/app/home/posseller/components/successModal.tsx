@@ -8,14 +8,13 @@ import DoneAllIcon from '@mui/icons-material/DoneAll';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import { PAYMENT_METHOD_LABELS, PaymentMethod, PendingOrderDraft } from '../../../../lib/contracts';
 import { fetchApiJson, isMissingApiBaseError } from '../../../../lib/api';
-
-type OrderSyncStatus = 'pending' | 'submitting' | 'submitted';
-
-type StoredPendingOrderDraft = PendingOrderDraft & {
-  clientDraftId?: string;
-  orderSyncStatus?: OrderSyncStatus;
-  lastSubmissionError?: string | null;
-};
+import {
+  buildPendingOrderPayload,
+  getPendingOrderFinalStatus,
+  isPendingOrderSubmitted,
+  PENDING_ORDER_KEY,
+  type StoredPendingOrderDraft,
+} from '../../../../lib/pending-order';
 
 type Props = {
   open: boolean;
@@ -24,8 +23,6 @@ type Props = {
   onPaid: () => void;
   onNewOrder: () => void;
 };
-
-const PENDING_ORDER_KEY = 'pendingOrder';
 
 function readPendingOrder(): StoredPendingOrderDraft | null {
   const orderStr = localStorage.getItem(PENDING_ORDER_KEY);
@@ -48,21 +45,6 @@ function persistPendingOrder(order: StoredPendingOrderDraft | null) {
   globalThis.dispatchEvent(new Event('storage'));
 }
 
-function buildOrderPayload(order: StoredPendingOrderDraft, status: 'partial' | 'paid'): PendingOrderDraft {
-  const payload = { ...order };
-  delete payload.clientDraftId;
-  delete payload.orderSyncStatus;
-  delete payload.lastSubmissionError;
-
-  return {
-    ...payload,
-    status,
-    taxInvoice: payload.taxInvoice,
-    vatAmount: payload.vatAmount,
-    grandTotal: payload.grandTotal,
-  };
-}
-
 export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrder }: Readonly<Props>) {
   const [isPaid, setIsPaid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -79,7 +61,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
 
       if (order) {
         setOrderData(order);
-        setIsPaid(order.orderSyncStatus === 'submitted' || order.status === 'paid' || order.status === 'partial');
+        setIsPaid(isPendingOrderSubmitted(order));
       } else {
         setOrderData(null);
         setIsPaid(false);
@@ -114,10 +96,9 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         return;
       }
 
-      const isPartial = (order.remainingTotal ?? 0) > 0;
-      const nextStatus = isPartial ? 'partial' : 'paid';
+      const nextStatus = getPendingOrderFinalStatus(order);
 
-      if (order.orderSyncStatus === 'submitted' || order.status === 'paid' || order.status === 'partial') {
+      if (isPendingOrderSubmitted(order)) {
         setOrderData(order);
         setIsPaid(true);
         onPaid();
@@ -139,7 +120,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       await fetchApiJson<PendingOrderDraft>('/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildOrderPayload(submittingOrder, nextStatus)),
+        body: JSON.stringify(buildPendingOrderPayload(submittingOrder, nextStatus)),
       });
 
       const submittedOrder: StoredPendingOrderDraft = {

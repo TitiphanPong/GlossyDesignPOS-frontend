@@ -266,6 +266,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Audit image usage on customer, landing, and storage screens and convert safe cases to Next.js image optimization where it won’t break layout, animation, or signed URL previews."
 
 ### Task PF-04: Reduce duplicate product modal code to shrink bundle surface
+- Status: completed on 2026-05-24
 - Task ID: PF-04
 - Title: Reduce duplicate product modal code to shrink bundle surface
 - Why it matters: many POS product modals repeat similar state and JSX patterns. Consolidating shared pieces can reduce maintenance cost and the amount of UI code loaded for the cashier flow.
@@ -307,6 +308,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Introduce integration-style tests for the public upload flow covering validation, upload success, partial failure, and retry behavior. Keep the setup lightweight and mock network calls."
 
 ### Task TS-03: Add regression tests for POS pending-order lifecycle
+- Status: completed on 2026-05-24
 - Task ID: TS-03
 - Title: Add regression tests for POS pending-order lifecycle
 - Why it matters: the POS flow depends on `localStorage.pendingOrder`, customer display polling, and success-modal state transitions. This is a likely regression area whenever checkout logic changes.

@@ -8,6 +8,7 @@ import {
   normalizeOrderStatus,
   type OrderStatus,
 } from '../../lib/contracts';
+import { isPendingOrderSettled, PENDING_ORDER_KEY } from '../../lib/pending-order';
 import { ActiveOrderScreen } from './components/CustomerActiveOrderScreen';
 import { IdleScreen, PaidScreen } from './components/CustomerDisplayShell';
 import {
@@ -121,7 +122,7 @@ export default function CustomerScreen() {
 
   useEffect(() => {
     const handleStorage = () => {
-      const str = localStorage.getItem('pendingOrder');
+      const str = localStorage.getItem(PENDING_ORDER_KEY);
       if (!str) {
         setOrder(null);
         return;
@@ -148,11 +149,11 @@ export default function CustomerScreen() {
     if (!order) return;
     if (order.orderSyncStatus === 'submitting') return;
 
-    const fullyPaid = order.status === 'paid' || (order.status === 'partial' && order.remainingTotal === 0);
+    const fullyPaid = isPendingOrderSettled(order);
     if (!fullyPaid) return;
 
     const timeoutId = setTimeout(() => {
-      localStorage.removeItem('pendingOrder');
+      localStorage.removeItem(PENDING_ORDER_KEY);
       setOrder(null);
     }, 6000);
 
@@ -161,7 +162,7 @@ export default function CustomerScreen() {
 
   const summary = useMemo(() => (order ? computeOrderPaymentSummary(order) : null), [order]);
   const currentStep = order ? getWorkflowStep(order.status) : 3;
-  const isPaid = order ? order.status === 'paid' || (order.status === 'partial' && order.remainingTotal === 0) : false;
+  const isPaid = order ? isPendingOrderSettled(order) : false;
   const statusLabel = STATUS_MESSAGES[currentStep] ?? 'เธเธณเธฅเธฑเธเธ”เธณเน€เธเธดเธเธเธฒเธฃ...';
 
   const displayStatusLabel =

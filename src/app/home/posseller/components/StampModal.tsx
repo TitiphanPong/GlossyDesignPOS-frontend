@@ -1,9 +1,10 @@
 ﻿'use client';
 
-import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Stack, Box, Card, TextField, Divider, FormControlLabel, RadioGroup, Radio, CardContent } from '@mui/material';
+import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Stack, Box, Card, TextField, Divider } from '@mui/material';
 import React, { useState, useEffect } from 'react';
 import { CartItem } from '../types/cart';
 import { formatMoneySummary, posSellerLocale } from '../locales/th';
+import PosPaymentSummaryFields from './PosPaymentSummaryFields';
 
 interface StampModalProps {
   open: boolean;
@@ -171,94 +172,15 @@ export default function StampModal({ open, onClose, onSelect, productName, initi
         <Typography variant="h6" fontWeight={700} gutterBottom>
           {posSellerLocale.common.priceSummaryTitle}
         </Typography>
-        <RadioGroup row value={fullPayment ? 'full' : 'deposit'} onChange={e => setFullPayment(e.target.value === 'full')} sx={{ width: '100%' }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} spacing={3} alignItems="stretch" flexWrap="wrap" sx={{ width: '100%' }}>
-            <Card
-              variant="outlined"
-              sx={{
-                flex: 1,
-                minWidth: 280,
-                borderColor: fullPayment ? 'grey.300' : 'primary.main',
-              }}>
-              <CardContent>
-                <FormControlLabel
-                  value="deposit"
-                  control={<Radio />}
-                  label={
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {posSellerLocale.common.depositProduct}
-                    </Typography>
-                  }
-                />
-                <Stack spacing={2} mt={2}>
-                  <TextField
-                    label={posSellerLocale.common.totalLabel}
-                    value={total}
-                    disabled
-                    fullWidth
-                    slotProps={{ input: {
-                      endAdornment: '฿',
-} }}
-                  />
-                  <TextField
-                    label={posSellerLocale.common.depositLabel}
-                    type="number"
-                    value={deposit}
-                    onChange={e => {
-                      const val = Number(e.target.value) || 0;
-                      setDeposit(Math.min(Math.max(val, 0), total));
-                    }}
-                    fullWidth
-                    disabled={fullPayment}
-                    slotProps={{ input: {
-                      endAdornment: '฿',
-} }}
-                  />
-                  <TextField
-                    label={posSellerLocale.common.remainingLabel}
-                    value={remaining}
-                    fullWidth
-                    disabled
-                    slotProps={{ input: {
-                      endAdornment: '฿',
-} }}
-                  />
-                </Stack>
-              </CardContent>
-            </Card>
-
-            <Card
-              variant="outlined"
-              sx={{
-                flex: 1,
-                minWidth: 280,
-                borderColor: fullPayment ? 'primary.main' : 'grey.300',
-              }}>
-              <CardContent>
-                <FormControlLabel
-                  value="full"
-                  control={<Radio />}
-                  label={
-                    <Typography variant="subtitle1" fontWeight={600}>
-                      {posSellerLocale.common.fullPaymentLabel}
-                    </Typography>
-                  }
-                />
-                <Stack spacing={2} mt={2}>
-                  <TextField
-                    label={posSellerLocale.common.amountLabel}
-                    value={total}
-                    fullWidth
-                    disabled
-                    slotProps={{ input: {
-                      endAdornment: '฿',
-} }}
-                  />
-                </Stack>
-              </CardContent>
-            </Card>
-          </Stack>
-        </RadioGroup>
+        <PosPaymentSummaryFields
+          fullPayment={fullPayment}
+          total={total}
+          deposit={deposit}
+          remaining={remaining}
+          onFullPaymentChange={setFullPayment}
+          onTotalChange={setTotal}
+          onDepositChange={value => setDeposit(Math.min(Math.max(value, 0), total))}
+        />
       </DialogContent>
 
       <Box sx={{ mt: 2, textAlign: 'right' }}>

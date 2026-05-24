@@ -18,12 +18,12 @@ import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
 import { MissingApiConfigState } from '../components/dashboardUi';
 import { fetchApiJson, isMissingApiBaseError } from '../../../lib/api';
+import { buildPendingOrderDraft, PENDING_ORDER_KEY } from '../../../lib/pending-order';
 import { computeTotals } from '../../utils/computeTotal';
 import { ActiveProduct, CartItem } from './types/cart';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
-type PendingOrderSyncStatus = 'pending' | 'submitting' | 'submitted';
 type CustomerInfo = { customerName: string; phoneNumber: string; note: string };
 export type Product = {
   id: string;
@@ -306,24 +306,16 @@ export default function SellPage() {
           setCustomer(sanitizedCustomer);
           setCustomerModalOpen(false);
           setSuccessOpen(true);
-          const order = {
+          const order = buildPendingOrderDraft({
             orderId: Date.now().toString(),
-            clientDraftId: globalThis.crypto.randomUUID(),
-            ...sanitizedCustomer,
+            draftId: globalThis.crypto.randomUUID(),
+            customer: sanitizedCustomer,
             payment: lastPayment,
-            total: totals.total,
             discount,
-            status: 'pending',
-            orderSyncStatus: 'pending' as PendingOrderSyncStatus,
-            lastSubmissionError: null,
-            depositTotal: totals.depositTotal,
-            remainingTotal: totals.remainingTotal,
-            cart: totals.adjustedCart,
             taxInvoice,
-            vatAmount: totals.vatAmount,
-            grandTotal: totals.grandTotal,
-          };
-          localStorage.setItem('pendingOrder', JSON.stringify(order));
+            totals,
+          });
+          localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(order));
           setCustomerModalOpen(false);
           setSuccessOpen(true);
         }}
