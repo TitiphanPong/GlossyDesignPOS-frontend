@@ -194,6 +194,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Audit the storage page for local-only mutations and add safe backend persistence for status and note updates using the existing upload endpoint fallbacks. Preserve current UI behavior and handle backend failures clearly."
 
 ### Task BR-02: Harden POS success modal against duplicate order creation
+- Status: completed on 2026-05-24
 - Task ID: BR-02
 - Title: Harden POS success modal against duplicate order creation
 - Why it matters: `successModal.tsx` reads `localStorage.pendingOrder`, POSTs it, then rewrites local storage and fires a synthetic storage event. Double clicks or retries could create duplicate orders.

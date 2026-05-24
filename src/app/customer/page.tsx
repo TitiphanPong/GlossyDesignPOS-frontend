@@ -27,6 +27,7 @@ type CartItem = {
 
 type Order = {
   orderId: string;
+  clientDraftId?: string;
   customerName?: string;
   phoneNumber?: string;
   note?: string;
@@ -39,6 +40,8 @@ type Order = {
   taxInvoice?: 'yes' | 'no';
   vatAmount?: number;
   remainingTotal: number;
+  orderSyncStatus?: 'pending' | 'submitting' | 'submitted';
+  lastSubmissionError?: string | null;
 };
 
 type StatusMeta = {
@@ -69,6 +72,8 @@ const STATUS_MESSAGES: Record<number, string> = {
   4: 'กำลังผลิตสินค้าของท่าน...',
   5: 'สินค้าพร้อมรับแล้ว!  Ready for Pickup',
 };
+
+const PAYMENT_CONFIRMING_MESSAGE = 'กำลังยืนยันการชำระเงิน กรุณารอสักครู่';
 
 const BANNERS = [
   { title: 'Glossy Design', sub: 'Premium Printing Services', img: '/banners/Banner1.png' },
@@ -733,7 +738,7 @@ function ActiveOrderScreen({
         flexDirection: 'column',
         position: 'relative',
         overflow: 'hidden',
-        fontFamily: '"Noto Sans Thai","Inter","Plus Jakarta Sans",-apple-system,sans-serif',
+        fontFamily: 'var(--font-sans), "Prompt", "Noto Sans Thai", sans-serif',
       }}
     >
       <AmbientBackground />
@@ -1167,6 +1172,7 @@ export default function CustomerScreen() {
 
   useEffect(() => {
     if (!order) return;
+    if (order.orderSyncStatus === 'submitting') return;
 
     const fullyPaid = order.status === 'paid' || (order.status === 'partial' && order.remainingTotal === 0);
     if (!fullyPaid) return;
@@ -1184,9 +1190,11 @@ export default function CustomerScreen() {
   const isPaid = order ? order.status === 'paid' || (order.status === 'partial' && order.remainingTotal === 0) : false;
   const statusLabel = STATUS_MESSAGES[currentStep] ?? 'กำลังดำเนินการ...';
 
+  const displayStatusLabel = order?.orderSyncStatus === 'submitting' ? PAYMENT_CONFIRMING_MESSAGE : statusLabel;
+
   if (!order) return <IdleScreen />;
   if (isPaid) return <PaidScreen />;
   if (!summary) return <IdleScreen />;
 
-  return <ActiveOrderScreen order={order} summary={summary} currentStep={currentStep} statusLabel={statusLabel} promptpayId={promptpayId} />;
+  return <ActiveOrderScreen order={order} summary={summary} currentStep={currentStep} statusLabel={displayStatusLabel} promptpayId={promptpayId} />;
 }
