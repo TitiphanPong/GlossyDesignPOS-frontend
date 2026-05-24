@@ -70,7 +70,7 @@ const StyledWrapper = styled.div`
 
   .new {
     font-size: 23px;
-    font-family: 'Lexend Deca', sans-serif;
+    font-family: var(--font-sans), 'Prompt', 'Noto Sans Thai', sans-serif;
     margin-left: 20px;
   }
 
@@ -180,7 +180,7 @@ const StyledWrapper = styled.div`
   .dollar {
     position: absolute;
     font-size: 16px;
-    font-family: 'Lexend Deca', sans-serif;
+    font-family: var(--font-sans), 'Prompt', 'Noto Sans Thai', sans-serif;
     width: 100%;
     left: 0;
     top: 0;

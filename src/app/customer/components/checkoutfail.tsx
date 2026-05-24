@@ -123,7 +123,7 @@ const StyledWrapper = styled.div`
 
   .new {
     font-size: 15px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans), 'Prompt', 'Noto Sans Thai', sans-serif;
     margin-left: 12px;
     color: #1a3c34;
     transition: color 0.3s ease-in-out;
@@ -285,7 +285,7 @@ const StyledWrapper = styled.div`
   .icon {
     position: absolute;
     font-size: 11px;
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans), 'Prompt', 'Noto Sans Thai', sans-serif;
     width: 100%;
     left: 0;
     top: 0;

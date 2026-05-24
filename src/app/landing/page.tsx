@@ -1,717 +1,480 @@
-'use client';
-
-import * as React from 'react';
 import Image from 'next/image';
-import {
-  Accordion,
-  AccordionDetails,
-  AccordionSummary,
-  AppBar,
-  Box,
-  Button,
-  Card,
-  CardActions,
-  CardContent,
-  CardMedia,
-  Chip,
-  Container,
-  Drawer,
-  Grid,
-  IconButton,
-  Stack,
-  Toolbar,
-  Typography,
-} from '@mui/material';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
-import ExpandMoreRoundedIcon from '@mui/icons-material/ExpandMoreRounded';
-import FileUploadRoundedIcon from '@mui/icons-material/FileUploadRounded';
-import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
-import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
-import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
-import PrecisionManufacturingRoundedIcon from '@mui/icons-material/PrecisionManufacturingRounded';
-import LocalShippingRoundedIcon from '@mui/icons-material/LocalShippingRounded';
-import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
-import VerifiedRoundedIcon from '@mui/icons-material/VerifiedRounded';
-import FilterNoneRoundedIcon from '@mui/icons-material/FilterNoneRounded';
-import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
-import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
-import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
-import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
-import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
-import LocalPhoneRoundedIcon from '@mui/icons-material/LocalPhoneRounded';
-import FacebookRoundedIcon from '@mui/icons-material/FacebookRounded';
-import ChatRoundedIcon from '@mui/icons-material/ChatRounded';
-import UploadFileRoundedIcon from '@mui/icons-material/UploadFileRounded';
+import Link from 'next/link';
 
 type NavItem = {
-  id: string;
   label: string;
+  href: string;
 };
 
-type ServiceItem = {
+type Service = {
   title: string;
   description: string;
-  image: string;
+  detail: string;
+};
+
+type Highlight = {
+  label: string;
+  value: string;
+  description: string;
 };
 
 type WorkflowStep = {
   title: string;
-  icon: React.ReactNode;
+  description: string;
 };
 
-type ShowcaseItem = {
+type PortfolioItem = {
   title: string;
+  category: string;
   image: string;
+  tone: string;
 };
 
-const headingFont = { className: '' };
-const bodyFont = { className: '' };
+type Testimonial = {
+  name: string;
+  role: string;
+  quote: string;
+};
 
 const navItems: NavItem[] = [
-  { id: 'services', label: 'บริการของเรา' },
-  { id: 'workflow', label: 'ขั้นตอนการสั่งงาน' },
-  { id: 'showcase', label: 'ตัวอย่างงาน' },
-  { id: 'reviews', label: 'รีวิวลูกค้า' },
-  { id: 'faq', label: 'คำถามที่พบบ่อย' },
-  { id: 'contact', label: 'ติดต่อเรา' },
+  { label: 'บริการ', href: '#services' },
+  { label: 'ผลงาน', href: '#portfolio' },
+  { label: 'ขั้นตอน', href: '#process' },
+  { label: 'ติดต่อ', href: '#contact' },
 ];
 
-const heroGallery = ['/banners/Banner1.png', '/banners/Banner5.png', '/covers/document.png', '/covers/namecard.png', '/covers/sticker.png', '/covers/plotplan.png'];
-
-const services: ServiceItem[] = [
+const highlights: Highlight[] = [
   {
-    title: 'ปริ้นท์เอกสาร / ถ่ายเอกสาร',
-    description: 'ขาวดำและสี ทั้ง A4-A3 คมชัด พร้อมเข้าแฟ้มทันที',
-    image: '/covers/document.png',
+    label: 'Premium finish',
+    value: 'วัสดุและผิวสัมผัส',
+    description: 'คัดกระดาษ โทนสี และเทคนิคหลังพิมพ์ให้ภาพลักษณ์ของแบรนด์ดูนิ่งและน่าเชื่อถือ',
   },
   {
-    title: 'เข้าเล่มรายงาน',
-    description: 'เข้าเล่มสันกาว สันห่วง และปกใสสำหรับรายงานหรือโปรเจกต์',
-    image: '/covers/postcard.png',
+    label: 'Fast response',
+    value: 'ตอบไวทุกวัน',
+    description: 'ช่วยเช็กไฟล์ สรุปสเปก และให้คำแนะนำก่อนเริ่มผลิตจริงแบบไม่ปล่อยให้ลูกค้าตัดสินใจคนเดียว',
   },
   {
-    title: 'เคลือบบัตร / เคลือบเอกสาร',
-    description: 'เคลือบด้านและเงา ป้องกันน้ำและรอยขีดข่วน',
-    image: '/banners/Banner2.png',
-  },
-  {
-    title: 'นามบัตร',
-    description: 'พิมพ์นามบัตรหลายแบบ ทั้งกระดาษอาร์ตการ์ดและกระดาษพรีเมียม',
-    image: '/covers/namecard.png',
-  },
-  {
-    title: 'สติ๊กเกอร์ PVC / PP',
-    description: 'สติ๊กเกอร์กันน้ำ ติดแน่น เหมาะกับสินค้าและบรรจุภัณฑ์',
-    image: '/covers/stickerpplaser.png',
-  },
-  {
-    title: 'โปสเตอร์ / อิงค์เจ็ท',
-    description: 'งานโปสเตอร์ขนาดใหญ่ สีสด คมชัด สำหรับหน้าร้านและงานอีเวนต์',
-    image: '/covers/inkjet.png',
-  },
-  {
-    title: 'พล็อตแบบแปลน',
-    description: 'พล็อตแบบก่อสร้างและแบบวิศวกรรม เส้นคม อ่านง่าย',
-    image: '/covers/plotplan.png',
-  },
-  {
-    title: 'ตรายาง',
-    description: 'ตรายางบริษัท ตรายางชื่อ พร้อมหมึกในตัวและแบบด้ามจับ',
-    image: '/covers/stamp.png',
-  },
-  {
-    title: 'สินค้าพรีเมียม',
-    description: 'งานของชำร่วยและสินค้าสั่งทำสำหรับองค์กรและกิจกรรม',
-    image: '/covers/productpremium.png',
-  },
-  {
-    title: 'งานอื่น ๆ',
-    description: 'รับผลิตงานพิมพ์เฉพาะทางตามงบและความต้องการของลูกค้า',
-    image: '/covers/other.png',
+    label: 'Nationwide delivery',
+    value: 'จัดส่งทั่วประเทศ',
+    description: 'แพ็กงานอย่างเป็นระบบเพื่อให้ชิ้นงานยังคม สะอาด และพร้อมใช้งานเมื่อถึงมือลูกค้า',
   },
 ];
 
-const workflowSteps: WorkflowStep[] = [
-  { title: 'ส่งไฟล์หรือแจ้งรายละเอียดงาน', icon: <FileUploadRoundedIcon /> },
-  { title: 'ทีมงานตรวจไฟล์', icon: <FactCheckRoundedIcon /> },
-  { title: 'แจ้งราคาและระยะเวลาผลิต', icon: <RequestQuoteRoundedIcon /> },
-  { title: 'ยืนยันออเดอร์', icon: <TaskAltRoundedIcon /> },
-  { title: 'เริ่มผลิตงาน', icon: <PrecisionManufacturingRoundedIcon /> },
-  { title: 'รับงานหรือจัดส่ง', icon: <LocalShippingRoundedIcon /> },
-];
-
-const trustBadges = ['รับงานด่วน', 'ตรวจไฟล์ก่อนผลิต', 'ไม่มีขั้นต่ำ', 'รองรับไฟล์ PDF / AI / PSD / JPG', 'มีบริการจัดส่ง', 'รับทั้งงานชิ้นเดียวและจำนวนมาก'];
-
-const showcaseItems: ShowcaseItem[] = [
-  { title: 'เอกสารและรายงาน', image: '/covers/document.png' },
-  { title: 'นามบัตร', image: '/covers/namecard.png' },
-  { title: 'สติ๊กเกอร์', image: '/covers/sticker.png' },
-  { title: 'โปสเตอร์', image: '/covers/inkjet.png' },
-  { title: 'ป้ายและไวนิล', image: '/banners/Banner9.png' },
-  { title: 'แปลนก่อสร้าง', image: '/covers/plotplan.png' },
-  { title: 'ตรายาง', image: '/assets/stamp_normal.png' },
-  { title: 'สินค้าพรีเมียม', image: '/covers/productpremium.png' },
-];
-
-const reviews = [
+const services: Service[] = [
   {
-    name: 'คุณเมย์ - นักศึกษา',
-    review: 'ส่งไฟล์ทาง LINE แล้วรอรับงานได้เลย รวดเร็วมาก เอกสารคมชัดทุกหน้า',
+    title: 'นามบัตร หัวจดหมาย และสื่อแนะนำตัว',
+    description: 'นามบัตร กระดาษหัวจดหมาย และองค์ประกอบแบรนด์ที่ช่วยให้การแนะนำตัวดูแพงขึ้นทันที',
+    detail: 'เหมาะกับแบรนด์ใหม่ ผู้บริหาร และทีมขายที่ต้องการภาพจำที่ชัด',
   },
   {
-    name: 'บริษัท S.K. Design',
-    review: 'สติ๊กเกอร์และนามบัตรคุณภาพดี สีตรงตามไฟล์ งานส่งตรงเวลา',
+    title: 'โบรชัวร์ เมนู และสื่อเล่าเรื่องแบรนด์',
+    description: 'ออกแบบลำดับการอ่าน วางจังหวะภาพ และเลือกวัสดุให้ข้อมูลเยอะยังดูโปรและอ่านง่าย',
+    detail: 'เหมาะกับร้านอาหาร สตูดิโอ คลินิก และงานพรีเซนต์สินค้า',
   },
   {
-    name: 'คุณปกรณ์ - วิศวกร',
-    review: 'พล็อตแบบแปลนละเอียด เส้นคมมาก เหมาะกับงานไซต์จริง ทีมงานแนะนำดี',
+    title: 'แพ็กเกจจิ้งและฉลากสินค้า',
+    description: 'งานกล่อง ซอง สติกเกอร์ และฉลากที่ช่วยให้สินค้าดูพร้อมวางขายและน่าหยิบขึ้นมาทันที',
+    detail: 'เหมาะกับสินค้าไลฟ์สไตล์ ความงาม อาหาร และของฝาก',
+  },
+  {
+    title: 'ป้าย อะคริลิก และสื่อหน้าร้าน',
+    description: 'สร้างประสบการณ์หน้าร้านให้ดูสะอาด คุมโทน และสื่อสารได้ชัดตั้งแต่ระยะไกล',
+    detail: 'เหมาะกับหน้าร้าน คาเฟ่ บูทอีเวนต์ และพื้นที่เปิดตัวสินค้า',
   },
 ];
 
-const faqs = [
+const workflow: WorkflowStep[] = [
   {
-    question: 'ส่งไฟล์ทางไหนได้บ้าง?',
-    answer: 'สามารถส่งได้ทาง LINE, Facebook, อีเมล หรืออัปโหลดผ่านหน้าเว็บไซต์ของร้าน',
+    title: 'คุยภาพรวมแบรนด์และเป้าหมายงาน',
+    description: 'เริ่มจากสิ่งที่ลูกค้าต้องการให้คนรู้สึกเมื่อได้รับชิ้นงาน ไม่ใช่แค่ขนาดหรือจำนวนพิมพ์',
   },
   {
-    question: 'รับงานด่วนไหม?',
-    answer: 'รับงานด่วนในหลายประเภทงาน โดยทีมงานจะแจ้งคิวและเวลารับงานให้ชัดเจนก่อนผลิต',
+    title: 'แนะนำสเปก วัสดุ และโทนที่เหมาะ',
+    description: 'ช่วยคัดทางเลือกที่ใช่สำหรับงบ เวลา และภาพลักษณ์ที่อยากสื่อออกไป',
   },
   {
-    question: 'มีขั้นต่ำหรือไม่?',
-    answer: 'ไม่มีขั้นต่ำ สามารถสั่งพิมพ์ได้ตั้งแต่ 1 ชิ้นขึ้นไป',
+    title: 'ตรวจไฟล์ก่อนผลิตจริง',
+    description: 'เช็กสี ฟอนต์ ระยะตัดตก และรายละเอียดสำคัญเพื่อลดความเสี่ยงเรื่องงานพลาด',
   },
   {
-    question: 'ใช้ไฟล์แบบไหนดีที่สุด?',
-    answer: 'ไฟล์ที่แนะนำคือ PDF ความละเอียดสูง หากเป็นงานออกแบบรองรับ AI, PSD, JPG และ PNG',
-  },
-  {
-    question: 'รับออกแบบไหม?',
-    answer: 'มีบริการออกแบบเบื้องต้นและออกแบบเต็มรูปแบบตามประเภทงานพิมพ์',
-  },
-  {
-    question: 'มีบริการจัดส่งหรือไม่?',
-    answer: 'มีบริการจัดส่งในพื้นที่และส่งขนส่งเอกชนทั่วประเทศ',
-  },
-  {
-    question: 'ใช้เวลากี่วัน?',
-    answer: 'ขึ้นอยู่กับประเภทงานและจำนวนชิ้น โดยงานทั่วไปใช้เวลาประมาณ 1-3 วันทำการ',
+    title: 'ผลิต แพ็ก และจัดส่งอย่างเป็นระบบ',
+    description: 'ติดตามงานให้ต่อเนื่องจนชิ้นงานไปถึงมือลูกค้าอย่างเรียบร้อยและพร้อมใช้งาน',
   },
 ];
 
-const lineUrl = 'https://line.me/';
-const facebookUrl = 'https://facebook.com/';
-const mapsUrl = 'https://maps.google.com/?q=Glossy+Copy+%26+Print+Shop';
-const phoneHref = 'tel:021234567';
+const testimonials: Testimonial[] = [
+  {
+    name: 'พิชาภรณ์',
+    role: 'Founder, Maison Bloom',
+    quote: 'ทีมช่วยคุมทั้งวัสดุและอารมณ์ของแบรนด์ได้ละเอียดมาก พองานออกมาวางคู่สินค้าแล้วภาพรวมดูแพงขึ้นชัดเจน',
+  },
+  {
+    name: 'ณัฐวุฒิ',
+    role: 'Marketing Manager, Vela Studio',
+    quote: 'ชอบวิธีทำงานที่ไม่ได้รีบพิมพ์อย่างเดียว แต่ช่วยจัดลำดับข้อมูลและแนะนำสเปกที่ทำให้สื่อทุกชิ้นไปในทิศทางเดียวกัน',
+  },
+  {
+    name: 'กีรติพล',
+    role: 'Owner, Aromatique Lab',
+    quote: 'คุณภาพงานนิ่ง รายละเอียดสะอาด และการตอบกลับรวดเร็วมาก ทำให้สั่งงานต่อได้สบายใจทุกครั้ง',
+  },
+];
 
-function SectionHeading({ title, subtitle }: Readonly<{ title: string; subtitle: string }>) {
+function ArrowIcon() {
   return (
-    <Stack spacing={1} sx={{ mb: 4 }}>
-      <Typography className={headingFont.className} sx={{ fontSize: { xs: '1.7rem', md: '2rem' }, color: '#0f2f57', lineHeight: 1.25 }}>
-        {title}
-      </Typography>
-      <Typography sx={{ color: '#5f7086', maxWidth: 760 }}>{subtitle}</Typography>
-    </Stack>
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path d="M4.167 10h11.666M10.833 4.167 15.833 10l-5 5.833" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
   );
 }
 
-function getTrustBadgeIcon(badge: string) {
-  if (badge.includes('ด่วน')) return <BoltRoundedIcon fontSize="small" />;
-  if (badge.includes('ตรวจไฟล์')) return <FactCheckRoundedIcon fontSize="small" />;
-  if (badge.includes('ขั้นต่ำ')) return <FilterNoneRoundedIcon fontSize="small" />;
-  if (badge.includes('ไฟล์')) return <InsertDriveFileRoundedIcon fontSize="small" />;
-  if (badge.includes('จัดส่ง')) return <LocalShippingRoundedIcon fontSize="small" />;
-  return <CollectionsBookmarkRoundedIcon fontSize="small" />;
+function CheckIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path d="m4.167 10.417 3.333 3.333 8.333-8.333" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SparkIcon() {
+  return (
+    <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden="true">
+      <path d="M10 2.5 11.864 8.136 17.5 10l-5.636 1.864L10 17.5l-1.864-5.636L2.5 10l5.636-1.864L10 2.5Z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SectionLabel({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="inline-flex items-center gap-2 rounded-full border border-white/60 bg-white/70 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-slate-500 shadow-[0_10px_30px_rgba(15,23,42,0.06)] backdrop-blur">
+      <span className="text-sky-600">
+        <SparkIcon />
+      </span>
+      {children}
+    </div>
+  );
 }
 
 export default function LandingPage() {
-  const [drawerOpen, setDrawerOpen] = React.useState(false);
-  const [scrolled, setScrolled] = React.useState(false);
-
-  React.useEffect(() => {
-    const onScroll = () => setScrolled(globalThis.scrollY > 16);
-    onScroll();
-    globalThis.addEventListener('scroll', onScroll);
-
-    return () => globalThis.removeEventListener('scroll', onScroll);
-  }, []);
-
-  const scrollToSection = React.useCallback((id: string) => {
-    const section = globalThis.document.getElementById(id);
-    if (!section) return;
-    const top = section.getBoundingClientRect().top + globalThis.scrollY - 88;
-    globalThis.scrollTo({ top, behavior: 'smooth' });
-  }, []);
-
-  const openChat = React.useCallback(() => {
-    globalThis.open(lineUrl, '_blank', 'noopener,noreferrer');
-  }, []);
-
-  const openFacebook = React.useCallback(() => {
-    globalThis.open(facebookUrl, '_blank', 'noopener,noreferrer');
-  }, []);
-
-  const openMaps = React.useCallback(() => {
-    globalThis.open(mapsUrl, '_blank', 'noopener,noreferrer');
-  }, []);
-
   return (
-    <Box
-      className={bodyFont.className}
-      sx={{
-        minHeight: '100dvh',
-        color: '#1c2b3a',
-        bgcolor: '#f7f9fc',
-        backgroundImage: 'radial-gradient(circle at 10% 5%, #f1f8ff 0%, rgba(241,248,255,0) 36%), radial-gradient(circle at 88% 8%, #eef6ff 0%, rgba(238,246,255,0) 34%)',
-      }}>
-      <AppBar
-        elevation={0}
-        position="sticky"
-        sx={{
-          bgcolor: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.72)',
-          borderBottom: '1px solid rgba(31, 65, 102, 0.1)',
-          backdropFilter: 'blur(10px)',
-        }}>
-        <Container maxWidth="xl">
-          <Toolbar disableGutters sx={{ minHeight: 74 }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ width: '100%' }}>
-              <Stack direction="row" alignItems="center" spacing={1.2}>
-                <Box
-                  sx={{
-                    width: 42,
-                    height: 42,
-                    borderRadius: '12px',
-                    bgcolor: '#0f5ea6',
-                    color: '#fff',
-                    display: 'grid',
-                    placeItems: 'center',
-                    boxShadow: '0 8px 20px rgba(15, 94, 166, 0.2)',
-                  }}>
-                  <PrintRoundedIcon fontSize="small" />
-                </Box>
-                <Box>
-                  <Typography className={headingFont.className} sx={{ color: '#103560', fontSize: '1.05rem', lineHeight: 1.2 }}>
-                    Glossy Copy & Print
-                  </Typography>
-                  <Typography sx={{ color: '#6b7a90', fontSize: '0.76rem' }}>งานพิมพ์ครบวงจรในพื้นที่ของคุณ</Typography>
-                </Box>
-              </Stack>
+    <main className="min-h-screen overflow-x-hidden bg-[#f3f7fb] text-slate-900">
+      <div className="relative isolate">
+        <div className="absolute inset-x-0 top-0 -z-10 h-[34rem] bg-[radial-gradient(circle_at_top_left,_rgba(125,211,252,0.45),_transparent_36%),radial-gradient(circle_at_top_right,_rgba(59,130,246,0.18),_transparent_32%),linear-gradient(180deg,_#f7fbff_0%,_#eef4f9_52%,_#f3f7fb_100%)]" />
+        <div className="absolute left-[-8rem] top-28 -z-10 h-56 w-56 rounded-full bg-sky-200/40 blur-3xl" />
+        <div className="absolute right-[-6rem] top-20 -z-10 h-64 w-64 rounded-full bg-blue-200/50 blur-3xl" />
 
-              <Stack direction="row" spacing={2.2} sx={{ display: { xs: 'none', md: 'flex' } }}>
-                {navItems.map(item => (
-                  <Button key={item.id} onClick={() => scrollToSection(item.id)} sx={{ color: '#20456e', fontWeight: 600, px: 1.2, minWidth: 'auto' }}>
-                    {item.label}
-                  </Button>
-                ))}
-              </Stack>
+        <header className="mx-auto flex w-full max-w-7xl items-center justify-between px-5 pb-4 pt-5 sm:px-6 lg:px-8">
+          <Link href="/landing" className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-[18px] border border-white/70 bg-white/80 shadow-[0_18px_40px_rgba(15,23,42,0.08)] backdrop-blur">
+              <Image src="/logo/logo.png" alt="Glossy Design" width={30} height={30} className="h-7 w-7 object-contain" />
+            </div>
+            <div>
+              <p className="text-sm font-semibold tracking-[0.18em] text-slate-500 uppercase">Glossy Design</p>
+              <p className="text-sm text-slate-600">Premium print studio</p>
+            </div>
+          </Link>
 
-              <Stack direction="row" spacing={1} alignItems="center">
-                <Button
-                  variant="contained"
-                  onClick={() => scrollToSection('services')}
-                  sx={{
-                    display: { xs: 'none', sm: 'inline-flex' },
-                    bgcolor: '#1267b0',
-                    px: 2,
-                    borderRadius: '999px',
-                    boxShadow: 'none',
-                    '&:hover': { bgcolor: '#0f578f', boxShadow: 'none' },
-                  }}>
-                  ดูบริการทั้งหมด
-                </Button>
-                <IconButton sx={{ display: { xs: 'inline-flex', md: 'none' }, color: '#1f446d' }} onClick={() => setDrawerOpen(true)}>
-                  <MenuRoundedIcon />
-                </IconButton>
-              </Stack>
-            </Stack>
-          </Toolbar>
-        </Container>
-      </AppBar>
-
-      <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
-        <Box sx={{ width: 290, p: 2.5, bgcolor: '#ffffff', height: '100%' }}>
-          <Stack spacing={1.5}>
+          <nav className="hidden items-center gap-8 text-sm font-medium text-slate-600 lg:flex">
             {navItems.map(item => (
-              <Button
-                key={item.id}
-                onClick={() => {
-                  setDrawerOpen(false);
-                  scrollToSection(item.id);
-                }}
-                sx={{ justifyContent: 'flex-start', color: '#1f446d', py: 1.2 }}>
+              <a key={item.href} href={item.href} className="transition hover:text-slate-950">
                 {item.label}
-              </Button>
+              </a>
             ))}
-            <Button variant="contained" onClick={openChat} sx={{ bgcolor: '#1267b0', borderRadius: '10px', mt: 1 }}>
-              ส่งไฟล์งาน / สอบถามราคา
-            </Button>
-            <Button variant="outlined" onClick={openChat} sx={{ borderRadius: '10px', borderColor: '#9ec7eb', color: '#1f568a' }}>
-              อัปโหลดไฟล์งาน
-            </Button>
-          </Stack>
-        </Box>
-      </Drawer>
+          </nav>
 
-      <Container maxWidth="xl" sx={{ pb: { xs: 12, md: 4 } }}>
-        <Box component="section" sx={{ pt: { xs: 5, md: 8 }, pb: { xs: 6, md: 8 } }}>
-          <Grid container spacing={{ xs: 4, md: 5 }} alignItems="center">
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Chip
-                label="ร้านถ่ายเอกสารและสิ่งพิมพ์สำหรับนักเรียน ออฟฟิศ และธุรกิจ"
-                icon={<VerifiedRoundedIcon sx={{ color: '#0f5ea6 !important' }} />}
-                sx={{
-                  mb: 2,
-                  px: 1,
-                  borderRadius: '999px',
-                  bgcolor: '#e9f4ff',
-                  color: '#184a77',
-                  border: '1px solid #c9e3fb',
-                }}
-              />
-              <Typography
-                className={headingFont.className}
-                sx={{
-                  color: '#0f2f57',
-                  fontSize: { xs: '2rem', sm: '2.4rem', md: '2.9rem' },
-                  lineHeight: { xs: 1.25, md: 1.2 },
-                }}>
-                ร้านถ่ายเอกสารและสื่อสิ่งพิมพ์ครบวงจร
-              </Typography>
-              <Typography sx={{ mt: 2, color: '#5a6d84', fontSize: { xs: '1rem', md: '1.08rem' }, maxWidth: 640, lineHeight: 1.8 }}>
-                รับปริ้นท์ ถ่ายเอกสาร เข้าเล่ม เคลือบบัตร นามบัตร สติ๊กเกอร์ ป้าย โปสเตอร์ พล็อตแบบ และงานพิมพ์ตามสั่ง พร้อมบริการรวดเร็วสำหรับนักเรียน นักศึกษา ออฟฟิศ และธุรกิจทุกขนาด
-              </Typography>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} sx={{ mt: 3 }}>
-                <Button
-                  variant="contained"
-                  onClick={() => scrollToSection('services')}
-                  sx={{
-                    bgcolor: '#1267b0',
-                    py: 1.2,
-                    px: 2.4,
-                    borderRadius: '12px',
-                    boxShadow: '0 12px 24px rgba(18, 103, 176, 0.18)',
-                    '&:hover': { bgcolor: '#0f578f', boxShadow: '0 14px 24px rgba(15, 87, 143, 0.22)' },
-                  }}>
-                  ดูบริการทั้งหมด
-                </Button>
-                <Button
-                  variant="outlined"
-                  startIcon={<UploadFileRoundedIcon />}
-                  onClick={openChat}
-                  sx={{
-                    borderColor: '#9ec7eb',
-                    color: '#1f568a',
-                    py: 1.2,
-                    px: 2.4,
-                    borderRadius: '12px',
-                    bgcolor: '#fff',
-                    '&:hover': { borderColor: '#78aedf', bgcolor: '#f3f9ff' },
-                  }}>
-                  ส่งไฟล์งาน / สอบถามราคา
-                </Button>
-              </Stack>
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} sx={{ mt: 2.2 }}>
-                <Chip size="small" icon={<AccessTimeRoundedIcon />} label="เปิดทุกวัน 08:00 - 20:00" sx={{ bgcolor: '#f2f8ff', color: '#2a5b89', border: '1px solid #d2e6f9' }} />
-                <Chip size="small" icon={<LocalPhoneRoundedIcon />} label="02-123-4567" sx={{ bgcolor: '#f2f8ff', color: '#2a5b89', border: '1px solid #d2e6f9' }} />
-              </Stack>
-            </Grid>
-            <Grid size={{ xs: 12, md: 6 }}>
-              <Box
-                sx={{
-                  p: { xs: 1.5, md: 2 },
-                  borderRadius: '24px',
-                  bgcolor: '#ffffff',
-                  border: '1px solid #d5e7f8',
-                  boxShadow: '0 20px 40px rgba(40, 77, 114, 0.12)',
-                }}>
-                <Grid container spacing={1.2}>
-                  {heroGallery.map((image, idx) => (
-                    <Grid key={image} size={{ xs: 6 }}>
-                      <Box
-                        sx={{
-                          position: 'relative',
-                          overflow: 'hidden',
-                          borderRadius: '14px',
-                          minHeight: idx < 2 ? 130 : 110,
-                          border: '1px solid #dcebfa',
-                        }}>
-                        <Image src={image} alt="ตัวอย่างงานพิมพ์" fill sizes="(max-width: 768px) 46vw, 220px" style={{ objectFit: 'cover' }} />
-                      </Box>
-                    </Grid>
-                  ))}
-                </Grid>
-                <Stack direction="row" flexWrap="wrap" gap={1} sx={{ mt: 1.6 }}>
-                  {['เครื่องปริ้นท์/ถ่ายเอกสาร', 'กระดาษ A4', 'นามบัตร', 'สติ๊กเกอร์', 'เคลือบบัตร', 'พล็อตแบบ', 'แพ็กเกจจิ้ง'].map(label => (
-                    <Chip key={label} label={label} size="small" sx={{ bgcolor: '#f2f8ff', color: '#225785', border: '1px solid #d7e8f8' }} />
-                  ))}
-                </Stack>
-              </Box>
-            </Grid>
-          </Grid>
-        </Box>
-
-        <Box component="section" id="services" sx={{ py: { xs: 4, md: 6 } }}>
-          <SectionHeading title="บริการของเรา" subtitle="บริการงานพิมพ์และถ่ายเอกสารครบหมวด พร้อมวัสดุและเครื่องจักรที่รองรับทั้งงานด่วนและงานจำนวนมาก" />
-          <Grid container spacing={2}>
-            {services.map(service => (
-              <Grid key={service.title} size={{ xs: 6, md: 3 }}>
-                <Card
-                  sx={{
-                    height: '100%',
-                    bgcolor: '#fff',
-                    borderRadius: '16px',
-                    border: '1px solid #dbe9f7',
-                    boxShadow: '0 10px 24px rgba(44, 79, 112, 0.08)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                  }}>
-                  <CardMedia sx={{ position: 'relative', height: { xs: 108, md: 140 } }}>
-                    <Image src={service.image} alt={service.title} fill sizes="(max-width: 900px) 46vw, 24vw" style={{ objectFit: 'cover' }} />
-                  </CardMedia>
-                  <CardContent sx={{ px: { xs: 1.2, md: 1.8 }, py: { xs: 1.2, md: 1.8 }, flexGrow: 1 }}>
-                    <Typography className={headingFont.className} sx={{ color: '#15426f', fontSize: { xs: '0.95rem', md: '1.04rem' }, lineHeight: 1.35 }}>
-                      {service.title}
-                    </Typography>
-                    <Typography sx={{ color: '#60738b', mt: 0.7, fontSize: { xs: '0.8rem', md: '0.9rem' }, lineHeight: 1.55 }}>{service.description}</Typography>
-                  </CardContent>
-                  <CardActions sx={{ px: { xs: 1.2, md: 1.8 }, pt: 0, pb: { xs: 1.3, md: 1.8 } }}>
-                    <Button variant="contained" size="small" sx={{ bgcolor: '#1267b0', borderRadius: '10px', boxShadow: 'none' }}>
-                      ดูรายละเอียด
-                    </Button>
-                  </CardActions>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        <Box component="section" id="workflow" sx={{ py: { xs: 5, md: 7 } }}>
-          <SectionHeading title="ขั้นตอนการสั่งงาน" subtitle="กระบวนการทำงานชัดเจน ตรวจไฟล์ก่อนผลิตทุกครั้ง เพื่อให้งานพิมพ์ออกมาตรงตามความต้องการ" />
-          <Stack spacing={2}>
-            {workflowSteps.map((step, index) => (
-              <Card
-                key={step.title}
-                sx={{
-                  borderRadius: '14px',
-                  border: '1px solid #d8e7f7',
-                  boxShadow: '0 8px 18px rgba(47, 83, 118, 0.07)',
-                  bgcolor: '#ffffff',
-                }}>
-                <Stack direction="row" alignItems="center" spacing={2} sx={{ p: { xs: 1.5, md: 2 } }}>
-                  <Box
-                    sx={{
-                      width: 42,
-                      height: 42,
-                      borderRadius: '12px',
-                      bgcolor: '#e8f3ff',
-                      color: '#155b98',
-                      display: 'grid',
-                      placeItems: 'center',
-                      border: '1px solid #cfe3f7',
-                      flexShrink: 0,
-                    }}>
-                    {step.icon}
-                  </Box>
-                  <Typography sx={{ color: '#285177', fontWeight: 700, fontSize: { xs: '0.96rem', md: '1rem' }, minWidth: 28 }}>{index + 1}.</Typography>
-                  <Typography className={headingFont.className} sx={{ color: '#1e4468', fontSize: { xs: '0.95rem', md: '1.05rem' } }}>
-                    {step.title}
-                  </Typography>
-                </Stack>
-              </Card>
-            ))}
-          </Stack>
-        </Box>
-
-        <Box component="section" sx={{ py: { xs: 4, md: 6 } }}>
-          <SectionHeading title="เหตุผลที่ลูกค้าไว้ใจเรา" subtitle="บริการแบบร้านจริงในพื้นที่ ใส่ใจทั้งคุณภาพงานและความรวดเร็วในการส่งมอบ" />
-          <Grid container spacing={1.5}>
-            {trustBadges.map(badge => (
-              <Grid key={badge} size={{ xs: 12, sm: 6, md: 4 }}>
-                <Card sx={{ borderRadius: '14px', border: '1px solid #d9e8f7', bgcolor: '#fff', boxShadow: '0 8px 18px rgba(43, 79, 115, 0.06)' }}>
-                  <Stack direction="row" spacing={1.4} alignItems="center" sx={{ p: 1.8 }}>
-                    <Box
-                      sx={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: '10px',
-                        bgcolor: '#e9f4ff',
-                        border: '1px solid #cfe3f7',
-                        display: 'grid',
-                        placeItems: 'center',
-                        color: '#145d9e',
-                      }}>
-                      {getTrustBadgeIcon(badge)}
-                    </Box>
-                    <Typography className={headingFont.className} sx={{ color: '#21496e', fontSize: '0.97rem' }}>
-                      {badge}
-                    </Typography>
-                  </Stack>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        <Box component="section" id="showcase" sx={{ py: { xs: 5, md: 7 } }}>
-          <SectionHeading title="ตัวอย่างงานจริงจากหน้าร้าน" subtitle="ตัวอย่างงานพิมพ์ในหมวดต่าง ๆ เพื่อช่วยให้ลูกค้าเลือกวัสดุและรูปแบบได้ง่ายขึ้น" />
-          <Grid container spacing={2}>
-            {showcaseItems.map(item => (
-              <Grid key={item.title} size={{ xs: 6, md: 3 }}>
-                <Card
-                  sx={{
-                    borderRadius: '16px',
-                    border: '1px solid #dbe9f7',
-                    boxShadow: '0 10px 24px rgba(44, 79, 112, 0.08)',
-                    overflow: 'hidden',
-                  }}>
-                  <Box sx={{ position: 'relative', height: { xs: 130, md: 170 } }}>
-                    <Image src={item.image} alt={item.title} fill sizes="(max-width: 900px) 46vw, 25vw" style={{ objectFit: 'cover' }} />
-                  </Box>
-                  <Box sx={{ p: 1.5, bgcolor: '#fff' }}>
-                    <Typography className={headingFont.className} sx={{ color: '#1f456a', fontSize: { xs: '0.92rem', md: '1rem' } }}>
-                      {item.title}
-                    </Typography>
-                  </Box>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        <Box component="section" id="reviews" sx={{ py: { xs: 4, md: 6 } }}>
-          <SectionHeading title="รีวิวลูกค้า" subtitle="เสียงจากลูกค้าที่ใช้บริการงานพิมพ์และสื่อสิ่งพิมพ์กับทางร้าน" />
-          <Grid container spacing={2}>
-            {reviews.map(item => (
-              <Grid key={item.name} size={{ xs: 12, md: 4 }}>
-                <Card sx={{ borderRadius: '16px', border: '1px solid #dbe9f7', bgcolor: '#fff', boxShadow: '0 10px 24px rgba(44, 79, 112, 0.07)', height: '100%' }}>
-                  <Stack spacing={1.4} sx={{ p: 2 }}>
-                    <Typography sx={{ color: '#456788', lineHeight: 1.8, fontSize: '0.95rem' }}>&quot;{item.review}&quot;</Typography>
-                    <Typography className={headingFont.className} sx={{ color: '#1d4469', fontSize: '0.95rem' }}>
-                      {item.name}
-                    </Typography>
-                  </Stack>
-                </Card>
-              </Grid>
-            ))}
-          </Grid>
-        </Box>
-
-        <Box component="section" id="faq" sx={{ py: { xs: 5, md: 7 } }}>
-          <SectionHeading title="คำถามที่พบบ่อย" subtitle="ตอบคำถามสำคัญก่อนสั่งผลิตงานพิมพ์" />
-          <Stack spacing={1.3}>
-            {faqs.map(item => (
-              <Accordion
-                key={item.question}
-                disableGutters
-                elevation={0}
-                sx={{
-                  borderRadius: '12px !important',
-                  border: '1px solid #d9e8f7',
-                  bgcolor: '#fff',
-                  boxShadow: '0 8px 16px rgba(41, 75, 108, 0.06)',
-                  '&::before': { display: 'none' },
-                }}>
-                <AccordionSummary expandIcon={<ExpandMoreRoundedIcon sx={{ color: '#1f5b90' }} />}>
-                  <Typography className={headingFont.className} sx={{ color: '#1f456a', fontSize: '1rem' }}>
-                    {item.question}
-                  </Typography>
-                </AccordionSummary>
-                <AccordionDetails>
-                  <Typography sx={{ color: '#5b7088' }}>{item.answer}</Typography>
-                </AccordionDetails>
-              </Accordion>
-            ))}
-          </Stack>
-        </Box>
-      </Container>
-
-      <Box component="footer" id="contact" sx={{ bgcolor: '#0f355d', color: '#eef6ff', pt: 5, pb: { xs: 10, md: 4 } }}>
-        <Container maxWidth="xl">
-          <Grid container spacing={3}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Typography className={headingFont.className} sx={{ fontSize: '1.35rem' }}>
-                Glossy Copy & Print
-              </Typography>
-              <Typography sx={{ opacity: 0.88, mt: 1, lineHeight: 1.8 }}>ร้านถ่ายเอกสารและสื่อสิ่งพิมพ์ครบวงจร บริการงานด่วน งานออฟฟิศ และงานธุรกิจทุกขนาด</Typography>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Stack spacing={1.2}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <LocalPhoneRoundedIcon fontSize="small" />
-                  <Typography component="a" href={phoneHref} sx={{ color: 'inherit', textDecoration: 'none' }}>
-                    โทร: 02-123-4567, 089-123-4567
-                  </Typography>
-                </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <ChatRoundedIcon fontSize="small" />
-                  <Typography component="a" href={lineUrl} target="_blank" rel="noopener noreferrer" sx={{ color: 'inherit', textDecoration: 'none' }}>
-                    LINE : @glossydesign
-                  </Typography>
-                </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <FacebookRoundedIcon fontSize="small" />
-                  <Typography component="a" href={facebookUrl} target="_blank" rel="noopener noreferrer" sx={{ color: 'inherit', textDecoration: 'none' }}>
-                    Facebook: Glossy Copy & Print
-                  </Typography>
-                </Stack>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <LocationOnRoundedIcon fontSize="small" />
-                  <Typography component="a" href={mapsUrl} target="_blank" rel="noopener noreferrer" sx={{ color: 'inherit', textDecoration: 'none' }}>
-                    Google Maps: Glossy Copy & Print Shop
-                  </Typography>
-                </Stack>
-              </Stack>
-            </Grid>
-
-            <Grid size={{ xs: 12, md: 4 }}>
-              <Stack spacing={1.2}>
-                <Stack direction="row" spacing={1} alignItems="center">
-                  <AccessTimeRoundedIcon fontSize="small" />
-                  <Typography>เปิดทุกวัน 08:00 - 20:00 น.</Typography>
-                </Stack>
-                <Typography>ที่อยู่: 99/88 ถนนตัวอย่าง แขวงตัวอย่าง เขตตัวอย่าง กรุงเทพมหานคร 10200</Typography>
-                <Stack direction="row" spacing={1.2} sx={{ mt: 1 }}>
-                  <Button variant="outlined" onClick={openFacebook} sx={{ color: '#eef6ff', borderColor: 'rgba(238,246,255,0.5)' }}>
-                    Facebook
-                  </Button>
-                  <Button variant="outlined" onClick={openMaps} sx={{ color: '#eef6ff', borderColor: 'rgba(238,246,255,0.5)' }}>
-                    Google Maps
-                  </Button>
-                  <Button variant="contained" onClick={openChat} sx={{ bgcolor: '#1f8fe0' }}>
-                    LINE สอบถามราคา
-                  </Button>
-                </Stack>
-              </Stack>
-            </Grid>
-          </Grid>
-
-          <Typography sx={{ opacity: 0.78, mt: 3, pt: 2.5, borderTop: '1px solid rgba(238,246,255,0.2)', fontSize: '0.88rem' }}>
-            Copyright {new Date().getFullYear()} Glossy Copy & Print. All rights reserved.
-          </Typography>
-        </Container>
-      </Box>
-
-      <Box
-        sx={{
-          position: 'fixed',
-          left: 12,
-          right: 12,
-          bottom: 12,
-          display: { xs: 'block', md: 'none' },
-          zIndex: 40,
-        }}>
-        <Card sx={{ borderRadius: '14px', border: '1px solid #cae2f7', boxShadow: '0 14px 28px rgba(32, 71, 106, 0.24)' }}>
-          <Stack direction="row" spacing={1} sx={{ p: 1 }}>
-            <Button fullWidth startIcon={<LocalPhoneRoundedIcon />} component="a" href={phoneHref} sx={{ borderRadius: '10px', bgcolor: '#eaf4ff', color: '#155e9d' }}>
-              โทรหาเรา
-            </Button>
-            <Button fullWidth variant="contained" startIcon={<UploadFileRoundedIcon />} onClick={openChat} sx={{ borderRadius: '10px', bgcolor: '#1267b0' }}>
+          <div className="hidden lg:block">
+            <Link
+              href="/upload"
+              className="inline-flex items-center gap-2 rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white shadow-[0_18px_40px_rgba(15,23,42,0.16)] transition hover:bg-slate-800">
               ส่งไฟล์งาน
-            </Button>
-          </Stack>
-        </Card>
-      </Box>
-    </Box>
+              <ArrowIcon />
+            </Link>
+          </div>
+        </header>
+
+        <section id="home" className="mx-auto max-w-7xl px-5 pb-10 pt-3 sm:px-6 lg:px-8 lg:pb-16">
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1.02fr)_minmax(0,0.98fr)] lg:items-center">
+            <div className="max-w-2xl">
+              <SectionLabel>Printing Shop</SectionLabel>
+              <h1 className="mt-5 text-[2.85rem] font-semibold leading-[1.12] tracking-[-0.06em] text-slate-950 sm:text-[4.25rem]">
+                งานพิมพ์ที่ทำให้แบรนด์
+                <span className="block text-sky-700">ดูนิ่ง ดูแพง และน่าจดจำ</span>
+              </h1>
+              <p className="mt-5 max-w-xl text-[1rem] leading-7 text-slate-600 sm:text-[1.08rem]">
+                Glossy Design ช่วยดูแลตั้งแต่การเลือกวัสดุ คุมโทนงาน ตรวจไฟล์ และผลิตชิ้นงานที่พร้อมเป็นหน้าตาของแบรนด์ทั้งออนไลน์และหน้าร้าน
+              </p>
+
+              <div className="mt-7 flex flex-col gap-3 sm:flex-row">
+                <Link
+                  href="/upload"
+                  className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-slate-950 px-6 text-base font-semibold text-white shadow-[0_22px_55px_rgba(15,23,42,0.18)] transition hover:bg-slate-800">
+                  เริ่มส่งไฟล์งาน
+                  <ArrowIcon />
+                </Link>
+                <a
+                  href="#portfolio"
+                  className="inline-flex min-h-14 items-center justify-center rounded-full border border-slate-200 bg-white/80 px-6 text-base font-semibold text-slate-700 shadow-[0_12px_32px_rgba(15,23,42,0.06)] backdrop-blur transition hover:border-slate-300 hover:text-slate-950">
+                  ดูตัวอย่างผลงาน
+                </a>
+              </div>
+
+              <div className="mt-8 grid gap-3">
+                {highlights.map(item => (
+                  <div key={item.value} className="flex items-start gap-3 rounded-[22px] border border-white/70 bg-white/78 px-4 py-4 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur">
+                    <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+                      <CheckIcon />
+                    </div>
+                    <div>
+                      <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">{item.label}</p>
+                      <p className="mt-1 text-base font-semibold text-slate-900">{item.value}</p>
+                      <p className="mt-1 text-sm leading-6 text-slate-600">{item.description}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="relative">
+              <div className="absolute inset-0 -z-10 rounded-[2rem] bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.85),_rgba(255,255,255,0)_68%)] blur-2xl" />
+              <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.92),rgba(244,248,252,0.84))] p-4 shadow-[0_30px_80px_rgba(15,23,42,0.1)] backdrop-blur sm:p-5">
+                <div className="grid gap-4">
+                  <div className="rounded-[1.6rem] border border-slate-200/70 bg-slate-950 p-4 text-white shadow-[0_20px_60px_rgba(15,23,42,0.18)]">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <p className="text-[11px] uppercase tracking-[0.22em] text-white/55">Signature kit</p>
+                        <p className="mt-2 text-xl font-semibold">Curated materials for elegant brand touchpoints</p>
+                      </div>
+                      <div className="rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs text-white/70">Since 2026</div>
+                    </div>
+                    <div className="mt-4 grid grid-cols-[1.1fr_0.9fr] gap-3">
+                      <div className="relative aspect-[4/5] overflow-hidden rounded-[1.4rem] bg-slate-900">
+                        <Image src="/covers/namecard.png" alt="Premium business card mockup" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 40vw" />
+                      </div>
+                      <div className="grid gap-3">
+                        <div className="rounded-[1.25rem] border border-white/10 bg-white/10 p-3">
+                          <p className="text-[11px] uppercase tracking-[0.2em] text-white/50">Finish advice</p>
+                          <p className="mt-2 text-sm leading-6 text-white/78">คุมผิวสัมผัส ฟอยล์ และน้ำหนักกระดาษให้เข้ากับคาแรกเตอร์ของแบรนด์</p>
+                        </div>
+                        <div className="relative min-h-40 overflow-hidden rounded-[1.25rem] border border-white/10 bg-white/8">
+                          <Image src="/covers/productpremium.png" alt="Premium packaging sample" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 22vw" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-4 sm:grid-cols-[0.85fr_1.15fr]">
+                    <div className="rounded-[1.6rem] border border-white/80 bg-white p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
+                      <p className="text-[11px] uppercase tracking-[0.22em] text-slate-400">Process</p>
+                      <div className="mt-3 space-y-3">
+                        {['Brief & brand mood', 'File check before print', 'Production tracking'].map(item => (
+                          <div key={item} className="flex items-center gap-3 rounded-2xl bg-slate-50 px-3 py-3">
+                            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-sky-100 text-sky-700">
+                              <CheckIcon />
+                            </div>
+                            <p className="text-sm font-medium text-slate-700">{item}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="relative overflow-hidden rounded-[1.6rem] border border-white/80 bg-white p-4 shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
+                      <div className="absolute right-0 top-0 h-28 w-28 rounded-full bg-sky-100/60 blur-2xl" />
+                      <p className="relative text-[11px] uppercase tracking-[0.22em] text-slate-400">Studio preview</p>
+                      <div className="relative mt-3 aspect-[16/10] overflow-hidden rounded-[1.3rem]">
+                        <Image src="/banners/Banner5.png" alt="Glossy Design studio work" fill className="object-cover" sizes="(max-width: 1024px) 100vw, 30vw" />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-5 py-6 sm:px-6 lg:px-8">
+          <div className="grid gap-4 lg:grid-cols-3">
+            {highlights.map(item => (
+              <div key={item.label} className="rounded-[1.8rem] border border-white/70 bg-white/78 px-5 py-5 shadow-[0_18px_40px_rgba(15,23,42,0.06)] backdrop-blur">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">{item.label}</p>
+                <p className="mt-3 text-2xl font-semibold tracking-[-0.04em] text-slate-950">{item.value}</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        <section id="services" className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <div className="max-w-2xl">
+            <SectionLabel>Services</SectionLabel>
+            <h2 className="mt-5 text-3xl font-semibold tracking-[-0.05em] text-slate-950 sm:text-5xl">เลือกสื่อที่ใช่ให้แบรนด์ดูดีตั้งแต่ชิ้นเล็กไปจนถึงพื้นที่หน้าร้าน</h2>
+            <p className="mt-4 text-base leading-7 text-slate-600">เราออกแบบให้แต่ละชิ้นทำงานร่วมกันเป็นระบบ ทั้งอารมณ์แบรนด์ ความคมชัดของงาน และประสบการณ์ที่ลูกค้าจะได้รับเมื่อหยิบหรือมองเห็น</p>
+          </div>
+
+          <div className="mt-10 grid gap-4 sm:grid-cols-2">
+            {services.map(service => (
+              <article
+                key={service.title}
+                className="group rounded-[2rem] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.9),rgba(248,250,252,0.82))] p-6 shadow-[0_22px_60px_rgba(15,23,42,0.08)] transition hover:-translate-y-1 hover:shadow-[0_28px_70px_rgba(15,23,42,0.11)]">
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-sky-100 text-sky-700">
+                  <SparkIcon />
+                </div>
+                <h3 className="mt-5 text-xl font-semibold tracking-[-0.03em] text-slate-950">{service.title}</h3>
+                <p className="mt-3 text-sm leading-6 text-slate-600">{service.description}</p>
+                <p className="mt-4 text-sm font-medium leading-6 text-slate-500">{service.detail}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section id="portfolio" className="mx-auto max-w-7xl px-5 py-2 sm:px-6 lg:px-8">
+          <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-end">
+            <div className="max-w-xl">
+              <SectionLabel>Selected work</SectionLabel>
+              <h2 className="mt-5 text-3xl font-semibold tracking-[-0.05em] text-slate-950 sm:text-5xl">งานที่ช่วยยืนยันว่าแบรนด์ที่ดูดี เริ่มจากรายละเอียดเล็กที่สุด</h2>
+              <p className="mt-4 text-base leading-7 text-slate-600">แต่ละโปรเจกต์เริ่มจากการตีความ mood ของแบรนด์ แล้วค่อยแปลออกมาเป็นพื้นผิว รูปทรง สี และจังหวะการรับรู้ที่ลูกค้าสัมผัสได้จริง</p>
+            </div>
+
+            <div className="rounded-[2rem] border border-white/80 bg-white/82 p-5 shadow-[0_24px_65px_rgba(15,23,42,0.08)] backdrop-blur">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-slate-400">What clients ask for</p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {['คุมโทนแบรนด์ให้ดูนิ่ง', 'ตรวจไฟล์ก่อนผลิต', 'สเปกที่เหมาะกับงบ', 'งานหน้าร้านที่ดูสะอาด'].map(item => (
+                  <span key={item} className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-600">
+                    {item}
+                  </span>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section id="process" className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <div className="overflow-hidden rounded-[2.2rem] border border-slate-200/70 bg-slate-950 px-5 py-6 text-white shadow-[0_34px_90px_rgba(15,23,42,0.18)] sm:px-6 lg:px-8 lg:py-8">
+            <div className="grid gap-8 lg:grid-cols-[0.86fr_1.14fr]">
+              <div className="max-w-xl">
+                <SectionLabel>Process</SectionLabel>
+                <h2 className="mt-5 text-3xl font-semibold tracking-[-0.05em] text-white sm:text-5xl">ไม่ใช่แค่รับพิมพ์ แต่ช่วยให้ทุกชิ้นสื่อสารในระดับที่แบรนด์ควรเป็น</h2>
+                <p className="mt-4 text-base leading-7 text-white/68">วิธีทำงานของเราถูกออกแบบให้ลูกค้าตัดสินใจง่ายขึ้น มั่นใจขึ้น และเห็นภาพรวมของชิ้นงานชัดตั้งแต่ก่อนเริ่มผลิตจริง</p>
+              </div>
+
+              <div className="grid gap-4">
+                {workflow.map((step, index) => (
+                  <div key={step.title} className="rounded-[1.7rem] border border-white/10 bg-white/8 p-5 backdrop-blur">
+                    <div className="flex items-center gap-3">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-white/15 bg-white/10 text-sm font-semibold text-white/80">0{index + 1}</div>
+                      <h3 className="text-lg font-semibold text-white">{step.title}</h3>
+                    </div>
+                    <p className="mt-4 text-sm leading-6 text-white/65">{step.description}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-5 py-2 sm:px-6 lg:px-8">
+          <div className="grid gap-4 lg:grid-cols-[1fr_1fr_1fr]">
+            {testimonials.map(item => (
+              <article key={item.name} className="rounded-[2rem] border border-white/80 bg-white/82 p-6 shadow-[0_22px_60px_rgba(15,23,42,0.08)] backdrop-blur">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-lg font-semibold tracking-[-0.03em] text-slate-950">{item.name}</p>
+                    <p className="mt-1 text-sm text-slate-500">{item.role}</p>
+                  </div>
+                  <span className="text-3xl leading-none text-sky-200">“</span>
+                </div>
+                <p className="mt-5 text-sm leading-7 text-slate-600">{item.quote}</p>
+              </article>
+            ))}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
+          <div className="overflow-hidden rounded-[2.4rem] bg-[linear-gradient(135deg,#0f172a_0%,#1e3a8a_55%,#38bdf8_100%)] px-5 py-8 text-white shadow-[0_36px_100px_rgba(30,58,138,0.28)] sm:px-6 lg:px-8 lg:py-10">
+            <div className="grid gap-8 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+              <div className="max-w-xl">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-white/60">Start your project</p>
+                <h2 className="mt-4 text-3xl font-semibold tracking-[-0.05em] text-white sm:text-5xl">พร้อมให้แบรนด์ของคุณดูพรีเมียมขึ้นตั้งแต่ชิ้นพิมพ์แรก</h2>
+                <p className="mt-4 text-base leading-7 text-white/75">ส่งไฟล์หรือเริ่มต้นคุยสเปกกับทีมได้เลย เราจะช่วยจัดทิศทางงานให้เหมาะกับภาพลักษณ์ของแบรนด์ งบประมาณ และเวลาที่คุณต้องการ</p>
+              </div>
+
+              <div className="rounded-[2rem] border border-white/15 bg-white/10 p-5 backdrop-blur">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  <Link
+                    href="/upload"
+                    className="inline-flex min-h-14 items-center justify-center gap-2 rounded-full bg-white px-6 text-base font-semibold text-slate-950 transition hover:bg-slate-100">
+                    ส่งไฟล์งานตอนนี้
+                    <ArrowIcon />
+                  </Link>
+                  <a
+                    href="tel:0641234567"
+                    className="inline-flex min-h-14 items-center justify-center rounded-full border border-white/22 bg-white/8 px-6 text-base font-semibold text-white transition hover:bg-white/12">
+                    โทรคุยกับทีม
+                  </a>
+                </div>
+                <div className="mt-5 grid gap-3 text-sm text-white/72">
+                  <div className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3">ตรวจไฟล์ก่อนผลิตจริงโดยไม่มีค่าใช้จ่ายเพิ่มเติม</div>
+                  <div className="rounded-2xl border border-white/10 bg-black/10 px-4 py-3">ช่วยเลือกวัสดุและฟินิชชิงที่เหมาะกับ mood ของแบรนด์</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <footer id="contact" className="mx-auto max-w-7xl px-5 pb-24 sm:px-6 lg:px-8 lg:pb-12">
+          <div className="grid gap-10 rounded-[2rem] border border-white/80 bg-white/84 px-5 py-6 shadow-[0_20px_60px_rgba(15,23,42,0.08)] backdrop-blur lg:grid-cols-[1.2fr_0.8fr_0.8fr_1fr] lg:px-6">
+            <div>
+              <Image src="/logo/logo.png" alt="Glossy Design" width={156} height={54} className="h-auto" />
+              <p className="mt-4 max-w-sm text-sm leading-7 text-slate-600">
+                สตูดิโองานพิมพ์และสื่อแบรนด์สำหรับธุรกิจที่ต้องการงานภาพลักษณ์สะอาด คุมโทนดี และพร้อมสร้างความประทับใจในทุกจุดสัมผัสของลูกค้า
+              </p>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Services</p>
+              <div className="mt-4 space-y-3 text-sm text-slate-600">
+                {services.map(service => (
+                  <p key={service.title}>{service.title}</p>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Menu</p>
+              <div className="mt-4 space-y-3 text-sm text-slate-600">
+                {navItems.map(item => (
+                  <a key={item.href} href={item.href} className="block transition hover:text-slate-950">
+                    {item.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <p className="text-sm font-semibold uppercase tracking-[0.18em] text-slate-400">Contact</p>
+              <div className="mt-4 space-y-3 text-sm leading-7 text-slate-600">
+                <p>081-555-2929</p>
+                <p>glossy2929@gmail.com</p>
+                <p>ซีคอนสแควร์ ชั้น B1 ถนนศรีนครินทร์ แขวงหนองบอน เขตประเวศ กรุงเทพฯ 10250</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-5 flex flex-col gap-2 text-sm text-slate-400 sm:flex-row sm:items-center sm:justify-between">
+            <p>© 2026 Glossy Design. All rights reserved.</p>
+            <p>Privacy policy · Terms of service</p>
+          </div>
+        </footer>
+
+        <div className="fixed inset-x-0 bottom-0 z-30 border-t border-slate-200/80 bg-white/92 px-4 py-3 shadow-[0_-18px_40px_rgba(15,23,42,0.08)] backdrop-blur lg:hidden">
+          <Link
+            href="/upload"
+            className="inline-flex min-h-14 w-full items-center justify-center gap-2 rounded-full bg-slate-950 px-6 text-base font-semibold text-white shadow-[0_20px_45px_rgba(15,23,42,0.16)]">
+            ส่งไฟล์งาน
+            <ArrowIcon />
+          </Link>
+        </div>
+      </div>
+    </main>
   );
 }

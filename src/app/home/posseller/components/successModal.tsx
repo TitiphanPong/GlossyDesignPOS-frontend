@@ -231,12 +231,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
 
       <DialogActions sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between', px: 2.5, pb: 2, pt: 2 }}>
         {!isPaid && (
-          <Button
-            variant="contained"
-            color={payment === 'cash' ? 'success' : 'warning'}
-            startIcon={<DoneAllIcon />}
-            onClick={handleConfirm}
-            disabled={isSubmitting || !orderData}>
+          <Button variant="contained" color={payment === 'cash' ? 'success' : 'warning'} startIcon={<DoneAllIcon />} onClick={handleConfirm} disabled={isSubmitting || !orderData}>
             {isSubmitting ? 'กำลังบันทึก...' : payment === 'cash' ? 'รับเงินแล้ว' : 'ยืนยันการโอนแล้ว'}
           </Button>
         )}
@@ -255,4 +250,3 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
     </Dialog>
   );
 }
-
