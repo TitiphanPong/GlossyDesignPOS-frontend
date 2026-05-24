@@ -312,6 +312,7 @@ This queue is based on a codebase scan of the current frontend. Tasks are ordere
 - Suggested Codex prompt: "Add regression tests around the pending-order lifecycle: create draft, show customer display state, confirm payment, and clear local storage after paid completion."
 
 ### Task TS-04: Add tests for storage payload normalization edge cases
+- Status: completed on 2026-05-24
 - Task ID: TS-04
 - Title: Add tests for storage payload normalization edge cases
 - Why it matters: storage accepts several backend shape variants for ids, customer fields, and file arrays. Normalization bugs can silently break the table or detail drawer.
