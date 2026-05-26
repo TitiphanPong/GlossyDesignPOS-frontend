@@ -45,6 +45,70 @@ function persistPendingOrder(order: StoredPendingOrderDraft | null) {
   globalThis.dispatchEvent(new Event('storage'));
 }
 
+function getConfirmErrorMessage(error: unknown): string {
+  if (isMissingApiBaseError(error)) {
+    return 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL ก่อนยืนยันการชำระเงิน';
+  }
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return 'เกิดข้อผิดพลาดในการยืนยันการชำระเงิน';
+}
+
+function hasDraftConflict(currentOrder: StoredPendingOrderDraft, modalOrder: StoredPendingOrderDraft | null): boolean {
+  return Boolean(
+    modalOrder?.clientDraftId &&
+      currentOrder.clientDraftId &&
+      currentOrder.clientDraftId !== modalOrder.clientDraftId
+  );
+}
+
+function buildSubmittingOrder(order: StoredPendingOrderDraft): StoredPendingOrderDraft {
+  return {
+    ...order,
+    clientDraftId: order.clientDraftId ?? globalThis.crypto.randomUUID(),
+    orderSyncStatus: 'submitting',
+    lastSubmissionError: null,
+  };
+}
+
+function buildSubmittedOrder(
+  order: StoredPendingOrderDraft,
+  status: StoredPendingOrderDraft['status']
+): StoredPendingOrderDraft {
+  return {
+    ...order,
+    status,
+    orderSyncStatus: 'submitted',
+    lastSubmissionError: null,
+  };
+}
+
+function getDialogHeading(isPaid: boolean, isSubmitting: boolean): string {
+  if (isPaid) return 'ชำระเงินเรียบร้อย';
+  if (isSubmitting) return 'กำลังยืนยันการชำระเงิน';
+  return 'รอชำระเงิน';
+}
+
+function getDialogDescription(isPaid: boolean, isSubmitting: boolean): string {
+  if (isPaid) return 'ชำระเงินเสร็จสิ้น ระบบจะปิดอัตโนมัติใน 5 วินาที';
+  if (isSubmitting) return 'ระบบกำลังบันทึกออเดอร์ กรุณารอสักครู่และอย่าปิดหน้าต่างนี้';
+  return 'โปรดยืนยันการชำระเงินก่อนปิดบิล';
+}
+
+function getPrimaryActionLabel(payment: PaymentMethod, isSubmitting: boolean): string {
+  if (isSubmitting) return 'กำลังบันทึก...';
+  return payment === 'cash' ? 'รับเงินแล้ว' : 'ยืนยันการโอนแล้ว';
+}
+
+function getPrimaryActionColor(payment: PaymentMethod): 'success' | 'warning' {
+  return payment === 'cash' ? 'success' : 'warning';
+}
+
+function getPaymentMethodLabel(payment: PaymentMethod): string {
+  return payment === 'cash' ? 'เงินสด' : PAYMENT_METHOD_LABELS[payment];
+}
+
 export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrder }: Readonly<Props>) {
   const [isPaid, setIsPaid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -86,7 +150,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         return;
       }
 
-      if (orderData?.clientDraftId && order.clientDraftId && order.clientDraftId !== orderData.clientDraftId) {
+      if (hasDraftConflict(order, orderData)) {
         alert('พบออเดอร์ใหม่ในระบบแล้ว กรุณาปิดหน้าต่างนี้และตรวจสอบรายการล่าสุดก่อนยืนยันอีกครั้ง');
         return;
       }
@@ -105,13 +169,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         return;
       }
 
-      const draftId = order.clientDraftId ?? globalThis.crypto.randomUUID();
-      const submittingOrder: StoredPendingOrderDraft = {
-        ...order,
-        clientDraftId: draftId,
-        orderSyncStatus: 'submitting',
-        lastSubmissionError: null,
-      };
+      const submittingOrder = buildSubmittingOrder(order);
 
       persistPendingOrder(submittingOrder);
       setOrderData(submittingOrder);
@@ -123,12 +181,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         body: JSON.stringify(buildPendingOrderPayload(submittingOrder, nextStatus)),
       });
 
-      const submittedOrder: StoredPendingOrderDraft = {
-        ...submittingOrder,
-        status: nextStatus,
-        orderSyncStatus: 'submitted',
-        lastSubmissionError: null,
-      };
+      const submittedOrder = buildSubmittedOrder(submittingOrder, nextStatus);
 
       persistPendingOrder(submittedOrder);
       setOrderData(submittedOrder);
@@ -136,11 +189,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       onPaid();
     } catch (error) {
       console.error(error);
-      const message = isMissingApiBaseError(error)
-        ? 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL ก่อนยืนยันการชำระเงิน'
-        : error instanceof Error && error.message
-          ? error.message
-          : 'เกิดข้อผิดพลาดในการยืนยันการชำระเงิน';
+      const message = getConfirmErrorMessage(error);
 
       const latestOrder = readPendingOrder();
       if (latestOrder && (!orderData?.clientDraftId || latestOrder.clientDraftId === orderData.clientDraftId)) {
@@ -171,9 +220,13 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       slotProps={{ paper: { sx: { borderRadius: 3, p: 0.5 } } }}>
       <DialogTitle>
         <Stack direction="row" alignItems="center" spacing={1}>
-          {isPaid ? <CheckCircleIcon color="success" fontSize="large" /> : <HourglassEmptyIcon color={isSubmitting ? 'info' : 'warning'} fontSize="large" />}
+          {isPaid ? (
+            <CheckCircleIcon color="success" fontSize="large" />
+          ) : (
+            <HourglassEmptyIcon color={isSubmitting ? 'info' : 'warning'} fontSize="large" />
+          )}
           <Typography variant="h6" fontWeight={800}>
-            {isPaid ? 'ชำระเงินเรียบร้อย' : isSubmitting ? 'กำลังยืนยันการชำระเงิน' : 'รอชำระเงิน'}
+            {getDialogHeading(isPaid, isSubmitting)}
           </Typography>
         </Stack>
       </DialogTitle>
@@ -197,7 +250,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           )}
 
           <Typography variant="body1" color="text.secondary" mt={1}>
-            วิธีชำระเงิน: {payment === 'cash' ? 'เงินสด' : PAYMENT_METHOD_LABELS[payment]}
+            วิธีชำระเงิน: {getPaymentMethodLabel(payment)}
           </Typography>
         </Box>
 
@@ -206,14 +259,14 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         </Box>
 
         <Typography variant="body2" color="text.secondary" align="center">
-          {isPaid ? 'ชำระเงินเสร็จสิ้น ระบบจะปิดอัตโนมัติใน 5 วินาที' : isSubmitting ? 'ระบบกำลังบันทึกออเดอร์ กรุณารอสักครู่และอย่าปิดหน้าต่างนี้' : 'โปรดยืนยันการชำระเงินก่อนปิดบิล'}
+          {getDialogDescription(isPaid, isSubmitting)}
         </Typography>
       </DialogContent>
 
       <DialogActions sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between', px: 2.5, pb: 2, pt: 2 }}>
         {!isPaid && (
-          <Button variant="contained" color={payment === 'cash' ? 'success' : 'warning'} startIcon={<DoneAllIcon />} onClick={handleConfirm} disabled={isSubmitting || !orderData}>
-            {isSubmitting ? 'กำลังบันทึก...' : payment === 'cash' ? 'รับเงินแล้ว' : 'ยืนยันการโอนแล้ว'}
+          <Button variant="contained" color={getPrimaryActionColor(payment)} startIcon={<DoneAllIcon />} onClick={handleConfirm} disabled={isSubmitting || !orderData}>
+            {getPrimaryActionLabel(payment, isSubmitting)}
           </Button>
         )}
         <Button

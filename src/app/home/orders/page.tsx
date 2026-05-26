@@ -228,6 +228,79 @@ function statusChip(status: PaymentStatus) {
   return <Chip label={ORDER_STATUS_LABELS[status]} color="error" size="small" sx={statusChipSx} />;
 }
 
+function getLoadOrdersErrorMessage(error: unknown): string {
+  if (error instanceof Error && error.message) {
+    return error.message;
+  }
+  return 'โหลดรายการออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+}
+
+function matchesSearch(row: OrderRow, search: string): boolean {
+  const normalizedQuery = search.trim().toLowerCase();
+  if (!normalizedQuery) {
+    return true;
+  }
+  return row.customerName.toLowerCase().includes(normalizedQuery) || row.orderId.toLowerCase().includes(normalizedQuery) || row.phoneNumber.toLowerCase().includes(normalizedQuery);
+}
+
+function matchesStatusFilter(row: OrderRow, statusFilter: 'all' | PaymentStatus): boolean {
+  return statusFilter === 'all' || row.status === statusFilter;
+}
+
+function matchesMonthFilter(row: OrderRow, monthFilter: string): boolean {
+  return monthFilter === 'all' || row.month === monthFilter;
+}
+
+function compareOrderRows(a: OrderRow, b: OrderRow, sort: SortOrder): number {
+  if (sort === 'high') return b.total - a.total;
+  if (sort === 'low') return a.total - b.total;
+
+  const t1 = dayjs(a.date).valueOf();
+  const t2 = dayjs(b.date).valueOf();
+  return sort === 'newest' ? t2 - t1 : t1 - t2;
+}
+
+function filterOrderRows(rows: OrderRow[], search: string, statusFilter: 'all' | PaymentStatus, monthFilter: string, sort: SortOrder): OrderRow[] {
+  return rows
+    .filter(row => matchesSearch(row, search))
+    .filter(row => matchesStatusFilter(row, statusFilter))
+    .filter(row => matchesMonthFilter(row, monthFilter))
+    .sort((a, b) => compareOrderRows(a, b, sort));
+}
+
+function buildOrderStats(rows: OrderRow[]) {
+  const todayKey = dayjs().format('YYYY-MM-DD');
+  const currentMonth = dayjs().format('YYYY-MM');
+
+  return rows.reduce(
+    (stats, row) => {
+      stats.totalSales += row.total;
+
+      if (row.status === 'pending' || row.status === 'partial') {
+        stats.pendingPayments += Math.max(row.total - row.paidAmount, 0);
+      }
+      if (row.status === 'paid') {
+        stats.paidOrders += 1;
+      }
+      if (dayjs(row.date).format('YYYY-MM-DD') === todayKey) {
+        stats.ordersToday += 1;
+      }
+      if (row.month === currentMonth) {
+        stats.ordersThisMonth += 1;
+      }
+
+      return stats;
+    },
+    {
+      totalSales: 0,
+      pendingPayments: 0,
+      paidOrders: 0,
+      ordersToday: 0,
+      ordersThisMonth: 0,
+    }
+  );
+}
+
 function downloadCsv(rows: OrderRow[], label: ExportType) {
   const headers = ['Order ID', 'Customer', 'Phone', 'Date', 'Status', 'Total'];
   const lines = rows.map(row => [row.orderId, row.customerName, row.phoneNumber, dayjs(row.date).format('DD/MM/YYYY HH:mm'), ORDER_STATUS_LABELS[row.status], row.total]);
@@ -335,6 +408,398 @@ function StatCard({ title, value, subtitle, tone, icon }: Readonly<StatCardProps
   );
 }
 
+type ExportMenuProps = {
+  anchorEl: HTMLElement | null;
+  rows: OrderRow[];
+  onClose: () => void;
+};
+
+function ExportMenu({ anchorEl, rows, onClose }: Readonly<ExportMenuProps>) {
+  const handleExport = (label: ExportType) => {
+    downloadCsv(rows, label);
+    onClose();
+  };
+
+  return (
+    <Menu
+      open={Boolean(anchorEl)}
+      anchorEl={anchorEl}
+      onClose={onClose}
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 3,
+            border: '1px solid #E6EDF7',
+            boxShadow: '0 16px 34px rgba(15, 23, 42, 0.14)',
+            p: 0.5,
+          },
+        },
+      }}>
+      <MenuItem onClick={() => handleExport('excel')}>Export Excel</MenuItem>
+      <MenuItem onClick={() => handleExport('pdf')}>Export PDF</MenuItem>
+      <MenuItem onClick={() => handleExport('sales')}>Export Sales Report</MenuItem>
+    </Menu>
+  );
+}
+
+type RowActionsMenuProps = {
+  anchorEl: HTMLElement | null;
+  rowMenuTarget: OrderRow | null;
+  updatingOrderId: string | null;
+  onClose: () => void;
+  onOpenDrawer: (row: OrderRow) => void;
+  onMarkAsPaid: (id: string) => void;
+  onCancelOrder: (id: string) => void;
+};
+
+function RowActionsMenu({
+  anchorEl,
+  rowMenuTarget,
+  updatingOrderId,
+  onClose,
+  onOpenDrawer,
+  onMarkAsPaid,
+  onCancelOrder,
+}: Readonly<RowActionsMenuProps>) {
+  const rowMenuTargetId = rowMenuTarget?.id ?? '';
+  const confirmPaymentDisabled =
+    !rowMenuTarget ||
+    rowMenuTarget.status === 'paid' ||
+    rowMenuTarget.status === 'cancelled' ||
+    updatingOrderId === rowMenuTargetId;
+  const cancelOrderDisabled = !rowMenuTarget || updatingOrderId === rowMenuTargetId;
+
+  return (
+    <Menu
+      open={Boolean(anchorEl)}
+      anchorEl={anchorEl}
+      onClose={onClose}
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 3,
+            border: '1px solid #E6EDF7',
+            boxShadow: '0 16px 34px rgba(15, 23, 42, 0.14)',
+            p: 0.6,
+          },
+        },
+      }}>
+      <MenuItem
+        onClick={() => {
+          if (rowMenuTarget) onOpenDrawer(rowMenuTarget);
+          onClose();
+        }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <VisibilityRoundedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14 }}>View Details</Typography>
+        </Stack>
+      </MenuItem>
+      <MenuItem
+        onClick={() => {
+          if (rowMenuTarget) printDocument(rowMenuTarget, 'receipt');
+          onClose();
+        }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <PrintRoundedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14 }}>Print Receipt</Typography>
+        </Stack>
+      </MenuItem>
+      <MenuItem
+        onClick={() => {
+          if (rowMenuTarget) printDocument(rowMenuTarget, 'invoice');
+          onClose();
+        }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <ReceiptRoundedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14 }}>Print Tax Invoice</Typography>
+        </Stack>
+      </MenuItem>
+      <MenuItem
+        disabled={confirmPaymentDisabled}
+        onClick={() => {
+          if (rowMenuTarget) {
+            onMarkAsPaid(rowMenuTarget.id);
+          }
+          onClose();
+        }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <CheckCircleRoundedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14 }}>Confirm Payment</Typography>
+        </Stack>
+      </MenuItem>
+      <MenuItem
+        sx={{ color: '#D73A49' }}
+        disabled={cancelOrderDisabled}
+        onClick={() => {
+          if (rowMenuTarget) {
+            onCancelOrder(rowMenuTarget.id);
+          }
+          onClose();
+        }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <CancelRoundedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14 }}>Cancel Order</Typography>
+        </Stack>
+      </MenuItem>
+    </Menu>
+  );
+}
+
+type OrderDetailDrawerProps = {
+  drawerOpen: boolean;
+  selectedOrder: OrderRow | null;
+  isMobile: boolean;
+  isCompactDrawer: boolean;
+  updatingOrderId: string | null;
+  onClose: () => void;
+  onMarkAsPaid: (id: string) => void;
+  onCancelOrder: (id: string) => void;
+};
+
+function OrderDetailDrawer({
+  drawerOpen,
+  selectedOrder,
+  isMobile,
+  isCompactDrawer,
+  updatingOrderId,
+  onClose,
+  onMarkAsPaid,
+  onCancelOrder,
+}: Readonly<OrderDetailDrawerProps>) {
+  return (
+    <Drawer
+      anchor={isMobile ? 'bottom' : 'right'}
+      open={drawerOpen}
+      onClose={onClose}
+      slotProps={{
+        paper: {
+          sx: {
+            width: isMobile ? '100%' : { sm: 420, md: 480, lg: 560 },
+            maxHeight: isMobile ? '94vh' : '100vh',
+            height: isMobile ? 'min(94vh, 860px)' : '100%',
+            borderTopLeftRadius: isMobile ? 18 : 22,
+            borderTopRightRadius: isMobile ? 18 : 0,
+            borderBottomLeftRadius: isMobile ? 0 : 22,
+            borderBottomRightRadius: 0,
+            background: 'linear-gradient(180deg, #FBFDFF 0%, #FFFFFF 100%)',
+            overflow: 'hidden',
+          },
+        },
+      }}>
+      {selectedOrder ? (
+        <Stack sx={{ height: '100%' }}>
+          <Box
+            sx={{
+              px: { xs: 2, sm: 2.5, md: 3 },
+              py: { xs: 1.8, sm: 2.2 },
+              borderBottom: '1px solid #E8EFF8',
+              bgcolor: 'rgba(255, 255, 255, 0.94)',
+              backdropFilter: 'blur(10px)',
+            }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1}>
+              <Box>
+                <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>Order Detail</Typography>
+                <Typography sx={{ mt: 0.4, color: '#64748B' }}>
+                  {selectedOrder.orderId} | {selectedOrder.customerName}
+                </Typography>
+              </Box>
+              {statusChip(selectedOrder.status)}
+            </Stack>
+          </Box>
+
+          <Box
+            sx={{
+              px: { xs: 2, sm: 2.5, md: 3 },
+              py: { xs: 2, sm: 2.3 },
+              overflowY: 'auto',
+              overflowX: 'hidden',
+              flex: 1,
+            }}>
+            <Stack spacing={isCompactDrawer ? 1.25 : 1.5}>
+              {selectedOrder.status === 'pending' || selectedOrder.status === 'partial' ? (
+                <Card sx={{ borderRadius: 3, border: '1px solid #FFD8A8', bgcolor: '#FFF8ED', boxShadow: 'none' }}>
+                  <CardContent sx={{ py: 1.2 }}>
+                    <Typography sx={{ color: '#B9650A', fontWeight: 700 }}>
+                      {selectedOrder.status === 'partial' ? 'Partial payment order' : 'Pending payment order'}: Remaining ฿{formatMoney(Math.max(selectedOrder.total - selectedOrder.paidAmount, 0))}
+                    </Typography>
+                  </CardContent>
+                </Card>
+              ) : null}
+
+              <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+                <CardContent>
+                  <Stack spacing={1.1}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#1E5EFF', 0.14), color: '#2156D8' }}>
+                        <ReceiptLongRoundedIcon sx={{ fontSize: 18 }} />
+                      </Avatar>
+                      <Typography sx={{ fontWeight: 700 }}>Order Information</Typography>
+                    </Stack>
+                    <Typography sx={{ color: '#334155' }}>
+                      <strong>Order ID:</strong> {selectedOrder.orderId}
+                    </Typography>
+                    <Typography sx={{ color: '#334155' }}>
+                      <strong>Order Date:</strong> {dayjs(selectedOrder.date).format('DD/MM/YYYY HH:mm')}
+                    </Typography>
+                    <Typography sx={{ color: '#334155' }}>
+                      <strong>Sales Channel:</strong> {selectedOrder.salesChannel}
+                    </Typography>
+                    <Typography sx={{ color: '#334155' }}>
+                      <strong>Staff Name:</strong> {selectedOrder.staffName}
+                    </Typography>
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+                <CardContent>
+                  <Stack spacing={1.1}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#4F46E5', 0.14), color: '#4F46E5' }}>
+                        <AccountCircleRoundedIcon sx={{ fontSize: 18 }} />
+                      </Avatar>
+                      <Typography sx={{ fontWeight: 700 }}>Customer Information</Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <PersonRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                      <Typography>{selectedOrder.customerName}</Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                      <Typography>{selectedOrder.phoneNumber}</Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <DescriptionRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                      <Typography>{selectedOrder.lineId}</Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <EmailRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                      <Typography>{selectedOrder.email}</Typography>
+                    </Stack>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <HomeRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                      <Typography>{selectedOrder.address}</Typography>
+                    </Stack>
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+                <CardContent>
+                  <Stack spacing={1.05}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#1F9D63', 0.14), color: '#1F9D63' }}>
+                        <AttachMoneyRoundedIcon sx={{ fontSize: 18 }} />
+                      </Avatar>
+                      <Typography sx={{ fontWeight: 700 }}>Payment Summary</Typography>
+                    </Stack>
+
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography color="text.secondary">Subtotal</Typography>
+                      <Typography>฿{formatMoney(selectedOrder.subtotal)}</Typography>
+                    </Stack>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography color="text.secondary">Discount</Typography>
+                      <Typography>-฿{formatMoney(selectedOrder.discount)}</Typography>
+                    </Stack>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography color="text.secondary">VAT</Typography>
+                      <Typography>฿{formatMoney(selectedOrder.vat)}</Typography>
+                    </Stack>
+                    <Divider />
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography sx={{ fontWeight: 700 }}>Final Total</Typography>
+                      <Typography sx={{ fontWeight: 800 }}>฿{formatMoney(selectedOrder.total)}</Typography>
+                    </Stack>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography color="text.secondary">Paid Amount</Typography>
+                      <Typography sx={{ color: '#18794E', fontWeight: 700 }}>฿{formatMoney(selectedOrder.paidAmount)}</Typography>
+                    </Stack>
+                    <Stack direction="row" justifyContent="space-between">
+                      <Typography color="text.secondary">Remaining Balance</Typography>
+                      <Typography sx={{ color: '#B9650A', fontWeight: 700 }}>฿{formatMoney(Math.max(selectedOrder.total - selectedOrder.paidAmount, 0))}</Typography>
+                    </Stack>
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+                <CardContent>
+                  <Stack spacing={1.1}>
+                    <Stack direction="row" alignItems="center" spacing={1}>
+                      <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#0EA5A3', 0.14), color: '#0EA5A3' }}>
+                        <StorefrontRoundedIcon sx={{ fontSize: 18 }} />
+                      </Avatar>
+                      <Typography sx={{ fontWeight: 700 }}>Payment Method</Typography>
+                    </Stack>
+                    <Chip label={PAYMENT_METHOD_LABELS[selectedOrder.paymentMethod]} sx={{ ...statusChipSx, width: 'fit-content', bgcolor: '#EEF8FF', color: '#1D4ED8' }} />
+                  </Stack>
+                </CardContent>
+              </Card>
+
+              <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+                <CardContent>
+                  <Stack spacing={1.1}>
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <TimelineRoundedIcon sx={{ color: '#3A73F7', fontSize: 19 }} />
+                      <Typography sx={{ fontWeight: 700 }}>Order Timeline</Typography>
+                    </Stack>
+                    {selectedOrder.timeline.map((event, index) => (
+                      <Stack key={`${event.title}-${event.at}-${index}`} direction="row" spacing={1.1} alignItems="flex-start">
+                        <Box sx={{ width: 9, height: 9, borderRadius: 99, mt: 0.85, bgcolor: '#3A73F7', flexShrink: 0 }} />
+                        <Box>
+                          <Typography sx={{ color: '#1E293B', fontWeight: 600 }}>{event.title}</Typography>
+                          <Typography sx={{ color: '#94A3B8', fontSize: 12 }}>{dayjs(event.at).format('DD/MM/YYYY HH:mm')}</Typography>
+                          {event.note ? <Typography sx={{ color: '#64748B', fontSize: 12.4 }}>{event.note}</Typography> : null}
+                        </Box>
+                      </Stack>
+                    ))}
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Stack>
+          </Box>
+
+          <Divider />
+          <Box
+            sx={{
+              position: 'sticky',
+              bottom: 0,
+              px: { xs: 2, sm: 2.5, md: 3 },
+              py: { xs: 1.5, sm: 1.8 },
+              borderTop: '1px solid #E8EFF8',
+              bgcolor: 'rgba(255, 255, 255, 0.96)',
+              backdropFilter: 'blur(10px)',
+            }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} flexWrap="wrap" gap={1}>
+              <Button
+                variant="contained"
+                startIcon={<CheckCircleRoundedIcon />}
+                disabled={!['pending', 'partial'].includes(selectedOrder.status) || updatingOrderId === selectedOrder.id}
+                onClick={() => {
+                  onMarkAsPaid(selectedOrder.id);
+                }}
+                sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
+                Confirm Payment
+              </Button>
+              <Button
+                variant="outlined"
+                startIcon={<CancelRoundedIcon />}
+                disabled={updatingOrderId === selectedOrder.id}
+                onClick={() => {
+                  onCancelOrder(selectedOrder.id);
+                }}
+                sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
+                Cancel Order
+              </Button>
+            </Stack>
+          </Box>
+        </Stack>
+      ) : null}
+    </Drawer>
+  );
+}
+
 export default function OrderManagementPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -373,7 +838,7 @@ export default function OrderManagementPage() {
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
       } else {
-        setLoadError(error instanceof Error && error.message ? error.message : 'โหลดรายการออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        setLoadError(getLoadOrdersErrorMessage(error));
       }
     } finally {
       setIsLoading(false);
@@ -392,21 +857,7 @@ export default function OrderManagementPage() {
   const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
 
   const filteredRows = React.useMemo(() => {
-    return rows
-      .filter(row => {
-        const q = search.trim().toLowerCase();
-        if (!q) return true;
-        return row.customerName.toLowerCase().includes(q) || row.orderId.toLowerCase().includes(q) || row.phoneNumber.toLowerCase().includes(q);
-      })
-      .filter(row => (statusFilter === 'all' ? true : row.status === statusFilter))
-      .filter(row => (monthFilter === 'all' ? true : row.month === monthFilter))
-      .sort((a, b) => {
-        if (sort === 'high') return b.total - a.total;
-        if (sort === 'low') return a.total - b.total;
-        const t1 = dayjs(a.date).valueOf();
-        const t2 = dayjs(b.date).valueOf();
-        return sort === 'newest' ? t2 - t1 : t1 - t2;
-      });
+    return filterOrderRows(rows, search, statusFilter, monthFilter, sort);
   }, [monthFilter, rows, search, sort, statusFilter]);
 
   const pagedRows = React.useMemo(() => {
@@ -419,33 +870,10 @@ export default function OrderManagementPage() {
   }, [search, statusFilter, monthFilter, sort]);
 
   const stats = React.useMemo(() => {
-    const todayKey = dayjs().format('YYYY-MM-DD');
-    const totalSales = rows.reduce((acc, row) => acc + row.total, 0);
-    const currentMonth = dayjs().format('YYYY-MM');
-    let pendingPayments = 0;
-    let paidOrders = 0;
-    let ordersToday = 0;
-    let ordersThisMonth = 0;
-
-    rows.forEach(row => {
-      if (row.status === 'pending' || row.status === 'partial') {
-        pendingPayments += Math.max(row.total - row.paidAmount, 0);
-      }
-      if (row.status === 'paid') {
-        paidOrders += 1;
-      }
-      if (dayjs(row.date).format('YYYY-MM-DD') === todayKey) {
-        ordersToday += 1;
-      }
-      if (row.month === currentMonth) {
-        ordersThisMonth += 1;
-      }
-    });
-
-    return { totalSales, pendingPayments, paidOrders, ordersToday, ordersThisMonth };
+    return buildOrderStats(rows);
   }, [rows]);
 
-  const rowMenuTarget = React.useMemo(() => (menuOrderId ? rowsById.get(menuOrderId) ?? null : null), [menuOrderId, rowsById]);
+  const rowMenuTarget = React.useMemo(() => (menuOrderId ? (rowsById.get(menuOrderId) ?? null) : null), [menuOrderId, rowsById]);
 
   const openRowMenu = (event: React.MouseEvent<HTMLButtonElement>, orderId: string) => {
     event.stopPropagation();
@@ -871,116 +1299,23 @@ export default function OrderManagementPage() {
         </Card>
       </Stack>
 
-      <Menu
-        open={Boolean(exportAnchor)}
-        anchorEl={exportAnchor}
-        onClose={() => setExportAnchor(null)}
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 3,
-              border: '1px solid #E6EDF7',
-              boxShadow: '0 16px 34px rgba(15, 23, 42, 0.14)',
-              p: 0.5,
-            },
-          },
-        }}>
-        <MenuItem
-          onClick={() => {
-            downloadCsv(filteredRows, 'excel');
-            setExportAnchor(null);
-          }}>
-          Export Excel
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            downloadCsv(filteredRows, 'pdf');
-            setExportAnchor(null);
-          }}>
-          Export PDF
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            downloadCsv(filteredRows, 'sales');
-            setExportAnchor(null);
-          }}>
-          Export Sales Report
-        </MenuItem>
-      </Menu>
+      <ExportMenu anchorEl={exportAnchor} rows={filteredRows} onClose={() => setExportAnchor(null)} />
 
-      <Menu
-        open={Boolean(rowMenuAnchor)}
+      <RowActionsMenu
         anchorEl={rowMenuAnchor}
+        rowMenuTarget={rowMenuTarget}
+        updatingOrderId={updatingOrderId}
         onClose={closeRowMenu}
-        slotProps={{
-          paper: {
-            sx: {
-              borderRadius: 3,
-              border: '1px solid #E6EDF7',
-              boxShadow: '0 16px 34px rgba(15, 23, 42, 0.14)',
-              p: 0.6,
-            },
-          },
-        }}>
-        <MenuItem
-          onClick={() => {
-            if (rowMenuTarget) openDrawer(rowMenuTarget);
-            closeRowMenu();
-          }}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <VisibilityRoundedIcon fontSize="small" />
-            <Typography sx={{ fontSize: 14 }}>View Details</Typography>
-          </Stack>
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (rowMenuTarget) printDocument(rowMenuTarget, 'receipt');
-            closeRowMenu();
-          }}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <PrintRoundedIcon fontSize="small" />
-            <Typography sx={{ fontSize: 14 }}>Print Receipt</Typography>
-          </Stack>
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (rowMenuTarget) printDocument(rowMenuTarget, 'invoice');
-            closeRowMenu();
-          }}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <ReceiptRoundedIcon fontSize="small" />
-            <Typography sx={{ fontSize: 14 }}>Print Tax Invoice</Typography>
-          </Stack>
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            if (rowMenuTarget) {
-              void markAsPaid(rowMenuTarget.id);
-            }
-            closeRowMenu();
-          }}
-          disabled={!rowMenuTarget || rowMenuTarget.status === 'paid' || rowMenuTarget.status === 'cancelled' || updatingOrderId === (rowMenuTarget?.id ?? '')}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <CheckCircleRoundedIcon fontSize="small" />
-            <Typography sx={{ fontSize: 14 }}>Confirm Payment</Typography>
-          </Stack>
-        </MenuItem>
-        <MenuItem
-          sx={{ color: '#D73A49' }}
-          onClick={() => {
-            if (rowMenuTarget) {
-              void cancelOrder(rowMenuTarget.id);
-            }
-            closeRowMenu();
-          }}
-          disabled={!rowMenuTarget || updatingOrderId === (rowMenuTarget?.id ?? '')}>
-          <Stack direction="row" spacing={1} alignItems="center">
-            <CancelRoundedIcon fontSize="small" />
-            <Typography sx={{ fontSize: 14 }}>Cancel Order</Typography>
-          </Stack>
-        </MenuItem>
-      </Menu>
+        onOpenDrawer={openDrawer}
+        onMarkAsPaid={targetId => {
+          void markAsPaid(targetId);
+        }}
+        onCancelOrder={targetId => {
+          void cancelOrder(targetId);
+        }}
+      />
 
+      {/*
       <Drawer
         anchor={isMobile ? 'bottom' : 'right'}
         open={drawerOpen}
@@ -1211,6 +1546,22 @@ export default function OrderManagementPage() {
           </Stack>
         ) : null}
       </Drawer>
+      */}
+
+      <OrderDetailDrawer
+        drawerOpen={drawerOpen}
+        selectedOrder={selectedOrder}
+        isMobile={isMobile}
+        isCompactDrawer={isCompactDrawer}
+        updatingOrderId={updatingOrderId}
+        onClose={closeDrawer}
+        onMarkAsPaid={targetId => {
+          void markAsPaid(targetId);
+        }}
+        onCancelOrder={targetId => {
+          void cancelOrder(targetId);
+        }}
+      />
     </AdminPageContainer>
   );
 }

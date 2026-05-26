@@ -3,22 +3,11 @@
 import { useEffect, useMemo, useState } from 'react';
 import './customer.css';
 import { computeOrderPaymentSummary } from '../utils/computeTotal';
-import {
-  normalizeCustomerDisplayPaymentMethod,
-  normalizeOrderStatus,
-  type OrderStatus,
-} from '../../lib/contracts';
+import { normalizeCustomerDisplayPaymentMethod, normalizeOrderStatus } from '../../lib/contracts';
 import { isPendingOrderSettled, PENDING_ORDER_KEY } from '../../lib/pending-order';
 import { ActiveOrderScreen } from './components/CustomerActiveOrderScreen';
 import { IdleScreen, PaidScreen } from './components/CustomerDisplayShell';
-import {
-  CANCELLED_STATUS_MESSAGE,
-  PAYMENT_CONFIRMING_MESSAGE,
-  STATUS_MESSAGES,
-  UNKNOWN_STATUS_MESSAGE,
-  type CartItem,
-  type Order,
-} from './components/customerDisplayShared';
+import { type CartItem, type Order } from './components/customerDisplayShared';
 
 function readOptionalString(value: unknown): string | undefined {
   return typeof value === 'string' && value.trim() ? value : undefined;
@@ -30,7 +19,12 @@ function readOptionalNullableString(value: unknown): string | null | undefined {
 }
 
 function readNumber(value: unknown, fallback = 0): number {
-  const numeric = typeof value === 'number' ? value : typeof value === 'string' ? Number(value) : Number.NaN;
+  let numeric = Number.NaN;
+  if (typeof value === 'number') {
+    numeric = value;
+  } else if (typeof value === 'string') {
+    numeric = Number(value);
+  }
   return Number.isFinite(numeric) ? numeric : fallback;
 }
 
@@ -42,6 +36,11 @@ function readOrderSyncStatus(value: unknown): Order['orderSyncStatus'] {
   return value === 'pending' || value === 'submitting' || value === 'submitted' ? value : undefined;
 }
 
+function readVariantName(value: unknown): string | undefined {
+  if (!value || typeof value !== 'object') return undefined;
+  return readOptionalString((value as { name?: unknown }).name);
+}
+
 function normalizeCartItem(value: unknown): CartItem | null {
   if (!value || typeof value !== 'object') return null;
 
@@ -49,7 +48,7 @@ function normalizeCartItem(value: unknown): CartItem | null {
   const name = readOptionalString(item.name);
   if (!name) return null;
 
-  const variantName = item.variant && typeof item.variant === 'object' ? readOptionalString((item.variant as { name?: unknown }).name) : undefined;
+  const variantName = readVariantName(item.variant);
 
   return {
     name,
@@ -101,21 +100,6 @@ function normalizeStoredOrder(value: unknown): Order | null {
   };
 }
 
-function getWorkflowStep(status: OrderStatus): number {
-  if (status === 'paid') return 5;
-  if (status === 'partial') return 4;
-  if (status === 'cancelled') return 3;
-  return 3;
-}
-
-function getStatusMessage(status: OrderStatus, hasUnsupportedStatus = false): string {
-  if (hasUnsupportedStatus) return UNKNOWN_STATUS_MESSAGE;
-  if (status === 'cancelled') return CANCELLED_STATUS_MESSAGE;
-  if (status === 'partial') return 'เธเธณเธฃเธฐเธกเธฑเธ”เธเธณเนเธฅเนเธง เธเธณเธฅเธฑเธเน€เธ•เธฃเธตเธขเธกเธเธฅเธดเธ•เธเธฒเธเธเธญเธเธ—เนเธฒเธ';
-  if (status === 'paid') return 'เธเธณเธฃเธฐเน€เธเธดเธเน€เธฃเธตเธขเธเธฃเนเธญเธขเนเธฅเนเธง';
-  return 'เธฃเธญเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธ Please Proceed to Payment';
-}
-
 export default function CustomerScreen() {
   const [order, setOrder] = useState<Order | null>(null);
   const promptpayId = process.env.NEXT_PUBLIC_PROMPTPAY_ID || '0625624598';
@@ -161,20 +145,10 @@ export default function CustomerScreen() {
   }, [order]);
 
   const summary = useMemo(() => (order ? computeOrderPaymentSummary(order) : null), [order]);
-  const currentStep = order ? getWorkflowStep(order.status) : 3;
   const isPaid = order ? isPendingOrderSettled(order) : false;
-  const statusLabel = STATUS_MESSAGES[currentStep] ?? 'เธเธณเธฅเธฑเธเธ”เธณเน€เธเธดเธเธเธฒเธฃ...';
-
-  const displayStatusLabel =
-    order?.orderSyncStatus === 'submitting'
-      ? PAYMENT_CONFIRMING_MESSAGE
-      : order
-        ? getStatusMessage(order.status, order.hasUnsupportedStatus)
-        : statusLabel;
-
   if (!order) return <IdleScreen />;
   if (isPaid) return <PaidScreen />;
   if (!summary) return <IdleScreen />;
 
-  return <ActiveOrderScreen order={order} summary={summary} currentStep={currentStep} statusLabel={displayStatusLabel} promptpayId={promptpayId} />;
+  return <ActiveOrderScreen order={order} summary={summary} promptpayId={promptpayId} />;
 }

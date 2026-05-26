@@ -55,10 +55,9 @@ function Brand({ collapsed = false, onToggleCollapsed }: Readonly<{ collapsed?: 
             width: 50,
             height: 50,
           }}>
-          <Image
+          <img
             src="logo/logo.png"
             alt="Company Logo"
-            fill
             sizes="50px"
             style={{
               objectFit: 'contain',
