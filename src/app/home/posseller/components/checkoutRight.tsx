@@ -309,7 +309,7 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
 
         <div className={styles.products}>
           {cart.length === 0 ? (
-            <div style={{ textAlign: 'center', padding: '1.8rem', color: '#728096', border: '1px dashed #D8E2F1', borderRadius: 12, background: '#FAFCFF' }}>━━━ 🛒 ไม่มีสินค้าในตะกร้า ━━━</div>
+            <div style={{ textAlign: 'center', padding: '1.8rem', color: '#728096', border: '1px dashed #D8E2F1', borderRadius: 12, background: '#FAFCFF' }}>🛒 ไม่มีสินค้าในตะกร้า</div>
           ) : (
             cart.map((item, idx) => (
               <div

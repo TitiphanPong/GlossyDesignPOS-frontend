@@ -71,7 +71,8 @@ type StorageRowPatch = {
 
 const endpointCandidates = ['/uploads', '/upload'];
 
-const softBlue = '#3778FF';
+const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
 function readErrorMessage(value: unknown): string | null {
   if (typeof value === 'string' && value.trim()) return value.trim();
@@ -111,6 +112,21 @@ function formatDate(value: string) {
     hour: '2-digit',
     minute: '2-digit',
   });
+}
+
+function formatLastSynced(date: Date | null) {
+  if (!date) return '-';
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear() + 543;
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+function formatThaiFullDate(date: Date | null) {
+  if (!date) return 'กำลังโหลดวันที่';
+  return `วัน${DAYS_TH[date.getDay()]}ที่ ${date.getDate()} ${MONTHS_TH[date.getMonth()]} พ.ศ. ${date.getFullYear() + 543}`;
 }
 
 function statusChip(status: StorageStatus) {
@@ -211,6 +227,7 @@ export default function StoragePage() {
   const [loading, setLoading] = React.useState(false);
   const [errorMessage, setErrorMessage] = React.useState<string | null>(null);
   const [missingApiBase, setMissingApiBase] = React.useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [actionMessage, setActionMessage] = React.useState<{ severity: 'success' | 'error'; text: string } | null>(null);
   const [persistingIds, setPersistingIds] = React.useState<string[]>([]);
   const [bulkUpdating, setBulkUpdating] = React.useState(false);
@@ -258,6 +275,7 @@ export default function StoragePage() {
           const normalized = list.filter((item): item is UploadApiRecord => typeof item === 'object' && item !== null).map(normalizeRecord);
 
           setRows(normalized);
+          setLastSyncedAt(new Date());
           loaded = true;
           break;
         } catch {
@@ -628,13 +646,15 @@ export default function StoragePage() {
             background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
           }}>
           <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.5}>
-              <Box>
+            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
+              <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
                 <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Storage</Typography>
                 <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร</Typography>
+                <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>Last synced {formatLastSynced(lastSyncedAt)}</Typography>
+                <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{formatThaiFullDate(lastSyncedAt)}</Typography>
               </Box>
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ minHeight: { md: 110 } }}>
                 <IconButton
                   sx={{
                     borderRadius: 3,
@@ -654,12 +674,12 @@ export default function StoragePage() {
                   startIcon={<RefreshRoundedIcon />}
                   variant="outlined"
                   sx={{
-                    height: 44,
+                    minHeight: 40,
                     borderRadius: 3,
                     borderColor: '#D7E3F4',
                     bgcolor: '#FFFFFF',
                     color: '#2A4365',
-                    px: 2,
+                    px: 1.8,
                     textTransform: 'none',
                     fontWeight: 700,
                   }}>
@@ -671,12 +691,12 @@ export default function StoragePage() {
                   startIcon={<FileDownloadDoneRoundedIcon />}
                   variant="outlined"
                   sx={{
-                    height: 44,
+                    minHeight: 40,
                     borderRadius: 3,
                     borderColor: '#D7E3F4',
                     bgcolor: '#FFFFFF',
                     color: '#2A4365',
-                    px: 2,
+                    px: 1.8,
                     textTransform: 'none',
                     fontWeight: 700,
                   }}>
@@ -689,13 +709,13 @@ export default function StoragePage() {
                   disabled={selectedRows.length === 0}
                   variant="contained"
                   sx={{
-                    height: 44,
+                    minHeight: 40,
                     borderRadius: 3,
-                    px: 2.4,
+                    px: 1.8,
                     textTransform: 'none',
                     fontWeight: 700,
-                    bgcolor: softBlue,
-                    boxShadow: '0 14px 28px rgba(55, 120, 255, 0.34)',
+                    bgcolor: '#2B62EE',
+                    boxShadow: '0 14px 28px rgba(43, 98, 238, 0.34)',
                   }}>
                   Download Selected
                 </Button>

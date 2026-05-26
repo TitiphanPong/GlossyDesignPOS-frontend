@@ -1,42 +1,43 @@
 'use client';
 
-import { Box, Typography, Paper } from '@mui/material';
+import { Box, Paper, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import AddBoxRoundedIcon from '@mui/icons-material/AddBoxRounded';
-import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import BarChartRoundedIcon from '@mui/icons-material/BarChartRounded';
+import { uiCardSx } from '../adminUi';
 
 const ACTIONS = [
   {
-    label: 'พิมพ์ใบเสร็จ',
-    description: 'ออกเอกสาร',
-    href: '/orders',
+    label: 'รายการออเดอร์',
+    description: 'ตรวจสอบและพิมพ์เอกสาร',
+    href: '/home/orders',
     icon: PrintRoundedIcon,
     iconGrad: 'linear-gradient(135deg, #6C4DFF, #8A5CFF)',
     bgHover: '#F5F0FF',
   },
   {
-    label: 'เพิ่มสินค้า',
-    description: 'จัดการสินค้า',
-    href: '/pos',
+    label: 'หน้าขาย',
+    description: 'เพิ่มสินค้าและเปิดบิลใหม่',
+    href: '/home/posseller',
     icon: AddBoxRoundedIcon,
     iconGrad: 'linear-gradient(135deg, #10B981, #34D399)',
     bgHover: '#F0FDF4',
   },
   {
-    label: 'จัดการลูกค้า',
-    description: 'ข้อมูลลูกค้า',
-    href: '/orders',
-    icon: PeopleAltRoundedIcon,
+    label: 'จัดการสต็อก',
+    description: 'ดูไฟล์งานและสถานะจัดเก็บ',
+    href: '/home/storage',
+    icon: Inventory2RoundedIcon,
     iconGrad: 'linear-gradient(135deg, #3B82F6, #60A5FA)',
     bgHover: '#EFF6FF',
   },
   {
-    label: 'ดูรายงาน',
-    description: 'สรุปยอดขาย',
-    href: '/orders',
+    label: 'สรุปการขาย',
+    description: 'ติดตามภาพรวมและผลลัพธ์',
+    href: '/home/orders',
     icon: BarChartRoundedIcon,
     iconGrad: 'linear-gradient(135deg, #EC4899, #F472B6)',
     bgHover: '#FDF2F8',
@@ -45,74 +46,69 @@ const ACTIONS = [
 
 export default function QuickActions() {
   return (
-    <Box>
-      <Typography
-        variant="subtitle1"
-        fontWeight={700}
-        sx={{ color: '#374151', mb: 1.5, fontSize: 14 }}
-      >
-        ⚡ การดำเนินการด่วน
-      </Typography>
-      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1.5 }}>
-        {ACTIONS.map((act, i) => {
-          const Icon = act.icon;
+    <Paper elevation={0} sx={{ ...uiCardSx, p: { xs: 2, md: 2.25 }, height: '100%', display: 'flex', flexDirection: 'column' }}>
+      <Box
+        sx={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+          gridTemplateRows: 'repeat(2, minmax(0, 1fr))',
+          gap: 1.5,
+          flex: 1,
+        }}>
+        {ACTIONS.map((action, index) => {
+          const Icon = action.icon;
           return (
-            <motion.div
-              key={act.label}
-              initial={{ opacity: 0, y: 16 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: i * 0.06, type: 'spring', stiffness: 280, damping: 22 }}
-            >
+            <motion.div key={action.label} initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: index * 0.06, type: 'spring', stiffness: 280, damping: 22 }}>
               <Paper
                 component={Link}
-                href={act.href}
+                href={action.href}
                 elevation={0}
-                className="quick-action-card"
                 sx={{
-                  borderRadius: '16px',
-                  background: 'white',
-                  boxShadow: '0 2px 12px rgba(0,0,0,0.06)',
-                  p: 2,
+                  borderRadius: 3,
+                  p: 1.75,
+                  minHeight: { xs: 132, md: 140 },
+                  height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
+                  justifyContent: 'center',
                   gap: 1,
                   textDecoration: 'none',
-                  border: '1.5px solid transparent',
-                  transition: 'all 0.22s cubic-bezier(0.4,0,0.2,1)',
+                  border: '1px solid',
+                  borderColor: 'divider',
+                  boxShadow: 'none',
+                  bgcolor: 'background.paper',
+                  transition: 'all 0.22s ease',
                   '&:hover': {
-                    background: act.bgHover,
+                    background: action.bgHover,
                     borderColor: 'rgba(108,77,255,0.14)',
-                    transform: 'translateY(-3px)',
-                    boxShadow: '0 8px 26px rgba(0,0,0,0.09)',
+                    transform: 'translateY(-2px)',
+                    boxShadow: '0 10px 22px rgba(15, 23, 42, 0.08)',
                   },
-                }}
-              >
+                }}>
                 <Box
-                  className="quick-action-icon"
                   sx={{
-                    width: 44, height: 44,
-                    borderRadius: '13px',
-                    background: act.iconGrad,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    boxShadow: '0 4px 14px rgba(0,0,0,0.15)',
-                  }}
-                >
-                  <Icon sx={{ color: 'white', fontSize: 22 }} />
+                    width: 44,
+                    height: 44,
+                    borderRadius: 2.5,
+                    background: action.iconGrad,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 6px 16px rgba(15, 23, 42, 0.14)',
+                  }}>
+                  <Icon sx={{ color: '#fff', fontSize: 22 }} />
                 </Box>
+
                 <Box sx={{ textAlign: 'center' }}>
-                  <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: '#1a1035', lineHeight: 1.2 }}>
-                    {act.label}
-                  </Typography>
-                  <Typography sx={{ fontSize: 11, color: '#9CA3AF', mt: 0.2 }}>
-                    {act.description}
-                  </Typography>
+                  <Typography sx={{ fontSize: 12.5, fontWeight: 700, color: '#101828', lineHeight: 1.2 }}>{action.label}</Typography>
+                  <Typography sx={{ fontSize: 11, color: 'text.secondary', mt: 0.3, lineHeight: 1.35 }}>{action.description}</Typography>
                 </Box>
               </Paper>
             </motion.div>
           );
         })}
       </Box>
-    </Box>
+    </Paper>
   );
 }

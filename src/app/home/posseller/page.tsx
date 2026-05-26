@@ -1,11 +1,14 @@
 ﻿'use client';
 
 import * as React from 'react';
-import { alpha, Alert, Box, Card, CardContent, Stack, Typography } from '@mui/material';
+import { alpha, Alert, Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
 
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
+import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import TvRoundedIcon from '@mui/icons-material/TvRounded';
 
 import { CheckoutSidebar } from './components/CheckoutSidebar';
 import { ProductList } from './components/ProductList';
@@ -16,11 +19,13 @@ import SuccessModal from './components/successModal';
 import CustomerInfoModal from './components/customerInfoModal';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
+import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
 import { MissingApiConfigState } from '../components/dashboardUi';
 import { fetchApiJson, isMissingApiBaseError } from '../../../lib/api';
 import { buildPendingOrderDraft, persistPendingOrderDraft } from '../../../lib/pending-order';
 import { computeTotals } from '../../utils/computeTotal';
 import { ActiveProduct, CartItem } from './types/cart';
+import Link from 'next/link';
 
 type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
@@ -35,6 +40,9 @@ export type Product = {
   variants: Variant[];
 };
 
+const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
 const normalizeVariant = (variant: Variant): Variant => ({ ...variant, price: Number(variant.price) });
 const normalizeProduct = (product: Product): Product => ({ ...product, variants: product.variants.map(normalizeVariant) });
 const toActiveProduct = (product: Product): ActiveProduct => ({ id: product.id, name: product.name, category: product.category });
@@ -43,6 +51,21 @@ const sanitizeCustomerInfo = (customer: CustomerInfo): CustomerInfo => ({
   phoneNumber: customer.phoneNumber.trim(),
   note: customer.note.trim(),
 });
+
+function formatLastSynced(date: Date | null) {
+  if (!date) return '-';
+  const day = date.getDate().toString().padStart(2, '0');
+  const month = (date.getMonth() + 1).toString().padStart(2, '0');
+  const year = date.getFullYear() + 543;
+  const hours = date.getHours().toString().padStart(2, '0');
+  const minutes = date.getMinutes().toString().padStart(2, '0');
+  return `${day}/${month}/${year} ${hours}:${minutes}`;
+}
+
+function formatThaiFullDate(date: Date | null) {
+  if (!date) return 'กำลังโหลดวันที่';
+  return `วัน${DAYS_TH[date.getDay()]}ที่ ${date.getDate()} ${MONTHS_TH[date.getMonth()]} พ.ศ. ${date.getFullYear() + 543}`;
+}
 
 type PosStatCardProps = {
   title: string;
@@ -104,6 +127,7 @@ export default function SellPage() {
   const [loading, setLoading] = React.useState(true);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
   const [missingApiBase, setMissingApiBase] = React.useState(false);
+  const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const cartState = useCart();
   const modalState = useProductModals();
   const { activeModal, activeProduct, closeModal, editingItem, openForEdit, openForProduct, openModal } = modalState;
@@ -125,25 +149,29 @@ export default function SellPage() {
     setCustomerModalOpen(true);
   };
 
-  React.useEffect(() => {
-    const loadProducts = async () => {
-      try {
-        const data = await fetchApiJson<Product[]>('/products');
-        const fixedData = Array.isArray(data) ? data.map(normalizeProduct) : [];
-        setProducts(fixedData);
-      } catch (error) {
-        if (isMissingApiBaseError(error)) {
-          setMissingApiBase(true);
-        } else {
-          setErrorMsg(error instanceof Error && error.message ? error.message : 'โหลดสินค้าล้มเหลว กรุณาลองใหม่');
-        }
-      } finally {
-        setLoading(false);
+  const loadProducts = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const data = await fetchApiJson<Product[]>('/products');
+      const fixedData = Array.isArray(data) ? data.map(normalizeProduct) : [];
+      setProducts(fixedData);
+      setErrorMsg(null);
+      setMissingApiBase(false);
+      setLastSyncedAt(new Date());
+    } catch (error) {
+      if (isMissingApiBaseError(error)) {
+        setMissingApiBase(true);
+      } else {
+        setErrorMsg(error instanceof Error && error.message ? error.message : 'โหลดสินค้าล้มเหลว กรุณาลองใหม่');
       }
-    };
-
-    void loadProducts();
+    } finally {
+      setLoading(false);
+    }
   }, []);
+
+  React.useEffect(() => {
+    void loadProducts();
+  }, [loadProducts]);
 
   React.useEffect(() => {
     if (customerModalOpen || successOpen) return;
@@ -188,22 +216,25 @@ export default function SellPage() {
 
   return (
     <AdminPageContainer>
-      {/* Top Header Card */}
-      <Box
-        sx={{
-          borderRadius: 6,
-          border: '1px solid #E6EDF8',
-          boxShadow: '0 20px 45px rgba(18, 45, 82, 0.08)',
-          background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
-          mb: 3,
-        }}>
-        <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.5} sx={{ p: { xs: 2.2, md: 3 } }}>
-          <Box>
-            <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Cashier</Typography>
-            <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>หน้าขายหน้าร้านสำหรับแคชเชียร์ ใช้งานเร็ว และจัดการคำสั่งซื้ออย่างเป็นระบบ</Typography>
-          </Box>
-        </Stack>
-      </Box>
+      <AdminHeroHeader
+        title="Cashier"
+        description="หน้าขายหน้าร้านสำหรับแคชเชียร์ ใช้งานเร็ว และจัดการคำสั่งซื้ออย่างเป็นระบบ"
+        lastSynced={formatLastSynced(lastSyncedAt)}
+        thaiDate={formatThaiFullDate(lastSyncedAt)}
+        actions={
+          <>
+            <Button onClick={() => void loadProducts()} startIcon={<RefreshRoundedIcon />} variant="outlined" disabled={loading} sx={heroOutlineButtonSx}>
+              {loading ? 'Refreshing...' : 'Refresh'}
+            </Button>
+            <Button component={Link} href="/home/orders" startIcon={<ReceiptLongRoundedIcon />} variant="outlined" sx={heroOutlineButtonSx}>
+              View Orders
+            </Button>
+            <Button component={Link} href="/customer" startIcon={<TvRoundedIcon />} variant="contained" sx={heroPrimaryButtonSx}>
+              Customer Display
+            </Button>
+          </>
+        }
+      />
 
       {/* Bottom Summary */}
       <Box

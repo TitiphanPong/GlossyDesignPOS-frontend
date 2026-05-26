@@ -34,6 +34,7 @@ import {
 } from '@mui/material';
 import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
+import Link from 'next/link';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { commonButtonSx, statusChipSx, tableShellSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
@@ -69,6 +70,9 @@ import { ApiOrder, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, type OrderStatus,
 type PaymentStatus = OrderStatus;
 type SortOrder = 'newest' | 'oldest' | 'high' | 'low';
 type ExportType = 'excel' | 'pdf' | 'sales';
+
+const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
 type OrderProduct = {
   name: string;
@@ -213,6 +217,12 @@ const MotionDiv = motion.div;
 
 function formatMoney(amount: number) {
   return amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatThaiFullDate(value: dayjs.Dayjs | null): string {
+  if (!value) return 'กำลังโหลดวันที่';
+  const date = value.toDate();
+  return `วัน${DAYS_TH[date.getDay()]}ที่ ${date.getDate()} ${MONTHS_TH[date.getMonth()]} พ.ศ. ${date.getFullYear() + 543}`;
 }
 
 function statusChip(status: PaymentStatus) {
@@ -955,15 +965,16 @@ export default function OrderManagementPage() {
                 </Box>
               ) : null}
 
-              <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2}>
-                <Box>
+              <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
+                <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
                   <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Orders</Typography>
                   <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>ติดตามออเดอร์ลูกค้า สถานะการชำระเงิน งานพิมพ์ และจัดการเอกสารการขายแบบครบวงจร</Typography>
                   <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>Last synced {lastUpdated ? lastUpdated.format('DD/MM/YYYY HH:mm') : '-'}</Typography>
+                  <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{formatThaiFullDate(lastUpdated)}</Typography>
                   {loadError ? <Typography sx={{ mt: 0.8, color: '#C62828', fontSize: 12.5 }}>{loadError}</Typography> : null}
                 </Box>
 
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ minHeight: { md: 110 } }}>
                   <Tooltip title="Notifications">
                     <IconButton
                       sx={{
@@ -1014,6 +1025,8 @@ export default function OrderManagementPage() {
                   </Button>
 
                   <Button
+                    component={Link}
+                    href="/home/posseller"
                     startIcon={<AddShoppingCartRoundedIcon />}
                     variant="contained"
                     sx={{
