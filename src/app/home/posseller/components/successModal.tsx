@@ -13,6 +13,7 @@ import {
   getPendingOrderFinalStatus,
   isPendingOrderSubmitted,
   PENDING_ORDER_KEY,
+  persistPendingOrderDraft,
   type StoredPendingOrderDraft,
 } from '../../../../lib/pending-order';
 
@@ -33,16 +34,6 @@ function readPendingOrder(): StoredPendingOrderDraft | null {
   } catch {
     return null;
   }
-}
-
-function persistPendingOrder(order: StoredPendingOrderDraft | null) {
-  if (order) {
-    localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(order));
-  } else {
-    localStorage.removeItem(PENDING_ORDER_KEY);
-  }
-
-  globalThis.dispatchEvent(new Event('storage'));
 }
 
 function getConfirmErrorMessage(error: unknown): string {
@@ -171,7 +162,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
 
       const submittingOrder = buildSubmittingOrder(order);
 
-      persistPendingOrder(submittingOrder);
+      persistPendingOrderDraft(submittingOrder);
       setOrderData(submittingOrder);
       setIsSubmitting(true);
 
@@ -183,7 +174,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
 
       const submittedOrder = buildSubmittedOrder(submittingOrder, nextStatus);
 
-      persistPendingOrder(submittedOrder);
+      persistPendingOrderDraft(submittedOrder);
       setOrderData(submittedOrder);
       setIsPaid(true);
       onPaid();
@@ -198,7 +189,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           orderSyncStatus: 'pending',
           lastSubmissionError: message,
         };
-        persistPendingOrder(resetOrder);
+        persistPendingOrderDraft(resetOrder);
         setOrderData(resetOrder);
       }
 
@@ -275,7 +266,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           startIcon={<ReplayIcon />}
           disabled={isSubmitting}
           onClick={() => {
-            persistPendingOrder(null);
+            persistPendingOrderDraft(null);
             onNewOrder();
           }}>
           ทำรายการใหม่

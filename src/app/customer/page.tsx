@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './customer.css';
 import { computeOrderPaymentSummary } from '../utils/computeTotal';
 import { normalizeCustomerDisplayPaymentMethod, normalizeOrderStatus } from '../../lib/contracts';
-import { isPendingOrderSettled, PENDING_ORDER_KEY } from '../../lib/pending-order';
+import { isPendingOrderSettled, PENDING_ORDER_KEY, persistPendingOrderDraft, shouldDisplayPendingOrder } from '../../lib/pending-order';
 import { ActiveOrderScreen } from './components/CustomerActiveOrderScreen';
 import { IdleScreen, PaidScreen } from './components/CustomerDisplayShell';
 import { type CartItem, type Order } from './components/customerDisplayShared';
@@ -100,23 +100,32 @@ function normalizeStoredOrder(value: unknown): Order | null {
   };
 }
 
+function readStoredOrder(): Order | null {
+  const str = localStorage.getItem(PENDING_ORDER_KEY);
+  if (!str) return null;
+
+  try {
+    const nextOrder = normalizeStoredOrder(JSON.parse(str));
+    if (!nextOrder || !shouldDisplayPendingOrder(nextOrder)) {
+      persistPendingOrderDraft(null);
+      return null;
+    }
+
+    return nextOrder;
+  } catch {
+    persistPendingOrderDraft(null);
+    return null;
+  }
+}
+
 export default function CustomerScreen() {
   const [order, setOrder] = useState<Order | null>(null);
+  const [dismissedOrderKey, setDismissedOrderKey] = useState<string | null>(null);
   const promptpayId = process.env.NEXT_PUBLIC_PROMPTPAY_ID || '0625624598';
 
   useEffect(() => {
     const handleStorage = () => {
-      const str = localStorage.getItem(PENDING_ORDER_KEY);
-      if (!str) {
-        setOrder(null);
-        return;
-      }
-
-      try {
-        setOrder(normalizeStoredOrder(JSON.parse(str)));
-      } catch {
-        setOrder(null);
-      }
+      setOrder(readStoredOrder());
     };
 
     handleStorage();
@@ -137,18 +146,43 @@ export default function CustomerScreen() {
     if (!fullyPaid) return;
 
     const timeoutId = setTimeout(() => {
-      localStorage.removeItem(PENDING_ORDER_KEY);
+      persistPendingOrderDraft(null);
       setOrder(null);
     }, 6000);
 
     return () => clearTimeout(timeoutId);
   }, [order]);
 
+  useEffect(() => {
+    if (!order) {
+      setDismissedOrderKey(null);
+      return;
+    }
+
+    const activeOrderKey = order.clientDraftId ?? order.orderId;
+    if (dismissedOrderKey && dismissedOrderKey !== activeOrderKey) {
+      setDismissedOrderKey(null);
+    }
+  }, [dismissedOrderKey, order]);
+
   const summary = useMemo(() => (order ? computeOrderPaymentSummary(order) : null), [order]);
   const isPaid = order ? isPendingOrderSettled(order) : false;
+  const activeOrderKey = order ? order.clientDraftId ?? order.orderId : null;
+  const isDismissed = Boolean(order && activeOrderKey && dismissedOrderKey === activeOrderKey);
   if (!order) return <IdleScreen />;
   if (isPaid) return <PaidScreen />;
+  if (isDismissed) return <IdleScreen />;
   if (!summary) return <IdleScreen />;
 
-  return <ActiveOrderScreen order={order} summary={summary} promptpayId={promptpayId} />;
+  return (
+    <ActiveOrderScreen
+      order={order}
+      summary={summary}
+      promptpayId={promptpayId}
+      onClose={() => {
+        if (!activeOrderKey) return;
+        setDismissedOrderKey(activeOrderKey);
+      }}
+    />
+  );
 }

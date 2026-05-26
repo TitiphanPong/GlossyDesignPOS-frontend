@@ -209,8 +209,12 @@ function CartItemDetailsList({ item }: Readonly<{ item: CartItem }>) {
       <CategoryDetails item={item} />
       <NamedProductDetails item={item} />
 
-      <li style={{ whiteSpace: 'nowrap' }}>
-        💰 การชำระ : {item.fullPayment ? `เต็มจำนวน (${Number(item.totalPrice).toFixed(2)}฿)` : `มัดจำ ${Number(item.deposit || 0).toFixed(2)}฿ (คงเหลือ ${Number(item.remaining || 0).toFixed(2)}฿)`}
+      <li style={{ listStyle: 'none', marginTop: 8, padding: '0.5rem', background: '#F0F4FF', borderRadius: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+          <span>💰 การชำระ : {item.fullPayment ? `เต็มจำนวน (${Number(item.totalPrice).toFixed(2)}฿)` : `มัดจำ ${Number(item.deposit || 0).toFixed(2)}฿`}</span>
+
+          {!item.fullPayment ? <span style={{ paddingLeft: '1.4rem', color: '#5B6F88' }}>คงเหลือ {Number(item.remaining || 0).toFixed(2)}฿</span> : null}
+        </div>
       </li>
     </>
   );

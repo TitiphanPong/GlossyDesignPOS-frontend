@@ -36,6 +36,26 @@ export function getPendingOrderFinalStatus(order: Pick<StoredPendingOrderDraft, 
   return Number(order.remainingTotal ?? 0) > 0 ? 'partial' : 'paid';
 }
 
+export function persistPendingOrderDraft(order: StoredPendingOrderDraft | null): void {
+  if (typeof window === 'undefined') return;
+
+  if (order) {
+    window.localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(order));
+  } else {
+    window.localStorage.removeItem(PENDING_ORDER_KEY);
+  }
+
+  window.dispatchEvent(new Event('storage'));
+}
+
+export function hasPendingOrderCartItems(order: Pick<StoredPendingOrderDraft, 'cart'>): boolean {
+  return Array.isArray(order.cart) && order.cart.length > 0;
+}
+
+export function shouldDisplayPendingOrder(order: Pick<StoredPendingOrderDraft, 'orderId' | 'status' | 'cart'>): boolean {
+  return typeof order.orderId === 'string' && order.orderId.trim().length > 0 && order.status !== 'cancelled' && hasPendingOrderCartItems(order);
+}
+
 export function isPendingOrderSubmitted(order: Pick<StoredPendingOrderDraft, 'orderSyncStatus' | 'status'>): boolean {
   return order.orderSyncStatus === 'submitted' || order.status === 'paid' || order.status === 'partial';
 }

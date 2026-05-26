@@ -5,8 +5,10 @@ import {
   buildPendingOrderDraft,
   buildPendingOrderPayload,
   getPendingOrderFinalStatus,
+  hasPendingOrderCartItems,
   isPendingOrderSettled,
   isPendingOrderSubmitted,
+  shouldDisplayPendingOrder,
 } from './pending-order';
 
 const pricingCart = [
@@ -90,4 +92,14 @@ test('isPendingOrderSettled matches the customer display clear-after-paid behavi
   assert.equal(isPendingOrderSettled({ status: 'partial', remainingTotal: 120 }), false);
   assert.equal(isPendingOrderSettled({ status: 'partial', remainingTotal: 0 }), true);
   assert.equal(isPendingOrderSettled({ status: 'paid', remainingTotal: 500 }), true);
+});
+
+test('customer display only hydrates displayable pending orders', () => {
+  assert.equal(hasPendingOrderCartItems({ cart: [] }), false);
+  assert.equal(hasPendingOrderCartItems({ cart: [{ name: 'Poster', qty: 1 }] }), true);
+
+  assert.equal(shouldDisplayPendingOrder({ orderId: '1712345678901', status: 'pending', cart: [{ name: 'Poster', qty: 1 }] }), true);
+  assert.equal(shouldDisplayPendingOrder({ orderId: '1712345678901', status: 'cancelled', cart: [{ name: 'Poster', qty: 1 }] }), false);
+  assert.equal(shouldDisplayPendingOrder({ orderId: '1712345678901', status: 'pending', cart: [] }), false);
+  assert.equal(shouldDisplayPendingOrder({ orderId: '', status: 'pending', cart: [{ name: 'Poster', qty: 1 }] }), false);
 });

@@ -18,7 +18,7 @@ import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
 import { MissingApiConfigState } from '../components/dashboardUi';
 import { fetchApiJson, isMissingApiBaseError } from '../../../lib/api';
-import { buildPendingOrderDraft, PENDING_ORDER_KEY } from '../../../lib/pending-order';
+import { buildPendingOrderDraft, persistPendingOrderDraft } from '../../../lib/pending-order';
 import { computeTotals } from '../../utils/computeTotal';
 import { ActiveProduct, CartItem } from './types/cart';
 
@@ -144,6 +144,13 @@ export default function SellPage() {
 
     void loadProducts();
   }, []);
+
+  React.useEffect(() => {
+    if (customerModalOpen || successOpen) return;
+    if (cart.length > 0) return;
+
+    persistPendingOrderDraft(null);
+  }, [cart.length, customerModalOpen, successOpen]);
 
   const filtered = React.useMemo(
     () => products.filter(p => (activeCat === 'ทั้งหมด' ? true : p.category === activeCat)).filter(p => p.name.toLowerCase().includes(qDebounced.toLowerCase())),
@@ -315,7 +322,7 @@ export default function SellPage() {
             taxInvoice,
             totals,
           });
-          localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(order));
+          persistPendingOrderDraft(order);
           setCustomerModalOpen(false);
           setSuccessOpen(true);
         }}

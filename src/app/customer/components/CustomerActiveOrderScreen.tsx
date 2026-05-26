@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { motion } from 'framer-motion';
 import {
+  X,
   CalendarDays,
   CheckCircle2,
   CircleDollarSign,
@@ -266,10 +267,12 @@ export function ActiveOrderScreen({
   order,
   summary,
   promptpayId,
+  onClose,
 }: Readonly<{
   order: Order;
   summary: PaymentSummaryResult;
   promptpayId: string;
+  onClose: () => void;
 }>) {
   const [qrRefreshIn, setQrRefreshIn] = useState(45);
   const statusTone = getToneFromStatus(order.status, order.hasUnsupportedStatus);
@@ -342,17 +345,27 @@ export function ActiveOrderScreen({
                 <div>
                   <HeaderBadge>POS Customer</HeaderBadge>
                 </div>
-                <div
-                  className={cn(
-                    'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.14em] uppercase',
-                    statusTone === 'success' && 'border-emerald-200 bg-emerald-50 text-emerald-700',
-                    statusTone === 'warning' && 'border-amber-200 bg-amber-50 text-amber-700',
-                    statusTone === 'danger' && 'border-rose-200 bg-rose-50 text-rose-700',
-                    statusTone === 'info' && 'border-blue-200 bg-blue-50 text-blue-700',
-                  )}
-                >
-                  <span className="h-2 w-2 rounded-full bg-current shadow-[0_0_12px_currentColor]" />
-                  {statusBadgeLabel}
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={onClose}
+                    aria-label="Close cart view"
+                    className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white/90 text-slate-500 transition hover:border-slate-300 hover:text-slate-700"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                  <div
+                    className={cn(
+                      'inline-flex items-center gap-2 rounded-full border px-3 py-1 text-[11px] font-semibold tracking-[0.14em] uppercase',
+                      statusTone === 'success' && 'border-emerald-200 bg-emerald-50 text-emerald-700',
+                      statusTone === 'warning' && 'border-amber-200 bg-amber-50 text-amber-700',
+                      statusTone === 'danger' && 'border-rose-200 bg-rose-50 text-rose-700',
+                      statusTone === 'info' && 'border-blue-200 bg-blue-50 text-blue-700',
+                    )}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-current shadow-[0_0_12px_currentColor]" />
+                    {statusBadgeLabel}
+                  </div>
                 </div>
               </div>
               <ClockBlock />
