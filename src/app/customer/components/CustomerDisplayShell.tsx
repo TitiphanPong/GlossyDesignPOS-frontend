@@ -1,11 +1,13 @@
 'use client';
 
 import { useEffect, useState, type ReactNode } from 'react';
+import Image from 'next/image';
 import { Box, Typography, type SxProps, type Theme } from '@mui/material';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
 import { motion } from 'framer-motion';
 import { BANNERS, WORKFLOW_STEPS } from './customerDisplayShared';
+import 'swiper/css';
 
 export function AmbientBackground() {
   const orbs = [
@@ -55,9 +57,7 @@ export function AmbientBackground() {
         sx={{
           position: 'absolute',
           inset: 0,
-          backgroundImage:
-            'linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),' +
-            'linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)',
+          backgroundImage: 'linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),' + 'linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px)',
           backgroundSize: '72px 72px',
         }}
       />
@@ -101,8 +101,7 @@ export function LiveClock() {
           fontFamily: '"SF Mono","Fira Code",monospace',
           lineHeight: 1,
           letterSpacing: '0.04em',
-        }}
-      >
+        }}>
         {time}
       </Typography>
       <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', mt: 0.4, letterSpacing: '0.08em' }}>{date}</Typography>
@@ -120,8 +119,7 @@ export function GlassCard({ children, sx }: Readonly<{ children: ReactNode; sx?:
         border: '1px solid rgba(255,255,255,0.09)',
         borderRadius: '20px',
         ...sx,
-      }}
-    >
+      }}>
       {children}
     </Box>
   );
@@ -139,8 +137,7 @@ export function OrderTimeline({ currentStep }: Readonly<{ currentStep: number }>
           letterSpacing: '0.22em',
           textTransform: 'uppercase',
           mb: { xs: 1.5, md: 2 },
-        }}
-      >
+        }}>
         Order Progress
       </Typography>
       <Box sx={{ display: 'flex', alignItems: 'flex-start' }}>
@@ -197,10 +194,9 @@ export function OrderTimeline({ currentStep }: Readonly<{ currentStep: number }>
                   boxShadow: active ? '0 0 14px rgba(0,229,255,0.5),0 0 28px rgba(124,77,255,0.25)' : 'none',
                   animation: active ? 'statusPulse 2.5s ease-in-out infinite' : 'none',
                   transition: 'all 0.5s ease',
-                }}
-              >
+                }}>
                 {done ? (
-                  <Typography sx={{ fontSize: '0.85rem', color: '#fff', fontWeight: 700, lineHeight: 1 }}>โ“</Typography>
+                  <Typography sx={{ fontSize: '0.85rem', color: '#fff', fontWeight: 700, lineHeight: 1 }}>✓</Typography>
                 ) : (
                   <Typography
                     sx={{
@@ -208,8 +204,7 @@ export function OrderTimeline({ currentStep }: Readonly<{ currentStep: number }>
                       fontWeight: 700,
                       color: active ? '#fff' : 'rgba(255,255,255,0.25)',
                       lineHeight: 1,
-                    }}
-                  >
+                    }}>
                     {step.id}
                   </Typography>
                 )}
@@ -224,8 +219,7 @@ export function OrderTimeline({ currentStep }: Readonly<{ currentStep: number }>
                   textAlign: 'center',
                   lineHeight: 1.3,
                   px: 0.3,
-                }}
-              >
+                }}>
                 {step.label}
               </Typography>
             </Box>
@@ -237,10 +231,17 @@ export function OrderTimeline({ currentStep }: Readonly<{ currentStep: number }>
 }
 
 export function IdleScreen() {
+  useEffect(() => {
+    BANNERS.forEach(item => {
+      const preloadedImage = new window.Image();
+      preloadedImage.src = item.img;
+    });
+  }, []);
+
   return (
     <Box sx={{ width: '100%', height: '100vh', bgcolor: '#04040A', overflow: 'hidden', position: 'relative' }}>
       <AmbientBackground />
-      <Swiper modules={[Autoplay]} autoplay={{ delay: 5500, disableOnInteraction: false }} loop style={{ width: '100%', height: '100vh' }}>
+      <Swiper modules={[Autoplay]} autoplay={{ delay: 15000, disableOnInteraction: false }} loop style={{ width: '100%', height: '100vh' }}>
         {BANNERS.map(item => (
           <SwiperSlide key={item.img}>
             <Box
@@ -248,20 +249,28 @@ export function IdleScreen() {
                 width: '100%',
                 height: '100vh',
                 position: 'relative',
-                backgroundImage: `url(${item.img})`,
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                filter: 'saturate(1.2) contrast(1.08) brightness(1.06)',
-              }}
-            >
+              }}>
+              <Image
+                src={item.img}
+                alt={item.title}
+                fill
+                priority
+                loading="eager"
+                unoptimized
+                sizes="100vw"
+                style={{
+                  objectFit: 'cover',
+                  filter: 'saturate(1.2) contrast(1.08) brightness(1.06)',
+                }}
+              />
               <Box
                 sx={{
                   position: 'absolute',
                   inset: 0,
-                  background: 'linear-gradient(to bottom,rgba(4,4,10,0.45) 0%,rgba(4,4,10,0.14) 38%,rgba(4,4,10,0.48) 100%)',
+                  background: 'linear-gradient(to bottom,rgba(4,4,10,0.18) 0%,rgba(4,4,10,0.04) 38%,rgba(4,4,10,0.22) 100%)',
                 }}
               />
-              <Box sx={{ position: 'absolute', inset: 0, background: 'rgba(4,4,10,0.08)' }} />
+              <Box sx={{ position: 'absolute', inset: 0, background: 'rgba(4,4,10,0.02)' }} />
               <Box
                 sx={{
                   position: 'absolute',
@@ -281,87 +290,10 @@ export function IdleScreen() {
                   justifyContent: 'space-between',
                   p: { xs: 3, md: 5 },
                   zIndex: 1,
-                }}
-              >
+                }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                    <Box
-                      sx={{
-                        width: 52,
-                        height: 52,
-                        borderRadius: '14px',
-                        background: 'linear-gradient(135deg,#7C4DFF 0%,#00E5FF 100%)',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        boxShadow: '0 0 24px rgba(124,77,255,0.55)',
-                      }}
-                    >
-                      <Typography sx={{ fontSize: '1.5rem', lineHeight: 1, userSelect: 'none' }}>✦</Typography>
-                    </Box>
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontSize: '1.35rem',
-                          fontWeight: 800,
-                          color: '#fff',
-                          letterSpacing: '0.08em',
-                          textTransform: 'uppercase',
-                          lineHeight: 1,
-                        }}
-                      >
-                        Glossy Design
-                      </Typography>
-                      <Typography
-                        sx={{
-                          fontSize: '0.7rem',
-                          color: 'rgba(255,255,255,0.45)',
-                          letterSpacing: '0.18em',
-                          textTransform: 'uppercase',
-                          mt: 0.4,
-                        }}
-                      >
-                        Premium Print Studio
-                      </Typography>
-                    </Box>
-                  </Box>
+                  <Box />
                   <LiveClock />
-                </Box>
-
-                <Box sx={{ display: 'flex', justifyContent: 'center' }}>
-                  <Box
-                    sx={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 1.5,
-                      px: 3.5,
-                      py: 1.2,
-                      borderRadius: '100px',
-                      background: 'rgba(255,255,255,0.06)',
-                      backdropFilter: 'blur(16px)',
-                      border: '1px solid rgba(255,255,255,0.1)',
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        width: 8,
-                        height: 8,
-                        borderRadius: '50%',
-                        bgcolor: '#00E5B0',
-                        animation: 'statusPulse 2s ease-in-out infinite',
-                        boxShadow: '0 0 10px #00E5B0',
-                      }}
-                    />
-                    <Typography
-                      sx={{
-                        fontSize: { xs: '0.85rem', md: '1.05rem' },
-                        color: 'rgba(255,255,255,0.78)',
-                        letterSpacing: '0.07em',
-                      }}
-                    >
-                      ยินดีต้อนรับสู่ Glossy Design
-                    </Typography>
-                  </Box>
                 </Box>
               </Box>
             </Box>
@@ -385,8 +317,7 @@ export function PaidScreen() {
         justifyContent: 'center',
         position: 'relative',
         overflow: 'hidden',
-      }}
-    >
+      }}>
       <AmbientBackground />
       <Box
         sx={{
@@ -399,7 +330,11 @@ export function PaidScreen() {
         }}
       />
 
-      <motion.div initial={{ scale: 0.55, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ duration: 0.8, type: 'spring', bounce: 0.28 }} style={{ zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
+      <motion.div
+        initial={{ scale: 0.55, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ duration: 0.8, type: 'spring', bounce: 0.28 }}
+        style={{ zIndex: 1, textAlign: 'center', padding: '0 24px' }}>
         <motion.div initial={{ scale: 0, rotate: -30 }} animate={{ scale: 1, rotate: 0 }} transition={{ delay: 0.15, duration: 0.7, type: 'spring', bounce: 0.4 }}>
           <Box
             sx={{
@@ -413,8 +348,7 @@ export function PaidScreen() {
               mx: 'auto',
               mb: { xs: 3, md: 5 },
               boxShadow: '0 0 60px rgba(0,200,100,0.45),0 0 120px rgba(0,200,100,0.18)',
-            }}
-          >
+            }}>
             <Typography sx={{ fontSize: { xs: '2.5rem', md: '3.5rem' }, lineHeight: 1, fontWeight: 900, color: '#fff' }}>✓</Typography>
           </Box>
         </motion.div>
@@ -427,8 +361,7 @@ export function PaidScreen() {
               color: '#fff',
               letterSpacing: '-0.03em',
               lineHeight: 1.1,
-            }}
-          >
+            }}>
             ชำระเงินเรียบร้อย
           </Typography>
           <Typography sx={{ fontSize: { xs: '1rem', md: '1.5rem', lg: '2rem' }, fontWeight: 400, color: '#00E5B0', letterSpacing: '0.06em', mt: 1 }}>Payment Successful</Typography>
@@ -438,9 +371,7 @@ export function PaidScreen() {
           <Typography sx={{ fontSize: { xs: '1rem', md: '1.3rem', lg: '1.6rem' }, color: 'rgba(255,255,255,0.55)', mt: { xs: 3, md: 4 }, fontWeight: 300 }}>
             ขอบคุณที่ใช้บริการ Glossy Design
           </Typography>
-          <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.95rem' }, color: 'rgba(255,255,255,0.28)', mt: 1.5, letterSpacing: '0.06em' }}>
-            หน้าจอจะกลับสู่หน้าหลักโดยอัตโนมัติ...
-          </Typography>
+          <Typography sx={{ fontSize: { xs: '0.8rem', md: '0.95rem' }, color: 'rgba(255,255,255,0.28)', mt: 1.5, letterSpacing: '0.06em' }}>หน้าจอจะกลับสู่หน้าหลักโดยอัตโนมัติ...</Typography>
         </motion.div>
 
         <motion.div initial={{ scaleX: 0, opacity: 0 }} animate={{ scaleX: 1, opacity: 1 }} transition={{ delay: 0.9, duration: 0.9, ease: 'easeOut' }} style={{ marginTop: '40px', originX: 0.5 }}>
