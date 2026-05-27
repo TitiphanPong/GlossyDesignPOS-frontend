@@ -52,15 +52,17 @@ function Brand({ collapsed = false, onToggleCollapsed }: Readonly<{ collapsed?: 
         <Box
           sx={{
             position: 'relative',
-            width: 50,
-            height: 50,
+            width: 36,
+            height: 36,
           }}>
-          <img
-            src="logo/logo.png"
-            sizes="50px"
+          <Image
+            src="/logo/logo.png"
+            alt="Glossy Design logo"
+            fill
+            sizes="30px"
             style={{
               objectFit: 'contain',
-              borderRadius: 15,
+              borderRadius: 20,
               display: 'block',
             }}
           />

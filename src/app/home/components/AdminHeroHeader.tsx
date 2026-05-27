@@ -1,6 +1,7 @@
 'use client';
 
 import { Badge, Box, Card, CardContent, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import type { SxProps, Theme } from '@mui/material/styles';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import { commonButtonSx } from './adminUi';
 import type { ReactNode } from 'react';
@@ -22,7 +23,7 @@ export const heroOutlineButtonSx = {
   bgcolor: '#FFFFFF',
   color: '#2A4365',
   textTransform: 'none',
-};
+} satisfies SxProps<Theme>;
 
 export const heroPrimaryButtonSx = {
   ...commonButtonSx,
@@ -30,9 +31,9 @@ export const heroPrimaryButtonSx = {
   textTransform: 'none',
   bgcolor: '#2B62EE',
   boxShadow: '0 14px 28px rgba(43, 98, 238, 0.34)',
-};
+} satisfies SxProps<Theme>;
 
-export const heroIconButtonSx = {
+export const heroIconButtonSx: SxProps<Theme> = {
   borderRadius: 3,
   border: '1px solid #DFE8F5',
   bgcolor: '#FFFFFF',

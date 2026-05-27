@@ -142,7 +142,6 @@ export default function SalesChart({ orders }: Readonly<SalesChartProps>) {
               slotProps={{
                 textField: {
                   size: 'small',
-                  placeholder: 'วว/ดด/ปปปป',
                   sx: {
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 3,
@@ -163,7 +162,6 @@ export default function SalesChart({ orders }: Readonly<SalesChartProps>) {
               slotProps={{
                 textField: {
                   size: 'small',
-                  placeholder: 'วว/ดด/ปปปป',
                   sx: {
                     '& .MuiOutlinedInput-root': {
                       borderRadius: 3,

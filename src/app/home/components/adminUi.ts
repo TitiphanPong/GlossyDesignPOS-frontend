@@ -96,13 +96,13 @@ export const tableShellSx: SxProps<Theme> = {
   },
 };
 
-export const commonButtonSx: SxProps<Theme> = {
+export const commonButtonSx = {
   minHeight: adminSurface.buttonHeight,
   borderRadius: adminSurface.buttonRadius,
   px: 1.8,
   fontWeight: 700,
   whiteSpace: 'nowrap',
-};
+} satisfies SxProps<Theme>;
 
 export const statusChipSx: SxProps<Theme> = {
   borderRadius: 1.5,
