@@ -36,7 +36,7 @@ import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import AdminPageContainer from '../components/AdminPageContainer';
-import { commonButtonSx, statusChipSx, tableShellSx, uiCardSx } from '../components/adminUi';
+import { commonButtonSx, statusChipSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import { fetchApi, fetchApiJson, isMissingApiBaseError } from '../../../lib/api';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
@@ -214,9 +214,85 @@ async function updateOrderStatus(orderId: string, status: PaymentStatus): Promis
 }
 
 const MotionDiv = motion.div;
+const ORDER_TABLE_STATUS_UI: Record<PaymentStatus, { label: string; dot: string }> = {
+  paid: { label: 'เสร็จสิ้น', dot: '#16A34A' },
+  pending: { label: 'รอดำเนินการ', dot: '#4F46E5' },
+  partial: { label: 'ค้างชำระ', dot: '#B45309' },
+  cancelled: { label: 'ยกเลิก', dot: '#9CA3AF' },
+};
+
+const ORDER_TABLE_PAYMENT_LABEL: Record<PaymentMethod, string> = {
+  cash: 'เงินสด',
+  promptpay: 'โอนเงิน',
+};
 
 function formatMoney(amount: number) {
   return amount.toLocaleString('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function formatTableCurrency(amount: number) {
+  return `฿ ${amount.toLocaleString('th-TH')}`;
+}
+
+function getCustomerInitial(name: string): string {
+  const trimmed = name.trim();
+  return trimmed ? trimmed[0].toUpperCase() : '?';
+}
+
+function buildOrderLineSummary(row: OrderRow): { primary: string; secondary: string } {
+  const primaryItem = row.products[0];
+  const itemCount = row.products.length;
+  const totalQty = row.products.reduce((sum, item) => sum + Math.max(0, item.qty || 0), 0);
+  const primary = primaryItem?.name?.trim() || 'ไม่มีรายละเอียดรายการ';
+
+  if (itemCount <= 1) {
+    return {
+      primary,
+      secondary: `${Math.max(totalQty, 1)} ชิ้น`,
+    };
+  }
+
+  return {
+    primary,
+    secondary: `${itemCount} รายการ • ${Math.max(totalQty, itemCount)} ชิ้น`,
+  };
+}
+
+function formatOrderRowTime(value: string): { relative: string; exact: string } {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return { relative: 'ไม่ทราบเวลา', exact: '-' };
+  }
+
+  const diffMs = Date.now() - date.getTime();
+  const mins = Math.floor(diffMs / 60000);
+  const hours = Math.floor(diffMs / 3600000);
+
+  if (mins < 1) {
+    return {
+      relative: 'เมื่อสักครู่',
+      exact: date.toLocaleString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    };
+  }
+
+  if (mins < 60) {
+    return {
+      relative: `${mins} นาทีที่แล้ว`,
+      exact: date.toLocaleString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    };
+  }
+
+  if (hours < 24) {
+    return {
+      relative: `${hours} ชั่วโมงที่แล้ว`,
+      exact: date.toLocaleString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+    };
+  }
+
+  return {
+    relative: date.toLocaleDateString('th-TH', { day: 'numeric', month: 'short' }),
+    exact: date.toLocaleString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }),
+  };
 }
 
 function formatThaiFullDate(value: dayjs.Dayjs | null): string {
@@ -1176,12 +1252,29 @@ export default function OrderManagementPage() {
           </CardContent>
         </Card>
 
-        <Card sx={{ ...uiCardSx, borderRadius: 4.5, overflow: 'hidden' }}>
-          <Box sx={{ px: 2.2, py: 1.6, borderBottom: '1px solid #ECF1F8', bgcolor: '#FCFDFF' }}>
-            <Stack direction="row" alignItems="center" justifyContent="space-between">
-              <Typography sx={{ fontWeight: 800, color: '#102A43' }}>Order Management</Typography>
-              <Chip label={`${filteredRows.length} รายการ`} sx={{ borderRadius: 2, bgcolor: '#ECF3FF', color: '#2957D8', fontWeight: 700 }} />
-            </Stack>
+        <Card
+          sx={{
+            ...uiCardSx,
+            borderRadius: 4.5,
+            overflow: 'hidden',
+            boxShadow: '0 12px 30px rgba(15, 37, 74, 0.08)',
+          }}>
+          <Box
+            sx={{
+              px: { xs: 2, md: 3 },
+              py: { xs: 2, md: 2.6 },
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 1.5,
+              borderBottom: '1px solid #F3F4F6',
+              bgcolor: '#FFFFFF',
+            }}>
+            <Box>
+              <Typography sx={{ fontSize: 16, fontWeight: 800, color: '#1A1035', letterSpacing: '-0.2px' }}>ออเดอร์ทั้งหมด</Typography>
+              <Typography sx={{ mt: 0.35, fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>{filteredRows.length} รายการตามเงื่อนไขล่าสุด</Typography>
+            </Box>
+            <Chip label={`${filteredRows.length} รายการ`} sx={{ borderRadius: '999px', bgcolor: '#F5F0FF', color: '#6C4DFF', fontWeight: 700 }} />
           </Box>
 
           {isMobile ? (
@@ -1225,23 +1318,38 @@ export default function OrderManagementPage() {
               ))}
             </Stack>
           ) : (
-            <Box sx={{ width: '100%', overflowX: 'auto', ...tableShellSx }}>
-              <Table stickyHeader>
+            <Box sx={{ width: '100%', overflowX: 'auto' }}>
+              <Table stickyHeader size="small">
                 <TableHead>
-                  <TableRow>
-                    <TableCell>Order ID</TableCell>
-                    <TableCell>Customer</TableCell>
-                    <TableCell>Phone Number</TableCell>
-                    <TableCell>Date</TableCell>
-                    <TableCell>Status</TableCell>
-                    <TableCell align="right">Total</TableCell>
-                    <TableCell align="right">Actions</TableCell>
+                  <TableRow
+                    sx={{
+                      '& th': {
+                        background: '#FAFAFA',
+                        color: '#9CA3AF',
+                        fontSize: 11.5,
+                        fontWeight: 700,
+                        letterSpacing: '0.3px',
+                        borderBottom: '1px solid #F3F4F6',
+                        py: 1.5,
+                        px: 2,
+                        whiteSpace: 'nowrap',
+                      },
+                    }}>
+                    <TableCell>ออเดอร์</TableCell>
+                    <TableCell>ลูกค้า</TableCell>
+                    <TableCell>รายการงาน</TableCell>
+                    <TableCell>สถานะ</TableCell>
+                    <TableCell align="right">ยอดรวม</TableCell>
+                    <TableCell align="right">ค้างชำระ</TableCell>
+                    <TableCell>ชำระ</TableCell>
+                    <TableCell>เวลา</TableCell>
+                    <TableCell align="right">จัดการ</TableCell>
                   </TableRow>
                 </TableHead>
                 <TableBody>
                   {pagedRows.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={7}>
+                      <TableCell colSpan={9}>
                         <EmptyState
                           compact
                           icon={<SearchRoundedIcon fontSize="small" />}
@@ -1253,44 +1361,137 @@ export default function OrderManagementPage() {
                     </TableRow>
                   ) : null}
 
-                  {pagedRows.map(row => (
-                    <TableRow
-                      key={row.id}
-                      hover
-                      onClick={() => openDrawer(row)}
-                      sx={{
-                        cursor: 'pointer',
-                        '& td': { borderBottomColor: '#EEF2F7' },
-                        '&:hover': { bgcolor: '#F7FAFF' },
-                      }}>
-                      <TableCell>
-                        <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>{row.orderId}</Typography>
-                      </TableCell>
-                      <TableCell>
-                        <Typography sx={{ fontWeight: 700 }}>{row.customerName}</Typography>
-                      </TableCell>
-                      <TableCell>{row.phoneNumber}</TableCell>
-                      <TableCell>{dayjs(row.date).format('DD/MM/YYYY HH:mm')}</TableCell>
-                      <TableCell>{statusChip(row.status)}</TableCell>
-                      <TableCell align="right">
-                        <Typography sx={{ fontWeight: 800 }}>฿{formatMoney(row.total)}</Typography>
-                      </TableCell>
-                      <TableCell align="right" onClick={event => event.stopPropagation()}>
-                        <Stack direction="row" spacing={0.7} justifyContent="flex-end">
-                          <Tooltip title="View Details">
-                            <IconButton size="small" onClick={() => openDrawer(row)}>
-                              <VisibilityRoundedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                          <Tooltip title="Actions">
-                            <IconButton size="small" onClick={event => openRowMenu(event, row.id)}>
-                              <MoreHorizRoundedIcon fontSize="small" />
-                            </IconButton>
-                          </Tooltip>
-                        </Stack>
-                      </TableCell>
-                    </TableRow>
-                  ))}
+                  {pagedRows.map((row, index) => {
+                    const summary = buildOrderLineSummary(row);
+                    const createdAt = formatOrderRowTime(row.date);
+                    const remaining = Math.max(row.total - row.paidAmount, 0);
+                    const statusUi = ORDER_TABLE_STATUS_UI[row.status];
+                    const avatarHue = (index * 47) % 360;
+
+                    return (
+                      <TableRow
+                        key={row.id}
+                        hover
+                        onClick={() => openDrawer(row)}
+                        sx={{
+                          cursor: 'pointer',
+                          '& td': {
+                            py: 1.6,
+                            px: 2,
+                            borderBottom: '1px solid #F9FAFB',
+                            fontSize: 13,
+                            verticalAlign: 'top',
+                          },
+                          '&:hover': { bgcolor: '#FBFCFF' },
+                        }}>
+                        <TableCell>
+                          <Typography sx={{ display: 'inline-block', fontWeight: 700, color: '#6C4DFF', fontVariantNumeric: 'tabular-nums' }}>#{row.orderId}</Typography>
+                          <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>
+                            {row.vat > 0 ? 'ใบกำกับภาษี' : 'บิลทั่วไป'}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.2, minWidth: 180 }}>
+                            <Box
+                              sx={{
+                                width: 30,
+                                height: 30,
+                                borderRadius: '9px',
+                                background: `hsl(${avatarHue}, 65%, 92%)`,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: 12,
+                                fontWeight: 700,
+                                color: `hsl(${avatarHue}, 55%, 38%)`,
+                                flexShrink: 0,
+                              }}>
+                              {getCustomerInitial(row.customerName)}
+                            </Box>
+                            <Box sx={{ minWidth: 0 }}>
+                              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#374151', lineHeight: 1.3 }}>{row.customerName}</Typography>
+                              <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>
+                                {row.phoneNumber || 'ไม่มีเบอร์โทร'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell>
+                          <Box sx={{ minWidth: 220 }}>
+                            <Typography sx={{ fontSize: 12.8, fontWeight: 700, color: '#374151', lineHeight: 1.35 }}>{summary.primary}</Typography>
+                            <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', lineHeight: 1.35 }}>{summary.secondary}</Typography>
+                          </Box>
+                        </TableCell>
+
+                        <TableCell>
+                          <Box
+                            sx={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 0.6,
+                              fontSize: 12.2,
+                              fontWeight: 700,
+                              color: '#374151',
+                              whiteSpace: 'nowrap',
+                            }}>
+                            <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: statusUi.dot, flexShrink: 0 }} />
+                            {statusUi.label}
+                          </Box>
+                        </TableCell>
+
+                        <TableCell align="right">
+                          <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#1A1035', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
+                            {formatTableCurrency(row.total)}
+                          </Typography>
+                          {row.discount > 0 ? (
+                            <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>ส่วนลด ฿ {row.discount.toLocaleString('th-TH')}</Typography>
+                          ) : null}
+                        </TableCell>
+
+                        <TableCell align="right">
+                          <Typography
+                            sx={{
+                              fontSize: 13,
+                              fontWeight: 800,
+                              color: remaining > 0 ? '#B45309' : '#16A34A',
+                              fontVariantNumeric: 'tabular-nums',
+                              whiteSpace: 'nowrap',
+                            }}>
+                            {remaining > 0 ? formatTableCurrency(remaining) : 'ไม่มีค้าง'}
+                          </Typography>
+                          {row.vat > 0 ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>VAT {formatTableCurrency(row.vat)}</Typography> : null}
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography sx={{ fontSize: 12.2, color: '#374151', whiteSpace: 'nowrap', fontWeight: 600 }}>
+                            {ORDER_TABLE_PAYMENT_LABEL[row.paymentMethod]}
+                          </Typography>
+                        </TableCell>
+
+                        <TableCell>
+                          <Typography sx={{ fontSize: 11.8, color: '#6B7280', whiteSpace: 'nowrap', fontWeight: 600 }}>{createdAt.relative}</Typography>
+                          <Typography sx={{ mt: 0.35, fontSize: 11.2, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{createdAt.exact}</Typography>
+                        </TableCell>
+
+                        <TableCell align="right" onClick={event => event.stopPropagation()}>
+                          <Stack direction="row" spacing={0.4} justifyContent="flex-end">
+                            <Tooltip title="View Details">
+                              <IconButton size="small" onClick={() => openDrawer(row)}>
+                                <VisibilityRoundedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Actions">
+                              <IconButton size="small" onClick={event => openRowMenu(event, row.id)}>
+                                <MoreHorizRoundedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </Stack>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
                 </TableBody>
               </Table>
             </Box>
