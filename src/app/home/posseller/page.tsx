@@ -341,11 +341,7 @@ export default function SellPage() {
             return;
           }
 
-          setCustomer(sanitizedCustomer);
-          setCustomerModalOpen(false);
-          setSuccessOpen(true);
           const order = buildPendingOrderDraft({
-            orderId: Date.now().toString(),
             draftId: globalThis.crypto.randomUUID(),
             customer: sanitizedCustomer,
             payment: lastPayment,
@@ -353,7 +349,9 @@ export default function SellPage() {
             taxInvoice,
             totals,
           });
+
           persistPendingOrderDraft(order);
+          setCustomer(sanitizedCustomer);
           setCustomerModalOpen(false);
           setSuccessOpen(true);
         }}

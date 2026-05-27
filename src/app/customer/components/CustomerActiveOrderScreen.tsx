@@ -9,9 +9,9 @@ import type { PaymentSummaryResult } from '../../utils/computeTotal';
 import { formatMoney, getCartKey, type CartItem, type Order } from './customerDisplayShared';
 
 const bankDetails = {
-  name: 'ธนาคารกรุงเทพ',
-  accountName: 'Glossy Design Co., Ltd.',
-  accountNumber: '123-4-56789-0',
+  name: 'พร้อมเพย์ (PromptPay)',
+  accountName: 'เพ็ญพิชชาย์ ผ่องสุวรรณ',
+  accountNumber: '099-469-4635',
 };
 
 function cn(...parts: Array<string | false | null | undefined>) {
@@ -23,18 +23,24 @@ function panelClassName(extra?: string) {
 }
 
 function getPaymentInstruction(order: Order): string {
+  if (order.lastSubmissionError) return 'ระบบยังสร้างออเดอร์ไม่สำเร็จ กรุณาติดต่อพนักงานเพื่อดำเนินการต่อ';
   if (order.orderSyncStatus === 'submitting') return 'ระบบตรวจพบการชำระเงินแล้ว กรุณารอพนักงานตรวจสอบ';
   if (order.status === 'partial') return 'ได้รับมัดจำแล้ว กรุณารอพนักงานดำเนินการต่อ';
   if (order.status === 'cancelled') return 'กรุณาติดต่อพนักงานที่เคาน์เตอร์';
   return 'สแกน QR เพื่อชำระเงิน แล้วแสดงหน้าจอนี้ให้พนักงาน';
 }
 
-function formatDisplayOrderId(orderId: string): string {
-  const normalized = orderId.replace(/^#/, '').trim();
-  if (/^GD[-A-Z0-9]+$/i.test(normalized)) return `#${normalized.toUpperCase()}`;
-
-  const digits = normalized.replace(/\D/g, '').slice(-5).padStart(5, '0');
-  return `#GD-BKK-${new Date().getFullYear()}-${digits}`;
+function getDisplayOrderNumber(order: Order): string {
+  if (order.orderNumber?.trim()) {
+    return order.orderNumber.trim();
+  }
+  if (order.lastSubmissionError) {
+    return 'Order number unavailable';
+  }
+  if (order.orderSyncStatus === 'submitting') {
+    return 'Creating order...';
+  }
+  return 'Pending backend confirmation';
 }
 
 function getUnitPrice(item: CartItem): number {
@@ -144,7 +150,7 @@ export function ActiveOrderScreen({
     };
   }, []);
 
-  const orderId = useMemo(() => formatDisplayOrderId(order.orderId), [order.orderId]);
+  const orderNumber = useMemo(() => getDisplayOrderNumber(order), [order]);
   const showDigitalPayment = order.payment !== 'cash';
   const totalLines = order.cart.length;
   const qrSize = isFullscreen ? (showDigitalPayment ? 300 : 300) : showDigitalPayment ? 350 : 350;
@@ -180,8 +186,8 @@ export function ActiveOrderScreen({
             <div className="rounded-[28px] border border-blue-100/80 bg-[linear-gradient(135deg,rgba(238,245,255,0.95),rgba(255,255,255,0.98),rgba(238,245,255,0.92))] px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.98),0_18px_48px_rgba(37,99,235,0.08)]">
               <div className="flex items-end justify-between gap-4">
                 <div>
-                  <div className="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">หมายเลขอ้างอิง</div>
-                  <div className="mt-1.5 text-[1.7rem] font-semibold tracking-tight text-blue-700 sm:text-[1.95rem] md:text-[2.15rem] xl:text-[2.35rem]">{orderId}</div>
+                  <div className="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">Order Number</div>
+                  <div className="mt-1.5 text-[1.7rem] font-semibold tracking-tight text-blue-700 sm:text-[1.95rem] md:text-[2.15rem] xl:text-[2.35rem]">{orderNumber}</div>
                 </div>
               </div>
             </div>
@@ -211,6 +217,7 @@ export function ActiveOrderScreen({
                   </div>
                 </div>
                 <p className="mt-3 max-w-3xl text-sm leading-5 text-slate-500">ตรวจสอบรายการ จำนวน และยอดรวมก่อนชำระเงิน พนักงานจะใช้หน้าจอนี้สำหรับยืนยันรายการ</p>
+                {order.lastSubmissionError ? <p className="mt-3 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-medium text-red-700">{order.lastSubmissionError}</p> : null}
               </div>
             </div>
 
@@ -317,7 +324,7 @@ export function ActiveOrderScreen({
                     className={cn('relative rounded-[34px] border border-white bg-white shadow-[0_24px_60px_rgba(37,99,235,0.14)]', isFullscreen ? 'p-6 xl:p-7' : 'p-4 xl:p-5')}>
                     <div className="absolute inset-0 rounded-[34px] border border-blue-100" />
                     <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent" />
-                    <QRCodeCanvas value={generatePayload(promptpayId, { amount: Math.round(summary.amountToPay) })} size={qrSize} includeMargin />
+                    <QRCodeCanvas value={generatePayload(promptpayId, { amount: Math.round(summary.amountToPay) })} size={qrSize}/>
                   </motion.div>
                 </div>
 

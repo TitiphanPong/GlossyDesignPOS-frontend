@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './customer.css';
 import { computeOrderPaymentSummary } from '../utils/computeTotal';
 import { normalizeCustomerDisplayPaymentMethod, normalizeOrderStatus } from '../../lib/contracts';
-import { isPendingOrderSettled, PENDING_ORDER_KEY, persistPendingOrderDraft, shouldDisplayPendingOrder } from '../../lib/pending-order';
+import { isPendingOrderSettled, PENDING_ORDER_KEY, persistPendingOrderDraft, shouldDisplayPendingOrder, subscribePendingOrderDraft } from '../../lib/pending-order';
 import { ActiveOrderScreen } from './components/CustomerActiveOrderScreen';
 import { IdleScreen, PaidScreen } from './components/CustomerDisplayShell';
 import { type CartItem, type Order } from './components/customerDisplayShared';
@@ -70,7 +70,7 @@ function normalizeStoredOrder(value: unknown): Order | null {
 
   const raw = value as Record<string, unknown>;
   const orderId = readOptionalString(raw.orderId);
-  if (!orderId) return null;
+  const orderNumber = readOptionalString(raw.orderNumber);
 
   const rawPayment = typeof raw.payment === 'string' ? raw.payment : null;
   const rawStatus = typeof raw.status === 'string' ? raw.status : null;
@@ -78,6 +78,7 @@ function normalizeStoredOrder(value: unknown): Order | null {
 
   return {
     orderId,
+    orderNumber,
     clientDraftId: readOptionalString(raw.clientDraftId),
     rawPayment,
     rawStatus,
@@ -129,11 +130,11 @@ export default function CustomerScreen() {
     };
 
     handleStorage();
-    globalThis.window?.addEventListener('storage', handleStorage);
+    const unsubscribe = subscribePendingOrderDraft(handleStorage);
     const interval = setInterval(handleStorage, 500);
 
     return () => {
-      globalThis.window?.removeEventListener('storage', handleStorage);
+      unsubscribe();
       clearInterval(interval);
     };
   }, []);
@@ -159,7 +160,7 @@ export default function CustomerScreen() {
       return;
     }
 
-    const activeOrderKey = order.clientDraftId ?? order.orderId;
+    const activeOrderKey = order.clientDraftId ?? order.orderId ?? order.orderNumber;
     if (dismissedOrderKey && dismissedOrderKey !== activeOrderKey) {
       setDismissedOrderKey(null);
     }
@@ -167,7 +168,7 @@ export default function CustomerScreen() {
 
   const summary = useMemo(() => (order ? computeOrderPaymentSummary(order) : null), [order]);
   const isPaid = order ? isPendingOrderSettled(order) : false;
-  const activeOrderKey = order ? order.clientDraftId ?? order.orderId : null;
+  const activeOrderKey = order ? order.clientDraftId ?? order.orderId ?? order.orderNumber ?? null : null;
   const isDismissed = Boolean(order && activeOrderKey && dismissedOrderKey === activeOrderKey);
   if (!order) return <IdleScreen />;
   if (isPaid) return <PaidScreen />;

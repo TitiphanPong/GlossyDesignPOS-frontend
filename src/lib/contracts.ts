@@ -72,6 +72,7 @@ export type ApiCartItem = {
 export type ApiOrder = {
   _id: string;
   orderId: string;
+  orderNumber: string;
   customerName?: string;
   phoneNumber?: string;
   note?: string;

@@ -17,7 +17,8 @@ export type CartItem = {
 };
 
 export type Order = {
-  orderId: string;
+  orderId?: string;
+  orderNumber?: string;
   clientDraftId?: string;
   rawPayment?: string | null;
   rawStatus?: string | null;

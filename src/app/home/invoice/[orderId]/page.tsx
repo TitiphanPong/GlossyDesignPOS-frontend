@@ -15,6 +15,7 @@ interface CartItem {
 
 interface Order {
   orderId: string;
+  orderNumber: string;
   customerName: string;
   phoneNumber: string;
   cart: CartItem[];
@@ -28,7 +29,7 @@ function InvoiceCopy({ title, order }: Readonly<{ title: string; order: Order }>
     <Card sx={{ p: 2.2, borderRadius: 3 }}>
       <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>{title}</Typography>
       <Stack spacing={0.5} sx={{ mb: 1.8 }}>
-        <Typography><strong>เลขที่:</strong> {order.orderId}</Typography>
+        <Typography><strong>เลขที่:</strong> {order.orderNumber}</Typography>
         <Typography><strong>ลูกค้า:</strong> {order.customerName}</Typography>
         <Typography><strong>เบอร์โทร:</strong> {order.phoneNumber}</Typography>
       </Stack>

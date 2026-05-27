@@ -19,7 +19,6 @@ const pricingCart = [
 test('buildPendingOrderDraft creates the pending localStorage shape used by POS checkout', () => {
   const totals = computeTotals(pricingCart, 20, 'yes');
   const draft = buildPendingOrderDraft({
-    orderId: '1712345678901',
     draftId: 'draft-001',
     customer: {
       customerName: 'Alice',
@@ -32,7 +31,7 @@ test('buildPendingOrderDraft creates the pending localStorage shape used by POS 
     totals,
   });
 
-  assert.equal(draft.orderId, '1712345678901');
+  assert.equal(draft.orderId, undefined);
   assert.equal(draft.clientDraftId, 'draft-001');
   assert.equal(draft.status, 'pending');
   assert.equal(draft.orderSyncStatus, 'pending');
@@ -98,8 +97,7 @@ test('customer display only hydrates displayable pending orders', () => {
   assert.equal(hasPendingOrderCartItems({ cart: [] }), false);
   assert.equal(hasPendingOrderCartItems({ cart: [{ name: 'Poster', qty: 1 }] }), true);
 
-  assert.equal(shouldDisplayPendingOrder({ orderId: '1712345678901', status: 'pending', cart: [{ name: 'Poster', qty: 1 }] }), true);
-  assert.equal(shouldDisplayPendingOrder({ orderId: '1712345678901', status: 'cancelled', cart: [{ name: 'Poster', qty: 1 }] }), false);
-  assert.equal(shouldDisplayPendingOrder({ orderId: '1712345678901', status: 'pending', cart: [] }), false);
-  assert.equal(shouldDisplayPendingOrder({ orderId: '', status: 'pending', cart: [{ name: 'Poster', qty: 1 }] }), false);
+  assert.equal(shouldDisplayPendingOrder({ status: 'pending', cart: [{ name: 'Poster', qty: 1 }] }), true);
+  assert.equal(shouldDisplayPendingOrder({ status: 'cancelled', cart: [{ name: 'Poster', qty: 1 }] }), false);
+  assert.equal(shouldDisplayPendingOrder({ status: 'pending', cart: [] }), false);
 });

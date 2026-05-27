@@ -4,6 +4,7 @@ export type PendingOrderSyncStatus = 'pending' | 'submitting' | 'submitted';
 
 export type StoredPendingOrderDraft = PendingOrderDraft & {
   orderId?: string;
+  orderNumber?: string;
   clientDraftId?: string;
   payment?: PaymentMethod;
   discount?: number;
@@ -31,6 +32,15 @@ type CheckoutTotals = {
 };
 
 export const PENDING_ORDER_KEY = 'pendingOrder';
+const PENDING_ORDER_CHANNEL = 'glossy-pending-order';
+
+function getPendingOrderBroadcastChannel(): BroadcastChannel | null {
+  if (typeof window === 'undefined' || typeof window.BroadcastChannel === 'undefined') {
+    return null;
+  }
+
+  return new BroadcastChannel(PENDING_ORDER_CHANNEL);
+}
 
 export function getPendingOrderFinalStatus(order: Pick<StoredPendingOrderDraft, 'remainingTotal'>): 'partial' | 'paid' {
   return Number(order.remainingTotal ?? 0) > 0 ? 'partial' : 'paid';
@@ -45,15 +55,48 @@ export function persistPendingOrderDraft(order: StoredPendingOrderDraft | null):
     window.localStorage.removeItem(PENDING_ORDER_KEY);
   }
 
+  const channel = getPendingOrderBroadcastChannel();
+  channel?.postMessage({ key: PENDING_ORDER_KEY, order });
+  channel?.close();
   window.dispatchEvent(new Event('storage'));
+}
+
+export function subscribePendingOrderDraft(onChange: () => void): () => void {
+  if (typeof window === 'undefined') {
+    return () => undefined;
+  }
+
+  const handleStorage = () => {
+    onChange();
+  };
+
+  window.addEventListener('storage', handleStorage);
+
+  const channel = getPendingOrderBroadcastChannel();
+  if (!channel) {
+    return () => {
+      window.removeEventListener('storage', handleStorage);
+    };
+  }
+
+  channel.onmessage = event => {
+    if (event.data?.key === PENDING_ORDER_KEY) {
+      onChange();
+    }
+  };
+
+  return () => {
+    window.removeEventListener('storage', handleStorage);
+    channel.close();
+  };
 }
 
 export function hasPendingOrderCartItems(order: Pick<StoredPendingOrderDraft, 'cart'>): boolean {
   return Array.isArray(order.cart) && order.cart.length > 0;
 }
 
-export function shouldDisplayPendingOrder(order: Pick<StoredPendingOrderDraft, 'orderId' | 'status' | 'cart'>): boolean {
-  return typeof order.orderId === 'string' && order.orderId.trim().length > 0 && order.status !== 'cancelled' && hasPendingOrderCartItems(order);
+export function shouldDisplayPendingOrder(order: Pick<StoredPendingOrderDraft, 'status' | 'cart'>): boolean {
+  return order.status !== 'cancelled' && hasPendingOrderCartItems(order);
 }
 
 export function isPendingOrderSubmitted(order: Pick<StoredPendingOrderDraft, 'orderSyncStatus' | 'status'>): boolean {
@@ -80,7 +123,6 @@ export function buildPendingOrderPayload(order: StoredPendingOrderDraft, status:
 }
 
 export function buildPendingOrderDraft({
-  orderId,
   draftId,
   customer,
   payment,
@@ -88,7 +130,6 @@ export function buildPendingOrderDraft({
   taxInvoice,
   totals,
 }: {
-  orderId: string;
   draftId: string;
   customer: CheckoutCustomerInfo;
   payment: PaymentMethod;
@@ -97,7 +138,6 @@ export function buildPendingOrderDraft({
   totals: CheckoutTotals;
 }): StoredPendingOrderDraft {
   return {
-    orderId,
     clientDraftId: draftId,
     ...customer,
     payment,

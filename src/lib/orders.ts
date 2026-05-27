@@ -1,0 +1,74 @@
+import { fetchApiJson } from './api';
+import type { ApiOrder, PendingOrderDraft } from './contracts';
+
+type ApiOrderLike = Partial<ApiOrder> & { id?: string };
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function normalizeApiOrder(value: unknown): ApiOrder | null {
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const order = value as ApiOrderLike;
+  const _id = typeof order._id === 'string' && order._id.trim().length > 0 ? order._id : typeof order.id === 'string' && order.id.trim().length > 0 ? order.id : null;
+  const orderId = typeof order.orderId === 'string' && order.orderId.trim().length > 0 ? order.orderId : null;
+  const orderNumber = typeof order.orderNumber === 'string' && order.orderNumber.trim().length > 0 ? order.orderNumber : null;
+
+  if (!_id || !orderId || !orderNumber) {
+    return null;
+  }
+
+  return {
+    ...order,
+    _id,
+    orderId,
+    orderNumber,
+  } as ApiOrder;
+}
+
+function extractApiOrder(value: unknown): ApiOrder | null {
+  const directOrder = normalizeApiOrder(value);
+  if (directOrder) {
+    return directOrder;
+  }
+
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const wrappedCandidates = [
+    value.data,
+    value.order,
+    value.result,
+    value.payload,
+    isRecord(value.data) ? value.data.order : null,
+    isRecord(value.result) ? value.result.order : null,
+  ];
+
+  for (const candidate of wrappedCandidates) {
+    const normalizedOrder = normalizeApiOrder(candidate);
+    if (normalizedOrder) {
+      return normalizedOrder;
+    }
+  }
+
+  return null;
+}
+
+export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder> {
+  const responseBody = await fetchApiJson<unknown>('/orders', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const createdOrder = extractApiOrder(responseBody);
+  if (!createdOrder) {
+    throw new Error('Backend did not return a valid order with orderNumber');
+  }
+
+  return createdOrder;
+}

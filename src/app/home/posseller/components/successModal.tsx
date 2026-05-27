@@ -1,13 +1,14 @@
 ﻿'use client';
 
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, Stack, Divider, Box } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Stack, Typography } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ReplayIcon from '@mui/icons-material/Replay';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import { PAYMENT_METHOD_LABELS, PaymentMethod, PendingOrderDraft } from '../../../../lib/contracts';
-import { fetchApiJson, isMissingApiBaseError } from '../../../../lib/api';
+import { PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../../lib/contracts';
+import { isMissingApiBaseError } from '../../../../lib/api';
+import { createOrder } from '../../../../lib/orders';
 import {
   buildPendingOrderPayload,
   getPendingOrderFinalStatus,
@@ -65,11 +66,14 @@ function buildSubmittingOrder(order: StoredPendingOrderDraft): StoredPendingOrde
 
 function buildSubmittedOrder(
   order: StoredPendingOrderDraft,
+  backendOrder: { orderId: string; orderNumber: string; status?: StoredPendingOrderDraft['status'] },
   status: StoredPendingOrderDraft['status']
 ): StoredPendingOrderDraft {
   return {
     ...order,
-    status,
+    orderId: backendOrder.orderId,
+    orderNumber: backendOrder.orderNumber,
+    status: backendOrder.status ?? status,
     orderSyncStatus: 'submitted',
     lastSubmissionError: null,
   };
@@ -104,6 +108,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
   const [isPaid, setIsPaid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderData, setOrderData] = useState<StoredPendingOrderDraft | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const remainingTotal = orderData?.remainingTotal ?? 0;
   const depositTotal = orderData?.depositTotal ?? 0;
   const grandTotal = orderData?.grandTotal ?? 0;
@@ -112,11 +117,13 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
   useEffect(() => {
     if (open) {
       setIsSubmitting(false);
+      setSubmitError(null);
       const order = readPendingOrder();
 
       if (order) {
         setOrderData(order);
         setIsPaid(isPendingOrderSubmitted(order));
+        setSubmitError(order.lastSubmissionError ?? null);
       } else {
         setOrderData(null);
         setIsPaid(false);
@@ -165,14 +172,11 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       persistPendingOrderDraft(submittingOrder);
       setOrderData(submittingOrder);
       setIsSubmitting(true);
+      setSubmitError(null);
 
-      await fetchApiJson<PendingOrderDraft>('/orders', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(buildPendingOrderPayload(submittingOrder, nextStatus)),
-      });
+      const createdOrder = await createOrder(buildPendingOrderPayload(submittingOrder, nextStatus));
 
-      const submittedOrder = buildSubmittedOrder(submittingOrder, nextStatus);
+      const submittedOrder = buildSubmittedOrder(submittingOrder, createdOrder, nextStatus);
 
       persistPendingOrderDraft(submittedOrder);
       setOrderData(submittedOrder);
@@ -193,7 +197,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         setOrderData(resetOrder);
       }
 
-      alert(message);
+      setSubmitError(message);
     } finally {
       setIsSubmitting(false);
     }
@@ -243,11 +247,24 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           <Typography variant="body1" color="text.secondary" mt={1}>
             วิธีชำระเงิน: {getPaymentMethodLabel(payment)}
           </Typography>
+
+          <Typography variant="body2" color="text.secondary" mt={1.5}>
+            Order Number:{' '}
+            <Box component="span" sx={{ fontWeight: 800, color: orderData?.orderNumber ? 'text.primary' : submitError ? 'error.main' : 'warning.main' }}>
+              {orderData?.orderNumber ?? (isSubmitting ? 'Waiting for backend...' : submitError ? 'Not created yet' : 'Pending confirmation')}
+            </Box>
+          </Typography>
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>
           <Divider sx={{ my: 2, width: '80%' }} />
         </Box>
+
+        {submitError ? (
+          <Alert severity="error" sx={{ mb: 2 }}>
+            {submitError}
+          </Alert>
+        ) : null}
 
         <Typography variant="body2" color="text.secondary" align="center">
           {getDialogDescription(isPaid, isSubmitting)}
@@ -256,7 +273,12 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
 
       <DialogActions sx={{ display: 'flex', flexWrap: 'wrap', gap: 1, justifyContent: 'space-between', px: 2.5, pb: 2, pt: 2 }}>
         {!isPaid && (
-          <Button variant="contained" color={getPrimaryActionColor(payment)} startIcon={<DoneAllIcon />} onClick={handleConfirm} disabled={isSubmitting || !orderData}>
+          <Button
+            variant="contained"
+            color={getPrimaryActionColor(payment)}
+            startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : <DoneAllIcon />}
+            onClick={handleConfirm}
+            disabled={isSubmitting || !orderData}>
             {getPrimaryActionLabel(payment, isSubmitting)}
           </Button>
         )}
