@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import {
@@ -60,7 +60,7 @@ import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded
 import axios from 'axios';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
-import { normalizeRecord, type StorageRow, type StorageStatus, type UploadApiRecord } from './normalizers';
+import { groupStorageRows, normalizeRecord, type StorageRow, type StorageStatus, type UploadApiRecord } from './normalizers';
 
 type SortType = 'newest' | 'oldest' | 'customer' | 'status';
 
@@ -102,6 +102,13 @@ function getRequestErrorMessage(error: unknown, fallback: string): string {
   return fallback;
 }
 
+function isMissingMutationEndpoint(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false;
+  const status = error.response?.status;
+  const message = readErrorMessage(error.response?.data) ?? error.message ?? '';
+  return status === 404 && /cannot\s+(patch|delete)\s+\/uploads?/i.test(message);
+}
+
 function formatDate(value: string) {
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '-';
@@ -125,40 +132,96 @@ function formatLastSynced(date: Date | null) {
 }
 
 function formatThaiFullDate(date: Date | null) {
-  if (!date) return 'กำลังโหลดวันที่';
+  if (!date) return 'ไม่มีวันที่';
   return `วัน${DAYS_TH[date.getDay()]}ที่ ${date.getDate()} ${MONTHS_TH[date.getMonth()]} พ.ศ. ${date.getFullYear() + 543}`;
 }
 
+function storageStatusLabel(status: StorageStatus) {
+  if (status === 'pending') return 'รอดำเนินการ';
+  if (status === 'completed') return 'เสร็จสิ้น';
+  return 'รอดาวน์โหลด';
+}
+
 function statusChip(status: StorageStatus) {
-  if (status === 'processing') {
+  if (status === 'pending') {
     return {
-      label: 'Processing',
+      label: storageStatusLabel(status),
       sx: {
-        color: '#B9650A',
-        bgcolor: '#FFF4E6',
-        border: '1px solid #FFD7A8',
+        color: '#9A5B00',
+        bgcolor: '#FFF1DB',
+        border: '1px solid #F6C97A',
       },
     };
   }
 
   if (status === 'completed') {
     return {
-      label: 'Completed',
+      label: storageStatusLabel(status),
       sx: {
-        color: '#18794E',
-        bgcolor: '#EAFBF3',
-        border: '1px solid #B6ECCD',
+        color: '#0F6B46',
+        bgcolor: '#E8F8EF',
+        border: '1px solid #9EDCBD',
       },
     };
   }
 
   return {
-    label: 'Waiting',
+    label: storageStatusLabel(status),
     sx: {
-      color: '#4A5568',
-      bgcolor: '#F2F4F7',
-      border: '1px solid #DDE3EA',
+      color: '#475467',
+      bgcolor: '#F5F7FA',
+      border: '1px solid #D8E0EA',
     },
+  };
+}
+
+function toPersistedUploadStatus(status: StorageStatus): 'pending' | 'completed' {
+  return status === 'completed' ? 'completed' : 'pending';
+}
+
+function toEditableStorageStatus(status: StorageStatus): StorageStatus {
+  return status;
+}
+
+function jobTypeChipSx(jobType: string) {
+  const normalized = jobType.toLowerCase();
+
+  if (normalized.includes('sticker')) {
+    return {
+      color: '#8A3FFC',
+      bgcolor: '#F3E8FF',
+      border: '1px solid #D9B8FF',
+    };
+  }
+
+  if (normalized.includes('banner') || normalized.includes('vinyl')) {
+    return {
+      color: '#9A3412',
+      bgcolor: '#FFF1E8',
+      border: '1px solid #F8C9B0',
+    };
+  }
+
+  if (normalized.includes('business') || normalized.includes('namecard')) {
+    return {
+      color: '#0F5B7A',
+      bgcolor: '#E7F6FD',
+      border: '1px solid #B8E4F7',
+    };
+  }
+
+  if (normalized.includes('packaging') || normalized.includes('binding')) {
+    return {
+      color: '#166534',
+      bgcolor: '#ECFDF3',
+      border: '1px solid #BBE7D0',
+    };
+  }
+
+  return {
+    color: '#334155',
+    bgcolor: '#EEF2FF',
+    border: '1px solid #CFD8F6',
   };
 }
 
@@ -169,9 +232,16 @@ function pickFileIcon(fileName: string) {
   return <InsertDriveFileRoundedIcon sx={{ color: '#6D7B8A', fontSize: 18 }} />;
 }
 
+function buildPersistedNote(note: string, batchId?: string, status?: StorageStatus) {
+  const trimmed = note.trim();
+  const markers = [batchId ? `[[batch:${batchId}]]` : '', status === 'pending' ? '[[stage:pending]]' : status === 'waiting' ? '[[stage:waiting-download]]' : ''].filter(Boolean).join('\n');
+  if (!markers) return trimmed;
+  return trimmed ? `${trimmed}\n\n${markers}` : markers;
+}
+
 function toCsv(rows: StorageRow[]) {
-  const headers = ['Upload Date', 'Customer Name', 'Phone', 'LINE ID', 'Job Type', 'Status', 'Notes'];
-  const body = rows.map(row => [formatDate(row.uploadDate), row.customerName, row.phone, row.lineId, row.jobType, row.status, row.notes]);
+  const headers = ['วันที่อัปโหลด', 'ชื่อลูกค้า', 'เบอร์โทร', 'LINE ID', 'ประเภทงาน', 'สถานะ', 'หมายเหตุ'];
+  const body = rows.map(row => [formatDate(row.uploadDate), row.customerName, row.phone, row.lineId, row.jobType, storageStatusLabel(row.status), row.notes]);
   return [headers, ...body].map(line => line.map(item => `"${String(item).replaceAll('"', '""')}"`).join(',')).join('\n');
 }
 
@@ -272,7 +342,7 @@ export default function StoragePage() {
             if (Array.isArray(nested)) list = nested;
           }
 
-          const normalized = list.filter((item): item is UploadApiRecord => typeof item === 'object' && item !== null).map(normalizeRecord);
+          const normalized = groupStorageRows(list.filter((item): item is UploadApiRecord => typeof item === 'object' && item !== null).map(normalizeRecord));
 
           setRows(normalized);
           setLastSyncedAt(new Date());
@@ -317,60 +387,76 @@ export default function StoragePage() {
     });
   }, []);
 
-  const applyRowPatch = React.useCallback((targetIds: string[], patch: StorageRowPatch) => {
-    setRows(current =>
-      current.map(row => {
-        if (!targetIds.includes(row.id)) return row;
+  const applyRowPatch = React.useCallback(
+    (targetIds: string[], patch: StorageRowPatch) => {
+      setRows(current =>
+        current.map(row => {
+          if (!row.sourceIds.some(sourceId => targetIds.includes(sourceId))) return row;
+          return {
+            ...row,
+            ...(patch.status ? { status: patch.status } : {}),
+            ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+          };
+        })
+      );
+
+      setActiveRecord(current => {
+        if (!current || !current.sourceIds.some(sourceId => targetIds.includes(sourceId))) return current;
         return {
-          ...row,
+          ...current,
           ...(patch.status ? { status: patch.status } : {}),
           ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
         };
-      }),
-    );
+      });
 
-    setActiveRecord(current => {
-      if (!current || !targetIds.includes(current.id)) return current;
-      return {
-        ...current,
-        ...(patch.status ? { status: patch.status } : {}),
-        ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
-      };
-    });
+      if (activeRecord && activeRecord.sourceIds.some(sourceId => targetIds.includes(sourceId)) && patch.status) {
+        setDrawerStatus(patch.status);
+      }
 
-    if (activeRecord && targetIds.includes(activeRecord.id) && patch.status) {
-      setDrawerStatus(patch.status);
-    }
+      if (activeRecord && activeRecord.sourceIds.some(sourceId => targetIds.includes(sourceId)) && patch.notes !== undefined) {
+        setDrawerNotes(patch.notes);
+      }
+    },
+    [activeRecord]
+  );
 
-    if (activeRecord && targetIds.includes(activeRecord.id) && patch.notes !== undefined) {
-      setDrawerNotes(patch.notes);
-    }
-  }, [activeRecord]);
+  const removeRows = React.useCallback(
+    (targetIds: string[]) => {
+      setRows(current => current.filter(row => !row.sourceIds.some(sourceId => targetIds.includes(sourceId))));
+      setSelectedIds(current => current.filter(id => !targetIds.includes(id)));
 
-  const removeRows = React.useCallback((targetIds: string[]) => {
-    setRows(current => current.filter(row => !targetIds.includes(row.id)));
-    setSelectedIds(current => current.filter(id => !targetIds.includes(id)));
-
-    if (activeRecord && targetIds.includes(activeRecord.id)) {
-      setDrawerOpen(false);
-      setActiveRecord(null);
-    }
-  }, [activeRecord]);
+      if (activeRecord && activeRecord.sourceIds.some(sourceId => targetIds.includes(sourceId))) {
+        setDrawerOpen(false);
+        setActiveRecord(null);
+      }
+    },
+    [activeRecord]
+  );
 
   const persistUploadMutation = React.useCallback(async (rowId: string, method: 'patch' | 'delete', payload?: Record<string, unknown>) => {
     const base = getApiBaseUrl();
     let lastError: unknown = null;
+    const normalizedPayload =
+      method === 'patch' && payload
+        ? {
+            ...payload,
+            ...(typeof payload.status === 'string' ? { status: toPersistedUploadStatus(payload.status as StorageStatus) } : {}),
+          }
+        : payload;
 
     for (const endpoint of endpointCandidates) {
       try {
         const url = `${base}${endpoint}/${encodeURIComponent(rowId)}`;
         if (method === 'patch') {
-          await axios.patch(url, payload);
+          await axios.patch(url, normalizedPayload);
         } else {
           await axios.delete(url);
         }
         return;
       } catch (error) {
+        if (!isMissingMutationEndpoint(error)) {
+          throw error;
+        }
         lastError = error;
       }
     }
@@ -419,14 +505,14 @@ export default function StoragePage() {
     const today = new Date();
     const todayText = today.toISOString().slice(0, 10);
     let waiting = 0;
-    let processing = 0;
+    let pending = 0;
     let completed = 0;
     let totalFiles = 0;
     let uploadedToday = 0;
 
     rows.forEach(row => {
       if (row.status === 'waiting') waiting += 1;
-      if (row.status === 'processing') processing += 1;
+      if (row.status === 'pending') pending += 1;
       if (row.status === 'completed') completed += 1;
       totalFiles += row.files.length;
 
@@ -436,7 +522,7 @@ export default function StoragePage() {
       }
     });
 
-    return { waiting, processing, completed, totalFiles, uploadedToday };
+    return { waiting, pending, completed, totalFiles, uploadedToday };
   }, [rows]);
 
   const downloadUrl = React.useCallback((url: string, fileName: string) => {
@@ -475,18 +561,19 @@ export default function StoragePage() {
   const handleBulkStatus = React.useCallback(async () => {
     if (selectedIds.length === 0) return;
 
-    const targetIds = [...selectedIds];
+    const targetIds = Array.from(new Set(selectedIds.flatMap(rowId => rowsById.get(rowId)?.sourceIds ?? [rowId])));
+    const nextStatus: StorageStatus = 'pending';
     setActionMessage(null);
     setBulkUpdating(true);
     trackPersistingIds(targetIds, true);
 
     try {
-      const results = await Promise.allSettled(targetIds.map(rowId => persistUploadMutation(rowId, 'patch', { status: 'processing' })));
+      const results = await Promise.allSettled(targetIds.map(rowId => persistUploadMutation(rowId, 'patch', { status: nextStatus })));
       const succeeded = targetIds.filter((_, index) => results[index]?.status === 'fulfilled');
       const failed = targetIds.length - succeeded.length;
 
       if (succeeded.length > 0) {
-        applyRowPatch(succeeded, { status: 'processing' });
+        applyRowPatch(succeeded, { status: nextStatus });
       }
 
       if (failed > 0) {
@@ -507,13 +594,13 @@ export default function StoragePage() {
       trackPersistingIds(targetIds, false);
       setBulkUpdating(false);
     }
-  }, [applyRowPatch, persistUploadMutation, selectedIds, trackPersistingIds]);
+  }, [applyRowPatch, persistUploadMutation, rowsById, selectedIds, trackPersistingIds]);
 
   const handleBulkDelete = React.useCallback(async () => {
     if (selectedIds.length === 0) return;
     if (!confirm('ยืนยันการลบรายการที่เลือก?')) return;
 
-    const targetIds = [...selectedIds];
+    const targetIds = Array.from(new Set(selectedIds.flatMap(rowId => rowsById.get(rowId)?.sourceIds ?? [rowId])));
     setActionMessage(null);
     setBulkDeleting(true);
     trackPersistingIds(targetIds, true);
@@ -546,7 +633,7 @@ export default function StoragePage() {
       setBulkDeleting(false);
     }
     return;
-  }, [persistUploadMutation, removeRows, selectedIds, trackPersistingIds]);
+  }, [persistUploadMutation, removeRows, rowsById, selectedIds, trackPersistingIds]);
 
   const allCurrentSelected = React.useMemo(() => filteredRows.length > 0 && filteredRows.every(row => selectedIdSet.has(row.id)), [filteredRows, selectedIdSet]);
 
@@ -560,7 +647,7 @@ export default function StoragePage() {
 
   const openDrawer = (row: StorageRow) => {
     setActiveRecord(row);
-    setDrawerStatus(row.status);
+    setDrawerStatus(toEditableStorageStatus(row.status));
     setDrawerNotes(row.notes);
     setDrawerOpen(true);
   };
@@ -591,16 +678,15 @@ export default function StoragePage() {
 
   const handleDrawerSave = React.useCallback(async () => {
     if (!activeRecord) return;
+    const targetIds = activeRecord.sourceIds;
+    const nextStatus = toEditableStorageStatus(drawerStatus);
     setActionMessage(null);
     setDrawerSaving(true);
-    trackPersistingIds([activeRecord.id], true);
+    trackPersistingIds(targetIds, true);
 
     try {
-      await persistUploadMutation(activeRecord.id, 'patch', {
-        status: drawerStatus,
-        note: drawerNotes,
-      });
-      applyRowPatch([activeRecord.id], { status: drawerStatus, notes: drawerNotes });
+      await Promise.all(targetIds.map(rowId => persistUploadMutation(rowId, 'patch', { status: nextStatus, note: buildPersistedNote(drawerNotes, activeRecord.batchId, nextStatus) })));
+      applyRowPatch(targetIds, { status: nextStatus, notes: drawerNotes });
       setActionMessage({ severity: 'success', text: 'บันทึกสถานะและหมายเหตุเรียบร้อยแล้ว' });
     } catch (error) {
       if (isMissingApiBaseError(error)) {
@@ -609,7 +695,7 @@ export default function StoragePage() {
         setActionMessage({ severity: 'error', text: getRequestErrorMessage(error, 'ไม่สามารถบันทึกสถานะและหมายเหตุได้') });
       }
     } finally {
-      trackPersistingIds([activeRecord.id], false);
+      trackPersistingIds(targetIds, false);
       setDrawerSaving(false);
     }
     return;
@@ -626,7 +712,7 @@ export default function StoragePage() {
     setRowMenuId(null);
   };
 
-  const rowMenuTarget = React.useMemo(() => (rowMenuId ? rowsById.get(rowMenuId) ?? null : null), [rowMenuId, rowsById]);
+  const rowMenuTarget = React.useMemo(() => (rowMenuId ? (rowsById.get(rowMenuId) ?? null) : null), [rowMenuId, rowsById]);
 
   return (
     <Box
@@ -649,8 +735,10 @@ export default function StoragePage() {
             <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
               <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
                 <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Storage</Typography>
-                <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร</Typography>
-                <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>Last synced {formatLastSynced(lastSyncedAt)}</Typography>
+                <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>
+                  จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร
+                </Typography>
+                <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>ซิงก์ล่าสุด {formatLastSynced(lastSyncedAt)}</Typography>
                 <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{formatThaiFullDate(lastSyncedAt)}</Typography>
               </Box>
 
@@ -664,7 +752,14 @@ export default function StoragePage() {
                     height: 44,
                     boxShadow: '0 10px 20px rgba(12, 56, 110, 0.08)',
                   }}>
-                  <Badge color="error" variant="dot">
+                  <Badge
+                    variant="dot"
+                    sx={{
+                      '& .MuiBadge-badge': {
+                        bgcolor: '#E5484D',
+                        boxShadow: '0 0 0 2px #FFFFFF',
+                      },
+                    }}>
                     <NotificationsRoundedIcon sx={{ color: '#2A4365' }} />
                   </Badge>
                 </IconButton>
@@ -705,19 +800,17 @@ export default function StoragePage() {
 
                 <Button
                   onClick={downloadSelected}
-                  startIcon={<DownloadRoundedIcon />}
                   disabled={selectedRows.length === 0}
                   variant="contained"
+                  startIcon={<DownloadRoundedIcon />}
                   sx={{
-                    minHeight: 40,
                     borderRadius: 3,
-                    px: 1.8,
                     textTransform: 'none',
                     fontWeight: 700,
-                    bgcolor: '#2B62EE',
-                    boxShadow: '0 14px 28px rgba(43, 98, 238, 0.34)',
+                    bgcolor: '#215AE8',
+                    boxShadow: '0 14px 24px rgba(26, 89, 247, 0.28)',
                   }}>
-                  Download Selected
+                  ดาวน์โหลดที่เลือก
                 </Button>
               </Stack>
             </Stack>
@@ -748,11 +841,12 @@ export default function StoragePage() {
             gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(5, minmax(0, 1fr))' },
             gap: 1.5,
           }}>
-          <StatCard title="Total Files" value={String(stats.totalFiles)} subtitle="ไฟล์ทั้งหมดในระบบ" icon={<Inventory2RoundedIcon />} tone="#1E5EFF" />
-          <StatCard title="Waiting Download" value={String(stats.waiting)} subtitle="คิวรอดาวน์โหลด" icon={<PendingActionsRoundedIcon />} tone="#8993A4" />
-          <StatCard title="Processing" value={String(stats.processing)} subtitle="กำลังเตรียมพิมพ์" icon={<AutorenewRoundedIcon />} tone="#F08C00" />
-          <StatCard title="Completed" value={String(stats.completed)} subtitle="จัดการเสร็จเรียบร้อย" icon={<TaskAltRoundedIcon />} tone="#1F9D63" />
-          <StatCard title="Uploaded Today" value={String(stats.uploadedToday)} subtitle="รายการใหม่ประจำวัน" icon={<CloudUploadRoundedIcon />} tone="#5B4AE6" />
+          {' '}
+          <StatCard title="ไฟล์ทั้งหมด" value={String(stats.totalFiles)} subtitle="จำนวนไฟล์ทั้งหมดในระบบ" icon={<Inventory2RoundedIcon />} tone="#1E5EFF" />
+          <StatCard title="รอดาวน์โหลด" value={String(stats.waiting)} subtitle="ไฟล์ที่รอเจ้าหน้าที่ดาวน์โหลด" icon={<PendingActionsRoundedIcon />} tone="#8993A4" />
+          <StatCard title="รอดำเนินการ" value={String(stats.pending)} subtitle="รายการที่รับงานแล้วและรอผลิต" icon={<AutorenewRoundedIcon />} tone="#F08C00" />
+          <StatCard title="เสร็จสิ้น" value={String(stats.completed)} subtitle="รายการที่จัดการเรียบร้อยแล้ว" icon={<TaskAltRoundedIcon />} tone="#1F9D63" />
+          <StatCard title="อัปโหลดวันนี้" value={String(stats.uploadedToday)} subtitle="รายการใหม่ของวันนี้" icon={<CloudUploadRoundedIcon />} tone="#5B4AE6" />
         </Box>
 
         <Card
@@ -765,8 +859,8 @@ export default function StoragePage() {
           <CardContent sx={{ p: { xs: 1.9, md: 2.3 } }}>
             <Stack spacing={1.8}>
               <Stack direction="row" alignItems="center" spacing={1}>
-                <FilterAltRoundedIcon sx={{ color: '#3866E8', fontSize: 20 }} />
-                <Typography sx={{ color: '#102A43', fontWeight: 800, fontSize: 15 }}>Filter Toolbar</Typography>
+                {/* <FilterAltRoundedIcon sx={{ color: '#3866E8', fontSize: 20 }} /> */}
+                {/* <Typography sx={{ color: '#102A43', fontWeight: 800, fontSize: 15 }}>Filter Toolbar</Typography> */}
               </Stack>
 
               <Box
@@ -801,26 +895,9 @@ export default function StoragePage() {
                     onChange={event => setStatusFilter(event.target.value)}
                     sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
                     <MenuItem value="all">ทั้งหมด</MenuItem>
-                    <MenuItem value="waiting">Waiting</MenuItem>
-                    <MenuItem value="processing">Processing</MenuItem>
-                    <MenuItem value="completed">Completed</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <FormControl size="small">
-                  <InputLabel id="job-filter">ประเภทงาน</InputLabel>
-                  <Select
-                    labelId="job-filter"
-                    value={jobTypeFilter}
-                    label="ประเภทงาน"
-                    onChange={event => setJobTypeFilter(event.target.value)}
-                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
-                    <MenuItem value="all">ทั้งหมด</MenuItem>
-                    {jobTypes.map(job => (
-                      <MenuItem key={job} value={job}>
-                        {job}
-                      </MenuItem>
-                    ))}
+                    <MenuItem value="waiting">รอดาวน์โหลด</MenuItem>
+                    <MenuItem value="pending">รอดำเนินการ</MenuItem>
+                    <MenuItem value="completed">เสร็จสิ้น</MenuItem>
                   </Select>
                 </FormControl>
 
@@ -835,11 +912,11 @@ export default function StoragePage() {
                 />
 
                 <FormControl size="small">
-                  <InputLabel id="sort-filter">Sort</InputLabel>
+                  <InputLabel id="sort-filter">เรียงลำดับ</InputLabel>
                   <Select<SortType>
                     labelId="sort-filter"
                     value={sortBy}
-                    label="Sort"
+                    label="เรียงลำดับ"
                     onChange={event => setSortBy(event.target.value)}
                     sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
                     <MenuItem value="newest">ล่าสุดก่อน</MenuItem>
@@ -863,7 +940,7 @@ export default function StoragePage() {
                     bgcolor: '#215AE8',
                     boxShadow: '0 14px 24px rgba(26, 89, 247, 0.28)',
                   }}>
-                  Download Selected
+                  ดาวน์โหลดที่เลือก
                 </Button>
                 <Button
                   onClick={() => {
@@ -873,7 +950,7 @@ export default function StoragePage() {
                   variant="outlined"
                   startIcon={<EditNoteRoundedIcon />}
                   sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
-                  {bulkUpdating ? 'Updating...' : 'Change Status'}
+                  {bulkUpdating ? 'กำลังอัปเดต...' : 'ตั้งเป็นรอดำเนินการ'}
                 </Button>
                 <Button
                   onClick={() => {
@@ -884,7 +961,7 @@ export default function StoragePage() {
                   color="error"
                   startIcon={<DeleteOutlineRoundedIcon />}
                   sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
-                  {bulkDeleting ? 'Deleting...' : 'Delete Selected'}
+                  {bulkDeleting ? 'กำลังลบ...' : 'ลบที่เลือก'}
                 </Button>
               </Stack>
             </Stack>
@@ -901,8 +978,17 @@ export default function StoragePage() {
           }}>
           <Box sx={{ px: 2.3, py: 1.7, borderBottom: '1px solid #ECF1F8', bgcolor: '#FCFDFF' }}>
             <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography sx={{ fontWeight: 800, color: '#102A43' }}>รายการไฟล์ลูกค้าในคลังเอกสาร</Typography>
-              <Chip label={`${filteredRows.length} รายการ`} sx={{ borderRadius: 2, bgcolor: '#ECF3FF', color: '#2957D8', fontWeight: 700 }} />
+              <Typography sx={{ fontWeight: 800, color: '#102A43' }}>รายการไฟล์</Typography>
+              <Chip
+                label={`${filteredRows.length} รายการ`}
+                sx={{
+                  borderRadius: 2.5,
+                  bgcolor: '#EEF4FF',
+                  color: '#1D4ED8',
+                  border: '1px solid #C7D8FE',
+                  fontWeight: 800,
+                }}
+              />
             </Stack>
           </Box>
 
@@ -913,20 +999,22 @@ export default function StoragePage() {
                   <TableCell sx={{ minWidth: 52, bgcolor: '#F8FAFE' }}>
                     <Checkbox checked={allCurrentSelected} onChange={toggleSelectAll} />
                   </TableCell>
-                  <TableCell sx={{ minWidth: 164, bgcolor: '#F7FAFF' }}>Upload Date</TableCell>
+                  <TableCell sx={{ minWidth: 164, bgcolor: '#F7FAFF' }}>วันที่อัปโหลด</TableCell>
+                  {/* Legacy customer contact columns kept out of the table for now:
                   <TableCell sx={{ minWidth: 180, bgcolor: '#F7FAFF' }}>Customer Name</TableCell>
                   <TableCell sx={{ minWidth: 140, bgcolor: '#F7FAFF' }}>Phone Number</TableCell>
-                  <TableCell sx={{ minWidth: 160, bgcolor: '#F7FAFF' }}>Job Type</TableCell>
-                  <TableCell sx={{ minWidth: 260, bgcolor: '#F7FAFF' }}>File Preview</TableCell>
-                  <TableCell sx={{ minWidth: 130, bgcolor: '#F7FAFF' }}>Status</TableCell>
-                  <TableCell sx={{ minWidth: 220, bgcolor: '#F7FAFF' }}>Notes</TableCell>
-                  <TableCell sx={{ minWidth: 172, bgcolor: '#F7FAFF' }}>Actions</TableCell>
+                  */}
+                  <TableCell sx={{ minWidth: 160, bgcolor: '#F7FAFF' }}>ประเภทงาน</TableCell>
+                  <TableCell sx={{ minWidth: 260, bgcolor: '#F7FAFF' }}>ตัวอย่างไฟล์</TableCell>
+                  <TableCell sx={{ minWidth: 130, bgcolor: '#F7FAFF' }}>สถานะ</TableCell>
+                  <TableCell sx={{ minWidth: 220, bgcolor: '#F7FAFF' }}>หมายเหตุ</TableCell>
+                  <TableCell sx={{ minWidth: 172, bgcolor: '#F7FAFF' }}>จัดการ</TableCell>
                 </TableRow>
               </TableHead>
               <TableBody>
                 {loading ? (
                   <TableRow>
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={7}>
                       <Typography sx={{ py: 5, textAlign: 'center', color: '#64748B' }}>กำลังโหลดข้อมูล...</Typography>
                     </TableCell>
                   </TableRow>
@@ -934,13 +1022,13 @@ export default function StoragePage() {
 
                 {!loading && filteredRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9}>
+                    <TableCell colSpan={7}>
                       <EmptyState
                         compact
                         icon={<SearchRoundedIcon fontSize="small" />}
                         eyebrow="Storage"
-                        title="ไม่พบงานอัปโหลดที่ตรงกับเงื่อนไข"
-                        subtitle="ลองเปลี่ยนคำค้นหา ตัวกรองสถานะ หรือวันที่อัปโหลดอีกครั้ง"
+                        title="ไม่พบไฟล์งานที่อัปโหลด"
+                        subtitle="กรุณาคลิกปุ่ม Refresh อีกครั้งเพื่อโหลดข้อมูลใหม่"
                       />
                     </TableCell>
                   </TableRow>
@@ -968,6 +1056,7 @@ export default function StoragePage() {
                         <TableCell>
                           <Typography sx={{ color: '#334155', fontWeight: 600, fontSize: 13.5 }}>{formatDate(row.uploadDate)}</Typography>
                         </TableCell>
+                        {/* Legacy customer contact cells kept out of the table for now:
                         <TableCell>
                           <Stack spacing={0.35}>
                             <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>{row.customerName}</Typography>
@@ -977,8 +1066,9 @@ export default function StoragePage() {
                         <TableCell>
                           <Typography sx={{ color: '#1E293B', fontWeight: 600 }}>{row.phone}</Typography>
                         </TableCell>
+                        */}
                         <TableCell>
-                          <Chip label={row.jobType} sx={{ borderRadius: 2, bgcolor: '#EFF5FF', color: '#2B5ABF', fontWeight: 700 }} />
+                          <Chip label={row.jobType} sx={{ borderRadius: 2.5, fontWeight: 700, ...jobTypeChipSx(row.jobType) }} />
                         </TableCell>
                         <TableCell>
                           <Stack spacing={0.85}>
@@ -1001,7 +1091,7 @@ export default function StoragePage() {
                           </Stack>
                         </TableCell>
                         <TableCell>
-                          <Chip label={statusView.label} sx={{ borderRadius: 2, fontWeight: 700, ...statusView.sx }} />
+                          <Chip label={statusView.label} sx={{ borderRadius: 2.5, fontWeight: 800, ...statusView.sx }} />
                         </TableCell>
                         <TableCell>
                           <Typography noWrap sx={{ maxWidth: 200, color: '#475569' }}>
@@ -1010,17 +1100,17 @@ export default function StoragePage() {
                         </TableCell>
                         <TableCell onClick={event => event.stopPropagation()}>
                           <Stack direction="row" spacing={0.6}>
-                            <Tooltip title="Preview">
+                            <Tooltip title="ดูรายละเอียด">
                               <IconButton size="small" onClick={() => openDrawer(row)}>
                                 <VisibilityRoundedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Download">
+                            <Tooltip title="ดาวน์โหลด">
                               <IconButton size="small" onClick={() => handleDownloadRowFiles(row)}>
                                 <DownloadRoundedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Copy Link">
+                            <Tooltip title="คัดลอกลิงก์">
                               <IconButton
                                 size="small"
                                 onClick={() => {
@@ -1029,7 +1119,7 @@ export default function StoragePage() {
                                 <ContentCopyRoundedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="More">
+                            <Tooltip title="ตัวเลือกเพิ่มเติม">
                               <IconButton size="small" onClick={event => openRowMenu(event, row.id)}>
                                 <MoreHorizRoundedIcon fontSize="small" />
                               </IconButton>
@@ -1048,22 +1138,15 @@ export default function StoragePage() {
       <Menu open={Boolean(rowMenuAnchor)} anchorEl={rowMenuAnchor} onClose={closeRowMenu}>
         <MenuItem
           onClick={() => {
-            if (rowMenuTarget) openDrawer(rowMenuTarget);
-            closeRowMenu();
-          }}>
-          ดูรายละเอียด
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
             if (rowMenuTarget) {
               void (async () => {
-                const targetId = rowMenuTarget.id;
+                const targetIds = rowMenuTarget.sourceIds;
                 setActionMessage(null);
-                trackPersistingIds([targetId], true);
+                trackPersistingIds(targetIds, true);
 
                 try {
-                  await persistUploadMutation(targetId, 'patch', { status: 'completed' });
-                  applyRowPatch([targetId], { status: 'completed' });
+                  await Promise.all(targetIds.map(rowId => persistUploadMutation(rowId, 'patch', { status: 'completed' })));
+                  applyRowPatch(targetIds, { status: 'completed' });
                   setActionMessage({ severity: 'success', text: 'อัปเดตสถานะรายการแล้ว' });
                 } catch (error) {
                   if (isMissingApiBaseError(error)) {
@@ -1072,13 +1155,13 @@ export default function StoragePage() {
                     setActionMessage({ severity: 'error', text: getRequestErrorMessage(error, 'ไม่สามารถอัปเดตสถานะรายการได้') });
                   }
                 } finally {
-                  trackPersistingIds([targetId], false);
+                  trackPersistingIds(targetIds, false);
                 }
               })();
             }
             closeRowMenu();
           }}>
-          เปลี่ยนสถานะเป็น Completed
+          เปลี่ยนสถานะเป็นเสร็จสิ้น
         </MenuItem>
       </Menu>
 
@@ -1112,7 +1195,7 @@ export default function StoragePage() {
                 backdropFilter: 'blur(10px)',
               }}>
               <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>รายละเอียดงานพิมพ์</Typography>
-              <Typography sx={{ mt: 0.5, color: '#64748B' }}>ลูกค้า: {activeRecord.customerName}</Typography>
+              <Typography sx={{ mt: 0.5, color: '#64748B' }}>ลูกค้า : {activeRecord.customerName}</Typography>
             </Box>
 
             <Box
@@ -1124,7 +1207,7 @@ export default function StoragePage() {
                 flex: 1,
               }}>
               <Stack spacing={isCompactDrawer ? 1.35 : 1.6}>
-                <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+                {/* <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                   <CardContent>
                     <Stack spacing={1.3}>
                       <Stack direction="row" alignItems="center" spacing={1}>
@@ -1138,7 +1221,7 @@ export default function StoragePage() {
                       <Typography sx={{ color: '#334155' }}>LINE ID: {activeRecord.lineId}</Typography>
                     </Stack>
                   </CardContent>
-                </Card>
+                </Card> */}
 
                 <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                   <CardContent>
@@ -1147,10 +1230,10 @@ export default function StoragePage() {
                         <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#F08C00', 0.14), color: '#AF6305' }}>
                           <AccessTimeRoundedIcon sx={{ fontSize: 18 }} />
                         </Avatar>
-                        <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>Job Information</Typography>
+                        <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>รายละเอียดงาน</Typography>
                       </Stack>
-                      <Typography sx={{ color: '#334155' }}>Upload Date: {formatDate(activeRecord.uploadDate)}</Typography>
-                      <Typography sx={{ color: '#334155' }}>Job Type: {activeRecord.jobType}</Typography>
+                      <Typography sx={{ color: '#334155' }}>วันที่อัปโหลด: {formatDate(activeRecord.uploadDate)}</Typography>
+                      <Typography sx={{ color: '#334155' }}>ประเภทงาน: {activeRecord.jobType}</Typography>
                     </Stack>
                   </CardContent>
                 </Card>
@@ -1162,7 +1245,7 @@ export default function StoragePage() {
                         <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#2A6BF6', 0.14), color: '#2A6BF6' }}>
                           <LocalPrintshopRoundedIcon sx={{ fontSize: 18 }} />
                         </Avatar>
-                        <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>File List</Typography>
+                        <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>ไฟล์งาน</Typography>
                       </Stack>
 
                       <Stack spacing={1}>
@@ -1206,7 +1289,7 @@ export default function StoragePage() {
                           fontWeight: 700,
                           bgcolor: '#1F5CE6',
                         }}>
-                        Download All
+                        ดาวน์โหลดทั้งหมด
                       </Button>
                     </Stack>
                   </CardContent>
@@ -1215,33 +1298,94 @@ export default function StoragePage() {
                 <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                   <CardContent>
                     <Stack spacing={1.3}>
-                      <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>Status & Note</Typography>
+                      <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>สถานะการดำเนินงาน</Typography>
                       <FormControl size="small" fullWidth>
                         <InputLabel id="drawer-status">สถานะงาน</InputLabel>
                         <Select<StorageStatus> labelId="drawer-status" value={drawerStatus} label="สถานะงาน" onChange={event => setDrawerStatus(event.target.value)}>
-                          <MenuItem value="waiting">รอการดำเนินการ</MenuItem>
-                          <MenuItem value="processing">กำลังดำเนินการ</MenuItem>
+                          <MenuItem value="waiting">รอดาวน์โหลด</MenuItem>
+                          <MenuItem value="pending">รอดำเนินการ</MenuItem>
                           <MenuItem value="completed">เสร็จสิ้น</MenuItem>
                         </Select>
                       </FormControl>
-                      <TextField label="Notes" multiline minRows={3} value={drawerNotes} onChange={event => setDrawerNotes(event.target.value)} />
+                      <TextField label="หมายเหตุ" multiline minRows={3} value={drawerNotes} onChange={event => setDrawerNotes(event.target.value)} />
                     </Stack>
                   </CardContent>
                 </Card>
 
                 <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                   <CardContent>
-                    <Typography sx={{ fontWeight: 700, color: '#0F172A', mb: 1.2 }}>Timeline / Activity</Typography>
-                    <Stack spacing={1.2}>
-                      {activeRecord.activities.map((item, index) => (
-                        <Stack key={`${item}-${index}`} direction="row" spacing={1.1} alignItems="flex-start">
-                          <Box sx={{ width: 10, height: 10, borderRadius: 999, mt: 0.7, bgcolor: '#3A73F7', flexShrink: 0 }} />
-                          <Box>
-                            <Typography sx={{ color: '#1E293B' }}>{item}</Typography>
-                            <Typography sx={{ color: '#94A3B8', fontSize: 12 }}>อัปเดตล่าสุด</Typography>
-                          </Box>
-                        </Stack>
-                      ))}
+                    <Stack spacing={0.7} sx={{ mb: 1.6 }}>
+                      <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>ไทม์ไลน์งาน</Typography>
+                      <Typography sx={{ color: '#64748B', fontSize: 12.5 }}>
+                        ลำดับการรับงานและอัปเดตความคืบหน้าของไฟล์ชุดนี้
+                      </Typography>
+                    </Stack>
+                    <Stack spacing={1.35}>
+                      {activeRecord.activities.map((item, index) => {
+                        const isLast = index === activeRecord.activities.length - 1;
+                        const isCurrent = index === 0;
+
+                        return (
+                          <Stack key={`${item}-${index}`} direction="row" spacing={1.4} alignItems="stretch">
+                            <Box sx={{ width: 26, display: 'flex', justifyContent: 'center', position: 'relative', flexShrink: 0 }}>
+                              <Box
+                                sx={{
+                                  mt: 0.6,
+                                  width: 12,
+                                  height: 12,
+                                  borderRadius: 999,
+                                  border: isCurrent ? '3px solid #BFDBFE' : '2px solid #C7D2FE',
+                                  bgcolor: isCurrent ? '#2563EB' : '#FFFFFF',
+                                  boxShadow: isCurrent ? '0 0 0 6px rgba(37,99,235,0.10)' : 'none',
+                                  zIndex: 1,
+                                }}
+                              />
+                              {!isLast ? (
+                                <Box
+                                  sx={{
+                                    position: 'absolute',
+                                    top: 22,
+                                    bottom: -18,
+                                    width: 2,
+                                    borderRadius: 999,
+                                    bgcolor: '#D9E4F5',
+                                  }}
+                                />
+                              ) : null}
+                            </Box>
+                            <Box
+                              sx={{
+                                flex: 1,
+                                borderRadius: 3,
+                                border: isCurrent ? '1px solid #BFDBFE' : '1px solid #E6EDF7',
+                                bgcolor: isCurrent ? '#F8FBFF' : '#FFFFFF',
+                                px: 1.7,
+                                py: 1.35,
+                                boxShadow: isCurrent ? '0 10px 24px rgba(37,99,235,0.08)' : 'none',
+                              }}>
+                              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                                <Typography sx={{ color: '#1E293B', fontWeight: isCurrent ? 700 : 600, lineHeight: 1.45 }}>{item}</Typography>
+                                <Box
+                                  sx={{
+                                    borderRadius: 999,
+                                    px: 1,
+                                    py: 0.35,
+                                    fontSize: 11,
+                                    fontWeight: 700,
+                                    color: isCurrent ? '#1D4ED8' : '#64748B',
+                                    bgcolor: isCurrent ? '#DBEAFE' : '#F1F5F9',
+                                    whiteSpace: 'nowrap',
+                                  }}>
+                                  {isCurrent ? 'ล่าสุด' : `ขั้นตอน ${index + 1}`}
+                                </Box>
+                              </Stack>
+                              <Typography sx={{ mt: 0.55, color: '#94A3B8', fontSize: 12.5 }}>
+                                {isCurrent ? 'อัปเดตล่าสุดในระบบ' : 'บันทึกไว้ในลำดับงานก่อนหน้า'}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        );
+                      })}
                     </Stack>
                   </CardContent>
                 </Card>
@@ -1266,7 +1410,7 @@ export default function StoragePage() {
                   onClick={() => {
                     void handleDrawerSave();
                   }}
-                  disabled={drawerSaving || persistingIds.includes(activeRecord.id)}
+                  disabled={drawerSaving || activeRecord.sourceIds.some(sourceId => persistingIds.includes(sourceId))}
                   sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
                   บันทึกข้อมูล
                 </Button>

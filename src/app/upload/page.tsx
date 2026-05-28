@@ -23,7 +23,9 @@ import { getSignedUrl, uploadFile, type UploadPayload } from '@/lib/upload-api';
 import { ACCEPTED_EXTENSIONS, buildAcceptAttribute, formatFileSize, getFileExtension, validateUploadFile } from './helpers';
 import { createUploadQueueItems, openSignedUrlWithRetry, uploadPendingFiles, type UploadQueueItem, type UploadStatus } from './upload-flow';
 
-type Step = 1 | 2 | 3 | 4;
+type Step = 1 | 2 | 3;
+// Legacy upload flow kept 4 steps with a standalone customer-info phase:
+// type Step = 1 | 2 | 3 | 4;
 
 type JobOption = {
   id: string;
@@ -34,13 +36,21 @@ type JobOption = {
 type UploadFileItem = UploadQueueItem;
 
 type UploadFieldErrors = {
-  customerName: string;
-  phone: string;
-  customerNote: string;
   jobNote: string;
 };
 
-const steps = ['ข้อมูลลูกค้า', 'รายละเอียดงาน', 'อัปโหลดไฟล์', 'ตรวจสอบและส่ง'];
+type FeedbackModalState =
+  | {
+      kind: 'success' | 'error';
+      title: string;
+      message: string;
+      details?: string[];
+    }
+  | null;
+
+const steps = ['รายละเอียดงาน', 'อัปโหลดไฟล์', 'ตรวจสอบและส่ง'];
+// Legacy step labels before the UX simplification:
+// const steps = ['ข้อมูลลูกค้า', 'รายละเอียดงาน', 'อัปโหลดไฟล์', 'ตรวจสอบและส่ง'];
 
 const jobOptions: JobOption[] = [
   { id: 'document', label: 'ปริ้นเอกสาร', icon: DescriptionRounded },
@@ -62,11 +72,14 @@ const uploadJobTypeMap: Record<string, UploadPayload['jobType']> = {
 };
 
 const ACCEPT_ATTRIBUTE = buildAcceptAttribute(ACCEPTED_EXTENSIONS);
-const CUSTOMER_NAME_MAX_LENGTH = 120;
-const CUSTOMER_NOTE_MAX_LENGTH = 500;
 const JOB_NOTE_MAX_LENGTH = 500;
-const PHONE_MIN_DIGITS = 9;
-const PHONE_MAX_DIGITS = 20;
+const UPLOAD_FALLBACK_CUSTOMER_NAME = 'Walk-in Customer';
+const UPLOAD_FALLBACK_PHONE = '000000000';
+// Legacy customer detail limits kept for the old standalone customer-info section:
+// const CUSTOMER_NAME_MAX_LENGTH = 120;
+// const CUSTOMER_NOTE_MAX_LENGTH = 500;
+// const PHONE_MIN_DIGITS = 9;
+// const PHONE_MAX_DIGITS = 20;
 
 function fileIconByName(name: string) {
   const ext = getFileExtension(name);
@@ -106,56 +119,36 @@ function getValidationError(file: File): string | null {
   return null;
 }
 
-function normalizePhone(phone: string): string {
-  return phone.replace(/\D/g, '');
+function buildUploadNote(jobNote: string, batchId: string): string {
+  const note = jobNote.trim();
+  return note ? `${note}\n\n[[batch:${batchId}]]\n[[stage:waiting-download]]` : `[[batch:${batchId}]]\n[[stage:waiting-download]]`;
 }
 
-function buildUploadNote(customerNote: string, jobNote: string): string {
-  return [customerNote.trim(), jobNote.trim()].filter(Boolean).join('\n');
+function createUploadBatchId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
+  }
+
+  return `batch-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function getUploadFieldErrors(customerName: string, normalizedPhone: string, customerNote: string, jobNote: string): UploadFieldErrors {
+function getUploadFieldErrors(jobNote: string): UploadFieldErrors {
   return {
-    customerName: !customerName
-      ? 'กรุณากรอกชื่อลูกค้า'
-      : customerName.length > CUSTOMER_NAME_MAX_LENGTH
-        ? `ชื่อลูกค้ายาวได้ไม่เกิน ${CUSTOMER_NAME_MAX_LENGTH} ตัวอักษร`
-        : '',
-    phone: !normalizedPhone
-      ? 'กรุณากรอกเบอร์โทรศัพท์'
-      : normalizedPhone.length < PHONE_MIN_DIGITS || normalizedPhone.length > PHONE_MAX_DIGITS
-        ? `เบอร์โทรควรมี ${PHONE_MIN_DIGITS}-${PHONE_MAX_DIGITS} ตัวเลข`
-        : '',
-    customerNote: customerNote.length > CUSTOMER_NOTE_MAX_LENGTH ? `หมายเหตุลูกค้ายาวได้ไม่เกิน ${CUSTOMER_NOTE_MAX_LENGTH} ตัวอักษร` : '',
     jobNote: jobNote.length > JOB_NOTE_MAX_LENGTH ? `รายละเอียดงานยาวได้ไม่เกิน ${JOB_NOTE_MAX_LENGTH} ตัวอักษร` : '',
   };
 }
 
 function getUploadInputError(errors: UploadFieldErrors): { message: string; step: Step } | null {
-  if (errors.customerName || errors.phone || errors.customerNote) {
-    return { message: errors.customerName || errors.phone || errors.customerNote, step: 1 };
-  }
-
   if (errors.jobNote) {
-    return { message: errors.jobNote, step: 2 };
+    return { message: errors.jobNote, step: 1 };
   }
 
   return null;
 }
 
-function getPrimaryActionLabel(isUploading: boolean, currentStep: Step): string {
+function getPrimaryActionLabel(isUploading: boolean): string {
   if (isUploading) return 'กำลังอัปโหลด...';
-  if (currentStep === 1) return 'ถัดไป: รายละเอียดงาน';
-  if (currentStep === 2) return 'ถัดไป: อัปโหลดไฟล์';
-  return 'เริ่มอัปโหลดไฟล์';
-}
-
-function getPreviousStep(currentStep: Step): Step {
-  return currentStep > 1 ? ((currentStep - 1) as Step) : currentStep;
-}
-
-function getNextStep(currentStep: Step): Step {
-  return currentStep < 4 ? ((currentStep + 1) as Step) : currentStep;
+  return 'ส่งไฟล์';
 }
 
 type UploadFileRowProps = {
@@ -221,51 +214,32 @@ function UploadQueueEmptyState() {
 }
 
 export default function UploadPage() {
-  const [currentStep, setCurrentStep] = useState<Step>(1);
   const [selectedJobType, setSelectedJobType] = useState<string>('document');
   const [uploadedFiles, setUploadedFiles] = useState<UploadFileItem[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [openingFileId, setOpeningFileId] = useState<string | null>(null);
-  const [globalError, setGlobalError] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>(null);
 
-  const [customerName, setCustomerName] = useState('');
-  const [phone, setPhone] = useState('');
-  const [customerNote, setCustomerNote] = useState('');
   const [jobNote, setJobNote] = useState('');
   const [touchedFields, setTouchedFields] = useState({
-    customerName: false,
-    phone: false,
-    customerNote: false,
     jobNote: false,
   });
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const selectedJobLabel = useMemo(() => jobOptions.find(item => item.id === selectedJobType)?.label ?? '-', [selectedJobType]);
   const envError = process.env.NEXT_PUBLIC_API_URL ? null : 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL ก่อนใช้งานอัปโหลดไฟล์';
-  const trimmedCustomerName = customerName.trim();
-  const trimmedCustomerNote = customerNote.trim();
   const trimmedJobNote = jobNote.trim();
-  const normalizedPhone = normalizePhone(phone);
-  const fieldErrors = useMemo(
-    () => getUploadFieldErrors(trimmedCustomerName, normalizedPhone, trimmedCustomerNote, trimmedJobNote),
-    [normalizedPhone, trimmedCustomerName, trimmedCustomerNote, trimmedJobNote]
-  );
+  const fieldErrors = useMemo(() => getUploadFieldErrors(trimmedJobNote), [trimmedJobNote]);
 
   const uploadedCount = uploadedFiles.filter(item => item.status === 'uploaded').length;
   const errorItems = uploadedFiles.filter(item => item.status === 'error');
   const waitingItems = uploadedFiles.filter(item => item.status === 'waiting');
   const totalFiles = uploadedFiles.length;
+  const currentStep: Step = isUploading || uploadedCount > 0 || errorItems.length > 0 ? 3 : totalFiles > 0 ? 2 : 1;
   const uploadProgress = totalFiles === 0 ? 0 : Math.round((uploadedCount / totalFiles) * 100);
   const showUploadProgress = isUploading || uploadedCount > 0;
-  const showSuccess = !isUploading && uploadedCount > 0;
-  const showError = errorItems.length > 0 || Boolean(globalError) || Boolean(envError);
-  const canAdvanceStep = currentStep < 3;
-  const canSubmitUploads = currentStep >= 3 && uploadedFiles.length > 0;
-  const primaryActionDisabled = Boolean(envError) || isUploading || (!canAdvanceStep && !canSubmitUploads);
-  const customerStepValid = !fieldErrors.customerName && !fieldErrors.phone && !fieldErrors.customerNote;
-  const jobStepValid = !fieldErrors.jobNote;
+  const primaryActionDisabled = Boolean(envError) || isUploading || uploadedFiles.length === 0;
 
   const statusPill = (status: UploadStatus) => {
     if (status === 'uploaded') {
@@ -293,17 +267,16 @@ export default function UploadPage() {
   };
 
   const clearFeedback = () => {
-    setGlobalError(null);
-    setSuccessMessage(null);
+    setFeedbackModal(null);
   };
 
-  const markCustomerFieldsTouched = () => {
-    setTouchedFields(prev => ({
-      ...prev,
-      customerName: true,
-      phone: true,
-      customerNote: true,
-    }));
+  const openErrorModal = (message: string, details?: string[]) => {
+    setFeedbackModal({
+      kind: 'error',
+      title: 'ส่งไฟล์ไม่สำเร็จ',
+      message,
+      details,
+    });
   };
 
   const markJobFieldsTouched = () => {
@@ -311,30 +284,6 @@ export default function UploadPage() {
       ...prev,
       jobNote: true,
     }));
-  };
-
-  const handleAdvanceStep = () => {
-    clearFeedback();
-
-    if (currentStep === 1 && !customerStepValid) {
-      markCustomerFieldsTouched();
-      const inputError = getUploadInputError(fieldErrors);
-      if (inputError) {
-        setGlobalError(inputError.message);
-        setCurrentStep(inputError.step);
-      }
-      return;
-    }
-
-    if (currentStep === 2 && !jobStepValid) {
-      markJobFieldsTouched();
-      if (fieldErrors.jobNote) {
-        setGlobalError(fieldErrors.jobNote);
-      }
-      return;
-    }
-
-    setCurrentStep(prev => getNextStep(prev));
   };
 
   const mergeFilesIntoState = (incomingFiles: File[]) => {
@@ -348,11 +297,7 @@ export default function UploadPage() {
       });
 
       if (queueState.validationMessages.length > 0) {
-        setGlobalError(queueState.validationMessages.join(' | '));
-      }
-
-      if (queueState.shouldMoveToUploadStep) {
-        setCurrentStep(3);
+        openErrorModal('มีบางไฟล์ไม่สามารถเพิ่มเข้าคิวได้', queueState.validationMessages);
       }
 
       return [...prev, ...queueState.items];
@@ -418,7 +363,8 @@ export default function UploadPage() {
         openWindow: signedUrl => window.open(signedUrl, '_blank', 'noopener,noreferrer'),
       });
     } catch (error) {
-      setGlobalError(error instanceof Error ? error.message : 'ไม่สามารถเปิดไฟล์ได้');
+      const message = error instanceof Error ? error.message : 'ไม่สามารถเปิดไฟล์ได้';
+      openErrorModal(message);
     } finally {
       setOpeningFileId(null);
     }
@@ -427,35 +373,32 @@ export default function UploadPage() {
   const handleUploadAll = async () => {
     if (isUploading || envError) return;
 
-    const note = buildUploadNote(trimmedCustomerNote, trimmedJobNote);
+    const batchId = createUploadBatchId();
+    const note = buildUploadNote(trimmedJobNote, batchId);
     const jobType = uploadJobTypeMap[selectedJobType] ?? 'Other';
 
-    markCustomerFieldsTouched();
     markJobFieldsTouched();
 
     const inputError = getUploadInputError(fieldErrors);
     if (inputError) {
-      setGlobalError(inputError.message);
-      setCurrentStep(inputError.step);
+      openErrorModal(inputError.message);
       return;
     }
 
     const pendingFiles = uploadedFiles.filter(item => item.status === 'waiting' || item.status === 'error');
     if (pendingFiles.length === 0) {
-      setGlobalError('ยังไม่มีไฟล์ที่รออัปโหลด');
-      setCurrentStep(3);
+      openErrorModal('ยังไม่มีไฟล์ที่รออัปโหลด');
       return;
     }
 
     clearFeedback();
     setIsUploading(true);
-    setCurrentStep(4);
 
     const uploadResult = await uploadPendingFiles({
       items: uploadedFiles,
       payload: {
-        customerName: trimmedCustomerName,
-        phone: normalizedPhone,
+        customerName: UPLOAD_FALLBACK_CUSTOMER_NAME,
+        phone: UPLOAD_FALLBACK_PHONE,
         jobType,
         note,
       },
@@ -465,18 +408,35 @@ export default function UploadPage() {
     setUploadedFiles(uploadResult.items);
     setIsUploading(false);
 
-    if (uploadResult.successCount > 0) {
-      setSuccessMessage(`อัปโหลดสำเร็จ ${uploadResult.successCount} ไฟล์`);
+    if (uploadResult.failureCount > 0) {
+      setFeedbackModal({
+        kind: 'error',
+        title: uploadResult.successCount > 0 ? 'ส่งไฟล์ได้บางส่วน' : 'ส่งไฟล์ไม่สำเร็จ',
+        message:
+          uploadResult.successCount > 0
+            ? `อัปโหลดสำเร็จ ${uploadResult.successCount} ไฟล์ และยังมี ${uploadResult.failureCount} ไฟล์ที่ต้องลองใหม่`
+            : 'ระบบยังส่งไฟล์ไม่สำเร็จ กรุณาตรวจสอบรายการแล้วลองใหม่',
+        details: uploadResult.items
+          .filter(item => item.status === 'error')
+          .slice(0, 3)
+          .map(item => `${item.file.name}: ${item.errorMessage ?? 'อัปโหลดไม่สำเร็จ'}`),
+      });
+      return;
     }
 
-    if (uploadResult.failureCount > 0) {
-      setGlobalError('บางไฟล์อัปโหลดไม่สำเร็จ กรุณาตรวจสอบรายการแล้วลองใหม่');
+    if (uploadResult.successCount > 0) {
+      setFeedbackModal({
+        kind: 'success',
+        title: 'ส่งไฟล์สำเร็จ!',
+        message: `อัปโหลดสำเร็จ ${uploadResult.successCount} ไฟล์`,
+        details: [`ประเภทงาน: ${selectedJobLabel}`, `ไฟล์ที่ส่งสำเร็จ: ${uploadResult.successCount} ไฟล์`],
+      });
     }
   };
 
   const handleUploadMore = () => {
     clearFeedback();
-    setCurrentStep(3);
+    setFeedbackModal(null);
     inputRef.current?.click();
   };
 
@@ -507,7 +467,6 @@ export default function UploadPage() {
               <div className="mt-3 flex flex-wrap gap-2">
                 <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">รองรับไฟล์สูงสุด 100MB</span>
                 <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700">อัปโหลดได้หลายไฟล์</span>
-                <span className="rounded-full border border-slate-200 bg-white/80 px-3 py-1 text-xs font-medium text-slate-600">ตรวจสอบสถานะได้ทันที</span>
               </div>
             </div>
 
@@ -518,7 +477,7 @@ export default function UploadPage() {
                 <div className="mt-3 grid grid-cols-2 gap-2">
                   <div className="rounded-xl bg-slate-50 px-3 py-2">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Step</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">{currentStep}/4</p>
+                    <p className="mt-1 text-sm font-semibold text-slate-800">{currentStep}/3</p>
                   </div>
                   <div className="rounded-xl bg-slate-50 px-3 py-2">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Files</p>
@@ -536,7 +495,7 @@ export default function UploadPage() {
         </header>
 
         <section className={`${glassCard()} px-4 py-4 sm:px-6`}>
-          <ol className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+          <ol className="grid grid-cols-1 gap-2 sm:grid-cols-3 md:gap-3">
             {steps.map((step, index) => {
               const stepNumber = (index + 1) as Step;
               const active = currentStep === stepNumber;
@@ -562,78 +521,14 @@ export default function UploadPage() {
                 <div className="rounded-lg bg-indigo-100 p-1.5 text-indigo-700">
                   <PersonRounded className="h-4 w-4" />
                 </div>
-                <h2 className="text-base font-semibold text-slate-900">ข้อมูลลูกค้า</h2>
+                <h2 className="text-base font-semibold text-slate-900">รายละเอียดงาน</h2>
               </div>
+              <p className="mb-4 text-sm text-slate-600">เลือกประเภทงานและใส่รายละเอียดเพิ่มเติมเท่าที่จำเป็น เพื่อให้ทีมตรวจสอบและเริ่มงานต่อได้ง่ายขึ้น</p>
+              {/* Legacy customer detail section kept for future reuse:
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="space-y-1 sm:col-span-1">
-                  <span className="text-sm font-medium text-slate-700">ชื่อลูกค้า *</span>
-                  <input
-                    value={customerName}
-                    onChange={e => setCustomerName(e.target.value)}
-                    onBlur={() => setTouchedFields(prev => ({ ...prev, customerName: true }))}
-                    placeholder="กรุณาระบุชื่อลูกค้า"
-                    maxLength={CUSTOMER_NAME_MAX_LENGTH}
-                    aria-invalid={touchedFields.customerName && Boolean(fieldErrors.customerName)}
-                    className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:ring-4 ${
-                      touchedFields.customerName && fieldErrors.customerName
-                        ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
-                        : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
-                    }`}
-                  />
-                  <span className={`text-xs ${touchedFields.customerName && fieldErrors.customerName ? 'text-rose-600' : 'text-slate-500'}`}>
-                    {touchedFields.customerName && fieldErrors.customerName ? fieldErrors.customerName : `${trimmedCustomerName.length}/${CUSTOMER_NAME_MAX_LENGTH}`}
-                  </span>
-                </label>
-                <label className="space-y-1 sm:col-span-1">
-                  <span className="text-sm font-medium text-slate-700">เบอร์โทรศัพท์ *</span>
-                  <input
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    onBlur={() => setTouchedFields(prev => ({ ...prev, phone: true }))}
-                    placeholder="กรุณาระบุเบอร์โทรศัพท์"
-                    inputMode="tel"
-                    maxLength={PHONE_MAX_DIGITS + 4}
-                    aria-invalid={touchedFields.phone && Boolean(fieldErrors.phone)}
-                    className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:ring-4 ${
-                      touchedFields.phone && fieldErrors.phone ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
-                    }`}
-                  />
-                  <span className={`text-xs ${touchedFields.phone && fieldErrors.phone ? 'text-rose-600' : 'text-slate-500'}`}>
-                    {touchedFields.phone && fieldErrors.phone ? fieldErrors.phone : 'รองรับตัวเลข 9-20 หลัก'}
-                  </span>
-                </label>
-                <label className="space-y-1 sm:col-span-2">
-                  <span className="text-sm font-medium text-slate-700">หมายเหตุเพิ่มเติม</span>
-                  <textarea
-                    value={customerNote}
-                    onChange={e => setCustomerNote(e.target.value)}
-                    onBlur={() => setTouchedFields(prev => ({ ...prev, customerNote: true }))}
-                    rows={3}
-                    placeholder="กรุณาระบุหมายเหตุเพิ่มเติม"
-                    maxLength={CUSTOMER_NOTE_MAX_LENGTH}
-                    aria-invalid={touchedFields.customerNote && Boolean(fieldErrors.customerNote)}
-                    className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:ring-4 ${
-                      touchedFields.customerNote && fieldErrors.customerNote
-                        ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100'
-                        : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
-                    }`}
-                  />
-                  <span className={`text-xs ${touchedFields.customerNote && fieldErrors.customerNote ? 'text-rose-600' : 'text-slate-500'}`}>
-                    {touchedFields.customerNote && fieldErrors.customerNote ? fieldErrors.customerNote : `${trimmedCustomerNote.length}/${CUSTOMER_NOTE_MAX_LENGTH}`}
-                  </span>
-                </label>
+                ...
               </div>
-              <button
-                type="button"
-                onClick={handleAdvanceStep}
-                className="mt-4 hidden items-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-500 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-indigo-500/25 transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-indigo-200 md:inline-flex">
-                ถัดไป
-                <ExpandMoreRounded className="h-4 w-4 rotate-[-90deg]" />
-              </button>
-            </article>
-
-            <article className={`${glassCard()} p-4 sm:p-5`}>
-              <h2 className="mb-4 text-base font-semibold text-slate-900">รายละเอียดงาน</h2>
+              */}
               <p className="mb-3 text-sm font-medium text-slate-700">ประเภทงาน *</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2">
                 {jobOptions.map(job => {
@@ -716,6 +611,7 @@ export default function UploadPage() {
           </div>
 
           <aside className="space-y-4 xl:col-span-4">
+            {/* Legacy helper card kept for future reuse:
             <article className={`${glassCard()} p-4 sm:p-5`}>
               <h3 className="mb-1 text-base font-semibold text-slate-900">ส่งงานได้จากทุกที่</h3>
 
@@ -737,22 +633,28 @@ export default function UploadPage() {
                 <p className="mt-1 text-slate-600">Facebook : Glossy Design</p>
               </div>
             </article>
+            */}
 
-            <AnimatePresence>
-              {showUploadProgress && (
-                <motion.article initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className={`${glassCard()} p-4 sm:p-5`}>
-                  <h3 className="text-base font-semibold text-slate-900">{isUploading ? 'กำลังอัปโหลดไฟล์...' : 'สรุปสถานะไฟล์'}</h3>
-                  <div className="my-3 flex items-center gap-4">
-                    <div className="grid h-16 w-16 place-items-center rounded-full border-4 border-indigo-100 text-indigo-700">
-                      <span className="text-sm font-bold">{uploadProgress}%</span>
-                    </div>
-                    <div>
-                      <p className="text-sm text-slate-600">{isUploading ? 'ระบบกำลังส่งไฟล์ขึ้นเซิร์ฟเวอร์' : 'อัปโหลดเสร็จแล้วบางส่วนหรือทั้งหมด'}</p>
-                      <p className="text-xs text-slate-500">
-                        สำเร็จ {uploadedCount} / {totalFiles} ไฟล์
-                      </p>
-                    </div>
+            <AnimatePresence mode="wait">
+              <motion.article
+                key={showUploadProgress ? 'progress-active' : 'progress-idle'}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -10 }}
+                className={`${glassCard()} p-4 sm:p-5`}>
+                <h3 className="text-base font-semibold text-slate-900">{isUploading ? 'กำลังอัปโหลดไฟล์...' : 'สรุปสถานะไฟล์'}</h3>
+                <div className="my-3 flex items-center gap-4">
+                  <div className="grid h-16 w-16 place-items-center rounded-full border-4 border-indigo-100 text-indigo-700">
+                    <span className="text-sm font-bold">{uploadProgress}%</span>
                   </div>
+                  <div>
+                    <p className="text-sm text-slate-600">{isUploading ? 'ระบบกำลังส่งไฟล์ขึ้นเซิร์ฟเวอร์' : totalFiles > 0 ? 'อัปโหลดเสร็จแล้วบางส่วนหรือทั้งหมด' : 'ยังไม่มีไฟล์ในคิวอัปโหลด'}</p>
+                    <p className="text-xs text-slate-500">
+                      สำเร็จ {uploadedCount} / {totalFiles} ไฟล์
+                    </p>
+                  </div>
+                </div>
+                {uploadedFiles.length > 0 ? (
                   <div className="space-y-2">
                     {uploadedFiles.map(item => (
                       <div key={`progress-${item.id}`} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm">
@@ -764,74 +666,23 @@ export default function UploadPage() {
                       </div>
                     ))}
                   </div>
-                </motion.article>
-              )}
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/60 px-4 py-5 text-sm text-slate-600">
+                    เลือกไฟล์เมื่อไหร่ รายการและสถานะการอัปโหลดจะแสดงที่นี่ทันที
+                  </div>
+                )}
+              </motion.article>
             </AnimatePresence>
 
-            {showSuccess && (
-              <article className="rounded-3xl border border-emerald-100 bg-emerald-50/80 p-4 shadow-[0_16px_40px_rgba(20,184,116,0.12)] sm:p-5">
-                <div className="mb-2 inline-flex rounded-full bg-emerald-600 p-2 text-white">
-                  <CheckRounded className="h-4 w-4" />
-                </div>
-                <h3 className="text-base font-semibold text-emerald-800">ส่งไฟล์สำเร็จ!</h3>
-                <p className="mt-1 text-sm text-emerald-700">{successMessage ?? 'ระบบบันทึกการอัปโหลดเรียบร้อยแล้ว'}</p>
-                <div className="mt-3 space-y-1 text-sm text-emerald-900">
-                  <p>ลูกค้า: {customerName || 'ระบุภายหลัง'}</p>
-                  <p>เบอร์โทร: {phone || 'ระบุภายหลัง'}</p>
-                  <p>ประเภทงาน: {selectedJobLabel}</p>
-                  <p>ไฟล์ที่ส่งสำเร็จ: {uploadedCount} ไฟล์</p>
-                </div>
-                <div className="mt-3 flex gap-2">
-                  <button
-                    type="button"
-                    onClick={handleUploadMore}
-                    className="rounded-xl border border-emerald-300 bg-white px-3 py-2 text-sm font-medium text-emerald-700 transition hover:bg-emerald-100">
-                    ส่งไฟล์เพิ่ม
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
-                    className="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition hover:bg-emerald-700">
-                    กลับขึ้นด้านบน
-                  </button>
-                </div>
-              </article>
-            )}
-
-            {showError && (
-              <article className="rounded-3xl border border-rose-100 bg-rose-50/80 p-4 shadow-[0_16px_40px_rgba(244,63,94,0.12)] sm:p-5">
-                <div className="mb-2 inline-flex rounded-full bg-rose-600 p-2 text-white">
-                  <ErrorOutlineRounded className="h-4 w-4" />
-                </div>
-                <h3 className="text-base font-semibold text-rose-800">ต้องตรวจสอบบางรายการ</h3>
-                <div className="mt-3 space-y-2 rounded-xl border border-rose-200 bg-white px-3 py-2 text-sm">
-                  {envError ? <p className="text-rose-700">{envError}</p> : null}
-                  {globalError ? <p className="text-rose-700">{globalError}</p> : null}
-                  {errorItems.slice(0, 3).map(item => (
-                    <div key={`error-${item.id}`}>
-                      <p className="font-medium text-slate-800">ไฟล์: {item.file.name}</p>
-                      <p className="text-rose-700">สาเหตุ: {item.errorMessage ?? 'อัปโหลดไม่สำเร็จ'}</p>
-                    </div>
-                  ))}
-                </div>
-                <button
-                  type="button"
-                  onClick={handleUploadAll}
-                  disabled={isUploading || Boolean(envError) || (waitingItems.length === 0 && errorItems.length === 0)}
-                  className="mt-3 rounded-xl bg-rose-600 px-3 py-2 text-sm font-semibold text-white transition enabled:hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50">
-                  ลองอัปโหลดอีกครั้ง
-                </button>
-              </article>
-            )}
           </aside>
         </section>
 
         <footer className="sticky bottom-2 z-20 rounded-2xl border border-indigo-100 bg-white/95 p-3 shadow-xl backdrop-blur">
           <div className="mb-3 flex items-start justify-between gap-3 md:hidden">
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-500">ขั้นตอน {currentStep}/4</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-500">ขั้นตอน {currentStep}/3</p>
               <p className="mt-1 text-sm font-semibold text-slate-900">{steps[currentStep - 1]}</p>
-              <p className="mt-1 text-xs text-slate-500">{totalFiles > 0 ? `เลือกแล้ว ${totalFiles} ไฟล์ • สำเร็จ ${uploadedCount} ไฟล์` : `ประเภทงาน ${selectedJobLabel}`}</p>
+              <p className="mt-1 text-xs text-slate-500">{totalFiles > 0 ? `พร้อมส่ง ${totalFiles} ไฟล์ • สำเร็จ ${uploadedCount} ไฟล์` : 'เพิ่มไฟล์อย่างน้อย 1 ไฟล์เพื่อส่งงาน'}</p>
             </div>
             {showUploadProgress ? (
               <div className="rounded-2xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-right">
@@ -841,25 +692,103 @@ export default function UploadPage() {
             ) : null}
           </div>
 
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-end">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="hidden min-w-0 sm:block">
+              <p className="text-sm font-semibold text-slate-900">{totalFiles > 0 ? `พร้อมส่ง ${totalFiles} ไฟล์` : 'ยังไม่มีไฟล์สำหรับส่ง'}</p>
+              <p className="mt-1 text-xs text-slate-500">
+                {totalFiles > 0 ? `ประเภทงาน ${selectedJobLabel}${trimmedJobNote ? ' • มีรายละเอียดเพิ่มเติมแล้ว' : ''}` : 'เลือกประเภทงานและเพิ่มไฟล์อย่างน้อย 1 ไฟล์ก่อนส่ง'}
+              </p>
+            </div>
             <button
               type="button"
-              onClick={() => setCurrentStep(prev => getPreviousStep(prev))}
-              className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 focus:outline-none focus:ring-2 focus:ring-indigo-200">
-              <ExpandMoreRounded className="h-4 w-4 rotate-90" />
-              ย้อนกลับ
-            </button>
-            <button
-              type="button"
-              onClick={canAdvanceStep ? handleAdvanceStep : handleUploadAll}
+              onClick={handleUploadAll}
               disabled={primaryActionDisabled}
               className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-[220px]">
-              {getPrimaryActionLabel(isUploading, currentStep)}
+              {getPrimaryActionLabel(isUploading)}
               <ExpandMoreRounded className="h-4 w-4 -rotate-90" />
             </button>
           </div>
         </footer>
       </div>
+
+      <AnimatePresence>
+        {feedbackModal ? (
+          <motion.div
+            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.96, y: 12 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.96, y: 12 }}
+              className={`w-full max-w-md rounded-[28px] border p-6 shadow-[0_24px_80px_rgba(15,23,42,0.28)] ${
+                feedbackModal.kind === 'success' ? 'border-emerald-100 bg-white' : 'border-rose-100 bg-white'
+              }`}>
+              <div className={`flex ${feedbackModal.kind === 'success' ? 'justify-center text-center' : 'justify-center text-center'}`}>
+                <div className={`inline-flex rounded-full p-3 ${feedbackModal.kind === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                  {feedbackModal.kind === 'success' ? <CheckRounded className="h-6 w-6" /> : <ErrorOutlineRounded className="h-6 w-6" />}
+                </div>
+              </div>
+              <h3 className={`mt-4 text-2xl font-black tracking-[-0.02em] text-center ${feedbackModal.kind === 'success' ? 'text-emerald-800' : 'text-rose-800'}`}>
+                {feedbackModal.title}
+              </h3>
+              <p className={`mt-2 text-sm leading-6 text-center ${feedbackModal.kind === 'success' ? 'text-emerald-700' : 'text-rose-700'}`}>
+                {feedbackModal.message}
+              </p>
+              {feedbackModal.details && feedbackModal.details.length > 0 ? (
+                <div
+                  className={`mt-4 space-y-2 rounded-2xl border px-4 py-3 text-sm ${
+                    feedbackModal.kind === 'success'
+                      ? 'border-emerald-100 bg-emerald-50/70 text-center text-emerald-900'
+                      : 'border-rose-100 bg-rose-50/70 text-left text-rose-900'
+                  }`}>
+                  {feedbackModal.details.map(detail => (
+                    <p key={detail}>{detail}</p>
+                  ))}
+                </div>
+              ) : null}
+              <div className="mt-5 flex flex-col gap-2 sm:flex-row">
+                {feedbackModal.kind === 'success' ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={handleUploadMore}
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">
+                      ส่งไฟล์เพิ่ม
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFeedbackModal(null)}
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                      รับทราบ
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => setFeedbackModal(null)}
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50">
+                      ปิด
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setFeedbackModal(null);
+                        void handleUploadAll();
+                      }}
+                      disabled={isUploading || Boolean(envError) || (waitingItems.length === 0 && errorItems.length === 0)}
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition enabled:hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50">
+                      ลองอัปโหลดอีกครั้ง
+                    </button>
+                  </>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        ) : null}
+      </AnimatePresence>
     </main>
   );
 }

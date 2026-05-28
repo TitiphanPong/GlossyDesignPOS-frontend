@@ -1,4 +1,4 @@
-export type StorageStatus = 'waiting' | 'processing' | 'completed';
+export type StorageStatus = 'waiting' | 'pending' | 'completed';
 
 export type UploadApiFile = {
   fileId?: string;
@@ -44,6 +44,8 @@ export type FileItem = {
 
 export type StorageRow = {
   id: string;
+  sourceIds: string[];
+  batchId?: string;
   uploadDate: string;
   customerName: string;
   phone: string;
@@ -55,10 +57,13 @@ export type StorageRow = {
   activities: string[];
 };
 
+const BATCH_MARKER_PATTERN = /\[\[batch:([a-z0-9-]+)\]\]/i;
+const STAGE_MARKER_PATTERN = /\[\[stage:(waiting-download|pending)\]\]/i;
+
 export function inferStatus(rawStatus?: string): StorageStatus {
   const status = (rawStatus ?? '').toLowerCase();
   if (status.includes('complete') || status.includes('done') || status.includes('success')) return 'completed';
-  if (status.includes('process') || status.includes('doing') || status.includes('working')) return 'processing';
+  if (status.includes('process') || status.includes('doing') || status.includes('working')) return 'pending';
   return 'waiting';
 }
 
@@ -74,6 +79,28 @@ function formatBytes(value?: number) {
   const mb = value / (1024 * 1024);
   if (mb >= 1) return `${mb.toFixed(1)} MB`;
   return `${(value / 1024).toFixed(0)} KB`;
+}
+
+function extractUploadMetadata(note?: string): { batchId?: string; stage?: 'waiting' | 'pending'; cleanNote: string } {
+  const rawNote = String(note ?? '');
+  const batchMatch = rawNote.match(BATCH_MARKER_PATTERN);
+  const stageMatch = rawNote.match(STAGE_MARKER_PATTERN);
+  const cleanNote = rawNote.replace(BATCH_MARKER_PATTERN, '').replace(STAGE_MARKER_PATTERN, '').replace(/\n{3,}/g, '\n\n').trim();
+
+  return {
+    batchId: batchMatch?.[1],
+    stage: stageMatch?.[1] === 'pending' ? 'pending' : stageMatch?.[1] === 'waiting-download' ? 'waiting' : undefined,
+    cleanNote,
+  };
+}
+
+function resolveStorageStatus(rawStatus?: string, stage?: 'waiting' | 'pending'): StorageStatus {
+  const status = (rawStatus ?? '').toLowerCase();
+  if (status.includes('complete') || status.includes('done') || status.includes('success')) return 'completed';
+  if (stage === 'pending') return 'pending';
+  if (stage === 'waiting') return 'waiting';
+  if (status.includes('process') || status.includes('doing') || status.includes('working')) return 'pending';
+  return 'waiting';
 }
 
 export function normalizeFiles(rawFiles: UploadApiRecord['files']): FileItem[] {
@@ -109,17 +136,59 @@ export function normalizeRecord(raw: UploadApiRecord): StorageRow {
   const id = String(raw._id ?? raw.id ?? raw.uploadId ?? `upload-${Math.random().toString(36).slice(2)}`);
   const files = normalizeFiles(raw.files);
   const createdAt = String(raw.createdAt ?? new Date().toISOString());
+  const { batchId, stage, cleanNote } = extractUploadMetadata(raw.note);
 
   return {
     id,
+    sourceIds: [id],
+    batchId,
     uploadDate: createdAt,
     customerName: String(raw.customerName ?? raw.customer ?? 'ไม่ระบุชื่อลูกค้า'),
     phone: String(raw.phone ?? raw.phoneNumber ?? '-'),
     lineId: String(raw.lineId ?? raw.line ?? '-'),
     jobType: String(raw.jobType ?? raw.category ?? 'งานพิมพ์ทั่วไป'),
     files,
-    status: inferStatus(raw.status),
-    notes: String(raw.note ?? '-'),
+    status: resolveStorageStatus(raw.status, stage),
+    notes: cleanNote || '-',
     activities: ['อัปโหลดไฟล์เข้าสู่ระบบคลังเอกสาร', 'เจ้าหน้าที่รับงานและตรวจไฟล์เบื้องต้น', 'รอคิวดาวน์โหลดเพื่อพิมพ์'],
   };
+}
+
+export function groupStorageRows(rows: readonly StorageRow[]): StorageRow[] {
+  const grouped = new Map<string, StorageRow>();
+
+  for (const row of rows) {
+    const key = row.batchId ? `batch:${row.batchId}` : `single:${row.id}`;
+    const existing = grouped.get(key);
+
+    if (!existing) {
+      grouped.set(key, {
+        ...row,
+        files: [...row.files],
+        sourceIds: [...row.sourceIds],
+        activities: [...row.activities],
+      });
+      continue;
+    }
+
+    const mergedFiles = [...existing.files];
+    const seenFileIds = new Set(mergedFiles.map(file => file.id));
+    row.files.forEach(file => {
+      if (!seenFileIds.has(file.id)) {
+        seenFileIds.add(file.id);
+        mergedFiles.push(file);
+      }
+    });
+
+    grouped.set(key, {
+      ...existing,
+      uploadDate: new Date(row.uploadDate).getTime() < new Date(existing.uploadDate).getTime() ? row.uploadDate : existing.uploadDate,
+      files: mergedFiles,
+      sourceIds: Array.from(new Set([...existing.sourceIds, ...row.sourceIds])),
+      notes: existing.notes !== '-' ? existing.notes : row.notes,
+      activities: Array.from(new Set([...existing.activities, ...row.activities])),
+    });
+  }
+
+  return Array.from(grouped.values());
 }

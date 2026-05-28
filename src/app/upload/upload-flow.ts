@@ -10,6 +10,21 @@ export type UploadQueueItem<TFile extends File = File> = {
   errorMessage?: string;
 };
 
+function normalizeUploadErrorMessage(error: unknown): string {
+  const fallbackMessage = 'อัปโหลดไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+  const message = error instanceof Error ? error.message : '';
+
+  if (!message) {
+    return fallbackMessage;
+  }
+
+  if (message.includes('phone must be longer than or equal to 9 characters') || message.includes('phone must contain digits only')) {
+    return 'ระบบยังต้องการข้อมูลเบอร์โทรสำหรับการรับงาน กรุณาลองส่งใหม่อีกครั้ง';
+  }
+
+  return message;
+}
+
 export function createUploadQueueItems<TFile extends File>({
   incomingFiles,
   existingIds,
@@ -87,7 +102,7 @@ export async function uploadPendingFiles<TFile extends File>({
       successCount += 1;
     } catch (error) {
       item.status = 'error';
-      item.errorMessage = error instanceof Error ? error.message : 'อัปโหลดไม่สำเร็จ';
+      item.errorMessage = normalizeUploadErrorMessage(error);
     }
   }
 
