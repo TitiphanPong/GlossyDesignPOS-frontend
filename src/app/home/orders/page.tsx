@@ -73,6 +73,19 @@ type ExportType = 'excel' | 'pdf' | 'sales';
 
 const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+const FILTER_STATUS_LABELS: Record<'all' | PaymentStatus, string> = {
+  all: 'ทั้งหมด',
+  pending: 'รอดำเนินการ',
+  partial: 'ค้างชำระ',
+  paid: 'ชำระแล้ว',
+  cancelled: 'ยกเลิก',
+};
+const SORT_ORDER_LABELS: Record<SortOrder, string> = {
+  newest: 'ล่าสุด',
+  oldest: 'เก่าสุด',
+  high: 'ยอดรวมสูงสุด',
+  low: 'ยอดรวมต่ำสุด',
+};
 
 type OrderProduct = {
   name: string;
@@ -301,6 +314,18 @@ function formatThaiFullDate(value: dayjs.Dayjs | null): string {
   if (!value) return 'กำลังโหลดวันที่';
   const date = value.toDate();
   return `วัน${DAYS_TH[date.getDay()]}ที่ ${date.getDate()} ${MONTHS_TH[date.getMonth()]} พ.ศ. ${date.getFullYear() + 543}`;
+}
+
+function formatMonthFilterLabel(month: string): string {
+  const [year, monthIndexText] = month.split('-');
+  const monthIndex = Number(monthIndexText) - 1;
+  const yearNumber = Number(year);
+
+  if (!Number.isInteger(monthIndex) || monthIndex < 0 || monthIndex > 11 || !Number.isInteger(yearNumber)) {
+    return month;
+  }
+
+  return `${MONTHS_TH[monthIndex]} ${yearNumber + 543}`;
 }
 
 function statusChip(status: PaymentStatus) {
@@ -693,56 +718,89 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
                 </Card>
               ) : null}
 
-              <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+              <Card
+                sx={{
+                  borderRadius: 3.8,
+                  border: '1px solid #E6EDF7',
+                  boxShadow: 'none',
+                }}>
                 <CardContent>
                   <Stack spacing={1.1}>
                     <Stack direction="row" alignItems="center" spacing={1}>
-                      <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#1E5EFF', 0.14), color: '#2156D8' }}>
+                      <Avatar
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          bgcolor: alpha('#1E5EFF', 0.14),
+                          color: '#2156D8',
+                        }}>
                         <ReceiptLongRoundedIcon sx={{ fontSize: 18 }} />
                       </Avatar>
-                      <Typography sx={{ fontWeight: 700 }}>Order Information</Typography>
+
+                      <Typography sx={{ fontWeight: 700 }}>ข้อมูลคำสั่งซื้อ</Typography>
                     </Stack>
+
                     <Typography sx={{ color: '#334155' }}>
-                      <strong>Order Number:</strong> {selectedOrder.orderNumber}
+                      <strong>เลขที่คำสั่งซื้อ :</strong> {selectedOrder.orderNumber}
                     </Typography>
+
                     <Typography sx={{ color: '#334155' }}>
-                      <strong>Order Date:</strong> {dayjs(selectedOrder.date).format('DD/MM/YYYY HH:mm')}
+                      <strong>วันที่สั่งซื้อ :</strong> {dayjs(selectedOrder.date).format('DD/MM/YYYY HH:mm')}
                     </Typography>
+
                     <Typography sx={{ color: '#334155' }}>
-                      <strong>Sales Channel:</strong> {selectedOrder.salesChannel}
+                      <strong>ช่องทางการขาย :</strong> {selectedOrder.salesChannel}
                     </Typography>
+
                     <Typography sx={{ color: '#334155' }}>
-                      <strong>Staff Name:</strong> {selectedOrder.staffName}
+                      <strong>พนักงานขาย :</strong> {selectedOrder.staffName}
                     </Typography>
                   </Stack>
                 </CardContent>
               </Card>
 
-              <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+              <Card
+                sx={{
+                  borderRadius: 3.8,
+                  border: '1px solid #E6EDF7',
+                  boxShadow: 'none',
+                }}>
                 <CardContent>
                   <Stack spacing={1.1}>
                     <Stack direction="row" alignItems="center" spacing={1}>
-                      <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#4F46E5', 0.14), color: '#4F46E5' }}>
+                      <Avatar
+                        sx={{
+                          width: 30,
+                          height: 30,
+                          bgcolor: alpha('#4F46E5', 0.14),
+                          color: '#4F46E5',
+                        }}>
                         <AccountCircleRoundedIcon sx={{ fontSize: 18 }} />
                       </Avatar>
-                      <Typography sx={{ fontWeight: 700 }}>Customer Information</Typography>
+
+                      <Typography sx={{ fontWeight: 700 }}>ข้อมูลลูกค้า</Typography>
                     </Stack>
+
                     <Stack direction="row" spacing={1} alignItems="center">
                       <PersonRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
                       <Typography>{selectedOrder.customerName}</Typography>
                     </Stack>
+
                     <Stack direction="row" spacing={1} alignItems="center">
                       <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
                       <Typography>{selectedOrder.phoneNumber}</Typography>
                     </Stack>
+
                     <Stack direction="row" spacing={1} alignItems="center">
                       <DescriptionRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
                       <Typography>{selectedOrder.lineId}</Typography>
                     </Stack>
+
                     <Stack direction="row" spacing={1} alignItems="center">
                       <EmailRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
                       <Typography>{selectedOrder.email}</Typography>
                     </Stack>
+
                     <Stack direction="row" spacing={1} alignItems="center">
                       <HomeRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
                       <Typography>{selectedOrder.address}</Typography>
@@ -750,7 +808,6 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
                   </Stack>
                 </CardContent>
               </Card>
-
               <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                 <CardContent>
                   <Stack spacing={1.05}>
@@ -1135,7 +1192,7 @@ export default function OrderManagementPage() {
             <Stack spacing={1.6}>
               <Stack direction="row" alignItems="center" spacing={1}>
                 <TuneRoundedIcon sx={{ color: '#3866E8', fontSize: 20 }} />
-                <Typography sx={{ color: '#102A43', fontWeight: 800, fontSize: 15 }}>Search & Filter</Typography>
+                <Typography sx={{ color: '#102A43', fontWeight: 800, fontSize: 15 }}>ค้นหาและตัวกรอง</Typography>
               </Stack>
 
               <Box
@@ -1148,7 +1205,7 @@ export default function OrderManagementPage() {
                   size="small"
                   value={search}
                   onChange={event => setSearch(event.target.value)}
-                  placeholder="ค้นหาชื่อลูกค้า / Order Number / เบอร์โทร"
+                  placeholder="ค้นหาชื่อลูกค้า / เลขออเดอร์ / เบอร์โทร"
                   slotProps={{
                     input: {
                       startAdornment: (
@@ -1169,65 +1226,52 @@ export default function OrderManagementPage() {
                 />
 
                 <FormControl size="small">
-                  <InputLabel id="status-filter">Status</InputLabel>
+                  <InputLabel id="status-filter">สถานะ</InputLabel>
                   <Select<'all' | PaymentStatus>
                     labelId="status-filter"
                     value={statusFilter}
-                    label="Status"
+                    label="สถานะ"
                     onChange={event => setStatusFilter(event.target.value)}
                     sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
-                    <MenuItem value="all">All</MenuItem>
-                    <MenuItem value="paid">{ORDER_STATUS_LABELS.paid}</MenuItem>
-                    <MenuItem value="pending">{ORDER_STATUS_LABELS.pending}</MenuItem>
-                    <MenuItem value="partial">{ORDER_STATUS_LABELS.partial}</MenuItem>
-                    <MenuItem value="cancelled">{ORDER_STATUS_LABELS.cancelled}</MenuItem>
+                    <MenuItem value="all">{FILTER_STATUS_LABELS.all}</MenuItem>
+                    <MenuItem value="paid">{FILTER_STATUS_LABELS.paid}</MenuItem>
+                    <MenuItem value="pending">{FILTER_STATUS_LABELS.pending}</MenuItem>
+                    <MenuItem value="partial">{FILTER_STATUS_LABELS.partial}</MenuItem>
+                    <MenuItem value="cancelled">{FILTER_STATUS_LABELS.cancelled}</MenuItem>
                   </Select>
                 </FormControl>
 
                 <FormControl size="small">
-                  <InputLabel id="month-filter">Month</InputLabel>
+                  <InputLabel id="month-filter">เดือน</InputLabel>
                   <Select<string>
                     labelId="month-filter"
                     value={monthFilter}
-                    label="Month"
+                    label="เดือน"
                     onChange={event => setMonthFilter(event.target.value)}
                     sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
-                    <MenuItem value="all">All</MenuItem>
+                    <MenuItem value="all">ทั้งหมด</MenuItem>
                     {months.map(month => (
                       <MenuItem key={month} value={month}>
-                        {dayjs(`${month}-01`).format('MMM YYYY')}
+                        {formatMonthFilterLabel(month)}
                       </MenuItem>
                     ))}
                   </Select>
                 </FormControl>
 
                 <FormControl size="small">
-                  <InputLabel id="sort-filter">Sort</InputLabel>
+                  <InputLabel id="sort-filter">เรียงลำดับ</InputLabel>
                   <Select<SortOrder>
                     labelId="sort-filter"
                     value={sort}
-                    label="Sort"
+                    label="เรียงลำดับ"
                     onChange={event => setSort(event.target.value)}
                     sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
-                    <MenuItem value="newest">Newest</MenuItem>
-                    <MenuItem value="oldest">Oldest</MenuItem>
-                    <MenuItem value="high">Highest Total</MenuItem>
-                    <MenuItem value="low">Lowest Total</MenuItem>
+                    <MenuItem value="newest">{SORT_ORDER_LABELS.newest}</MenuItem>
+                    <MenuItem value="oldest">{SORT_ORDER_LABELS.oldest}</MenuItem>
+                    <MenuItem value="high">{SORT_ORDER_LABELS.high}</MenuItem>
+                    <MenuItem value="low">{SORT_ORDER_LABELS.low}</MenuItem>
                   </Select>
                 </FormControl>
-
-                <Button
-                  variant="outlined"
-                  sx={{
-                    borderRadius: 3,
-                    px: 1.9,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    minHeight: 46,
-                    borderColor: '#D7E3F4',
-                  }}>
-                  ตัวกรองเพิ่มเติม
-                </Button>
               </Box>
             </Stack>
           </CardContent>
