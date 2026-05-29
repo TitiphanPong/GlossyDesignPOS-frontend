@@ -40,7 +40,6 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import FileDownloadDoneRoundedIcon from '@mui/icons-material/FileDownloadDoneRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import FilterAltRoundedIcon from '@mui/icons-material/FilterAltRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
@@ -54,10 +53,10 @@ import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
-import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
 import axios from 'axios';
+import JobTimelineCard, { type JobTimelineCardItem } from '../components/JobTimelineCard';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
 import { groupStorageRows, normalizeRecord, type StorageRow, type StorageStatus, type UploadApiRecord } from './normalizers';
@@ -173,6 +172,34 @@ function statusChip(status: StorageStatus) {
       border: '1px solid #D8E0EA',
     },
   };
+}
+
+function buildStorageTimelineItems(record: StorageRow): JobTimelineCardItem[] {
+  const activeIndex = record.status === 'pending' ? 1 : record.status === 'completed' ? 2 : 0;
+  const titles = [
+    'อัปโหลดไฟล์เข้าสู่ระบบคลังเอกสาร',
+    'เจ้าหน้าที่รับงานและตรวจไฟล์เบื้องต้น',
+    'รอคิวดาวน์โหลดเพื่อพิมพ์',
+  ] as const;
+  const subtitles = [
+    activeIndex === 0 ? 'อัปเดตล่าสุดในระบบ' : 'บันทึกไว้ในลำดับงานก่อนหน้า',
+    activeIndex === 1 ? 'กำลังตรวจสอบไฟล์และเตรียมดำเนินการ' : 'บันทึกไว้ในลำดับงานก่อนหน้า',
+    activeIndex === 2 ? 'ดำเนินการครบตามขั้นตอนและพร้อมใช้งาน' : 'บันทึกไว้ในลำดับงานก่อนหน้า',
+  ] as const;
+  const icons = [
+    <CloudUploadRoundedIcon key="upload" sx={{ fontSize: 18 }} />,
+    <TaskAltRoundedIcon key="check" sx={{ fontSize: 18 }} />,
+    <LocalPrintshopRoundedIcon key="print" sx={{ fontSize: 18 }} />,
+  ] as const;
+
+  return titles.map((title, index) => ({
+    id: `${record.id}-timeline-${index}`,
+    title,
+    subtitle: subtitles[index],
+    icon: icons[index],
+    active: index === activeIndex,
+    pillLabel: index === activeIndex ? 'ล่าสุด' : `ขั้นตอน ${index + 1}`,
+  }));
 }
 
 function toPersistedUploadStatus(status: StorageStatus): 'pending' | 'completed' {
@@ -306,7 +333,7 @@ export default function StoragePage() {
 
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'all' | StorageStatus>('all');
-  const [jobTypeFilter, setJobTypeFilter] = React.useState('all');
+  const [jobTypeFilter] = React.useState('all');
   const [dateFilter, setDateFilter] = React.useState('');
   const [sortBy, setSortBy] = React.useState<SortType>('newest');
 
@@ -463,11 +490,6 @@ export default function StoragePage() {
 
     throw lastError ?? new Error('storage_request_failed');
   }, []);
-
-  const jobTypes = React.useMemo(() => {
-    const set = new Set(rows.map(row => row.jobType));
-    return Array.from(set).sort((a, b) => a.localeCompare(b));
-  }, [rows]);
 
   const filteredRows = React.useMemo(() => {
     return rows
@@ -1312,83 +1334,7 @@ export default function StoragePage() {
                   </CardContent>
                 </Card>
 
-                <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
-                  <CardContent>
-                    <Stack spacing={0.7} sx={{ mb: 1.6 }}>
-                      <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>ไทม์ไลน์งาน</Typography>
-                      <Typography sx={{ color: '#64748B', fontSize: 12.5 }}>
-                        ลำดับการรับงานและอัปเดตความคืบหน้าของไฟล์ชุดนี้
-                      </Typography>
-                    </Stack>
-                    <Stack spacing={1.35}>
-                      {activeRecord.activities.map((item, index) => {
-                        const isLast = index === activeRecord.activities.length - 1;
-                        const isCurrent = index === 0;
-
-                        return (
-                          <Stack key={`${item}-${index}`} direction="row" spacing={1.4} alignItems="stretch">
-                            <Box sx={{ width: 26, display: 'flex', justifyContent: 'center', position: 'relative', flexShrink: 0 }}>
-                              <Box
-                                sx={{
-                                  mt: 0.6,
-                                  width: 12,
-                                  height: 12,
-                                  borderRadius: 999,
-                                  border: isCurrent ? '3px solid #BFDBFE' : '2px solid #C7D2FE',
-                                  bgcolor: isCurrent ? '#2563EB' : '#FFFFFF',
-                                  boxShadow: isCurrent ? '0 0 0 6px rgba(37,99,235,0.10)' : 'none',
-                                  zIndex: 1,
-                                }}
-                              />
-                              {!isLast ? (
-                                <Box
-                                  sx={{
-                                    position: 'absolute',
-                                    top: 22,
-                                    bottom: -18,
-                                    width: 2,
-                                    borderRadius: 999,
-                                    bgcolor: '#D9E4F5',
-                                  }}
-                                />
-                              ) : null}
-                            </Box>
-                            <Box
-                              sx={{
-                                flex: 1,
-                                borderRadius: 3,
-                                border: isCurrent ? '1px solid #BFDBFE' : '1px solid #E6EDF7',
-                                bgcolor: isCurrent ? '#F8FBFF' : '#FFFFFF',
-                                px: 1.7,
-                                py: 1.35,
-                                boxShadow: isCurrent ? '0 10px 24px rgba(37,99,235,0.08)' : 'none',
-                              }}>
-                              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
-                                <Typography sx={{ color: '#1E293B', fontWeight: isCurrent ? 700 : 600, lineHeight: 1.45 }}>{item}</Typography>
-                                <Box
-                                  sx={{
-                                    borderRadius: 999,
-                                    px: 1,
-                                    py: 0.35,
-                                    fontSize: 11,
-                                    fontWeight: 700,
-                                    color: isCurrent ? '#1D4ED8' : '#64748B',
-                                    bgcolor: isCurrent ? '#DBEAFE' : '#F1F5F9',
-                                    whiteSpace: 'nowrap',
-                                  }}>
-                                  {isCurrent ? 'ล่าสุด' : `ขั้นตอน ${index + 1}`}
-                                </Box>
-                              </Stack>
-                              <Typography sx={{ mt: 0.55, color: '#94A3B8', fontSize: 12.5 }}>
-                                {isCurrent ? 'อัปเดตล่าสุดในระบบ' : 'บันทึกไว้ในลำดับงานก่อนหน้า'}
-                              </Typography>
-                            </Box>
-                          </Stack>
-                        );
-                      })}
-                    </Stack>
-                  </CardContent>
-                </Card>
+                <JobTimelineCard items={buildStorageTimelineItems(activeRecord)} subtitle="ลำดับการรับงานและอัปเดตความคืบหน้าของไฟล์งาน" />
               </Stack>
             </Box>
 

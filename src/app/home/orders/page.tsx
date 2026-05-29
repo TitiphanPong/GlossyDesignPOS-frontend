@@ -36,6 +36,7 @@ import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import AdminPageContainer from '../components/AdminPageContainer';
+import JobTimelineCard, { type JobTimelineCardItem } from '../components/JobTimelineCard';
 import { commonButtonSx, statusChipSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import { fetchApi, fetchApiJson, isMissingApiBaseError } from '../../../lib/api';
@@ -64,8 +65,7 @@ import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import TimelineRoundedIcon from '@mui/icons-material/TimelineRounded';
-import { ApiOrder, ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, type OrderStatus, type PaymentMethod } from '../../../lib/contracts';
+import { ApiOrder, type OrderStatus, type PaymentMethod } from '../../../lib/contracts';
 
 type PaymentStatus = OrderStatus;
 type SortOrder = 'newest' | 'oldest' | 'high' | 'low';
@@ -73,12 +73,19 @@ type ExportType = 'excel' | 'pdf' | 'sales';
 
 const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+const STATUS_LABELS_TH: Record<PaymentStatus, string> = {
+  pending: 'รอชำระเงิน',
+  partial: 'ชำระบางส่วน',
+  paid: 'ชำระแล้ว',
+  cancelled: 'ยกเลิกงาน',
+};
 const FILTER_STATUS_LABELS: Record<'all' | PaymentStatus, string> = {
   all: 'ทั้งหมด',
-  pending: 'รอดำเนินการ',
-  partial: 'ค้างชำระ',
-  paid: 'ชำระแล้ว',
-  cancelled: 'ยกเลิก',
+  ...STATUS_LABELS_TH,
+};
+const PAYMENT_METHOD_LABELS_TH: Record<PaymentMethod, string> = {
+  cash: 'เงินสด',
+  promptpay: 'พร้อมเพย์',
 };
 const SORT_ORDER_LABELS: Record<SortOrder, string> = {
   newest: 'ล่าสุด',
@@ -145,7 +152,7 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
     const lineTotal = toNumber(item.totalPrice) || toNumber(item.price ?? item.unitPrice) * qty;
     const unitPrice = qty > 0 ? lineTotal / qty : 0;
     return {
-      name: item.name || item.category || 'Untitled product',
+      name: item.name || item.category || 'สินค้าไม่ระบุชื่อ',
       qty,
       price: unitPrice,
     };
@@ -159,19 +166,19 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
   const remaining = Math.max(toNumber(order.remainingTotal), 0);
   const paidAmount = Math.min(total, Math.max(total - remaining, 0));
   const status = order.status;
-  const timeline: TimelineEvent[] = [{ title: 'Order created', at: createdAt }];
+  const timeline: TimelineEvent[] = [{ title: 'สร้างรายการงาน', at: createdAt }];
 
   if (status === 'paid') {
-    timeline.push({ title: 'Payment completed', at: createdAt });
+    timeline.push({ title: 'ชำระเงินเรียบร้อย', at: createdAt });
   }
   if (status === 'pending') {
-    timeline.push({ title: 'Pending payment', at: createdAt });
+    timeline.push({ title: 'รอชำระเงิน', at: createdAt });
   }
   if (status === 'partial') {
-    timeline.push({ title: 'Partial payment received', at: createdAt });
+    timeline.push({ title: 'รับชำระบางส่วนแล้ว', at: createdAt });
   }
   if (status === 'cancelled') {
-    timeline.push({ title: 'Order cancelled', at: createdAt });
+    timeline.push({ title: 'ยกเลิกรายการงาน', at: createdAt });
   }
 
   return {
@@ -230,15 +237,15 @@ async function updateOrderStatus(orderId: string, status: PaymentStatus): Promis
 
 const MotionDiv = motion.div;
 const ORDER_TABLE_STATUS_UI: Record<PaymentStatus, { label: string; dot: string }> = {
-  paid: { label: 'เสร็จสิ้น', dot: '#16A34A' },
-  pending: { label: 'รอดำเนินการ', dot: '#4F46E5' },
-  partial: { label: 'ค้างชำระ', dot: '#B45309' },
-  cancelled: { label: 'ยกเลิก', dot: '#9CA3AF' },
+  paid: { label: STATUS_LABELS_TH.paid, dot: '#16A34A' },
+  pending: { label: STATUS_LABELS_TH.pending, dot: '#4F46E5' },
+  partial: { label: STATUS_LABELS_TH.partial, dot: '#B45309' },
+  cancelled: { label: STATUS_LABELS_TH.cancelled, dot: '#9CA3AF' },
 };
 
 const ORDER_TABLE_PAYMENT_LABEL: Record<PaymentMethod, string> = {
-  cash: 'เงินสด',
-  promptpay: 'โอนเงิน',
+  cash: PAYMENT_METHOD_LABELS_TH.cash,
+  promptpay: PAYMENT_METHOD_LABELS_TH.promptpay,
 };
 
 function formatMoney(amount: number) {
@@ -328,24 +335,88 @@ function formatMonthFilterLabel(month: string): string {
   return `${MONTHS_TH[monthIndex]} ${yearNumber + 543}`;
 }
 
+function buildOrderPaymentTimelineSubtitle(order: OrderRow): string {
+  const remaining = Math.max(order.total - order.paidAmount, 0);
+
+  if (order.status === 'paid') {
+    return `ชำระครบแล้วผ่าน ${PAYMENT_METHOD_LABELS_TH[order.paymentMethod]}`;
+  }
+
+  if (order.status === 'partial') {
+    return `ชำระแล้ว ฿${formatMoney(order.paidAmount)} คงเหลือ ฿${formatMoney(remaining)}`;
+  }
+
+  if (order.status === 'cancelled') {
+    return 'รายการนี้ถูกยกเลิกและหยุดการดำเนินงานแล้ว';
+  }
+
+  return `สถานะปัจจุบัน: ${STATUS_LABELS_TH[order.status]}`;
+}
+
+function buildOrderTimelineItems(order: OrderRow): JobTimelineCardItem[] {
+  const activeStage: 'created' | 'payment' = order.status === 'pending' ? 'created' : 'payment';
+  const productionSubtitle =
+    order.status === 'paid' || order.status === 'partial' ? 'พร้อมส่งต่อเข้ากระบวนการผลิต' : order.status === 'cancelled' ? 'หยุดการดำเนินการตามสถานะรายการงาน' : 'รอเข้าสู่กระบวนการผลิต';
+
+  const steps: Array<{ id: string; title: string; subtitle: string; icon: React.ReactNode; active: boolean }> = [
+    {
+      id: 'order-created',
+      title: 'สร้างรายการงาน',
+      subtitle: 'บันทึกคำสั่งซื้อเข้าสู่ระบบ',
+      icon: <ReceiptLongRoundedIcon sx={{ fontSize: 18 }} />,
+      active: activeStage === 'created',
+    },
+    {
+      id: 'order-confirmed',
+      title: 'ยืนยันข้อมูลลูกค้าและรายการผลิต',
+      subtitle: 'ตรวจสอบรายละเอียดงานก่อนดำเนินการ',
+      icon: <FactCheckRoundedIcon sx={{ fontSize: 18 }} />,
+      active: false,
+    },
+    {
+      id: 'order-payment',
+      title: 'อัปเดตสถานะการชำระเงิน',
+      subtitle: buildOrderPaymentTimelineSubtitle(order),
+      icon: <PaymentsRoundedIcon sx={{ fontSize: 18 }} />,
+      active: activeStage === 'payment',
+    },
+    {
+      id: 'order-production',
+      title: 'เตรียมงานผลิต / พิมพ์',
+      subtitle: productionSubtitle,
+      icon: <PrintRoundedIcon sx={{ fontSize: 18 }} />,
+      active: false,
+    },
+  ];
+
+  return steps.map((step, index) => ({
+    id: step.id,
+    title: step.title,
+    subtitle: step.subtitle,
+    icon: step.icon,
+    active: step.active,
+    pillLabel: step.active ? 'ล่าสุด' : `ขั้นตอน ${index + 1}`,
+  }));
+}
+
 function statusChip(status: PaymentStatus) {
   if (status === 'paid') {
-    return <Chip label={ORDER_STATUS_LABELS[status]} color="success" size="small" sx={statusChipSx} />;
+    return <Chip label={STATUS_LABELS_TH[status]} color="success" size="small" sx={statusChipSx} />;
   }
   if (status === 'pending') {
-    return <Chip label={ORDER_STATUS_LABELS[status]} color="warning" size="small" sx={statusChipSx} />;
+    return <Chip label={STATUS_LABELS_TH[status]} color="warning" size="small" sx={statusChipSx} />;
   }
   if (status === 'partial') {
-    return <Chip label={ORDER_STATUS_LABELS[status]} color="info" size="small" sx={statusChipSx} />;
+    return <Chip label={STATUS_LABELS_TH[status]} color="info" size="small" sx={statusChipSx} />;
   }
-  return <Chip label={ORDER_STATUS_LABELS[status]} color="error" size="small" sx={statusChipSx} />;
+  return <Chip label={STATUS_LABELS_TH[status]} color="error" size="small" sx={statusChipSx} />;
 }
 
 function getLoadOrdersErrorMessage(error: unknown): string {
   if (error instanceof Error && error.message) {
     return error.message;
   }
-  return 'โหลดรายการออเดอร์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+  return 'โหลดรายการงานไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
 }
 
 function matchesSearch(row: OrderRow, search: string): boolean {
@@ -415,8 +486,8 @@ function buildOrderStats(rows: OrderRow[]) {
 }
 
 function downloadCsv(rows: OrderRow[], label: ExportType) {
-  const headers = ['Order Number', 'Customer', 'Phone', 'Date', 'Status', 'Total'];
-  const lines = rows.map(row => [row.orderNumber, row.customerName, row.phoneNumber, dayjs(row.date).format('DD/MM/YYYY HH:mm'), ORDER_STATUS_LABELS[row.status], row.total]);
+  const headers = ['เลขที่งาน', 'ลูกค้า', 'เบอร์โทรศัพท์', 'วันที่', 'สถานะ', 'ยอดรวม'];
+  const lines = rows.map(row => [row.orderNumber, row.customerName, row.phoneNumber, dayjs(row.date).format('DD/MM/YYYY HH:mm'), STATUS_LABELS_TH[row.status], row.total]);
   const csv = [headers, ...lines].map(line => line.map(item => `"${String(item).replaceAll('"', '""')}"`).join(',')).join('\n');
 
   const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
@@ -437,7 +508,7 @@ function printDocument(row: OrderRow, mode: 'receipt' | 'invoice') {
   const content = `
     <html>
       <head>
-        <title>${mode === 'receipt' ? 'Receipt' : 'Tax Invoice'} ${row.orderNumber}</title>
+        <title>${mode === 'receipt' ? 'ใบเสร็จรับเงิน' : 'ใบกำกับภาษี'} ${row.orderNumber}</title>
         <style>
           body { font-family: Arial, sans-serif; padding: 24px; color: #0F172A; }
           .header { border-bottom: 2px solid #1E5EFF; padding-bottom: 12px; margin-bottom: 16px; }
@@ -451,18 +522,18 @@ function printDocument(row: OrderRow, mode: 'receipt' | 'invoice') {
       </head>
       <body>
         <div class="header">
-          <div class="title">CashierPrint - ${mode === 'receipt' ? 'Receipt' : 'Tax Invoice'}</div>
-          <div class="meta">Order Number: ${row.orderNumber} | Customer: ${row.customerName} | Date: ${dayjs(row.date).format('DD/MM/YYYY HH:mm')}</div>
+          <div class="title">Glossy Design - ${mode === 'receipt' ? 'ใบเสร็จรับเงิน' : 'ใบกำกับภาษี'}</div>
+          <div class="meta">เลขที่งาน: ${row.orderNumber} | ลูกค้า: ${row.customerName} | วันที่: ${dayjs(row.date).format('DD/MM/YYYY HH:mm')}</div>
         </div>
         <table>
           <thead>
-            <tr><th>Product</th><th>Qty</th><th>Price</th></tr>
+            <tr><th>รายการ</th><th>จำนวน</th><th>ราคา</th><th>ยอดรวม</th></tr>
           </thead>
           <tbody>
-            ${row.products.map(product => `<tr><td>${product.name}</td><td>${product.qty}</td><td>${formatMoney(product.price)}</td></tr>`).join('')}
+            ${row.products.map(product => `<tr><td>${product.name}</td><td>${product.qty}</td><td>${formatMoney(product.price)}</td><td>${formatMoney(product.qty * product.price)}</td></tr>`).join('')}
           </tbody>
         </table>
-        <div class="sum">Total: ${formatMoney(row.total)} THB</div>
+        <div class="sum">ยอดรวม: ${formatMoney(row.total)} THB</div>
       </body>
     </html>
   `;
@@ -548,9 +619,9 @@ function ExportMenu({ anchorEl, rows, onClose }: Readonly<ExportMenuProps>) {
           },
         },
       }}>
-      <MenuItem onClick={() => handleExport('excel')}>Export Excel</MenuItem>
-      <MenuItem onClick={() => handleExport('pdf')}>Export PDF</MenuItem>
-      <MenuItem onClick={() => handleExport('sales')}>Export Sales Report</MenuItem>
+      <MenuItem onClick={() => handleExport('excel')}>ส่งออก Excel</MenuItem>
+      <MenuItem onClick={() => handleExport('pdf')}>ส่งออก PDF</MenuItem>
+      <MenuItem onClick={() => handleExport('sales')}>ส่งออกรายงานยอดขาย</MenuItem>
     </Menu>
   );
 }
@@ -592,7 +663,7 @@ function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onO
         }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <VisibilityRoundedIcon fontSize="small" />
-          <Typography sx={{ fontSize: 14 }}>View Details</Typography>
+          <Typography sx={{ fontSize: 14 }}>ดูรายละเอียด</Typography>
         </Stack>
       </MenuItem>
       <MenuItem
@@ -602,7 +673,7 @@ function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onO
         }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <PrintRoundedIcon fontSize="small" />
-          <Typography sx={{ fontSize: 14 }}>Print Receipt</Typography>
+          <Typography sx={{ fontSize: 14 }}>พิมพ์ใบเสร็จ</Typography>
         </Stack>
       </MenuItem>
       <MenuItem
@@ -612,7 +683,7 @@ function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onO
         }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <ReceiptRoundedIcon fontSize="small" />
-          <Typography sx={{ fontSize: 14 }}>Print Tax Invoice</Typography>
+          <Typography sx={{ fontSize: 14 }}>พิมพ์ใบกำกับภาษี</Typography>
         </Stack>
       </MenuItem>
       <MenuItem
@@ -625,7 +696,7 @@ function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onO
         }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <CheckCircleRoundedIcon fontSize="small" />
-          <Typography sx={{ fontSize: 14 }}>Confirm Payment</Typography>
+          <Typography sx={{ fontSize: 14 }}>ยืนยันการชำระเงิน</Typography>
         </Stack>
       </MenuItem>
       <MenuItem
@@ -639,7 +710,7 @@ function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onO
         }}>
         <Stack direction="row" spacing={1} alignItems="center">
           <CancelRoundedIcon fontSize="small" />
-          <Typography sx={{ fontSize: 14 }}>Cancel Order</Typography>
+          <Typography sx={{ fontSize: 14 }}>ยกเลิกงาน</Typography>
         </Stack>
       </MenuItem>
     </Menu>
@@ -690,7 +761,7 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
             }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1}>
               <Box>
-                <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>Order Detail</Typography>
+                <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>รายละเอียดงาน</Typography>
                 <Typography sx={{ mt: 0.4, color: '#64748B' }}>
                   {selectedOrder.orderNumber} | {selectedOrder.customerName}
                 </Typography>
@@ -712,7 +783,7 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
                 <Card sx={{ borderRadius: 3, border: '1px solid #FFD8A8', bgcolor: '#FFF8ED', boxShadow: 'none' }}>
                   <CardContent sx={{ py: 1.2 }}>
                     <Typography sx={{ color: '#B9650A', fontWeight: 700 }}>
-                      {selectedOrder.status === 'partial' ? 'Partial payment order' : 'Pending payment order'}: Remaining ฿{formatMoney(Math.max(selectedOrder.total - selectedOrder.paidAmount, 0))}
+                      {selectedOrder.status === 'partial' ? 'งานนี้ชำระบางส่วน' : 'งานนี้รอชำระเงิน'}: คงเหลือ ฿{formatMoney(Math.max(selectedOrder.total - selectedOrder.paidAmount, 0))}
                     </Typography>
                   </CardContent>
                 </Card>
@@ -737,23 +808,15 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
                         <ReceiptLongRoundedIcon sx={{ fontSize: 18 }} />
                       </Avatar>
 
-                      <Typography sx={{ fontWeight: 700 }}>ข้อมูลคำสั่งซื้อ</Typography>
+                      <Typography sx={{ fontWeight: 700 }}>ข้อมูลรายการสั่งผลิต</Typography>
                     </Stack>
 
                     <Typography sx={{ color: '#334155' }}>
-                      <strong>เลขที่คำสั่งซื้อ :</strong> {selectedOrder.orderNumber}
+                      <strong>เลขที่งาน :</strong> {selectedOrder.orderNumber}
                     </Typography>
 
                     <Typography sx={{ color: '#334155' }}>
-                      <strong>วันที่สั่งซื้อ :</strong> {dayjs(selectedOrder.date).format('DD/MM/YYYY HH:mm')}
-                    </Typography>
-
-                    <Typography sx={{ color: '#334155' }}>
-                      <strong>ช่องทางการขาย :</strong> {selectedOrder.salesChannel}
-                    </Typography>
-
-                    <Typography sx={{ color: '#334155' }}>
-                      <strong>พนักงานขาย :</strong> {selectedOrder.staffName}
+                      <strong>วันที่รับงาน :</strong> {dayjs(selectedOrder.date).format('DD/MM/YYYY HH:mm')}
                     </Typography>
                   </Stack>
                 </CardContent>
@@ -783,27 +846,27 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
 
                     <Stack direction="row" spacing={1} alignItems="center">
                       <PersonRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
-                      <Typography>{selectedOrder.customerName}</Typography>
+                      <Typography>ชื่อลูกค้า : {selectedOrder.customerName}</Typography>
                     </Stack>
 
                     <Stack direction="row" spacing={1} alignItems="center">
                       <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
-                      <Typography>{selectedOrder.phoneNumber}</Typography>
+                      <Typography>เบอร์โทรศัพท์ : {selectedOrder.phoneNumber}</Typography>
                     </Stack>
 
                     <Stack direction="row" spacing={1} alignItems="center">
                       <DescriptionRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
-                      <Typography>{selectedOrder.lineId}</Typography>
+                      <Typography>LINE ID : {selectedOrder.lineId}</Typography>
                     </Stack>
 
                     <Stack direction="row" spacing={1} alignItems="center">
                       <EmailRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
-                      <Typography>{selectedOrder.email}</Typography>
+                      <Typography>อีเมล : {selectedOrder.email}</Typography>
                     </Stack>
 
                     <Stack direction="row" spacing={1} alignItems="center">
                       <HomeRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
-                      <Typography>{selectedOrder.address}</Typography>
+                      <Typography>ที่อยู่ : {selectedOrder.address}</Typography>
                     </Stack>
                   </Stack>
                 </CardContent>
@@ -815,15 +878,18 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
                       <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#1F9D63', 0.14), color: '#1F9D63' }}>
                         <AttachMoneyRoundedIcon sx={{ fontSize: 18 }} />
                       </Avatar>
-                      <Typography sx={{ fontWeight: 700 }}>Payment Summary</Typography>
+                      <Stack direction="row" alignItems="center" spacing={1} flexWrap="wrap">
+                        <Typography sx={{ fontWeight: 700 }}>สรุปยอดชำระ</Typography>
+                        <Chip label={PAYMENT_METHOD_LABELS_TH[selectedOrder.paymentMethod]} sx={{ ...statusChipSx, width: 'fit-content', bgcolor: '#EEF8FF', color: '#1D4ED8' }} />
+                      </Stack>
                     </Stack>
 
                     <Stack direction="row" justifyContent="space-between">
-                      <Typography color="text.secondary">Subtotal</Typography>
+                      <Typography color="text.secondary">ยอดก่อนส่วนลด</Typography>
                       <Typography>฿{formatMoney(selectedOrder.subtotal)}</Typography>
                     </Stack>
                     <Stack direction="row" justifyContent="space-between">
-                      <Typography color="text.secondary">Discount</Typography>
+                      <Typography color="text.secondary">ส่วนลด</Typography>
                       <Typography>-฿{formatMoney(selectedOrder.discount)}</Typography>
                     </Stack>
                     <Stack direction="row" justifyContent="space-between">
@@ -832,55 +898,22 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
                     </Stack>
                     <Divider />
                     <Stack direction="row" justifyContent="space-between">
-                      <Typography sx={{ fontWeight: 700 }}>Final Total</Typography>
+                      <Typography sx={{ fontWeight: 700 }}>ยอดสุทธิ</Typography>
                       <Typography sx={{ fontWeight: 800 }}>฿{formatMoney(selectedOrder.total)}</Typography>
                     </Stack>
                     <Stack direction="row" justifyContent="space-between">
-                      <Typography color="text.secondary">Paid Amount</Typography>
+                      <Typography color="text.secondary">ยอดที่ชำระแล้ว</Typography>
                       <Typography sx={{ color: '#18794E', fontWeight: 700 }}>฿{formatMoney(selectedOrder.paidAmount)}</Typography>
                     </Stack>
                     <Stack direction="row" justifyContent="space-between">
-                      <Typography color="text.secondary">Remaining Balance</Typography>
+                      <Typography color="text.secondary">ยอดคงเหลือ</Typography>
                       <Typography sx={{ color: '#B9650A', fontWeight: 700 }}>฿{formatMoney(Math.max(selectedOrder.total - selectedOrder.paidAmount, 0))}</Typography>
                     </Stack>
                   </Stack>
                 </CardContent>
               </Card>
 
-              <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
-                <CardContent>
-                  <Stack spacing={1.1}>
-                    <Stack direction="row" alignItems="center" spacing={1}>
-                      <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#0EA5A3', 0.14), color: '#0EA5A3' }}>
-                        <StorefrontRoundedIcon sx={{ fontSize: 18 }} />
-                      </Avatar>
-                      <Typography sx={{ fontWeight: 700 }}>Payment Method</Typography>
-                    </Stack>
-                    <Chip label={PAYMENT_METHOD_LABELS[selectedOrder.paymentMethod]} sx={{ ...statusChipSx, width: 'fit-content', bgcolor: '#EEF8FF', color: '#1D4ED8' }} />
-                  </Stack>
-                </CardContent>
-              </Card>
-
-              <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
-                <CardContent>
-                  <Stack spacing={1.1}>
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <TimelineRoundedIcon sx={{ color: '#3A73F7', fontSize: 19 }} />
-                      <Typography sx={{ fontWeight: 700 }}>Order Timeline</Typography>
-                    </Stack>
-                    {selectedOrder.timeline.map((event, index) => (
-                      <Stack key={`${event.title}-${event.at}-${index}`} direction="row" spacing={1.1} alignItems="flex-start">
-                        <Box sx={{ width: 9, height: 9, borderRadius: 99, mt: 0.85, bgcolor: '#3A73F7', flexShrink: 0 }} />
-                        <Box>
-                          <Typography sx={{ color: '#1E293B', fontWeight: 600 }}>{event.title}</Typography>
-                          <Typography sx={{ color: '#94A3B8', fontSize: 12 }}>{dayjs(event.at).format('DD/MM/YYYY HH:mm')}</Typography>
-                          {event.note ? <Typography sx={{ color: '#64748B', fontSize: 12.4 }}>{event.note}</Typography> : null}
-                        </Box>
-                      </Stack>
-                    ))}
-                  </Stack>
-                </CardContent>
-              </Card>
+              <JobTimelineCard items={buildOrderTimelineItems(selectedOrder)} />
             </Stack>
           </Box>
 
@@ -904,7 +937,7 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
                   onMarkAsPaid(selectedOrder.id);
                 }}
                 sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
-                Confirm Payment
+                ยืนยันการชำระเงิน
               </Button>
               <Button
                 variant="outlined"
@@ -914,7 +947,7 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
                   onCancelOrder(selectedOrder.id);
                 }}
                 sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
-                Cancel Order
+                ยกเลิกงาน
               </Button>
             </Stack>
           </Box>
@@ -1075,21 +1108,21 @@ export default function OrderManagementPage() {
             <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
               {missingApiBase ? (
                 <Box sx={{ mb: 2.2 }}>
-                  <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้ารายการออเดอร์ดึงข้อมูลจากระบบได้" />
+                  <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้ารายการงานดึงข้อมูลจากระบบได้" />
                 </Box>
               ) : null}
 
               <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
                 <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
-                  <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Orders</Typography>
-                  <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>ติดตามออเดอร์ลูกค้า สถานะการชำระเงิน งานพิมพ์ และจัดการเอกสารการขายแบบครบวงจร</Typography>
-                  <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>Last synced {lastUpdated ? lastUpdated.format('DD/MM/YYYY HH:mm') : '-'}</Typography>
+                  <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>รายการงาน</Typography>
+                  <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>ติดตามรายการงานลูกค้า สถานะการชำระเงิน งานพิมพ์ และเอกสารการขายได้ในหน้าจอเดียว</Typography>
+                  <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>อัปเดตล่าสุด {lastUpdated ? lastUpdated.format('DD/MM/YYYY HH:mm') : '-'}</Typography>
                   <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{formatThaiFullDate(lastUpdated)}</Typography>
                   {loadError ? <Typography sx={{ mt: 0.8, color: '#C62828', fontSize: 12.5 }}>{loadError}</Typography> : null}
                 </Box>
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ minHeight: { md: 110 } }}>
-                  <Tooltip title="Notifications">
+                  <Tooltip title="การแจ้งเตือน">
                     <IconButton
                       sx={{
                         borderRadius: 3,
@@ -1120,7 +1153,7 @@ export default function OrderManagementPage() {
                       color: '#2A4365',
                       textTransform: 'none',
                     }}>
-                    {isLoading ? 'Refreshing...' : 'Refresh'}
+                    {isLoading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
                   </Button>
 
                   <Button
@@ -1135,7 +1168,7 @@ export default function OrderManagementPage() {
                       color: '#2A4365',
                       textTransform: 'none',
                     }}>
-                    Export Report
+                    ส่งออกรายงาน
                   </Button>
 
                   <Button
@@ -1150,7 +1183,7 @@ export default function OrderManagementPage() {
                       bgcolor: '#2B62EE',
                       boxShadow: '0 14px 28px rgba(43, 98, 238, 0.34)',
                     }}>
-                    Create New Order
+                    สร้างรายการงานใหม่
                   </Button>
                 </Stack>
               </Stack>
@@ -1165,19 +1198,19 @@ export default function OrderManagementPage() {
             gap: 1.4,
           }}>
           <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
-            <StatCard title="Total Sales" value={`฿${formatMoney(stats.totalSales)}`} subtitle="ยอดขายรวมทั้งหมด" tone="#1E5EFF" icon={<AttachMoneyRoundedIcon />} />
+            <StatCard title="ยอดขายรวม" value={`฿${formatMoney(stats.totalSales)}`} subtitle="ยอดขายรวมทั้งหมด" tone="#1E5EFF" icon={<AttachMoneyRoundedIcon />} />
           </MotionDiv>
           <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}>
-            <StatCard title="Pending Payments" value={`฿${formatMoney(stats.pendingPayments)}`} subtitle="ยอดที่รอยืนยันการชำระ" tone="#F08C00" icon={<PaymentsRoundedIcon />} />
+            <StatCard title="ยอดรอชำระ" value={`฿${formatMoney(stats.pendingPayments)}`} subtitle="ยอดที่รอชำระเงิน" tone="#F08C00" icon={<PaymentsRoundedIcon />} />
           </MotionDiv>
           <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
-            <StatCard title="Paid Orders" value={`${stats.paidOrders}`} subtitle="รายการที่ชำระแล้ว" tone="#1F9D63" icon={<FactCheckRoundedIcon />} />
+            <StatCard title="งานที่ชำระแล้ว" value={`${stats.paidOrders}`} subtitle="จำนวนงานที่ชำระเรียบร้อย" tone="#1F9D63" icon={<FactCheckRoundedIcon />} />
           </MotionDiv>
           <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.21 }}>
-            <StatCard title="Orders Today" value={`${stats.ordersToday}`} subtitle="ออเดอร์ในวันนี้" tone="#5C6AC4" icon={<TodayRoundedIcon />} />
+            <StatCard title="งานวันนี้" value={`${stats.ordersToday}`} subtitle="จำนวนงานที่รับวันนี้" tone="#5C6AC4" icon={<TodayRoundedIcon />} />
           </MotionDiv>
           <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}>
-            <StatCard title="Orders This Month" value={`${stats.ordersThisMonth}`} subtitle="ออเดอร์ประจำเดือน" tone="#2563EB" icon={<CalendarMonthRoundedIcon />} />
+            <StatCard title="งานเดือนนี้" value={`${stats.ordersThisMonth}`} subtitle="จำนวนงานประจำเดือน" tone="#2563EB" icon={<CalendarMonthRoundedIcon />} />
           </MotionDiv>
         </Box>
 
@@ -1192,7 +1225,7 @@ export default function OrderManagementPage() {
             <Stack spacing={1.6}>
               <Stack direction="row" alignItems="center" spacing={1}>
                 <TuneRoundedIcon sx={{ color: '#3866E8', fontSize: 20 }} />
-                <Typography sx={{ color: '#102A43', fontWeight: 800, fontSize: 15 }}>ค้นหาและตัวกรอง</Typography>
+                <Typography sx={{ color: '#102A43', fontWeight: 800, fontSize: 15 }}>ค้นหารายการงาน</Typography>
               </Stack>
 
               <Box
@@ -1205,7 +1238,7 @@ export default function OrderManagementPage() {
                   size="small"
                   value={search}
                   onChange={event => setSearch(event.target.value)}
-                  placeholder="ค้นหาชื่อลูกค้า / เลขออเดอร์ / เบอร์โทร"
+                  placeholder="ค้นหาชื่อลูกค้า / เลขที่งาน / เบอร์โทรศัพท์"
                   slotProps={{
                     input: {
                       startAdornment: (
@@ -1296,8 +1329,8 @@ export default function OrderManagementPage() {
               bgcolor: '#FFFFFF',
             }}>
             <Box>
-              <Typography sx={{ fontSize: 16, fontWeight: 800, color: '#1A1035', letterSpacing: '-0.2px' }}>ออเดอร์ทั้งหมด</Typography>
-              <Typography sx={{ mt: 0.35, fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>{filteredRows.length} รายการตามเงื่อนไขล่าสุด</Typography>
+              <Typography sx={{ fontSize: 16, fontWeight: 800, color: '#1A1035', letterSpacing: '-0.2px' }}>รายการงานทั้งหมด</Typography>
+              <Typography sx={{ mt: 0.35, fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>{filteredRows.length} รายการตามตัวกรองล่าสุด</Typography>
             </Box>
             <Chip label={`${filteredRows.length} รายการ`} sx={{ borderRadius: '999px', bgcolor: '#F5F0FF', color: '#6C4DFF', fontWeight: 700 }} />
           </Box>
@@ -1308,9 +1341,9 @@ export default function OrderManagementPage() {
                 <EmptyState
                   compact
                   icon={<SearchRoundedIcon fontSize="small" />}
-                  eyebrow="Orders"
-                  title="ไม่พบรายการออเดอร์ที่ตรงกับเงื่อนไข"
-                  subtitle="ลองเปลี่ยนคำค้นหา ตัวกรอง หรือช่วงเวลาเพื่อดูรายการเพิ่มเติม"
+                  eyebrow="รายการงาน"
+                  title="ไม่พบรายการงานที่ตรงกับเงื่อนไข"
+                  subtitle="ลองเปลี่ยนคำค้นหา ตัวกรอง หรือช่วงเวลาเพื่อดูรายการงานเพิ่มเติม"
                   sx={{ py: 4.5 }}
                 />
               ) : null}
@@ -1360,14 +1393,14 @@ export default function OrderManagementPage() {
                         whiteSpace: 'nowrap',
                       },
                     }}>
-                    <TableCell>ออเดอร์</TableCell>
+                    <TableCell>เลขที่งาน</TableCell>
                     <TableCell>ลูกค้า</TableCell>
-                    <TableCell>รายการงาน</TableCell>
+                    <TableCell>รายการ</TableCell>
                     <TableCell>สถานะ</TableCell>
                     <TableCell align="right">ยอดรวม</TableCell>
-                    <TableCell align="right">ค้างชำระ</TableCell>
-                    <TableCell>ชำระ</TableCell>
-                    <TableCell>เวลา</TableCell>
+                    <TableCell align="right">ยอดคงเหลือ</TableCell>
+                    <TableCell>วิธีชำระเงิน</TableCell>
+                    <TableCell>วันที่รับงาน</TableCell>
                     <TableCell align="right">จัดการ</TableCell>
                   </TableRow>
                 </TableHead>
@@ -1378,9 +1411,9 @@ export default function OrderManagementPage() {
                         <EmptyState
                           compact
                           icon={<SearchRoundedIcon fontSize="small" />}
-                          eyebrow="Orders"
-                          title="ไม่พบรายการออเดอร์ที่ตรงกับเงื่อนไข"
-                          subtitle="ลองเปลี่ยนคำค้นหา ตัวกรอง หรือช่วงเวลาเพื่อดูรายการเพิ่มเติม"
+                          eyebrow="รายการงาน"
+                          title="ไม่พบรายการงานที่ตรงกับเงื่อนไข"
+                          subtitle="ลองเปลี่ยนคำค้นหา ตัวกรอง หรือช่วงเวลาเพื่อดูรายการงานเพิ่มเติม"
                         />
                       </TableCell>
                     </TableRow>
@@ -1411,7 +1444,7 @@ export default function OrderManagementPage() {
                         }}>
                         <TableCell>
                           <Typography sx={{ display: 'inline-block', fontWeight: 700, color: '#6C4DFF', fontVariantNumeric: 'tabular-nums' }}>{row.orderNumber}</Typography>
-                          <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.vat > 0 ? 'ใบกำกับภาษี' : 'บิลทั่วไป'}</Typography>
+                          <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.vat > 0 ? 'ใบกำกับภาษี' : 'ใบเสร็จทั่วไป'}</Typography>
                         </TableCell>
 
                         <TableCell>
@@ -1434,7 +1467,7 @@ export default function OrderManagementPage() {
                             </Box>
                             <Box sx={{ minWidth: 0 }}>
                               <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#374151', lineHeight: 1.3 }}>{row.customerName}</Typography>
-                              <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.phoneNumber || 'ไม่มีเบอร์โทร'}</Typography>
+                              <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.phoneNumber || 'ไม่มีเบอร์โทรศัพท์'}</Typography>
                             </Box>
                           </Box>
                         </TableCell>
@@ -1476,7 +1509,7 @@ export default function OrderManagementPage() {
                               fontVariantNumeric: 'tabular-nums',
                               whiteSpace: 'nowrap',
                             }}>
-                            {remaining > 0 ? formatTableCurrency(remaining) : 'ไม่มีค้าง'}
+                            {remaining > 0 ? formatTableCurrency(remaining) : 'ไม่มีคงเหลือ'}
                           </Typography>
                           {row.vat > 0 ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>VAT {formatTableCurrency(row.vat)}</Typography> : null}
                         </TableCell>
@@ -1492,12 +1525,12 @@ export default function OrderManagementPage() {
 
                         <TableCell align="right" onClick={event => event.stopPropagation()}>
                           <Stack direction="row" spacing={0.4} justifyContent="flex-end">
-                            <Tooltip title="View Details">
+                            <Tooltip title="ดูรายละเอียด">
                               <IconButton size="small" onClick={() => openDrawer(row)}>
                                 <VisibilityRoundedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
-                            <Tooltip title="Actions">
+                            <Tooltip title="จัดการ">
                               <IconButton size="small" onClick={event => openRowMenu(event, row.id)}>
                                 <MoreHorizRoundedIcon fontSize="small" />
                               </IconButton>
@@ -1523,7 +1556,8 @@ export default function OrderManagementPage() {
               setPage(0);
             }}
             rowsPerPageOptions={[5, 8, 10, 20]}
-            labelRowsPerPage="Rows per page"
+            labelRowsPerPage="จำนวนรายการต่อหน้า"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`}
           />
         </Card>
       </Stack>
