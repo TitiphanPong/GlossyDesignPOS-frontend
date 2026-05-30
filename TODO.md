@@ -178,6 +178,8 @@ Important scope note:
 
 ### 4. Unused/alternate landing hero component should be cleaned up
 
+- Status: Complete (landing hero consolidated into `HeroSection` on 2026-05-31)
+
 - Title: Resolve unused `HeroSection` component
 - File path(s) involved:
   - `src/app/landing/sections/HeroSection.tsx`
@@ -363,6 +365,8 @@ Important scope note:
   - Jarring blank flashes on admin route load.
 
 ### 2. Replace placeholder landing content with real business links/content
+
+- Status: Complete (landing contact CTA and legal links cleaned up on 2026-05-31)
 
 - Title: Clean up landing page placeholder CTAs and footer links
 - File path(s) involved:
