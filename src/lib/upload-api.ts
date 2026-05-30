@@ -18,6 +18,9 @@ export interface UploadPayload {
   phone: string;
   jobType: string;
   note?: string;
+  statusNote?: string;
+  batchId?: string;
+  stage?: 'waiting-download' | 'pending' | 'completed';
 }
 
 export async function uploadFile(file: File, payload: UploadPayload, signal?: AbortSignal): Promise<UploadResponse> {
@@ -29,6 +32,18 @@ export async function uploadFile(file: File, payload: UploadPayload, signal?: Ab
 
   if (payload.note) {
     formData.append('note', payload.note);
+  }
+
+  if (payload.statusNote) {
+    formData.append('statusNote', payload.statusNote);
+  }
+
+  if (payload.batchId) {
+    formData.append('batchId', payload.batchId);
+  }
+
+  if (payload.stage) {
+    formData.append('stage', payload.stage);
   }
 
   return fetchApiJson<UploadResponse>('/uploads', {

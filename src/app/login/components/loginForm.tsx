@@ -33,21 +33,9 @@ const LoginForm: React.FC<LoginFormProps> = ({ username, password, onUsernameCha
             <input id="login-password" type="password" className={styles.input} placeholder="Enter your Password" value={password} onChange={onPasswordChange} />
           </div>
 
-          <div className={styles['flex-row']} style={{ marginLeft: '5px' }}>
-            <div>
-              <input id="remember-me" type="checkbox" />
-              <label htmlFor="remember-me"> Remember me </label>
-            </div>
-          </div>
-
           <button className={styles['button-submit']} type="submit">
             Sign In
           </button>
-
-          <p className={styles.p}>
-            Don&apos;t have an account? <span className={styles.span}>Sign Up</span>
-          </p>
-          <p className={styles.p + ' ' + styles.line}></p>
         </form>
       </div>
     </StyledWrapper>

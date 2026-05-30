@@ -4,8 +4,9 @@ import { use, useEffect, useState } from 'react';
 import { Box, Button, Card, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import { InvoiceLoadingState, MissingApiConfigState } from '../../components/dashboardUi';
-import { fetchApiJson, isMissingApiBaseError } from '../../../../lib/api';
-import { type ApiOrder, type NormalizedInvoiceOrder, normalizeApiOrderForInvoice } from '../../../../lib/contracts';
+import { isMissingApiBaseError } from '../../../../lib/api';
+import { type NormalizedInvoiceOrder, normalizeApiOrderForInvoice } from '../../../../lib/contracts';
+import { fetchOrderById } from '../../../../lib/orders';
 
 function InvoiceCopy({ title, order }: Readonly<{ title: string; order: NormalizedInvoiceOrder }>) {
   return (
@@ -60,7 +61,7 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const data = await fetchApiJson<ApiOrder>(`/orders/${orderId}`);
+        const data = await fetchOrderById(orderId);
         setOrder(normalizeApiOrderForInvoice(data));
         setLoadError(null);
       } catch (error) {

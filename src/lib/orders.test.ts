@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createOrder } from './orders';
+import { createOrder, fetchOrderById, fetchOrders, payRemainingBalance } from './orders';
 
 test('createOrder accepts a direct order response with orderNumber', async () => {
   const originalFetch = globalThis.fetch;
@@ -87,6 +87,106 @@ test('createOrder falls back to orderId when backend omits orderNumber', async (
     assert.equal(result.orderId, 'legacy-003');
     assert.equal(result.orderNumber, 'legacy-003');
     assert.equal(result._id, 'abc125');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('payRemainingBalance accepts a wrapped updated order response', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+
+  globalThis.fetch = (async () =>
+    new Response(
+      JSON.stringify({
+        order: {
+          _id: 'abc126',
+          orderId: 'legacy-004',
+          orderNumber: 'ORD-20260527-0004',
+          payment: 'promptpay',
+          status: 'paid',
+          createdAt: '2026-05-31T10:00:00.000Z',
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )) as typeof fetch;
+
+  try {
+    const result = await payRemainingBalance('abc126', { amount: 120, method: 'promptpay' });
+    assert.equal(result.orderNumber, 'ORD-20260527-0004');
+    assert.equal(result.status, 'paid');
+    assert.equal(result._id, 'abc126');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('fetchOrders accepts a wrapped orders list response', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+
+  globalThis.fetch = (async () =>
+    new Response(
+      JSON.stringify({
+        data: {
+          orders: [
+            {
+              _id: 'abc127',
+              orderId: 'legacy-005',
+              orderNumber: 'ORD-20260527-0005',
+              payment: 'cash',
+              status: 'pending',
+              createdAt: '2026-05-31T10:00:00.000Z',
+            },
+          ],
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )) as typeof fetch;
+
+  try {
+    const result = await fetchOrders();
+    assert.equal(result.length, 1);
+    assert.equal(result[0]?.orderNumber, 'ORD-20260527-0005');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('fetchOrderById accepts a wrapped single-order response', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+
+  globalThis.fetch = (async () =>
+    new Response(
+      JSON.stringify({
+        data: {
+          order: {
+            _id: 'abc128',
+            orderId: 'legacy-006',
+            orderNumber: 'ORD-20260527-0006',
+            payment: 'cash',
+            status: 'paid',
+            createdAt: '2026-05-31T10:00:00.000Z',
+          },
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )) as typeof fetch;
+
+  try {
+    const result = await fetchOrderById('abc128');
+    assert.equal(result.orderNumber, 'ORD-20260527-0006');
+    assert.equal(result._id, 'abc128');
   } finally {
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;

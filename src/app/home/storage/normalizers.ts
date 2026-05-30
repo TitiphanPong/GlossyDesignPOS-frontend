@@ -27,8 +27,11 @@ export type UploadApiRecord = {
   lineId?: string;
   line?: string;
   note?: string;
+  statusNote?: string;
   category?: string;
   jobType?: string;
+  batchId?: string;
+  stage?: string;
   files?: Array<UploadApiFile | string>;
   createdAt?: string;
   status?: string;
@@ -81,16 +84,26 @@ function formatBytes(value?: number) {
   return `${(value / 1024).toFixed(0)} KB`;
 }
 
-function extractUploadMetadata(note?: string): { batchId?: string; stage?: 'waiting' | 'pending'; cleanNote: string } {
-  const rawNote = String(note ?? '');
+function normalizeStage(value?: string): 'waiting' | 'pending' | undefined {
+  const stage = String(value ?? '').toLowerCase().trim();
+  if (stage === 'waiting' || stage === 'waiting-download') return 'waiting';
+  if (stage === 'pending') return 'pending';
+  return undefined;
+}
+
+function extractUploadMetadata(raw: Pick<UploadApiRecord, 'note' | 'statusNote' | 'batchId' | 'stage'>): { batchId?: string; stage?: 'waiting' | 'pending'; cleanNote: string } {
+  const structuredBatchId = typeof raw.batchId === 'string' && raw.batchId.trim() ? raw.batchId.trim() : undefined;
+  const structuredStage = normalizeStage(raw.stage);
+  const structuredNote = typeof raw.statusNote === 'string' ? raw.statusNote.trim() : '';
+  const rawNote = String(raw.note ?? '');
   const batchMatch = rawNote.match(BATCH_MARKER_PATTERN);
   const stageMatch = rawNote.match(STAGE_MARKER_PATTERN);
   const cleanNote = rawNote.replace(BATCH_MARKER_PATTERN, '').replace(STAGE_MARKER_PATTERN, '').replace(/\n{3,}/g, '\n\n').trim();
 
   return {
-    batchId: batchMatch?.[1],
-    stage: stageMatch?.[1] === 'pending' ? 'pending' : stageMatch?.[1] === 'waiting-download' ? 'waiting' : undefined,
-    cleanNote,
+    batchId: structuredBatchId ?? batchMatch?.[1],
+    stage: structuredStage ?? (stageMatch?.[1] === 'pending' ? 'pending' : stageMatch?.[1] === 'waiting-download' ? 'waiting' : undefined),
+    cleanNote: structuredNote || cleanNote,
   };
 }
 
@@ -136,7 +149,7 @@ export function normalizeRecord(raw: UploadApiRecord): StorageRow {
   const id = String(raw._id ?? raw.id ?? raw.uploadId ?? `upload-${Math.random().toString(36).slice(2)}`);
   const files = normalizeFiles(raw.files);
   const createdAt = String(raw.createdAt ?? new Date().toISOString());
-  const { batchId, stage, cleanNote } = extractUploadMetadata(raw.note);
+  const { batchId, stage, cleanNote } = extractUploadMetadata(raw);
 
   return {
     id,

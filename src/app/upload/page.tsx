@@ -123,7 +123,7 @@ function getValidationError(file: File): string | null {
   return null;
 }
 
-function buildUploadNote(jobNote: string, batchId: string): string {
+function buildLegacyUploadNote(jobNote: string, batchId: string): string {
   const note = jobNote.trim();
   return note ? `${note}\n\n[[batch:${batchId}]]\n[[stage:waiting-download]]` : `[[batch:${batchId}]]\n[[stage:waiting-download]]`;
 }
@@ -408,7 +408,7 @@ export default function UploadPage() {
     if (isUploading || envError) return;
 
     const batchId = createUploadBatchId();
-    const note = buildUploadNote(trimmedJobNote, batchId);
+    const legacyNote = buildLegacyUploadNote(trimmedJobNote, batchId);
     const jobType = uploadJobTypeMap[selectedJobType] ?? 'Other';
 
     markJobFieldsTouched();
@@ -434,7 +434,10 @@ export default function UploadPage() {
         customerName: trimmedCustomerName,
         phone: trimmedPhone,
         jobType,
-        note,
+        note: legacyNote,
+        statusNote: trimmedJobNote || undefined,
+        batchId,
+        stage: 'waiting-download',
       },
       upload: uploadFile,
     });

@@ -4,7 +4,8 @@ import { Box } from '@mui/material';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiOrder, type OrderStatus } from '../../lib/contracts';
-import { fetchApiJson, hasApiBaseUrl } from '../../lib/api';
+import { hasApiBaseUrl } from '../../lib/api';
+import { fetchOrders } from '../../lib/orders';
 
 import DashboardHeader from './components/dashboard/DashboardHeader';
 import KPICards from './components/dashboard/KPICards';
@@ -15,8 +16,6 @@ import OrderStatusSummary from './components/dashboard/OrderStatusSummary';
 import RecentOrdersTable from './components/dashboard/RecentOrdersTable';
 import AdminPageContainer from './components/AdminPageContainer';
 import { LoadingState, MissingApiConfigState } from './components/dashboardUi';
-
-const isApiOrderArray = (value: unknown): value is ApiOrder[] => Array.isArray(value);
 
 type DashboardKpiItem = {
   label: string;
@@ -72,16 +71,12 @@ export default function DashboardPage() {
 
     setMissingApiBase(false);
     setLoading(true);
-    const ordersRequest = fetchApiJson<unknown>('/orders');
-
-    Promise.all([ordersRequest])
+    Promise.all([fetchOrders()])
       .then(([orders]) => {
         setLoadError(null);
         setLastSyncedAt(new Date());
-        if (isApiOrderArray(orders)) {
-          const sorted = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-          setOrders(sorted);
-        }
+        const sorted = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setOrders(sorted);
       })
       .catch(error => {
         console.error('Dashboard load failed:', error);

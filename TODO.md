@@ -32,6 +32,7 @@ Important scope note:
 - Backend still needs to deduplicate repeated `POST /orders` requests by `clientDraftId` / `Idempotency-Key`.
 - Backend should keep accepting legacy cart field variants during transition, but should converge on one canonical shape.
 - Upload endpoints should validate and persist real `customerName`, `phone`, `jobType`, and `note` fields from the public upload flow.
+- Frontend now also sends structured upload workflow metadata via `batchId`, `stage`, and `statusNote`; backend should persist and return those fields so note-marker fallbacks can be removed later.
 
 ## Top 10 Most Important TODOs First
 
@@ -142,6 +143,8 @@ Important scope note:
 
 ### 2. POS filter/search state is effectively dead
 
+- Status: Complete (frontend POS search and category filters wired on 2026-05-31)
+
 - Title: Wire up real POS search and category filtering
 - File path(s) involved:
   - `src/app/home/posseller/page.tsx`
@@ -158,6 +161,8 @@ Important scope note:
   - Poor cashier usability as product count increases.
 
 ### 3. Login screen contains misleading placeholder UX
+
+- Status: Complete (frontend cleaned up on 2026-05-31)
 
 - Title: Remove or implement fake login affordances
 - File path(s) involved:

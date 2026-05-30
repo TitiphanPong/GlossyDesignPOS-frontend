@@ -131,11 +131,9 @@ export default function CustomerScreen() {
 
     handleStorage();
     const unsubscribe = subscribePendingOrderDraft(handleStorage);
-    const interval = setInterval(handleStorage, 500);
 
     return () => {
       unsubscribe();
-      clearInterval(interval);
     };
   }, []);
 

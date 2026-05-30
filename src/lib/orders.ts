@@ -58,6 +58,46 @@ function extractApiOrder(value: unknown): ApiOrder | null {
   return null;
 }
 
+function extractApiOrderArray(value: unknown): ApiOrder[] | null {
+  if (Array.isArray(value)) {
+    const normalizedOrders = value.map(extractApiOrder).filter((order): order is ApiOrder => Boolean(order));
+    return normalizedOrders.length > 0 || value.length === 0 ? normalizedOrders : null;
+  }
+
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  const wrappedCandidates = [
+    value.data,
+    value.orders,
+    value.items,
+    value.result,
+    value.payload,
+    isRecord(value.data) ? value.data.orders : null,
+    isRecord(value.result) ? value.result.orders : null,
+    isRecord(value.payload) ? value.payload.orders : null,
+  ];
+
+  for (const candidate of wrappedCandidates) {
+    if (!Array.isArray(candidate)) {
+      continue;
+    }
+
+    const normalizedOrders = candidate.map(extractApiOrder).filter((order): order is ApiOrder => Boolean(order));
+    if (normalizedOrders.length > 0 || candidate.length === 0) {
+      return normalizedOrders;
+    }
+  }
+
+  return null;
+}
+
+type RemainingPaymentPayload = {
+  amount: number;
+  method: ApiOrder['payment'];
+};
+
 export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (typeof payload.clientDraftId === 'string' && payload.clientDraftId.trim().length > 0) {
@@ -77,4 +117,41 @@ export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder>
   }
 
   return createdOrder;
+}
+
+export async function payRemainingBalance(orderId: string, payload: RemainingPaymentPayload): Promise<ApiOrder> {
+  const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}/payments`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
+
+  const updatedOrder = extractApiOrder(responseBody);
+  if (!updatedOrder) {
+    throw new Error('Backend did not return a valid updated order');
+  }
+
+  return updatedOrder;
+}
+
+export async function fetchOrders(): Promise<ApiOrder[]> {
+  const responseBody = await fetchApiJson<unknown>('/orders', { cache: 'no-store' });
+  const orders = extractApiOrderArray(responseBody);
+
+  if (!orders) {
+    throw new Error('Backend did not return a valid orders list');
+  }
+
+  return orders;
+}
+
+export async function fetchOrderById(orderId: string): Promise<ApiOrder> {
+  const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}`);
+  const order = extractApiOrder(responseBody);
+
+  if (!order) {
+    throw new Error('Backend did not return a valid order');
+  }
+
+  return order;
 }

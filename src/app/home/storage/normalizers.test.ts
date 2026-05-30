@@ -106,6 +106,21 @@ test('normalizeRecord strips hidden batch markers from notes', () => {
   assert.equal(record.notes, 'เป็นสี 2 ด้าน');
 });
 
+test('normalizeRecord prefers structured metadata fields over legacy note markers', () => {
+  const record = normalizeRecord({
+    id: 'upload-structured',
+    note: 'legacy note\n\n[[batch:legacy-batch]]\n[[stage:waiting-download]]',
+    statusNote: 'structured note',
+    batchId: 'batch-structured',
+    stage: 'pending',
+    files: [],
+  });
+
+  assert.equal(record.batchId, 'batch-structured');
+  assert.equal(record.status, 'pending');
+  assert.equal(record.notes, 'structured note');
+});
+
 test('groupStorageRows merges files from the same batch into one row', () => {
   const rows = [
     normalizeRecord({

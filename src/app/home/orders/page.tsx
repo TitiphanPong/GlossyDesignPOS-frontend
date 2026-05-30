@@ -39,7 +39,8 @@ import AdminPageContainer from '../components/AdminPageContainer';
 import JobTimelineCard, { type JobTimelineCardItem } from '../components/JobTimelineCard';
 import { commonButtonSx, statusChipSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
-import { fetchApi, fetchApiJson, isMissingApiBaseError } from '../../../lib/api';
+import { fetchApi, isMissingApiBaseError } from '../../../lib/api';
+import { fetchOrders } from '../../../lib/orders';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
@@ -65,6 +66,7 @@ import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
+import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { ApiOrder, getOrderDisplayNumber, normalizeApiCartItem, normalizeApiOrderAmounts, type OrderStatus, type PaymentMethod } from '../../../lib/contracts';
 
 type PaymentStatus = OrderStatus;
@@ -129,8 +131,6 @@ type OrderRow = {
   products: OrderProduct[];
   timeline: TimelineEvent[];
 };
-
-const isApiOrderArray = (value: unknown): value is ApiOrder[] => Array.isArray(value);
 
 function toNumber(value: unknown): number {
   if (typeof value === 'number' && Number.isFinite(value)) {
@@ -202,12 +202,8 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
 }
 
 async function fetchOrderRows(): Promise<OrderRow[]> {
-  const payload = await fetchApiJson<unknown>('/orders', { cache: 'no-store' });
-  if (!isApiOrderArray(payload)) {
-    throw new Error('invalid_orders_payload');
-  }
-
-  return payload.map(mapApiOrderToRow);
+  const orders = await fetchOrders();
+  return orders.map(mapApiOrderToRow);
 }
 
 async function updateOrderStatus(orderId: string, status: PaymentStatus): Promise<void> {
@@ -720,10 +716,11 @@ type OrderDetailDrawerProps = {
   updatingOrderId: string | null;
   onClose: () => void;
   onMarkAsPaid: (id: string) => void;
+  onOpenPayRemaining: (order: OrderRow) => void;
   onCancelOrder: (id: string) => void;
 };
 
-function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawer, updatingOrderId, onClose, onMarkAsPaid, onCancelOrder }: Readonly<OrderDetailDrawerProps>) {
+function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawer, updatingOrderId, onClose, onMarkAsPaid, onOpenPayRemaining, onCancelOrder }: Readonly<OrderDetailDrawerProps>) {
   return (
     <Drawer
       anchor={isMobile ? 'bottom' : 'right'}
@@ -924,6 +921,18 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
               backdropFilter: 'blur(10px)',
             }}>
             <Stack direction={{ xs: 'column', sm: 'row' }} flexWrap="wrap" gap={1}>
+              {selectedOrder.status === 'partial' ? (
+                <Button
+                  variant="outlined"
+                  startIcon={<PaymentsRoundedIcon />}
+                  disabled={updatingOrderId === selectedOrder.id}
+                  onClick={() => {
+                    onOpenPayRemaining(selectedOrder);
+                  }}
+                  sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
+                  รับชำระยอดคงเหลือ
+                </Button>
+              ) : null}
               <Button
                 variant="contained"
                 startIcon={<CheckCircleRoundedIcon />}
@@ -975,6 +984,7 @@ export default function OrderManagementPage() {
   const [exportAnchor, setExportAnchor] = React.useState<null | HTMLElement>(null);
   const [lastUpdated, setLastUpdated] = React.useState<dayjs.Dayjs | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = React.useState<string | null>(null);
+  const [payRemainingTarget, setPayRemainingTarget] = React.useState<OrderRow | null>(null);
 
   const loadOrders = React.useCallback(async () => {
     setIsLoading(true);
@@ -1081,6 +1091,17 @@ export default function OrderManagementPage() {
       }
     },
     [loadOrders, rowsById]
+  );
+
+  const handlePayRemainingSuccess = React.useCallback(
+    async (updatedOrder: ApiOrder) => {
+      const updatedRow = mapApiOrderToRow(updatedOrder);
+      setRows(prev => prev.map(row => (row.id === updatedRow.id ? updatedRow : row)));
+      setSelectedOrder(prev => (prev && prev.id === updatedRow.id ? updatedRow : prev));
+      setPayRemainingTarget(null);
+      await loadOrders();
+    },
+    [loadOrders]
   );
 
   React.useEffect(() => {
@@ -1583,8 +1604,20 @@ export default function OrderManagementPage() {
         onMarkAsPaid={targetId => {
           void markAsPaid(targetId);
         }}
+        onOpenPayRemaining={order => {
+          setPayRemainingTarget(order);
+        }}
         onCancelOrder={targetId => {
           void cancelOrder(targetId);
+        }}
+      />
+      <PayRemainingModal
+        open={Boolean(payRemainingTarget)}
+        orderId={payRemainingTarget?.id ?? ''}
+        remaining={payRemainingTarget ? Math.max(payRemainingTarget.total - payRemainingTarget.paidAmount, 0) : 0}
+        onClose={() => setPayRemainingTarget(null)}
+        onSuccess={updatedOrder => {
+          void handlePayRemainingSuccess(updatedOrder);
         }}
       />
     </AdminPageContainer>

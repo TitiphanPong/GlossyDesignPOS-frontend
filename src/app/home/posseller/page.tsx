@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import * as React from 'react';
-import { alpha, Alert, Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
+import { alpha, Alert, Box, Button, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
 
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
@@ -12,6 +12,7 @@ import TvRoundedIcon from '@mui/icons-material/TvRounded';
 
 import { CheckoutSidebar } from './components/CheckoutSidebar';
 import { ProductList } from './components/ProductList';
+import { SearchBar } from './components/SearchBar';
 
 import { useCart } from './components/useCart';
 import { createCartItemKey, useProductModals } from './components/useProductModals';
@@ -120,8 +121,8 @@ function useDebouncedValue<T>(value: T, ms = 250) {
 }
 
 export default function SellPage() {
-  const [activeCat] = React.useState<Category | 'ทั้งหมด'>('ทั้งหมด');
-  const [q] = React.useState('');
+  const [activeCat, setActiveCat] = React.useState<Category | 'ทั้งหมด'>('ทั้งหมด');
+  const [q, setQ] = React.useState('');
   const qDebounced = useDebouncedValue(q, 200);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
@@ -183,6 +184,11 @@ export default function SellPage() {
   const filtered = React.useMemo(
     () => products.filter(p => (activeCat === 'ทั้งหมด' ? true : p.category === activeCat)).filter(p => p.name.toLowerCase().includes(qDebounced.toLowerCase())),
     [products, activeCat, qDebounced]
+  );
+
+  const categories = React.useMemo<Array<Category | 'ทั้งหมด'>>(
+    () => ['ทั้งหมด', ...Array.from(new Set(products.map(product => product.category)))],
+    [products]
   );
 
   const summaryStats = React.useMemo(() => {
@@ -278,6 +284,21 @@ export default function SellPage() {
       {/* Main Content */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 3fr) minmax(320px, 1fr)' }, gap: 2 }}>
         <Card sx={{ ...uiCardSx, p: 1.4 }}>
+          <Stack spacing={1.5} sx={{ mb: 1.5 }}>
+            <SearchBar q={q} setQ={setQ} />
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+              {categories.map(category => (
+                <Chip
+                  key={category}
+                  label={category}
+                  clickable
+                  color={activeCat === category ? 'primary' : 'default'}
+                  onClick={() => setActiveCat(category)}
+                  variant={activeCat === category ? 'filled' : 'outlined'}
+                />
+              ))}
+            </Box>
+          </Stack>
           <ProductList
             loading={loading}
             filtered={filtered}

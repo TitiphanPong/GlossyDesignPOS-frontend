@@ -301,6 +301,13 @@ function buildPersistedNote(note: string, batchId?: string, status?: StorageStat
   return trimmed ? `${trimmed}\n\n${markers}` : markers;
 }
 
+function toStructuredStage(status?: StorageStatus): 'waiting-download' | 'pending' | 'completed' | undefined {
+  if (status === 'waiting') return 'waiting-download';
+  if (status === 'pending') return 'pending';
+  if (status === 'completed') return 'completed';
+  return undefined;
+}
+
 function toCsv(rows: StorageRow[]) {
   const headers = ['วันที่อัปโหลด', 'ชื่อลูกค้า', 'เบอร์โทร', 'LINE ID', 'ประเภทงาน', 'สถานะ', 'หมายเหตุ'];
   const body = rows.map(row => [formatDate(row.uploadDate), row.customerName, row.phone, row.lineId, row.jobType, storageStatusLabel(row.status), row.notes]);
@@ -742,7 +749,17 @@ export default function StoragePage() {
     trackPersistingIds(targetIds, true);
 
     try {
-      await Promise.all(targetIds.map(rowId => persistUploadMutation(rowId, 'patch', { status: nextStatus, note: buildPersistedNote(drawerNotes, activeRecord.batchId, nextStatus) })));
+      await Promise.all(
+        targetIds.map(rowId =>
+          persistUploadMutation(rowId, 'patch', {
+            status: nextStatus,
+            note: buildPersistedNote(drawerNotes, activeRecord.batchId, nextStatus),
+            statusNote: drawerNotes.trim() || undefined,
+            batchId: activeRecord.batchId,
+            stage: toStructuredStage(nextStatus),
+          })
+        )
+      );
       applyRowPatch(targetIds, { status: nextStatus, notes: drawerNotes });
       setActionMessage({ severity: 'success', text: 'บันทึกสถานะและหมายเหตุเรียบร้อยแล้ว' });
     } catch (error) {
