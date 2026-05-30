@@ -1,338 +1,685 @@
-# 6-Hour Codex Task Queue
+# Glossy POS Project TODO Report
 
-This queue is based on a codebase scan of the current frontend. Tasks are ordered to favor low-risk, high-value work first and avoid backend-contract changes unless clearly isolated.
+## Project Status Summary
 
-## Codex Queue Schedule
+This repository is a Next.js 15 + TypeScript frontend for a print-shop POS system. The main frontend flows already exist:
 
-### Cycle 1 (Hours 0-6)
-- Primary focus: Quick Wins only
-- Target tasks:
-  - QW-01 Standardize missing API-base error states on admin pages
-  - QW-02 Add shared empty-state copy for table/list pages
-  - QW-03 Tighten loading-state consistency for dashboard and invoice screens
-- Goal: ship visible UX improvements with minimal logic risk
+- Admin dashboard
+- POS seller / checkout
+- Orders management
+- Storage / upload management
+- Customer display
+- Public upload intake
+- Invoice printing
 
-### Cycle 2 (Hours 6-12)
-- Primary focus: remaining low-risk UI polish
-- Target tasks:
-  - QW-04 Fix mobile footer/action responsiveness on upload flow
-  - QW-05 Improve drawer behavior on smaller admin screens
-  - BR-04 Replace silent fetch failures with user-visible errors on dashboard
-- Goal: improve responsiveness and clarity without changing contracts
+Current technical status:
 
-### Cycle 3 (Hours 12-18)
-- Primary focus: safe low-risk refactors
-- Target tasks:
-  - RC-04 Extract upload file-validation utilities into one reusable module
-  - PF-02 Memoize derived list rows on heavy admin pages where practical
-  - PF-05 Audit unused dependencies and heavy client-only libraries
-- Goal: reduce duplication and prep the codebase for safer future edits
+- `npm test`: passed
+- `npm run build`: passed
+- `npm run lint`: passed with 1 warning
 
-### Cycle 4 (Hours 18-24)
-- Primary focus: testing foundation
-- Target tasks:
-  - TS-01 Add pure unit tests for total/payment calculations
-  - TS-04 Add tests for storage payload normalization edge cases
-  - TS-05 Add guardrail tests for auth and route protection assumptions
-- Goal: improve confidence before touching medium-risk business logic
+Important scope note:
 
-### Cycle 5 (Hours 24-30)
-- Primary focus: medium-risk contract-safe refactors
-- Target tasks:
-  - RC-01 Extract shared admin fetch helper with better error parsing
-  - RC-05 Normalize inconsistent naming for order/payment display types
-  - BR-05 Tighten form validation boundaries for customer and upload inputs
-- Goal: reduce inconsistency while staying backend-compatible
+- This repository does not contain the NestJS backend source.
+- This repository does not contain MongoDB schema/model files.
+- Backend, API, and schema findings below are inferred from frontend contracts and usage.
+- Items that depend on backend internals are marked `Needs verification` where appropriate.
 
-### Cycle 6 (Hours 30-36)
-- Primary focus: payment/order flow safety
-- Target tasks:
-  - BR-03 Reconcile payment/status logic between shared contracts and customer display
-  - BR-02 Harden POS success modal against duplicate order creation
-  - TS-02 Add integration tests for public upload flow
-- Goal: reduce bug risk in critical customer-facing flows
+## Top 10 Most Important TODOs First
 
-### Cycle 7 (Hours 36-42)
-- Primary focus: operational correctness
-- Target tasks:
-  - BR-01 Persist storage status/note changes instead of local-only edits
-  - TS-03 Add regression tests for POS pending-order lifecycle
-- Goal: fix misleading local-only behavior and protect checkout flow
+1. Replace the current hardcoded client-side admin authentication with real backend auth.
+2. Fix invoice data normalization so invoice rows match real shared order/cart contracts.
+3. Add idempotent order creation to prevent duplicate order records on retry.
+4. Restore real customer information capture in the public upload flow.
+5. Complete and harden the remaining-balance payment flow for partial orders.
+6. Normalize `/orders` API response handling across dashboard, orders, and invoice pages.
+7. Move upload workflow metadata out of `note` text markers into real backend fields.
+8. Remove tracked environment files from the repository and review exposed configuration.
+9. Split very large pages into smaller components/hooks for maintainability.
+10. Replace customer-display localStorage polling with a more reliable sync approach.
 
-### Cycle 8+ (Hours 42+)
-- Primary focus: larger refactors and performance work
-- Target tasks:
-  - RC-03 Unify cart total calculations around one source of truth
-  - PF-01 Split the oversized customer display page into focused subcomponents
-  - PF-03 Replace plain `img` usage on asset-heavy screens with audited Next image usage
-  - PF-04 Reduce duplicate product modal code to shrink bundle surface
-  - RC-02 Consolidate POS modal open/select/update boilerplate
-- Goal: tackle larger structural work only after the low-risk queue is cleared
+## Critical Bugs
 
-## Per-Cycle Rule
+### 1. Client-side admin auth is fully bypassable
 
-- Pick 1 primary task and 1 fallback task per 6-hour cycle
-- Prefer `low` risk before `medium`, and avoid `high` unless tests already exist or the bug is user-visible
-- End each cycle with: `lint`, `build`, available tests, and a short summary
-- Mark a task done only when implementation and verification both succeed
-- If a task expands in scope, split the remainder into the next 6-hour cycle instead of forcing it into the current one
+- Title: Replace insecure localStorage-only admin auth
+- File path(s) involved:
+  - `src/lib/admin-auth.ts`
+  - `src/app/login/page.tsx`
+  - `src/components/admin/AdminGuardLayout.tsx`
+- Current problem:
+  - Admin username, password, and token are hardcoded in frontend code.
+  - Access is gated only by `localStorage`.
+  - Anyone with browser devtools can bypass the admin guard.
+- Recommended fix:
+  - Move authentication to the NestJS backend.
+  - Use real login endpoints, hashed credentials, session/JWT cookies, and protected admin APIs.
+- Priority: High
+- Estimated effort: Large
+- Risk if ignored:
+  - Unauthorized admin access, fake data changes, and no real production security.
 
-## 1. Quick Wins
+### 2. Invoice page expects cart fields that do not fully match shared contracts
 
-### Task QW-01: Standardize missing API-base error states on admin pages
-- Status: completed on 2026-05-21
-- Task ID: QW-01
-- Title: Standardize missing API-base error states on admin pages
-- Why it matters: `NEXT_PUBLIC_API_URL` is handled differently across dashboard, orders, storage, POS, invoice, and upload flows. A consistent visible fallback is a safe improvement that reduces blank or misleading screens.
-- Affected files: `src/app/home/page.tsx`, `src/app/home/orders/page.tsx`, `src/app/home/storage/page.tsx`, `src/app/home/posseller/page.tsx`, `src/app/home/invoice/[orderId]/page.tsx`, `src/lib/api.ts`
-- Risk level: low
-- Estimated effort: small
-- Suggested Codex prompt: "Add a consistent low-risk API-base missing state across admin pages. Reuse existing UI patterns, avoid backend contract changes, and keep behavior identical except for clearer user-facing error handling."
+- Title: Normalize invoice order/cart data before rendering
+- File path(s) involved:
+  - `src/app/home/invoice/[orderId]/page.tsx`
+  - `src/lib/contracts.ts`
+- Current problem:
+  - Invoice rows assume `quantity`, `unitPrice`, and `totalPrice`.
+  - Shared contracts and other pages also use `qty`, `price`, and fallback variants.
+  - Invoice output can be wrong or break when backend payloads vary.
+- Recommended fix:
+  - Add a shared order/cart normalizer and reuse it across invoice, orders, and dashboard pages.
+- Priority: High
+- Estimated effort: Medium
+- Risk if ignored:
+  - Broken invoice rendering, incorrect receipts, and billing mistakes.
 
-### Task QW-02: Add shared empty-state copy for table/list pages
-- Status: completed on 2026-05-21
-- Task ID: QW-02
-- Title: Add shared empty-state copy for table/list pages
-- Why it matters: orders, storage, product list, and upload queue all show different empty-state language and styling. Unifying empty states improves polish without changing data logic.
-- Affected files: `src/app/home/orders/page.tsx`, `src/app/home/storage/page.tsx`, `src/app/home/posseller/components/ProductList.tsx`, `src/app/upload/page.tsx`, `src/app/home/components/dashboardUi.tsx`
-- Risk level: low
-- Estimated effort: small
-- Suggested Codex prompt: "Create a small shared empty-state pattern for list and table screens, then apply it to orders, storage, POS product list, and upload queue without changing any fetching behavior."
+### 3. Order creation is not idempotent
 
-### Task QW-03: Tighten loading-state consistency for dashboard and invoice screens
-- Status: completed on 2026-05-21
-- Task ID: QW-03
-- Title: Tighten loading-state consistency for dashboard and invoice screens
-- Why it matters: some screens use explicit loading placeholders while others fall back to minimal text or nothing. Better loading states improve perceived quality and are safe to ship.
-- Affected files: `src/app/home/page.tsx`, `src/app/home/invoice/[orderId]/page.tsx`, `src/app/home/components/dashboardUi.tsx`, `src/app/home/posseller/components/ProductList.tsx`
-- Risk level: low
-- Estimated effort: small
-- Suggested Codex prompt: "Improve loading-state consistency on dashboard, invoice, and POS product surfaces using the repo’s current admin UI style. Do not change data flow or API calls."
+- Title: Prevent duplicate backend order creation
+- File path(s) involved:
+  - `src/app/home/posseller/components/successModal.tsx`
+  - `src/lib/orders.ts`
+  - `src/lib/pending-order.ts`
+- Current problem:
+  - The frontend tracks `clientDraftId` locally.
+  - `buildPendingOrderPayload` removes that field before POSTing.
+  - Network retries or uncertain responses can create duplicate orders.
+- Recommended fix:
+  - Send an idempotency key such as `clientDraftId` to the backend and deduplicate in `POST /orders`.
+- Priority: High
+- Estimated effort: Large
+- Risk if ignored:
+  - Duplicate orders, duplicate accounting records, and reconciliation issues.
 
-### Task QW-04: Fix mobile footer/action responsiveness on upload flow
-- Task ID: QW-04
-- Title: Fix mobile footer/action responsiveness on upload flow
-- Status: completed on 2026-05-20
-- Why it matters: the sticky action footer exists only on medium-plus screens, which leaves mobile users with less obvious progress and action affordance late in the flow.
-- Affected files: `src/app/upload/page.tsx`
-- Risk level: low
-- Estimated effort: small
-- Suggested Codex prompt: "Improve the upload page’s mobile action layout and step navigation without changing upload logic. Keep the current visual language and make the primary action easier to reach on small screens."
+### 4. Partial-payment settlement flow is incomplete
 
-### Task QW-05: Improve drawer behavior on smaller admin screens
-- Status: completed on 2026-05-21
-- Task ID: QW-05
-- Title: Improve drawer behavior on smaller admin screens
-- Why it matters: storage and orders both use heavy detail drawers with dense content that may be cramped on tablets and small laptops. Responsive spacing and sticky action cleanup are low-risk usability wins.
-- Affected files: `src/app/home/orders/page.tsx`, `src/app/home/storage/page.tsx`
-- Risk level: low
-- Estimated effort: medium
-- Suggested Codex prompt: "Refine responsive drawer layout for orders and storage detail panels on smaller screens, focusing on spacing, action placement, and overflow handling only."
+- Title: Finish and validate remaining-balance payment flow
+- File path(s) involved:
+  - `src/app/home/saleListPage/components/PayRemainingModal.tsx`
+  - `src/app/home/orders/page.tsx`
+- Current problem:
+  - Remaining-payment modal exists but is not integrated into the main orders page flow.
+  - It bypasses shared API helpers.
+  - Validation only rejects values greater than the remaining balance.
+- Recommended fix:
+  - Wire the modal into order actions.
+  - Validate `0 < amount <= remaining`.
+  - Use shared API helpers and consistent error handling.
+- Priority: High
+- Estimated effort: Medium
+- Risk if ignored:
+  - Partial-payment orders cannot be safely completed.
 
-## 2. Refactor Candidates
+## Frontend TODO
 
-### Task RC-01: Extract shared admin fetch helper with better error parsing
-- Status: completed on 2026-05-21
-- Task ID: RC-01
-- Title: Extract shared admin fetch helper with better error parsing
-- Why it matters: raw `fetch` logic is repeated across dashboard, orders, POS, invoice, and success modal, while `src/lib/api.ts` is too thin and inconsistent with `upload-api.ts`. A shared helper would reduce duplicate error handling safely.
-- Affected files: `src/lib/api.ts`, `src/lib/upload-api.ts`, `src/app/home/page.tsx`, `src/app/home/orders/page.tsx`, `src/app/home/posseller/page.tsx`, `src/app/home/invoice/[orderId]/page.tsx`, `src/app/home/posseller/components/successModal.tsx`
-- Risk level: medium
-- Estimated effort: medium
-- Suggested Codex prompt: "Refactor duplicated frontend fetch logic into a shared helper with safer API-base checks and readable error messages. Keep request/response contracts the same and migrate only obvious call sites."
+### 1. Restore customer information capture in public upload flow
 
-### Task RC-02: Consolidate POS modal open/select/update boilerplate
-- Status: completed on 2026-05-21
-- Task ID: RC-02
-- Title: Consolidate POS modal open/select/update boilerplate
-- Why it matters: `posseller/page.tsx` repeats nearly identical modal wiring for every product type. This increases maintenance cost and makes safe category additions harder.
-- Affected files: `src/app/home/posseller/page.tsx`, `src/app/home/posseller/components/useProductModals.ts`, `src/app/home/posseller/types/cart.ts`
-- Risk level: medium
-- Estimated effort: large
-- Suggested Codex prompt: "Refactor duplicated POS modal wiring in `posseller/page.tsx` into a safer shared pattern without changing category matching, cart payload shape, or checkout behavior."
+- Title: Reintroduce real customer identity fields in upload flow
+- File path(s) involved:
+  - `src/app/upload/page.tsx`
+- Current problem:
+  - The upload flow sends fallback values:
+    - `Walk-in Customer`
+    - `000000000`
+  - Real customer information is no longer captured.
+- Recommended fix:
+  - Re-add customer name/phone/contact inputs and validation, or bind uploads to a real customer/session model.
+- Priority: High
+- Estimated effort: Medium
+- Risk if ignored:
+  - Uploaded jobs are hard to contact, trace, and fulfill correctly.
 
-### Task RC-03: Unify cart total calculations around one source of truth
-- Status: completed on 2026-05-21
-- Task ID: RC-03
-- Title: Unify cart total calculations around one source of truth
-- Why it matters: totals are calculated in `useCart`, `posseller/page.tsx`, `customer/page.tsx`, and `computeTotal.ts`, which raises regression risk for discount, VAT, deposit, and remaining-balance logic.
-- Affected files: `src/app/home/posseller/components/useCart.ts`, `src/app/home/posseller/page.tsx`, `src/app/customer/page.tsx`, `src/app/utils/computeTotal.ts`
-- Risk level: medium
-- Estimated effort: medium
-- Suggested Codex prompt: "Refactor cart/payment total computation so the POS and customer display share one source of truth for discount, VAT, deposit, and remaining calculations. Preserve existing output fields."
+### 2. POS filter/search state is effectively dead
 
-### Task RC-04: Extract upload file-validation utilities into one reusable module
-- Status: completed on 2026-05-21
-- Task ID: RC-04
-- Title: Extract upload file-validation utilities into one reusable module
-- Why it matters: `src/app/upload/page.tsx` and `src/components/upload/uploader.tsx` duplicate accepted extensions, file-size rules, and status logic. A shared utility is a clean low-risk refactor.
-- Affected files: `src/app/upload/page.tsx`, `src/components/upload/uploader.tsx`, `src/app/upload/helpers.tsx`
-- Risk level: low
-- Estimated effort: small
-- Suggested Codex prompt: "Deduplicate upload validation and file metadata helpers between the public upload page and the quick uploader component, keeping the current accepted file rules unchanged."
+- Title: Wire up real POS search and category filtering
+- File path(s) involved:
+  - `src/app/home/posseller/page.tsx`
+  - `src/app/home/posseller/components/SearchBar.tsx`
+  - `src/app/home/posseller/components/ProductList.tsx`
+- Current problem:
+  - `activeCat` and `q` state exist, but they are never updated by UI in the page.
+  - Filtering logic exists but is not meaningfully interactive.
+- Recommended fix:
+  - Connect real search/category controls or remove dead state until ready.
+- Priority: Medium
+- Estimated effort: Small
+- Risk if ignored:
+  - Poor cashier usability as product count increases.
 
-### Task RC-05: Normalize inconsistent naming for order/payment display types
-- Status: completed on 2026-05-24
-- Task ID: RC-05
-- Title: Normalize inconsistent naming for order/payment display types
-- Why it matters: the repo mixes backend-facing values like `cash` and `promptpay` with UI-only labels like `Cash`, `PromptPay`, and extra values like `Bank Transfer`, `transfer`, and `card`. Naming cleanup will reduce accidental mismatches.
-- Affected files: `src/lib/contracts.ts`, `src/app/customer/page.tsx`, `src/app/home/orders/page.tsx`, `src/app/home/posseller/components/successModal.tsx`
-- Risk level: medium
-- Estimated effort: medium
-- Suggested Codex prompt: "Audit and normalize frontend-only payment/status naming so display labels are clearly separated from backend contract values. Avoid changing actual API payload values."
+### 3. Login screen contains misleading placeholder UX
 
-## 3. Bug Risk Areas
+- Title: Remove or implement fake login affordances
+- File path(s) involved:
+  - `src/app/login/components/loginForm.tsx`
+- Current problem:
+  - `Remember me` and `Sign Up` appear in the UI but do nothing.
+- Recommended fix:
+  - Remove inactive controls or implement real behavior.
+- Priority: Low
+- Estimated effort: Small
+- Risk if ignored:
+  - User confusion and lower trust in the admin interface.
 
-### Task BR-01: Persist storage status/note changes instead of local-only edits
-- Status: completed on 2026-05-24
-- Task ID: BR-01
-- Title: Persist storage status/note changes instead of local-only edits
-- Why it matters: storage bulk status changes, drawer saves, and row actions currently update only local React state. Users can think they saved work when nothing was sent to the backend.
-- Affected files: `src/app/home/storage/page.tsx`
-- Risk level: high
-- Estimated effort: medium
-- Suggested Codex prompt: "Audit the storage page for local-only mutations and add safe backend persistence for status and note updates using the existing upload endpoint fallbacks. Preserve current UI behavior and handle backend failures clearly."
+### 4. Unused/alternate landing hero component should be cleaned up
 
-### Task BR-02: Harden POS success modal against duplicate order creation
-- Status: completed on 2026-05-24
-- Task ID: BR-02
-- Title: Harden POS success modal against duplicate order creation
-- Why it matters: `successModal.tsx` reads `localStorage.pendingOrder`, POSTs it, then rewrites local storage and fires a synthetic storage event. Double clicks or retries could create duplicate orders.
-- Affected files: `src/app/home/posseller/components/successModal.tsx`, `src/app/home/posseller/page.tsx`, `src/app/customer/page.tsx`
-- Risk level: high
-- Estimated effort: medium
-- Suggested Codex prompt: "Review the POS success modal for duplicate-submit and stale-localStorage risks, then add safe client-side guards without changing the checkout contract."
+- Title: Resolve unused `HeroSection` component
+- File path(s) involved:
+  - `src/app/landing/sections/HeroSection.tsx`
+  - `src/app/landing/page.tsx`
+- Current problem:
+  - `HeroSection.tsx` contains an unfinished TODO and does not appear to be used.
+- Recommended fix:
+  - Either integrate it properly or remove/archive it to reduce confusion.
+- Priority: Low
+- Estimated effort: Small
+- Risk if ignored:
+  - Design drift and developer confusion about the active landing implementation.
 
-### Task BR-03: Reconcile payment/status logic between shared contracts and customer display
-- Status: completed on 2026-05-24
-- Task ID: BR-03
-- Title: Reconcile payment/status logic between shared contracts and customer display
-- Why it matters: shared contracts allow `cancelled`, but `customer/page.tsx` defines a narrower status union and broader payment union. This mismatch can hide real backend states or cause brittle assumptions.
-- Affected files: `src/lib/contracts.ts`, `src/app/customer/page.tsx`
-- Risk level: medium
-- Estimated effort: medium
-- Suggested Codex prompt: "Align customer-display order/payment typings with shared contracts while preserving its UI-specific extensions. Add safe handling for unsupported or unexpected status values."
+## Backend TODO
 
-### Task BR-04: Replace silent fetch failures with user-visible errors on dashboard
-- Status: completed on 2026-05-21
-- Task ID: BR-04
-- Title: Replace silent fetch failures with user-visible errors on dashboard
-- Why it matters: the dashboard swallows fetch errors with an empty catch block, which can render partial or misleading data without explanation.
-- Affected files: `src/app/home/page.tsx`
-- Risk level: low
-- Estimated effort: small
-- Suggested Codex prompt: "Remove silent dashboard fetch failures and add a visible non-disruptive error state while keeping the current layout and summary logic intact."
+### 1. Implement real authentication/authorization
 
-### Task BR-05: Tighten form validation boundaries for customer and upload inputs
-- Status: completed on 2026-05-24
-- Task ID: BR-05
-- Title: Tighten form validation boundaries for customer and upload inputs
-- Why it matters: upload validation is fairly defensive, but POS customer info and some modal flows still rely on weaker assumptions. Safer validation prevents bad drafts from reaching payment and invoice flows.
-- Affected files: `src/app/home/posseller/components/customerInfoModal.tsx`, `src/app/home/posseller/page.tsx`, `src/app/upload/page.tsx`
-- Risk level: medium
-- Estimated effort: medium
-- Suggested Codex prompt: "Audit customer-facing form validation in POS customer info and public upload flow. Add low-risk input guards and inline feedback without changing backend payload shape."
+- Title: Add secure backend auth for admin surfaces
+- File path(s) involved:
+  - Frontend touchpoints:
+    - `src/lib/admin-auth.ts`
+    - `src/app/login/page.tsx`
+    - `src/components/admin/AdminGuardLayout.tsx`
+  - Backend modules: Needs verification
+- Current problem:
+  - No evidence of a real NestJS auth integration from this repo.
+- Recommended fix:
+  - Add a backend auth module, hashed passwords, session/JWT handling, and role checks.
+- Priority: High
+- Estimated effort: Large
+- Risk if ignored:
+  - Admin area remains insecure.
 
-## 4. Performance Improvements
+### 2. Standardize order response envelopes
 
-### Task PF-01: Split the oversized customer display page into focused subcomponents
-- Status: completed on 2026-05-24
-- Task ID: PF-01
-- Title: Split the oversized customer display page into focused subcomponents
-- Why it matters: `src/app/customer/page.tsx` is very large and mixes state polling, payment math, animation, and multiple screen modes. Smaller components will make future work safer and reduce accidental re-renders.
-- Affected files: `src/app/customer/page.tsx`, `src/app/customer/components/CartItemDetails.tsx`, `src/app/customer/components/cartFieldConfigs.ts`
-- Risk level: medium
-- Estimated effort: large
-- Suggested Codex prompt: "Refactor the customer display page into smaller presentational components and isolate polling/state logic, without changing visuals or kiosk behavior."
+- Title: Normalize `/orders` and single-order response shapes
+- File path(s) involved:
+  - `src/app/home/page.tsx`
+  - `src/app/home/orders/page.tsx`
+  - `src/app/home/invoice/[orderId]/page.tsx`
+  - Backend controllers/services: Needs verification
+- Current problem:
+  - Different pages assume different payload shapes.
+  - Dashboard only accepts a raw array from `/orders`.
+- Recommended fix:
+  - Standardize NestJS responses and document them in shared contracts.
+- Priority: High
+- Estimated effort: Medium
+- Risk if ignored:
+  - Fragile frontend/backend integration and inconsistent breakage.
 
-### Task PF-02: Memoize derived list rows on heavy admin pages where practical
-- Status: completed on 2026-05-21
-- Task ID: PF-02
-- Title: Memoize derived list rows on heavy admin pages where practical
-- Why it matters: orders and storage pages do a lot of filtering, sorting, and row mapping in the same component. Some of this is already memoized, but expensive derived sections and handlers are still crowded into one render path.
-- Affected files: `src/app/home/orders/page.tsx`, `src/app/home/storage/page.tsx`
-- Risk level: low
-- Estimated effort: medium
-- Suggested Codex prompt: "Review orders and storage pages for unnecessary re-renders and expensive derived computations. Apply targeted memoization or component extraction only where it materially simplifies render work."
+### 3. Standardize upload endpoint naming
 
-### Task PF-03: Replace plain `img` usage on asset-heavy screens with audited Next image usage
-- Status: completed on 2026-05-24
-- Task ID: PF-03
-- Title: Replace plain `img` usage on asset-heavy screens with audited Next image usage
-- Why it matters: banner-heavy and file-preview-heavy screens likely miss out on image optimization. A careful audit can improve loading without disturbing visual composition.
-- Affected files: `src/app/customer/page.tsx`, `src/app/landing/page.tsx`, `src/app/landing/sections/HeroSection.tsx`, `src/app/home/storage/page.tsx`
-- Risk level: medium
-- Estimated effort: medium
-- Suggested Codex prompt: "Audit image usage on customer, landing, and storage screens and convert safe cases to Next.js image optimization where it won’t break layout, animation, or signed URL previews."
+- Title: Remove `/upload` vs `/uploads` inconsistency
+- File path(s) involved:
+  - `src/app/home/storage/page.tsx`
+  - Backend routes/controllers: Needs verification
+- Current problem:
+  - The storage page tries both `/uploads` and `/upload`.
+- Recommended fix:
+  - Choose one canonical endpoint family and deprecate the other.
+- Priority: Medium
+- Estimated effort: Medium
+- Risk if ignored:
+  - More frontend workarounds and ambiguous API behavior.
 
-### Task PF-04: Reduce duplicate product modal code to shrink bundle surface
-- Status: completed on 2026-05-24
-- Task ID: PF-04
-- Title: Reduce duplicate product modal code to shrink bundle surface
-- Why it matters: many POS product modals repeat similar state and JSX patterns. Consolidating shared pieces can reduce maintenance cost and the amount of UI code loaded for the cashier flow.
-- Affected files: `src/app/home/posseller/components/NameCardModal.tsx`, `src/app/home/posseller/components/StampModal.tsx`, `src/app/home/posseller/components/DocumentPrintModal.tsx`, `src/app/home/posseller/components/PostCardModal.tsx`, `src/app/home/posseller/components/InkjetModal.tsx`, `src/app/home/posseller/components/PlotPlanModal.tsx`, `src/app/home/posseller/components/stickerPVCModal.tsx`, `src/app/home/posseller/components/stickerPPModal.tsx`, `src/app/home/posseller/components/premiumProductModal.tsx`
-- Risk level: medium
-- Estimated effort: large
-- Suggested Codex prompt: "Identify shared structure across POS product modals and extract reusable form sections or helpers to reduce duplication without changing product-specific pricing behavior."
+## Database / Schema TODO
 
-### Task PF-05: Audit unused dependencies and heavy client-only libraries
-- Status: completed on 2026-05-25
-- Task ID: PF-05
-- Title: Audit unused dependencies and heavy client-only libraries
-- Why it matters: the repo ships several visually heavy libraries and may also have unused dependencies. A dependency audit is a contained way to find future bundle-size wins.
-- Affected files: `package.json`, `src/app/customer/page.tsx`, `src/app/landing/page.tsx`, `src/app/home/components/dashboard/*.tsx`
-- Risk level: low
-- Estimated effort: medium
-- Suggested Codex prompt: "Audit package usage and identify unused or unnecessarily heavy client-side dependencies. Produce a minimal safe cleanup plan first, then implement only removals that are clearly unused."
+### 1. Stop storing workflow metadata in free-text notes
 
-## 5. Test Suggestions
+- Title: Move upload `batch` and `stage` out of note strings
+- File path(s) involved:
+  - `src/app/upload/page.tsx`
+  - `src/app/home/storage/normalizers.ts`
+  - `src/app/home/storage/page.tsx`
+  - Backend schema: Needs verification
+- Current problem:
+  - Upload workflow metadata is embedded inside `note` text using markers like:
+    - `[[batch:...]]`
+    - `[[stage:waiting-download]]`
+- Recommended fix:
+  - Add real schema fields such as `batchId`, `stage`, and `statusNote`.
+- Priority: High
+- Estimated effort: Medium
+- Risk if ignored:
+  - Brittle parsing, bad filtering, and accidental note corruption.
 
-### Task TS-01: Add pure unit tests for total/payment calculations
-- Status: completed on 2026-05-24
-- Task ID: TS-01
-- Title: Add pure unit tests for total/payment calculations
-- Why it matters: discount, VAT, deposit, and remaining-balance math appears in multiple places and directly affects billing correctness.
-- Affected files: `src/app/utils/computeTotal.ts`, `src/app/home/posseller/components/useCart.ts`, `src/app/customer/page.tsx`
-- Risk level: low
-- Estimated effort: medium
-- Suggested Codex prompt: "Set up a lightweight test path for pure pricing logic and add unit tests covering discount, VAT, full payment, partial payment, and zero-value edge cases."
+### 2. Unify order cart field naming
 
-### Task TS-02: Add integration tests for public upload flow
-- Status: completed on 2026-05-24
-- Task ID: TS-02
-- Title: Add integration tests for public upload flow
-- Why it matters: the upload flow has multiple steps, client-side validation, retry paths, and signed URL opening. It is one of the safest high-value surfaces to test because contracts are already fairly explicit.
-- Affected files: `src/app/upload/page.tsx`, `src/lib/upload-api.ts`, `src/components/upload/uploader.tsx`
-- Risk level: medium
-- Estimated effort: medium
-- Suggested Codex prompt: "Introduce integration-style tests for the public upload flow covering validation, upload success, partial failure, and retry behavior. Keep the setup lightweight and mock network calls."
+- Title: Standardize stored cart item field names
+- File path(s) involved:
+  - `src/lib/contracts.ts`
+  - `src/app/home/orders/page.tsx`
+  - `src/app/home/invoice/[orderId]/page.tsx`
+  - Backend schema: Needs verification
+- Current problem:
+  - The app tolerates `qty` vs `quantity` and `price` vs `unitPrice`.
+- Recommended fix:
+  - Choose one canonical schema shape and normalize at the API boundary.
+- Priority: High
+- Estimated effort: Medium
+- Risk if ignored:
+  - Reporting and invoice logic remain fragile.
 
-### Task TS-03: Add regression tests for POS pending-order lifecycle
-- Status: completed on 2026-05-24
-- Task ID: TS-03
-- Title: Add regression tests for POS pending-order lifecycle
-- Why it matters: the POS flow depends on `localStorage.pendingOrder`, customer display polling, and success-modal state transitions. This is a likely regression area whenever checkout logic changes.
-- Affected files: `src/app/home/posseller/page.tsx`, `src/app/home/posseller/components/successModal.tsx`, `src/app/customer/page.tsx`
-- Risk level: medium
-- Estimated effort: large
-- Suggested Codex prompt: "Add regression tests around the pending-order lifecycle: create draft, show customer display state, confirm payment, and clear local storage after paid completion."
+### 3. Require stable upload file metadata from backend
 
-### Task TS-04: Add tests for storage payload normalization edge cases
-- Status: completed on 2026-05-24
-- Task ID: TS-04
-- Title: Add tests for storage payload normalization edge cases
-- Why it matters: storage accepts several backend shape variants for ids, customer fields, and file arrays. Normalization bugs can silently break the table or detail drawer.
-- Affected files: `src/app/home/storage/page.tsx`
-- Risk level: low
-- Estimated effort: medium
-- Suggested Codex prompt: "Extract storage normalization helpers if needed and add tests for mixed backend payload shapes, missing fields, string file arrays, and alternate id keys."
+- Title: Stop fabricating upload IDs and file sizes in frontend fallbacks
+- File path(s) involved:
+  - `src/app/home/storage/normalizers.ts`
+  - Backend schema/API: Needs verification
+- Current problem:
+  - When metadata is missing, the frontend fabricates IDs and inferred file sizes.
+- Recommended fix:
+  - Always return stable file IDs, byte sizes, names, and URLs from the backend.
+- Priority: Medium
+- Estimated effort: Medium
+- Risk if ignored:
+  - Misleading file info, unreliable bulk actions, and weak download integrity.
 
-### Task TS-05: Add guardrail tests for auth and route protection assumptions
-- Status: completed on 2026-05-24
-- Task ID: TS-05
-- Title: Add guardrail tests for auth and route protection assumptions
-- Why it matters: auth currently relies on local storage tokens and client-side guards. Even lightweight tests would help catch accidental regressions in admin access flow.
-- Affected files: `src/components/admin/AdminGuardLayout.tsx`, `src/app/login/page.tsx`, `src/app/home/layout.tsx`
-- Risk level: low
-- Estimated effort: medium
-- Suggested Codex prompt: "Add basic auth-guard regression tests for the local-storage admin flow, focusing on redirect/blocked-render behavior rather than security redesign."
+## API Integration TODO
+
+### 1. Use summary endpoints instead of deriving everything client-side
+
+- Title: Reuse `OrdersSummary` contract for dashboard KPIs
+- File path(s) involved:
+  - `src/lib/contracts.ts`
+  - `src/app/home/page.tsx`
+- Current problem:
+  - `OrdersSummary` exists but the dashboard still downloads all orders and computes KPIs locally.
+- Recommended fix:
+  - Use `GET /orders/summary` for KPIs and fetch recent orders separately.
+- Priority: Medium
+- Estimated effort: Medium
+- Risk if ignored:
+  - Slower dashboard loads and unnecessary data transfer.
+
+### 2. Align payment method contracts across screens
+
+- Title: Reconcile backend-facing payment types with customer display types
+- File path(s) involved:
+  - `src/lib/contracts.ts`
+  - `src/app/customer/page.tsx`
+  - `src/app/customer/components/customerDisplayShared.ts`
+- Current problem:
+  - Customer display allows `transfer` and `card`, while backend-facing contracts only allow `cash` and `promptpay`.
+- Recommended fix:
+  - Extend backend payment enums if needed, or make unsupported values explicit instead of silently normalizing.
+- Priority: Medium
+- Estimated effort: Small
+- Risk if ignored:
+  - Wrong payment display and future integration bugs.
+
+### 3. Reuse shared order extraction logic on all order reads
+
+- Title: Add a shared single-order response normalizer
+- File path(s) involved:
+  - `src/lib/orders.ts`
+  - `src/app/home/invoice/[orderId]/page.tsx`
+- Current problem:
+  - Order creation already normalizes backend order responses.
+  - Invoice fetch does not reuse the same robustness.
+- Recommended fix:
+  - Add a shared extractor/normalizer and use it for all order reads.
+- Priority: Medium
+- Estimated effort: Small
+- Risk if ignored:
+  - One backend response change can break only some screens.
+
+## UI / UX Improvements
+
+### 1. Show a loading state instead of a blank admin screen during guard checks
+
+- Title: Add admin guard loading UI
+- File path(s) involved:
+  - `src/components/admin/AdminGuardLayout.tsx`
+- Current problem:
+  - While checking auth, the layout returns `null`.
+- Recommended fix:
+  - Show a lightweight loading shell or skeleton.
+- Priority: Medium
+- Estimated effort: Small
+- Risk if ignored:
+  - Jarring blank flashes on admin route load.
+
+### 2. Replace placeholder landing content with real business links/content
+
+- Title: Clean up landing page placeholder CTAs and footer links
+- File path(s) involved:
+  - `src/app/landing/page.tsx`
+  - `src/app/landing/sections/HeroSection.tsx`
+- Current problem:
+  - Placeholder CTA copy and non-linked legal/footer content still exist.
+- Recommended fix:
+  - Replace demo/phone/legal placeholders with real business actions and links.
+- Priority: Low
+- Estimated effort: Small
+- Risk if ignored:
+  - Lower trust and reduced marketing polish.
+
+### 3. Hide placeholder customer/contact fields in orders until real data exists
+
+- Title: Remove misleading placeholder order metadata
+- File path(s) involved:
+  - `src/app/home/orders/page.tsx`
+- Current problem:
+  - `lineId`, `email`, `address`, `salesChannel`, and `staffName` are mostly shown as `-`.
+- Recommended fix:
+  - Remove these sections until backend support exists, or add the real fields end-to-end.
+- Priority: Medium
+- Estimated effort: Medium
+- Risk if ignored:
+  - Staff may assume missing data actually exists somewhere in the system.
+
+## Refactor / Code Quality
+
+### 1. Break up oversized route files
+
+- Title: Split monolithic route pages into focused modules
+- File path(s) involved:
+  - `src/app/home/orders/page.tsx`
+  - `src/app/home/storage/page.tsx`
+  - `src/app/upload/page.tsx`
+  - `src/app/landing/page.tsx`
+- Current problem:
+  - These files combine data loading, mapping, rendering, dialogs, and exports in very large modules.
+- Recommended fix:
+  - Extract route-local hooks, mappers, dialogs, and view sections.
+- Priority: Medium
+- Estimated effort: Large
+- Risk if ignored:
+  - Slower development and more regression-prone edits.
+
+### 2. Remove dead imports and stale paths
+
+- Title: Clean warnings and legacy/dead code paths
+- File path(s) involved:
+  - `src/app/home/orders/page.tsx`
+  - `src/app/landing/sections/HeroSection.tsx`
+  - `src/app/home/components/AppBreadCrumb.tsx`
+- Current problem:
+  - Lint already reports an unused icon import.
+  - Some components appear stale or unused.
+- Recommended fix:
+  - Remove dead imports and retire obsolete components/routes where safe.
+- Priority: Low
+- Estimated effort: Small
+- Risk if ignored:
+  - More code drift and harder onboarding.
+
+### 3. Strengthen POS cart/product typing
+
+- Title: Replace weak cart typing with explicit types
+- File path(s) involved:
+  - `src/app/home/posseller/types/cart.ts`
+- Current problem:
+  - `variant?: any` weakens a central business type.
+- Recommended fix:
+  - Replace `any` with explicit variant types or discriminated unions.
+- Priority: Medium
+- Estimated effort: Medium
+- Risk if ignored:
+  - Type safety gaps in pricing and modal flows.
+
+### 4. Reduce string-coupled modal routing
+
+- Title: Stop routing product modals by fragile UI strings
+- File path(s) involved:
+  - `src/app/home/posseller/components/useProductModals.ts`
+- Current problem:
+  - Modal selection depends on exact Thai category strings and product-name substrings.
+- Recommended fix:
+  - Use stable product type codes from the backend instead of display labels.
+- Priority: Medium
+- Estimated effort: Medium
+- Risk if ignored:
+  - Product config changes can silently break modal selection.
+
+## Security / Validation
+
+### 1. Remove tracked environment files and rotate if needed
+
+- Title: Stop versioning local/production env files
+- File path(s) involved:
+  - `.env.local`
+  - `.env.production`
+  - `.gitignore`
+- Current problem:
+  - Env files are already tracked in git even though `.gitignore` excludes them.
+- Recommended fix:
+  - Remove them from version control, rotate any sensitive values if necessary, and document required env vars in `README.md`.
+- Priority: High
+- Estimated effort: Small
+- Risk if ignored:
+  - Configuration leakage and unsafe production coupling.
+
+### 2. Tighten remaining-payment validation
+
+- Title: Validate remaining-payment amounts properly
+- File path(s) involved:
+  - `src/app/home/saleListPage/components/PayRemainingModal.tsx`
+- Current problem:
+  - The modal does not reject zero, negative, empty, or non-finite values.
+- Recommended fix:
+  - Add inline validation for valid positive numeric ranges before submit.
+- Priority: High
+- Estimated effort: Small
+- Risk if ignored:
+  - Invalid payment records and accounting errors.
+
+### 3. Add validation parity between upload and POS customer capture
+
+- Title: Reuse customer validation standards in upload flows
+- File path(s) involved:
+  - `src/app/upload/page.tsx`
+  - `src/app/home/posseller/components/customerInfoModal.tsx`
+- Current problem:
+  - POS has meaningful customer validation, but upload flow bypasses it entirely.
+- Recommended fix:
+  - Reuse equivalent validation rules for public upload customer fields.
+- Priority: High
+- Estimated effort: Medium
+- Risk if ignored:
+  - Bad customer records and support/fulfillment issues.
+
+## Performance
+
+### 1. Remove aggressive customer-display polling
+
+- Title: Stop polling every 500ms when storage sync already exists
+- File path(s) involved:
+  - `src/app/customer/page.tsx`
+- Current problem:
+  - The page already uses storage/BroadcastChannel subscriptions but still polls every 500ms.
+- Recommended fix:
+  - Remove polling or make it a slower fallback only when sync primitives are unavailable.
+- Priority: Medium
+- Estimated effort: Small
+- Risk if ignored:
+  - Unnecessary browser work and extra re-renders.
+
+### 2. Avoid loading full datasets for admin analytics/pages
+
+- Title: Add server-side pagination/filtering/summary endpoints
+- File path(s) involved:
+  - `src/app/home/page.tsx`
+  - `src/app/home/orders/page.tsx`
+  - `src/app/home/storage/page.tsx`
+  - Backend services/controllers: Needs verification
+- Current problem:
+  - Large lists and aggregates are handled client-side.
+- Recommended fix:
+  - Add server-side summaries, filters, and pagination.
+- Priority: Medium
+- Estimated effort: Large
+- Risk if ignored:
+  - Slower admin UX as data volume grows.
+
+### 3. Review heavy client bundles in admin pages
+
+- Title: Reduce large admin first-load JS where practical
+- File path(s) involved:
+  - Admin route pages and route-local dialogs/charts
+- Current problem:
+  - Build output shows relatively heavy first-load JS on major admin routes.
+- Recommended fix:
+  - Lazy-load dialogs/charts/export tools and reduce always-on client code where possible.
+- Priority: Medium
+- Estimated effort: Medium
+- Risk if ignored:
+  - Slower initial page load on lower-end devices.
+
+## Deployment / Environment
+
+### 1. Re-enable lint enforcement during builds
+
+- Title: Stop skipping lint in production builds
+- File path(s) involved:
+  - `next.config.ts`
+- Current problem:
+  - `ignoreDuringBuilds: true` allows production builds to pass even when lint quality regresses.
+- Recommended fix:
+  - Re-enable lint during builds after current warnings are cleaned up.
+- Priority: Medium
+- Estimated effort: Small
+- Risk if ignored:
+  - Gradual code quality drift in production builds.
+
+### 2. Replace generic README with real project documentation
+
+- Title: Update README to match the actual POS system
+- File path(s) involved:
+  - `README.md`
+- Current problem:
+  - README is still largely generic Next.js boilerplate and does not clearly document routes, flows, or env requirements.
+- Recommended fix:
+  - Add real setup, architecture, env vars, API expectations, and route descriptions.
+- Priority: Medium
+- Estimated effort: Small
+- Risk if ignored:
+  - Slower onboarding and more setup mistakes.
+
+### 3. Keep one canonical root redirect strategy
+
+- Title: Remove duplicate root redirect mechanisms
+- File path(s) involved:
+  - `next.config.ts`
+  - `src/app/page.tsx`
+- Current problem:
+  - Both config redirects and App Router redirect logic handle the root path.
+- Recommended fix:
+  - Keep a single redirect approach.
+- Priority: Low
+- Estimated effort: Small
+- Risk if ignored:
+  - Small but unnecessary maintenance confusion.
+
+## Future Features
+
+### 1. Real-time customer display backed by backend state
+
+- Title: Replace browser-local display sync with store-wide real-time state
+- File path(s) involved:
+  - `src/app/customer/page.tsx`
+  - Backend real-time infrastructure: Needs verification
+- Current problem:
+  - Customer display is local-browser based rather than backend-synchronized.
+- Recommended fix:
+  - Add WebSocket/SSE/backend polling tied to the active store/order state.
+- Priority: Medium
+- Estimated effort: Large
+- Risk if ignored:
+  - Display remains limited to the same browser/storage context.
+
+### 2. Production workflow beyond payment-only state
+
+- Title: Add real print-production lifecycle states
+- File path(s) involved:
+  - `src/app/customer/components/customerDisplayShared.ts`
+  - `src/app/home/orders/page.tsx`
+  - `src/app/home/storage/page.tsx`
+  - Backend models/services: Needs verification
+- Current problem:
+  - The app hints at workflow stages, but core operational tracking is still shallow.
+- Recommended fix:
+  - Add production, proofing, ready-for-pickup, and completion states end-to-end.
+- Priority: Medium
+- Estimated effort: Large
+- Risk if ignored:
+  - Staff must continue tracking operations outside the system.
+
+### 3. Product management/admin CRUD
+
+- Title: Add product management flow for `/products`
+- File path(s) involved:
+  - `src/app/home/posseller/page.tsx`
+  - Backend product module: Needs verification
+- Current problem:
+  - POS relies on `/products`, but there is no visible admin product-management interface in this repo.
+- Recommended fix:
+  - Add admin product CRUD, pricing, and stable product type codes.
+- Priority: Medium
+- Estimated effort: Large
+- Risk if ignored:
+  - Product updates remain manual and error-prone.
+
+### 4. Quote/proof approval flow for uploaded jobs
+
+- Title: Extend upload intake into real pre-production workflow
+- File path(s) involved:
+  - `src/app/upload/page.tsx`
+  - `src/app/home/storage/page.tsx`
+  - Backend quote/proof modules: Needs verification
+- Current problem:
+  - Upload intake exists, but no visible quotation/proof approval lifecycle is implemented.
+- Recommended fix:
+  - Add quote, proof approval, and upload-to-order conversion workflow.
+- Priority: Low
+- Estimated effort: Large
+- Risk if ignored:
+  - Public upload remains disconnected from higher-value print-job operations.
+
+## Suggested Development Roadmap
+
+### Phase 1: Fix critical bugs
+
+- Replace client-side admin auth with real backend auth.
+- Fix invoice/order cart normalization.
+- Add idempotent order creation.
+- Complete and validate remaining-payment flow.
+- Remove tracked env files and review exposed configuration.
+
+### Phase 2: Complete core POS/order/upload flow
+
+- Restore upload customer information capture.
+- Standardize `/orders` and `/uploads` API contracts.
+- Move upload workflow metadata into real schema fields.
+- Reuse shared order normalizers across dashboard, orders, and invoice.
+
+### Phase 3: Improve UI/UX
+
+- Add POS search/filter controls.
+- Add guard loading state instead of blank admin render.
+- Clean placeholder landing/login content.
+- Hide fake order-contact fields until they are real.
+
+### Phase 4: Refactor and stabilize
+
+- Split monolithic route files.
+- Strengthen core cart/product types.
+- Remove dead imports/components.
+- Re-enable strict lint enforcement in builds.
+
+### Phase 5: Add future features
+
+- Backend-driven real-time customer display.
+- Production workflow statuses and pickup readiness.
+- Product CRUD and pricing management.
+- Quote/proof approval flow for uploads.

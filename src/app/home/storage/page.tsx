@@ -55,6 +55,9 @@ import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
+import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
+import SyncRoundedIcon from '@mui/icons-material/SyncRounded';
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import axios from 'axios';
 import JobTimelineCard, { type JobTimelineCardItem } from '../components/JobTimelineCard';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
@@ -141,6 +144,42 @@ function storageStatusLabel(status: StorageStatus) {
   return 'รอดาวน์โหลด';
 }
 
+function getStorageStatusPresentation(status: StorageStatus) {
+  if (status === 'pending') {
+    return {
+      label: storageStatusLabel(status),
+      description: 'กำลังตรวจสอบไฟล์และเตรียมลำดับงานพิมพ์',
+      accent: '#1E5EFF',
+      border: '#BFDBFE',
+      softBg: '#F6FAFF',
+      gradient: 'linear-gradient(135deg, #F6FAFF 0%, #EEF6FF 100%)',
+      icon: <LocalPrintshopRoundedIcon sx={{ fontSize: 28 }} />,
+    };
+  }
+
+  if (status === 'completed') {
+    return {
+      label: storageStatusLabel(status),
+      description: 'ดำเนินการครบถ้วนและพร้อมใช้งานในขั้นตอนถัดไป',
+      accent: '#10B981',
+      border: '#A7F3D0',
+      softBg: '#ECFDF5',
+      gradient: 'linear-gradient(135deg, #ECFDF5 0%, #F4FFF9 100%)',
+      icon: <Inventory2RoundedIcon sx={{ fontSize: 28 }} />,
+    };
+  }
+
+  return {
+    label: storageStatusLabel(status),
+    description: 'ไฟล์อยู่ในคิวรอหยิบไปดำเนินการและตรวจสอบต่อ',
+    accent: '#F59E0B',
+    border: '#FED7AA',
+    softBg: '#FFF7E8',
+    gradient: 'linear-gradient(135deg, #FFF7E8 0%, #FFFDF7 100%)',
+    icon: <AccessTimeRoundedIcon sx={{ fontSize: 28 }} />,
+  };
+}
+
 function statusChip(status: StorageStatus) {
   if (status === 'pending') {
     return {
@@ -176,11 +215,7 @@ function statusChip(status: StorageStatus) {
 
 function buildStorageTimelineItems(record: StorageRow): JobTimelineCardItem[] {
   const activeIndex = record.status === 'pending' ? 1 : record.status === 'completed' ? 2 : 0;
-  const titles = [
-    'อัปโหลดไฟล์เข้าสู่ระบบคลังเอกสาร',
-    'เจ้าหน้าที่รับงานและตรวจไฟล์เบื้องต้น',
-    'รอคิวดาวน์โหลดเพื่อพิมพ์',
-  ] as const;
+  const titles = ['อัปโหลดไฟล์เข้าสู่ระบบคลังเอกสาร', 'เจ้าหน้าที่รับงานและตรวจไฟล์เบื้องต้น', 'รอคิวดาวน์โหลดเพื่อพิมพ์'] as const;
   const subtitles = [
     activeIndex === 0 ? 'อัปเดตล่าสุดในระบบ' : 'บันทึกไว้ในลำดับงานก่อนหน้า',
     activeIndex === 1 ? 'กำลังตรวจสอบไฟล์และเตรียมดำเนินการ' : 'บันทึกไว้ในลำดับงานก่อนหน้า',
@@ -735,6 +770,9 @@ export default function StoragePage() {
   };
 
   const rowMenuTarget = React.useMemo(() => (rowMenuId ? (rowsById.get(rowMenuId) ?? null) : null), [rowMenuId, rowsById]);
+  const drawerStatusView = activeRecord ? getStorageStatusPresentation(drawerStatus) : null;
+  const drawerNoteLength = drawerNotes === '-' ? 0 : drawerNotes.length;
+  const drawerBusy = Boolean(activeRecord && (drawerSaving || activeRecord.sourceIds.some(sourceId => persistingIds.includes(sourceId))));
 
   return (
     <Box
@@ -757,10 +795,8 @@ export default function StoragePage() {
             <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
               <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
                 <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Storage</Typography>
-                <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>
-                  จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร
-                </Typography>
-                <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>ซิงก์ล่าสุด {formatLastSynced(lastSyncedAt)}</Typography>
+                <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร</Typography>
+                <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>Last synced {formatLastSynced(lastSyncedAt)}</Typography>
                 <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{formatThaiFullDate(lastSyncedAt)}</Typography>
               </Box>
 
@@ -864,11 +900,11 @@ export default function StoragePage() {
             gap: 1.5,
           }}>
           {' '}
-          <StatCard title="ไฟล์ทั้งหมด" value={String(stats.totalFiles)} subtitle="จำนวนไฟล์ทั้งหมดในระบบ" icon={<Inventory2RoundedIcon />} tone="#1E5EFF" />
-          <StatCard title="รอดาวน์โหลด" value={String(stats.waiting)} subtitle="ไฟล์ที่รอเจ้าหน้าที่ดาวน์โหลด" icon={<PendingActionsRoundedIcon />} tone="#8993A4" />
-          <StatCard title="รอดำเนินการ" value={String(stats.pending)} subtitle="รายการที่รับงานแล้วและรอผลิต" icon={<AutorenewRoundedIcon />} tone="#F08C00" />
-          <StatCard title="เสร็จสิ้น" value={String(stats.completed)} subtitle="รายการที่จัดการเรียบร้อยแล้ว" icon={<TaskAltRoundedIcon />} tone="#1F9D63" />
-          <StatCard title="อัปโหลดวันนี้" value={String(stats.uploadedToday)} subtitle="รายการใหม่ของวันนี้" icon={<CloudUploadRoundedIcon />} tone="#5B4AE6" />
+          <StatCard title="ไฟล์ทั้งหมด" value={String(stats.totalFiles)} subtitle="จำนวนไฟล์ทั้งหมด" icon={<Inventory2RoundedIcon />} tone="#1E5EFF" />
+          <StatCard title="รอดาวน์โหลด" value={String(stats.waiting)} subtitle="ไฟล์ที่รอดาวน์โหลด" icon={<PendingActionsRoundedIcon />} tone="#8993A4" />
+          <StatCard title="รอดำเนินการ" value={String(stats.pending)} subtitle="รายการที่รับงานแล้ว" icon={<AutorenewRoundedIcon />} tone="#F08C00" />
+          <StatCard title="เสร็จสิ้น" value={String(stats.completed)} subtitle="รายการที่จัดการเรียบร้อย" icon={<TaskAltRoundedIcon />} tone="#1F9D63" />
+          <StatCard title="อัปโหลดวันนี้" value={String(stats.uploadedToday)} subtitle="รายการใหม่วันนี้" icon={<CloudUploadRoundedIcon />} tone="#5B4AE6" />
         </Box>
 
         <Card
@@ -1045,13 +1081,7 @@ export default function StoragePage() {
                 {!loading && filteredRows.length === 0 ? (
                   <TableRow>
                     <TableCell colSpan={7}>
-                      <EmptyState
-                        compact
-                        icon={<SearchRoundedIcon fontSize="small" />}
-                        eyebrow="Storage"
-                        title="ไม่พบไฟล์งานที่อัปโหลด"
-                        subtitle="กรุณาคลิกปุ่ม Refresh อีกครั้งเพื่อโหลดข้อมูลใหม่"
-                      />
+                      <EmptyState compact icon={<SearchRoundedIcon fontSize="small" />} eyebrow="Storage" title="ไม่พบไฟล์งานที่อัปโหลด" subtitle="กรุณาคลิกปุ่ม Refresh อีกครั้งเพื่อโหลดข้อมูลใหม่" />
                     </TableCell>
                   </TableRow>
                 ) : null}
@@ -1254,8 +1284,8 @@ export default function StoragePage() {
                         </Avatar>
                         <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>รายละเอียดงาน</Typography>
                       </Stack>
-                      <Typography sx={{ color: '#334155' }}>วันที่อัปโหลด: {formatDate(activeRecord.uploadDate)}</Typography>
-                      <Typography sx={{ color: '#334155' }}>ประเภทงาน: {activeRecord.jobType}</Typography>
+                      <Typography sx={{ color: '#334155' }}>วันที่อัปโหลด : {formatDate(activeRecord.uploadDate)}</Typography>
+                      <Typography sx={{ color: '#334155' }}>ประเภทงาน : {activeRecord.jobType}</Typography>
                     </Stack>
                   </CardContent>
                 </Card>
@@ -1317,19 +1347,172 @@ export default function StoragePage() {
                   </CardContent>
                 </Card>
 
-                <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
-                  <CardContent>
-                    <Stack spacing={1.3}>
-                      <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>สถานะการดำเนินงาน</Typography>
-                      <FormControl size="small" fullWidth>
-                        <InputLabel id="drawer-status">สถานะงาน</InputLabel>
-                        <Select<StorageStatus> labelId="drawer-status" value={drawerStatus} label="สถานะงาน" onChange={event => setDrawerStatus(event.target.value)}>
-                          <MenuItem value="waiting">รอดาวน์โหลด</MenuItem>
-                          <MenuItem value="pending">รอดำเนินการ</MenuItem>
-                          <MenuItem value="completed">เสร็จสิ้น</MenuItem>
-                        </Select>
-                      </FormControl>
-                      <TextField label="หมายเหตุ" multiline minRows={3} value={drawerNotes} onChange={event => setDrawerNotes(event.target.value)} />
+                <Card
+                  sx={{
+                    borderRadius: '24px',
+                    border: '1px solid #E2ECF8',
+                    boxShadow: '0 18px 50px rgba(15, 23, 42, 0.06)',
+                    bgcolor: '#FFFFFF',
+                    overflow: 'hidden',
+                  }}>
+                  <CardContent sx={{ p: { xs: '18px !important', sm: '20px !important' } }}>
+                    <Stack spacing={2}>
+                      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1.25}>
+                        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+                          <Box
+                            sx={{
+                              width: 44,
+                              height: 44,
+                              borderRadius: '14px',
+                              bgcolor: '#EEF6FF',
+                              color: '#1E5EFF',
+                              display: 'grid',
+                              placeItems: 'center',
+                              flexShrink: 0,
+                            }}>
+                            <FactCheckRoundedIcon sx={{ fontSize: 22 }} />
+                          </Box>
+                          <Box sx={{ minWidth: 0 }}>
+                            <Typography sx={{ fontWeight: 800, color: '#16233B', fontSize: { xs: 17, sm: 18 }, lineHeight: 1.2 }}>สถานะการดำเนินงาน</Typography>
+                            <Typography sx={{ color: '#7A8CA5', fontSize: 13, mt: 0.2 }}>อัปเดตความคืบหน้าของงานพิมพ์</Typography>
+                          </Box>
+                        </Stack>
+                      </Stack>
+
+                      {drawerStatusView ? (
+                        <Box
+                          sx={{
+                            borderRadius: '18px',
+                            px: 2,
+                            py: 2,
+                            border: `1px solid ${drawerStatusView.border}`,
+                            background: drawerStatusView.gradient,
+                            display: 'flex',
+                            flexDirection: { xs: 'column', sm: 'row' },
+                            alignItems: { xs: 'flex-start', sm: 'center' },
+                            gap: 1.5,
+                          }}>
+                          <Box
+                            sx={{
+                              width: 56,
+                              height: 56,
+                              borderRadius: '16px',
+                              bgcolor: alpha(drawerStatusView.accent, 0.1),
+                              color: drawerStatusView.accent,
+                              display: 'grid',
+                              placeItems: 'center',
+                              flexShrink: 0,
+                              boxShadow: `inset 0 0 0 1px ${alpha(drawerStatusView.accent, 0.08)}`,
+                            }}>
+                            {React.cloneElement(drawerStatusView.icon, { sx: { fontSize: 26 } })}
+                          </Box>
+
+                          <Stack spacing={0.5} sx={{ minWidth: 0, flex: 1 }}>
+                            <Typography sx={{ fontWeight: 800, color: drawerStatusView.accent, fontSize: { xs: 18, sm: 20 }, lineHeight: 1.15 }}>{drawerStatusView.label}</Typography>
+                            <Typography sx={{ color: '#334155', fontSize: 13.5, lineHeight: 1.45 }}>{drawerStatusView.description}</Typography>
+                          </Stack>
+                        </Box>
+                      ) : null}
+
+                      <Stack spacing={1}>
+                        <Typography sx={{ fontWeight: 700, color: '#16233B', fontSize: 15 }}>
+                          เปลี่ยนสถานะ{' '}
+                          <Box component="span" sx={{ color: '#EF4444' }}>
+                            *
+                          </Box>
+                        </Typography>
+                        <FormControl fullWidth>
+                          <Select<StorageStatus>
+                            value={drawerStatus}
+                            onChange={event => setDrawerStatus(event.target.value)}
+                            displayEmpty
+                            input={
+                              <OutlinedInput
+                                startAdornment={
+                                  <InputAdornment position="start" sx={{ mr: 1.5 }}>
+                                    <SyncRoundedIcon sx={{ color: '#1E5EFF', fontSize: 20 }} />
+                                  </InputAdornment>
+                                }
+                              />
+                            }
+                            renderValue={value => (
+                              <Stack direction="row" alignItems="center" spacing={1.1}>
+                                <Box
+                                  sx={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: '999px',
+                                    bgcolor: getStorageStatusPresentation(value).accent,
+                                    boxShadow: `0 0 0 4px ${alpha(getStorageStatusPresentation(value).accent, 0.12)}`,
+                                  }}
+                                />
+                                <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>{storageStatusLabel(value)}</Typography>
+                              </Stack>
+                            )}
+                            sx={{
+                              height: 52,
+                              borderRadius: '14px',
+                              bgcolor: '#FFFFFF',
+                              '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D8E4F5', borderWidth: 1.5 },
+                              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#BFD3F3' },
+                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#1E5EFF', borderWidth: 2 },
+                              '& .MuiSelect-select': { display: 'flex', alignItems: 'center', py: 1.1, fontSize: 15, fontWeight: 600, color: '#1A2740' },
+                              '& .MuiSvgIcon-root.MuiSelect-icon': { fontSize: 24, color: '#6B7C99', right: 12 },
+                            }}>
+                            <MenuItem value="waiting">รอดาวน์โหลด</MenuItem>
+                            <MenuItem value="pending">รอดำเนินการ</MenuItem>
+                            <MenuItem value="completed">เสร็จสิ้น</MenuItem>
+                          </Select>
+                        </FormControl>
+                      </Stack>
+
+                      <Stack spacing={1}>
+                        <Typography sx={{ fontWeight: 700, color: '#16233B', fontSize: 15 }}>บันทึกเพิ่มเติม</Typography>
+                        <Box sx={{ position: 'relative' }}>
+                          <TextField
+                            fullWidth
+                            multiline
+                            minRows={5}
+                            placeholder="เพิ่มรายละเอียดเกี่ยวกับสถานะงาน..."
+                            value={drawerNotes}
+                            onChange={event => setDrawerNotes(event.target.value)}
+                            sx={{
+                              '& .MuiOutlinedInput-root': {
+                                minHeight: 120,
+                                alignItems: 'flex-start',
+                                borderRadius: '16px',
+                                bgcolor: '#FFFFFF',
+                                pr: 2,
+                                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7)',
+                                '& fieldset': { borderColor: '#D1DBEA', borderWidth: 1.5 },
+                                '&:hover fieldset': { borderColor: '#BFD3F3' },
+                                '&.Mui-focused fieldset': { borderColor: '#1E5EFF', borderWidth: 2 },
+                              },
+                              '& .MuiInputBase-inputMultiline': {
+                                px: 0,
+                                py: 0,
+                                fontSize: 14,
+                                color: '#22314B',
+                              },
+                              '& .MuiInputBase-input::placeholder': {
+                                color: '#A0AEC0',
+                                opacity: 1,
+                              },
+                            }}
+                          />
+                          <Typography
+                            sx={{
+                              position: 'absolute',
+                              right: 18,
+                              bottom: 14,
+                              color: '#8194B2',
+                              fontSize: 13,
+                              pointerEvents: 'none',
+                            }}>
+                            {drawerNoteLength} / 500
+                          </Typography>
+                        </Box>
+                      </Stack>
                     </Stack>
                   </CardContent>
                 </Card>
@@ -1344,23 +1527,54 @@ export default function StoragePage() {
                 position: 'sticky',
                 bottom: 0,
                 px: { xs: 2, sm: 2.5, md: 3 },
-                py: { xs: 1.5, sm: 1.8 },
+                py: { xs: 2, sm: 2.2 },
                 borderTop: '1px solid #E8EFF8',
-                bgcolor: 'rgba(255, 255, 255, 0.96)',
+                bgcolor: 'rgba(248, 250, 255, 0.96)',
                 backdropFilter: 'blur(10px)',
               }}>
-              <Stack direction={{ xs: 'column', sm: 'row' }} gap={1}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.2} alignItems={{ sm: 'stretch' }} sx={{ width: '100%' }}>
                 <Button
-                  fullWidth
                   variant="contained"
                   onClick={() => {
                     void handleDrawerSave();
                   }}
-                  disabled={drawerSaving || activeRecord.sourceIds.some(sourceId => persistingIds.includes(sourceId))}
-                  sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
-                  บันทึกข้อมูล
+                  disabled={drawerBusy}
+                  startIcon={<SaveRoundedIcon />}
+                  sx={{
+                    width: { xs: '100%', sm: 'auto' },
+                    flex: 1,
+                    minHeight: 46,
+                    borderRadius: '14px',
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    fontSize: 15.5,
+                    background: 'linear-gradient(135deg, #1E5EFF 0%, #4778FF 100%)',
+                    boxShadow: '0 12px 28px rgba(30, 94, 255, 0.24)',
+                    '&:hover': {
+                      background: 'linear-gradient(135deg, #1A56EB 0%, #3F71FF 100%)',
+                      boxShadow: '0 14px 30px rgba(30, 94, 255, 0.28)',
+                    },
+                    '&.Mui-disabled': {
+                      color: '#FFFFFF',
+                      opacity: 0.72,
+                    },
+                  }}>
+                  {drawerSaving ? 'กำลังบันทึก...' : 'บันทึกสถานะ'}
                 </Button>
-                <Button fullWidth variant="outlined" onClick={() => setDrawerOpen(false)} sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setDrawerOpen(false)}
+                  sx={{
+                    width: { xs: '100%', sm: 'auto' },
+                    flex: { sm: '0 0 140px' },
+                    minHeight: 48,
+                    borderRadius: '14px',
+                    textTransform: 'none',
+                    fontWeight: 700,
+                    borderColor: '#D7E3F4',
+                    color: '#33517A',
+                    bgcolor: '#FFFFFF',
+                  }}>
                   ปิดรายละเอียด
                 </Button>
               </Stack>
