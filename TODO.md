@@ -25,6 +25,14 @@ Important scope note:
 - Backend, API, and schema findings below are inferred from frontend contracts and usage.
 - Items that depend on backend internals are marked `Needs verification` where appropriate.
 
+## Backend Requirements From Current Frontend Work
+
+- Frontend now expects `orderNumber` to be returned consistently by `POST /orders`, `GET /orders`, and `GET /orders/:id`.
+- Frontend now preserves and sends `clientDraftId` during order creation and also sends it as `Idempotency-Key` when available.
+- Backend still needs to deduplicate repeated `POST /orders` requests by `clientDraftId` / `Idempotency-Key`.
+- Backend should keep accepting legacy cart field variants during transition, but should converge on one canonical shape.
+- Upload endpoints should validate and persist real `customerName`, `phone`, `jobType`, and `note` fields from the public upload flow.
+
 ## Top 10 Most Important TODOs First
 
 1. Replace the current hardcoded client-side admin authentication with real backend auth.

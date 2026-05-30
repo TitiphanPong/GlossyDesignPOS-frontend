@@ -109,7 +109,6 @@ export function isPendingOrderSettled(order: Pick<StoredPendingOrderDraft, 'stat
 
 export function buildPendingOrderPayload(order: StoredPendingOrderDraft, status: 'partial' | 'paid'): PendingOrderDraft {
   const payload = { ...order };
-  delete payload.clientDraftId;
   delete payload.orderSyncStatus;
   delete payload.lastSubmissionError;
 

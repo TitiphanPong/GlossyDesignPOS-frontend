@@ -6,23 +6,31 @@ import { createOrder } from './orders';
 test('createOrder accepts a direct order response with orderNumber', async () => {
   const originalFetch = globalThis.fetch;
   const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  let capturedHeaders: HeadersInit | undefined;
+  let capturedBody: string | undefined;
 
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
-  globalThis.fetch = (async () =>
-    new Response(
+  globalThis.fetch = (async (_input, init) => {
+    capturedHeaders = init?.headers;
+    capturedBody = typeof init?.body === 'string' ? init.body : undefined;
+
+    return new Response(
       JSON.stringify({
         _id: 'abc123',
         orderId: 'legacy-001',
         orderNumber: 'ORD-20260527-0001',
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
-    )) as typeof fetch;
+    );
+  }) as typeof fetch;
 
   try {
-    const result = await createOrder({ status: 'paid' });
+    const result = await createOrder({ status: 'paid', clientDraftId: 'draft-001' });
     assert.equal(result.orderNumber, 'ORD-20260527-0001');
     assert.equal(result._id, 'abc123');
+    assert.equal(capturedHeaders instanceof Headers ? capturedHeaders.get('Idempotency-Key') : (capturedHeaders as Record<string, string>)['Idempotency-Key'], 'draft-001');
+    assert.match(capturedBody ?? '', /"clientDraftId":"draft-001"/);
   } finally {
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;

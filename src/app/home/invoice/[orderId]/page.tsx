@@ -5,34 +5,9 @@ import { Box, Button, Card, Divider, Stack, Table, TableBody, TableCell, TableHe
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import { InvoiceLoadingState, MissingApiConfigState } from '../../components/dashboardUi';
 import { fetchApiJson, isMissingApiBaseError } from '../../../../lib/api';
-import { getOrderDisplayNumber } from '../../../../lib/contracts';
+import { type ApiOrder, type NormalizedInvoiceOrder, normalizeApiOrderForInvoice } from '../../../../lib/contracts';
 
-interface CartItem {
-  name: string;
-  quantity: number;
-  unitPrice: number;
-  totalPrice: number;
-}
-
-interface Order {
-  orderId: string;
-  orderNumber: string;
-  customerName: string;
-  phoneNumber: string;
-  cart: CartItem[];
-  finalTotal: number;
-  vatAmount: number;
-  grandTotal: number;
-}
-
-function normalizeInvoiceOrder(order: Order): Order {
-  return {
-    ...order,
-    orderNumber: getOrderDisplayNumber(order),
-  };
-}
-
-function InvoiceCopy({ title, order }: Readonly<{ title: string; order: Order }>) {
+function InvoiceCopy({ title, order }: Readonly<{ title: string; order: NormalizedInvoiceOrder }>) {
   return (
     <Card sx={{ p: 2.2, borderRadius: 3 }}>
       <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>{title}</Typography>
@@ -77,7 +52,7 @@ function InvoiceCopy({ title, order }: Readonly<{ title: string; order: Order }>
 
 export default function InvoicePage({ params }: Readonly<{ params: Promise<{ orderId: string }> }>) {
   const { orderId } = use(params);
-  const [order, setOrder] = useState<Order | null>(null);
+  const [order, setOrder] = useState<NormalizedInvoiceOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [missingApiBase, setMissingApiBase] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -85,8 +60,8 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
   useEffect(() => {
     const fetchOrder = async () => {
       try {
-        const data = await fetchApiJson<Order>(`/orders/${orderId}`);
-        setOrder(normalizeInvoiceOrder(data));
+        const data = await fetchApiJson<ApiOrder>(`/orders/${orderId}`);
+        setOrder(normalizeApiOrderForInvoice(data));
         setLoadError(null);
       } catch (error) {
         if (isMissingApiBaseError(error)) {

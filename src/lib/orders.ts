@@ -59,9 +59,15 @@ function extractApiOrder(value: unknown): ApiOrder | null {
 }
 
 export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (typeof payload.clientDraftId === 'string' && payload.clientDraftId.trim().length > 0) {
+    // Backend requirement: POST /orders should deduplicate repeated submissions using this key.
+    headers['Idempotency-Key'] = payload.clientDraftId.trim();
+  }
+
   const responseBody = await fetchApiJson<unknown>('/orders', {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify(payload),
   });
 

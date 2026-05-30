@@ -55,7 +55,7 @@ test('submission helpers keep partial-payment and paid transitions aligned', () 
   assert.equal(isPendingOrderSubmitted({ status: 'paid', orderSyncStatus: 'pending' }), true);
 });
 
-test('buildPendingOrderPayload removes client-only fields before POSTing to backend', () => {
+test('buildPendingOrderPayload preserves clientDraftId but removes transient sync fields before POSTing to backend', () => {
   const payload = buildPendingOrderPayload(
     {
       orderId: '1712345678901',
@@ -81,7 +81,7 @@ test('buildPendingOrderPayload removes client-only fields before POSTing to back
   assert.equal(payload.taxInvoice, 'yes');
   assert.equal(payload.vatAmount, 18.2);
   assert.equal(payload.grandTotal, 298.2);
-  assert.equal('clientDraftId' in payload, false);
+  assert.equal(payload.clientDraftId, 'draft-001');
   assert.equal('orderSyncStatus' in payload, false);
   assert.equal('lastSubmissionError' in payload, false);
 });

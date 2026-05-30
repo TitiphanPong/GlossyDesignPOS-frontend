@@ -65,7 +65,7 @@ import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import { ApiOrder, getOrderDisplayNumber, type OrderStatus, type PaymentMethod } from '../../../lib/contracts';
+import { ApiOrder, getOrderDisplayNumber, normalizeApiCartItem, normalizeApiOrderAmounts, type OrderStatus, type PaymentMethod } from '../../../lib/contracts';
 
 type PaymentStatus = OrderStatus;
 type SortOrder = 'newest' | 'oldest' | 'high' | 'low';
@@ -149,22 +149,17 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
   const createdAt = order.createdAt || dayjs().toISOString();
   const products = (order.cart ?? []).map(item => {
     const qty = Math.max(1, toNumber(item.quantity ?? item.qty));
-    const lineTotal = toNumber(item.totalPrice) || toNumber(item.price ?? item.unitPrice) * qty;
+    const lineTotal = toNumber(item.totalPrice ?? item.lineTotal) || toNumber(item.price ?? item.unitPrice) * qty;
     const unitPrice = qty > 0 ? lineTotal / qty : 0;
+    const normalizedItem = normalizeApiCartItem(item);
     return {
       name: item.name || item.category || 'สินค้าไม่ระบุชื่อ',
-      qty,
-      price: unitPrice,
+      qty: normalizedItem.quantity,
+      price: normalizedItem.unitPrice || unitPrice,
     };
   });
 
-  const subtotal = products.reduce((sum, item) => sum + item.qty * item.price, 0);
-  const discount = toNumber(order.discount);
-  const vat = toNumber(order.vatAmount);
-  const fallbackTotal = Math.max(subtotal - discount + vat, 0);
-  const total = toNumber(order.grandTotal ?? order.total) || fallbackTotal;
-  const remaining = Math.max(toNumber(order.remainingTotal), 0);
-  const paidAmount = Math.min(total, Math.max(total - remaining, 0));
+  const amounts = normalizeApiOrderAmounts(order);
   const status = order.status;
   const timeline: TimelineEvent[] = [{ title: 'สร้างรายการงาน', at: createdAt }];
 
@@ -195,11 +190,11 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
     salesChannel: '-',
     staffName: '-',
     status,
-    subtotal,
-    discount,
-    vat,
-    total,
-    paidAmount,
+    subtotal: amounts.subtotal,
+    discount: amounts.discount,
+    vat: amounts.vatAmount,
+    total: amounts.grandTotal,
+    paidAmount: amounts.paidAmount,
     paymentMethod: order.payment,
     products,
     timeline,

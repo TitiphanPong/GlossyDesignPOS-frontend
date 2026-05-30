@@ -52,6 +52,19 @@ function readNonEmptyString(value: unknown): string | null {
   return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
 }
 
+function readNumber(value: unknown): number | null {
+  if (typeof value === 'number' && Number.isFinite(value)) {
+    return value;
+  }
+
+  if (typeof value === 'string' && value.trim().length > 0) {
+    const parsed = Number(value);
+    return Number.isFinite(parsed) ? parsed : null;
+  }
+
+  return null;
+}
+
 export function getOrderDisplayNumber(
   value: {
     orderNumber?: unknown;
@@ -70,16 +83,19 @@ export type ApiCartItem = {
   price?: number;
   unitPrice?: number;
   totalPrice?: number;
+  lineTotal?: number;
   deposit?: number;
   remaining?: number;
   fullPayment?: boolean;
   productNote?: string;
+  note?: string;
   sides?: string;
   colorMode?: string;
   material?: string;
   size?: string;
   shape?: string;
   type?: string;
+  variant?: { name?: string };
   extra?: Record<string, unknown>;
 };
 
@@ -111,6 +127,7 @@ export type OrdersSummary = {
 };
 
 export type PendingOrderDraft = {
+  clientDraftId?: string;
   grandTotal?: number;
   total?: number;
   remainingTotal?: number;
@@ -120,3 +137,123 @@ export type PendingOrderDraft = {
   status?: OrderStatus;
   [key: string]: unknown;
 };
+
+export type NormalizedInvoiceCartItem = {
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  totalPrice: number;
+};
+
+export type NormalizedOrderCartItem = NormalizedInvoiceCartItem & {
+  category?: string;
+  deposit: number;
+  remaining: number;
+  fullPayment?: boolean;
+  material?: string;
+  variant?: { name?: string };
+  size?: string;
+  note?: string;
+};
+
+export type NormalizedOrderAmounts = {
+  subtotal: number;
+  discount: number;
+  vatAmount: number;
+  finalTotal: number;
+  grandTotal: number;
+  remainingTotal: number;
+  paidAmount: number;
+};
+
+export type NormalizedInvoiceOrder = {
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  phoneNumber: string;
+  cart: NormalizedInvoiceCartItem[];
+  finalTotal: number;
+  vatAmount: number;
+  grandTotal: number;
+};
+
+export function normalizeApiCartItem(item: Partial<ApiCartItem>): NormalizedOrderCartItem {
+  const quantity = Math.max(1, readNumber(item.quantity ?? item.qty) ?? 1);
+  const directUnitPrice = readNumber(item.unitPrice);
+  const fallbackUnitPrice = readNumber(item.price);
+  const totalPrice = readNumber(item.totalPrice) ?? readNumber(item.lineTotal) ?? (directUnitPrice ?? fallbackUnitPrice ?? 0) * quantity;
+  const unitPrice = directUnitPrice ?? fallbackUnitPrice ?? (quantity > 0 ? totalPrice / quantity : 0);
+
+  return {
+    name: readNonEmptyString(item.name) ?? '-',
+    category: readNonEmptyString(item.category) ?? undefined,
+    quantity,
+    unitPrice,
+    totalPrice,
+    deposit: Math.max(readNumber(item.deposit) ?? 0, 0),
+    remaining: Math.max(readNumber(item.remaining) ?? 0, 0),
+    fullPayment: typeof item.fullPayment === 'boolean' ? item.fullPayment : undefined,
+    material: readNonEmptyString(item.material) ?? undefined,
+    variant: readNonEmptyString(item.variant?.name) ? { name: readNonEmptyString(item.variant?.name) ?? undefined } : undefined,
+    size: readNonEmptyString(item.size) ?? undefined,
+    note: readNonEmptyString(item.note) ?? readNonEmptyString(item.productNote) ?? undefined,
+  };
+}
+
+export function normalizeApiCartItemForInvoice(item: ApiCartItem): NormalizedInvoiceCartItem {
+  const normalized = normalizeApiCartItem(item);
+  return {
+    name: normalized.name,
+    quantity: normalized.quantity,
+    unitPrice: normalized.unitPrice,
+    totalPrice: normalized.totalPrice,
+  };
+}
+
+export function normalizeApiOrderAmounts(
+  order: Partial<ApiOrder> & {
+    finalTotal?: number;
+    cart?: ApiCartItem[];
+  }
+): NormalizedOrderAmounts {
+  const cart = Array.isArray(order.cart) ? order.cart.map(normalizeApiCartItem) : [];
+  const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+  const discount = Math.max(readNumber(order.discount) ?? 0, 0);
+  const vatAmount = Math.max(readNumber(order.vatAmount) ?? 0, 0);
+  const finalTotal = Math.max(readNumber(order.finalTotal) ?? readNumber(order.total) ?? subtotal - discount, 0);
+  const grandTotal = Math.max(readNumber(order.grandTotal) ?? finalTotal + vatAmount, 0);
+  const remainingTotal = Math.max(readNumber(order.remainingTotal) ?? 0, 0);
+  const paidAmount = Math.min(grandTotal, Math.max(grandTotal - remainingTotal, 0));
+
+  return {
+    subtotal,
+    discount,
+    vatAmount,
+    finalTotal,
+    grandTotal,
+    remainingTotal,
+    paidAmount,
+  };
+}
+
+export function normalizeApiOrderForInvoice(
+  order: Partial<ApiOrder> & {
+    _id?: string;
+    finalTotal?: number;
+    cart?: ApiCartItem[];
+  }
+): NormalizedInvoiceOrder {
+  const cart = Array.isArray(order.cart) ? order.cart.map(normalizeApiCartItemForInvoice) : [];
+  const amounts = normalizeApiOrderAmounts(order);
+
+  return {
+    orderId: readNonEmptyString(order.orderId) ?? readNonEmptyString(order._id) ?? '-',
+    orderNumber: getOrderDisplayNumber(order),
+    customerName: readNonEmptyString(order.customerName) ?? '-',
+    phoneNumber: readNonEmptyString(order.phoneNumber) ?? '-',
+    cart,
+    finalTotal: amounts.finalTotal,
+    vatAmount: amounts.vatAmount,
+    grandTotal: amounts.grandTotal,
+  };
+}
