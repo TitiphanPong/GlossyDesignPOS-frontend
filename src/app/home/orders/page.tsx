@@ -65,7 +65,7 @@ import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
-import { ApiOrder, type OrderStatus, type PaymentMethod } from '../../../lib/contracts';
+import { ApiOrder, getOrderDisplayNumber, type OrderStatus, type PaymentMethod } from '../../../lib/contracts';
 
 type PaymentStatus = OrderStatus;
 type SortOrder = 'newest' | 'oldest' | 'high' | 'low';
@@ -184,7 +184,7 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
   return {
     id: order._id || order.orderId,
     orderId: order.orderId,
-    orderNumber: order.orderNumber,
+    orderNumber: getOrderDisplayNumber(order),
     customerName: order.customerName || 'ลูกค้าไม่ระบุชื่อ',
     phoneNumber: order.phoneNumber || '-',
     lineId: '-',

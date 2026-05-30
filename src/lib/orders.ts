@@ -1,5 +1,5 @@
 import { fetchApiJson } from './api';
-import type { ApiOrder, PendingOrderDraft } from './contracts';
+import { getOrderDisplayNumber, type ApiOrder, type PendingOrderDraft } from './contracts';
 
 type ApiOrderLike = Partial<ApiOrder> & { id?: string };
 
@@ -15,7 +15,7 @@ function normalizeApiOrder(value: unknown): ApiOrder | null {
   const order = value as ApiOrderLike;
   const _id = typeof order._id === 'string' && order._id.trim().length > 0 ? order._id : typeof order.id === 'string' && order.id.trim().length > 0 ? order.id : null;
   const orderId = typeof order.orderId === 'string' && order.orderId.trim().length > 0 ? order.orderId : null;
-  const orderNumber = typeof order.orderNumber === 'string' && order.orderNumber.trim().length > 0 ? order.orderNumber : null;
+  const orderNumber = getOrderDisplayNumber(order, '');
 
   if (!_id || !orderId || !orderNumber) {
     return null;
@@ -67,7 +67,7 @@ export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder>
 
   const createdOrder = extractApiOrder(responseBody);
   if (!createdOrder) {
-    throw new Error('Backend did not return a valid order with orderNumber');
+    throw new Error('Backend did not return a valid order identifier');
   }
 
   return createdOrder;

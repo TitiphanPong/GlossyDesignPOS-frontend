@@ -6,7 +6,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ReplayIcon from '@mui/icons-material/Replay';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import { PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../../lib/contracts';
+import { getOrderDisplayNumber, PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../../lib/contracts';
 import { isMissingApiBaseError } from '../../../../lib/api';
 import { createOrder } from '../../../../lib/orders';
 import {
@@ -72,7 +72,7 @@ function buildSubmittedOrder(
   return {
     ...order,
     orderId: backendOrder.orderId,
-    orderNumber: backendOrder.orderNumber,
+    orderNumber: getOrderDisplayNumber(backendOrder),
     status: backendOrder.status ?? status,
     orderSyncStatus: 'submitted',
     lastSubmissionError: null,
@@ -250,8 +250,13 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
 
           <Typography variant="body2" color="text.secondary" mt={1.5}>
             Order Number:{' '}
-            <Box component="span" sx={{ fontWeight: 800, color: orderData?.orderNumber ? 'text.primary' : submitError ? 'error.main' : 'warning.main' }}>
-              {orderData?.orderNumber ?? (isSubmitting ? 'Waiting for backend...' : submitError ? 'Not created yet' : 'Pending confirmation')}
+            <Box
+              component="span"
+              sx={{
+                fontWeight: 800,
+                color: (orderData?.orderNumber || orderData?.orderId) ? 'text.primary' : submitError ? 'error.main' : 'warning.main',
+              }}>
+              {getOrderDisplayNumber(orderData ?? {}, isSubmitting ? 'Waiting for backend...' : submitError ? 'Not created yet' : 'Pending confirmation')}
             </Box>
           </Typography>
         </Box>

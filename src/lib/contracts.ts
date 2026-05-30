@@ -48,6 +48,20 @@ export function normalizeOrderStatus(value: unknown, fallback: OrderStatus = 'pe
   return isOrderStatus(value) ? value : fallback;
 }
 
+function readNonEmptyString(value: unknown): string | null {
+  return typeof value === 'string' && value.trim().length > 0 ? value.trim() : null;
+}
+
+export function getOrderDisplayNumber(
+  value: {
+    orderNumber?: unknown;
+    orderId?: unknown;
+  },
+  fallback = '-'
+): string {
+  return readNonEmptyString(value.orderNumber) ?? readNonEmptyString(value.orderId) ?? fallback;
+}
+
 export type ApiCartItem = {
   name: string;
   category?: string;

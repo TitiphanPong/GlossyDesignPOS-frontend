@@ -58,3 +58,29 @@ test('createOrder accepts a wrapped order response with orderNumber', async () =
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;
   }
 });
+
+test('createOrder falls back to orderId when backend omits orderNumber', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+
+  globalThis.fetch = (async () =>
+    new Response(
+      JSON.stringify({
+        _id: 'abc125',
+        orderId: 'legacy-003',
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )) as typeof fetch;
+
+  try {
+    const result = await createOrder({ status: 'paid' });
+    assert.equal(result.orderId, 'legacy-003');
+    assert.equal(result.orderNumber, 'legacy-003');
+    assert.equal(result._id, 'abc125');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});

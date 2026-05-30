@@ -5,6 +5,7 @@ import { Box, Button, Card, Divider, Stack, Table, TableBody, TableCell, TableHe
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import { InvoiceLoadingState, MissingApiConfigState } from '../../components/dashboardUi';
 import { fetchApiJson, isMissingApiBaseError } from '../../../../lib/api';
+import { getOrderDisplayNumber } from '../../../../lib/contracts';
 
 interface CartItem {
   name: string;
@@ -22,6 +23,13 @@ interface Order {
   finalTotal: number;
   vatAmount: number;
   grandTotal: number;
+}
+
+function normalizeInvoiceOrder(order: Order): Order {
+  return {
+    ...order,
+    orderNumber: getOrderDisplayNumber(order),
+  };
 }
 
 function InvoiceCopy({ title, order }: Readonly<{ title: string; order: Order }>) {
@@ -78,7 +86,7 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
     const fetchOrder = async () => {
       try {
         const data = await fetchApiJson<Order>(`/orders/${orderId}`);
-        setOrder(data);
+        setOrder(normalizeInvoiceOrder(data));
         setLoadError(null);
       } catch (error) {
         if (isMissingApiBaseError(error)) {
