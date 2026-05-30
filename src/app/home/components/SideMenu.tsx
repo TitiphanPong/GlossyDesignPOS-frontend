@@ -14,6 +14,7 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import { useRouter } from 'next/navigation';
 import Face2Icon from '@mui/icons-material/Face2';
+import { clearAdminAuthSession } from '@/lib/admin-auth';
 
 export type NavItem = {
   label: string;
@@ -123,7 +124,7 @@ export default function SideMenu({
   const showCollapsedState = variant === 'permanent' && collapsed;
 
   const handleLogout = React.useCallback(() => {
-    localStorage.removeItem('auth_token');
+    clearAdminAuthSession(localStorage);
     router.push('/login');
   }, [router]);
 

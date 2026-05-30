@@ -1,11 +1,11 @@
 // src/app/login/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Snackbar } from '@mui/material';
 import LoginForm from './components/loginForm';
-import { ADMIN_AUTH_STORAGE_KEY, ADMIN_AUTH_TOKEN, ADMIN_LOGIN_REDIRECT_PATH, canAdminLogin } from '@/lib/admin-auth';
+import { ADMIN_AUTH_STORAGE_KEY, ADMIN_LOGIN_REDIRECT_PATH, canAdminLogin, createAdminSession, isValidAdminToken } from '@/lib/admin-auth';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -13,11 +13,18 @@ export default function LoginPage() {
   const [password, setPassword] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
 
+  useEffect(() => {
+    const storedToken = localStorage.getItem(ADMIN_AUTH_STORAGE_KEY);
+    if (isValidAdminToken(storedToken)) {
+      router.replace(ADMIN_LOGIN_REDIRECT_PATH);
+    }
+  }, [router]);
+
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
 
     if (canAdminLogin(username, password)) {
-      localStorage.setItem(ADMIN_AUTH_STORAGE_KEY, ADMIN_AUTH_TOKEN);
+      localStorage.setItem(ADMIN_AUTH_STORAGE_KEY, createAdminSession());
       router.push(ADMIN_LOGIN_REDIRECT_PATH);
     } else {
       setSnackbarOpen(true);

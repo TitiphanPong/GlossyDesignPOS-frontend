@@ -2,8 +2,9 @@
 
 import { useRouter } from 'next/navigation';
 import { useEffect, useState } from 'react';
+import { Box, CircularProgress } from '@mui/material';
 import AppShell from '@/app/home/shell';
-import { ADMIN_AUTH_STORAGE_KEY, resolveAdminGuardRedirect } from '@/lib/admin-auth';
+import { ADMIN_AUTH_STORAGE_KEY, clearAdminAuthSession, resolveAdminGuardRedirect, shouldClearStoredAdminToken } from '@/lib/admin-auth';
 
 type AdminGuardLayoutProps = Readonly<{ children: React.ReactNode }>;
 
@@ -20,10 +21,20 @@ export default function AdminGuardLayout({ children }: AdminGuardLayoutProps) {
       return;
     }
 
-    router.push(redirectPath);
+    if (shouldClearStoredAdminToken(token)) {
+      clearAdminAuthSession(localStorage);
+    }
+
+    router.replace(redirectPath);
   }, [router]);
 
-  if (isChecking) return null;
+  if (isChecking) {
+    return (
+      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', bgcolor: 'background.default' }}>
+        <CircularProgress size={28} />
+      </Box>
+    );
+  }
 
   return <AppShell>{children}</AppShell>;
 }

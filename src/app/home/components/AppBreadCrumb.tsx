@@ -30,6 +30,7 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import { usePathname, useRouter } from 'next/navigation';
 import ButtonLogout from './LogoutOutline';
+import { clearAdminAuthSession } from '@/lib/admin-auth';
 
 const Brand = () => {
   const theme = useTheme();
@@ -148,7 +149,7 @@ export default function AppBreadCrumb() {
   }
 
   const handleLogout = () => {
-    localStorage.removeItem('auth_token');
+    clearAdminAuthSession(localStorage);
     router.push('/');
   };
 
