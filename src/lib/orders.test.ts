@@ -1,7 +1,13 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { createOrder, fetchOrderById, fetchOrders, payRemainingBalance } from './orders';
+import {
+  createOrder,
+  fetchOrderById,
+  fetchOrders,
+  payRemainingBalance,
+  updateOrderCustomerInfo,
+} from './orders';
 
 test('createOrder accepts a direct order response with orderNumber', async () => {
   const originalFetch = globalThis.fetch;
@@ -187,6 +193,60 @@ test('fetchOrderById accepts a wrapped single-order response', async () => {
     const result = await fetchOrderById('abc128');
     assert.equal(result.orderNumber, 'ORD-20260527-0006');
     assert.equal(result._id, 'abc128');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('updateOrderCustomerInfo sends only tax invoice customer fields', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  let capturedBody: string | undefined;
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+
+  globalThis.fetch = (async (_input, init) => {
+    capturedBody = typeof init?.body === 'string' ? init.body : undefined;
+
+    return new Response(
+      JSON.stringify({
+        _id: 'abc129',
+        orderId: 'legacy-007',
+        orderNumber: 'ORD-20260531-0007',
+        customerName: 'Sarayut 111',
+        taxId: '0123456789012',
+        customerTaxId: '0123456789012',
+        address: '88/8 Moo Baan Klang Muang',
+        customerAddress: '88/8 Moo Baan Klang Muang',
+        payment: 'cash',
+        status: 'pending',
+        createdAt: '2026-05-31T10:00:00.000Z',
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+  }) as typeof fetch;
+
+  try {
+    const result = await updateOrderCustomerInfo('abc129', {
+      customerName: 'Sarayut 111',
+      taxId: '0123456789012',
+      address: '88/8 Moo Baan Klang Muang',
+    });
+
+    assert.equal(result.orderNumber, 'ORD-20260531-0007');
+
+    const parsedBody = JSON.parse(capturedBody ?? '{}') as Record<string, unknown>;
+    assert.deepEqual(parsedBody, {
+      customerName: 'Sarayut 111',
+      taxId: '0123456789012',
+      customerTaxId: '0123456789012',
+      address: '88/8 Moo Baan Klang Muang',
+      customerAddress: '88/8 Moo Baan Klang Muang',
+    });
+    assert.equal('phoneNumber' in parsedBody, false);
+    assert.equal('email' in parsedBody, false);
+    assert.equal('branch' in parsedBody, false);
   } finally {
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;

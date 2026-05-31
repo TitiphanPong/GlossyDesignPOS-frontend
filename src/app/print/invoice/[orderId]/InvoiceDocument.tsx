@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Divider, Stack, Typography } from '@mui/material';
+import { Box, Stack, Typography } from '@mui/material';
 import { formatCustomerAddress, type NormalizedInvoiceOrder, type PaymentMethod } from '../../../../lib/contracts';
 import { convertAmountToThaiText, formatCurrency, resolveInvoiceDocumentType, type InvoiceDocumentType } from '../../../home/invoice/[orderId]/invoice-utils';
 
@@ -94,6 +94,18 @@ function normalizePrintablePaymentMethod(paymentMethod: PaymentMethod): 'cash' |
   return paymentMethod === 'cash' ? 'cash' : 'transfer';
 }
 
+function getRenderedCopyTitle(baseTitle: string, copyIndex: number): string {
+  if (baseTitle.startsWith('ต้นฉบับ')) {
+    return copyIndex === 0 ? baseTitle.replace(/ต้นฉบับ/g, 'สำเนา') : baseTitle;
+  }
+
+  if (baseTitle.startsWith('ใบเสนอราคา')) {
+    return copyIndex === 0 ? `สำเนา${baseTitle}` : `ต้นฉบับ${baseTitle}`;
+  }
+
+  return copyIndex === 0 ? `สำเนา${baseTitle}` : `ต้นฉบับ${baseTitle}`;
+}
+
 function formatThaiTaxDate(value: string): string {
   const parsed = new Date(value);
   if (Number.isNaN(parsed.getTime())) {
@@ -117,14 +129,14 @@ function formatThaiTaxDate(value: string): string {
 
 function getCompanyInfo(): CompanyInfo {
   return {
-    thaiName: readEnv(process.env.NEXT_PUBLIC_COMPANY_THAI_NAME, 'กลอสซี่ ปริ้น แอด์ พรีเมี่ยม'),
+    thaiName: readEnv(process.env.NEXT_PUBLIC_COMPANY_THAI_NAME, 'กลอสซี่ ปริ้น แอนด์ พรีเมี่ยม'),
     englishName: readEnv(process.env.NEXT_PUBLIC_COMPANY_ENGLISH_NAME, 'GLOSSY PRINT AND PREMIUM'),
     branchNumber: readEnv(process.env.NEXT_PUBLIC_COMPANY_BRANCH_NO, 'สำนักงานใหญ่'),
     address: readEnv(process.env.NEXT_PUBLIC_COMPANY_ADDRESS, '55 ถนนศรีนครินทร์ แขวงหนองบอน เขตประเวศ จังหวัดกรุงเทพฯ 10250'),
     phone: readEnv(process.env.NEXT_PUBLIC_COMPANY_PHONE, '081-555-2929'),
     taxId: readEnv(process.env.NEXT_PUBLIC_COMPANY_TAX_ID, '3160100252587'),
     email: readEnv(process.env.NEXT_PUBLIC_COMPANY_EMAIL, 'glossy2929@gmail.com'),
-    website: readEnv(process.env.NEXT_PUBLIC_COMPANY_WEBSITE, '-'),
+    website: readEnv(process.env.NEXT_PUBLIC_COMPANY_WEBSITE, 'glossysiam.com'),
   };
 }
 
@@ -156,7 +168,7 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
     totalAmount,
     amountInWords: convertAmountToThaiText(totalAmount),
     paymentMethod: normalizePrintablePaymentMethod(order.paymentMethod),
-    bankTransferInfo: readEnv(process.env.NEXT_PUBLIC_COMPANY_BANK_INFO, 'ธนาคาร / พร้อมเพย์ __________________________________'),
+    bankTransferInfo: readEnv(process.env.NEXT_PUBLIC_COMPANY_BANK_INFO),
     collectorSignatureLabel: 'ผู้รับเงิน / Collector',
     authorizedSignatureLabel: 'ผู้มีอำนาจลงนาม / Authorized',
     customerSignatureLabel: 'ผู้รับสินค้า / Customer',
@@ -195,7 +207,19 @@ function SignatureColumn({ label }: Readonly<{ label: string }>) {
   );
 }
 
-function InfoLine({ label, value, minHeight = '5.4mm' }: Readonly<{ label: string; value: string; minHeight?: string }>) {
+function InfoLine({
+  label,
+  value,
+  minHeight = '5.4mm',
+  labelFontSize = '2.9mm',
+  valueFontSize = '2.9mm',
+}: Readonly<{
+  label: string;
+  value: string;
+  minHeight?: string;
+  labelFontSize?: string;
+  valueFontSize?: string;
+}>) {
   return (
     <Stack
       direction="row"
@@ -206,8 +230,8 @@ function InfoLine({ label, value, minHeight = '5.4mm' }: Readonly<{ label: strin
         borderBottom: DOTTED_BORDER,
         pb: '0.7mm',
       }}>
-      <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, whiteSpace: 'nowrap', lineHeight: 1.2 }}>{label}</Typography>
-      <Typography sx={{ flex: 1, minWidth: 0, fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, wordBreak: 'break-word' }}>{value || '-'}</Typography>
+      <Typography sx={{ fontSize: labelFontSize, fontWeight: 700, whiteSpace: 'nowrap', lineHeight: 1.2 }}>{label}</Typography>
+      <Typography sx={{ flex: 1, minWidth: 0, fontSize: valueFontSize, lineHeight: 1.2, wordBreak: 'break-word' }}>{value || '-'}</Typography>
     </Stack>
   );
 }
@@ -216,19 +240,26 @@ function SummaryLine({
   label,
   value,
   bold = false,
+  labelFontSize = '3mm',
+  valueFontSize,
+  labelWhiteSpace = 'normal',
 }: Readonly<{
   label: string;
   value: string;
   bold?: boolean;
+  labelFontSize?: string;
+  valueFontSize?: string;
+  labelWhiteSpace?: 'normal' | 'nowrap';
 }>) {
   return (
-    <Stack direction="row" justifyContent="space-between" spacing="2mm" sx={{ py: '0.45mm' }}>
-      <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, fontWeight: bold ? 700 : 400, lineHeight: 1.2 }}>{label}</Typography>
+    <Stack direction="row" justifyContent="space-between" spacing="9mm" alignItems="center" sx={{ py: '0.15mm' }}>
+      <Typography sx={{ flex: 1, minWidth: 0, fontSize: labelFontSize, fontWeight: bold ? 700 : 500, lineHeight: 1.15, whiteSpace: labelWhiteSpace, textAlign: 'right' }}>{label}</Typography>
       <Typography
         sx={{
-          fontSize: `${BASE_FONT_MM}mm`,
-          fontWeight: bold ? 700 : 400,
-          lineHeight: 1.2,
+          minWidth: '15mm',
+          fontSize: valueFontSize ?? (bold ? '3.25mm' : '3mm'),
+          fontWeight: bold ? 700 : 500,
+          lineHeight: 1.1,
           fontVariantNumeric: 'tabular-nums',
           textAlign: 'right',
         }}>
@@ -241,6 +272,7 @@ function SummaryLine({
 export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyIndex }: Readonly<InvoiceCopyProps>) {
   const emptyRowCount = Math.max(minItemRows - invoiceData.items.length, 0);
   const rows = [...invoiceData.items, ...Array.from({ length: emptyRowCount }, () => null)];
+  const renderedCopyTitle = getRenderedCopyTitle(invoiceData.copyTitle, copyIndex);
 
   return (
     <Box
@@ -273,33 +305,50 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
           </Box>
         </Stack>
 
-        <Box sx={{ border: BORDER, px: '1.6mm', py: '1.4mm', textAlign: 'center' }}>
-          <Typography sx={{ fontSize: '3.15mm', fontWeight: 700, lineHeight: 1.2 }}>{invoiceData.company.thaiName}</Typography>
-          <Typography sx={{ mt: '0.3mm', fontSize: '2.45mm', lineHeight: 1.2 }}>{invoiceData.company.englishName}</Typography>
-          <Typography sx={{ mt: '0.35mm', fontSize: '2.25mm', lineHeight: 1.2 }}>สาขา / Branch No. {invoiceData.company.branchNumber}</Typography>
-          <Typography sx={{ mt: '0.35mm', fontSize: '2.15mm', lineHeight: 1.25 }}>{invoiceData.company.address}</Typography>
-          <Typography sx={{ mt: '0.35mm', fontSize: '2.15mm', lineHeight: 1.25 }}>
-            โทร / Phone : {invoiceData.company.phone} | Tax ID : {invoiceData.company.taxId}
-          </Typography>
-          <Typography sx={{ mt: '0.2mm', fontSize: '2.05mm', lineHeight: 1.25 }}>
-            Email : {invoiceData.company.email} | Website : {invoiceData.company.website}
-          </Typography>
+        <Box sx={{ border: BORDER, px: '1.6mm', py: '1.4mm' }}>
+          <Stack direction="row" spacing="2mm" justifyContent="space-between" alignItems="flex-start">
+            <Box sx={{ width: '42%', textAlign: 'left' }}>
+              <Typography sx={{ fontSize: '4.4mm', fontWeight: 700, lineHeight: 1.2 }}>{invoiceData.company.thaiName}</Typography>
+              <Typography sx={{ mt: '0.3mm', fontSize: '3.6mm', lineHeight: 1.2 }}>{invoiceData.company.englishName}</Typography>
+              <Typography sx={{ mt: '0.35mm', fontSize: '2.25mm', lineHeight: 1.2 }}>สาขา / Branch No. {invoiceData.company.branchNumber}</Typography>
+            </Box>
+            <Box sx={{ width: '58%', textAlign: 'right' }}>
+              <Typography sx={{ fontSize: '3mm', lineHeight: 1.25 }}>{invoiceData.company.address}</Typography>
+              <Typography sx={{ mt: '0.35mm', fontSize: '2.15mm', lineHeight: 1.25 }}>
+                โทร / Phone : {invoiceData.company.phone} | Tax ID : {invoiceData.company.taxId}
+              </Typography>
+              <Typography sx={{ mt: '0.2mm', fontSize: '2.05mm', lineHeight: 1.25 }}>
+                Email : {invoiceData.company.email} | Website : {invoiceData.company.website}
+              </Typography>
+            </Box>
+          </Stack>
         </Box>
 
-        <Box sx={{ border: BORDER, px: '1.6mm', py: '1.3mm', textAlign: 'center' }}>
-          <Typography sx={{ fontSize: '2.9mm', fontWeight: 700, lineHeight: 1.2 }}>{invoiceData.copyTitle}</Typography>
+        <Box sx={{ position: 'relative', border: BORDER, px: '1.6mm', py: '1.3mm', minHeight: '7mm' }}>
+          <Typography
+            sx={{
+              position: 'absolute',
+              left: '50%',
+              top: '50%',
+              transform: 'translate(-50%, -50%)',
+              width: '100%',
+              px: '20mm',
+              fontSize: '3.4mm',
+              fontWeight: 700,
+              lineHeight: 1.2,
+              textAlign: 'center',
+            }}>
+            {renderedCopyTitle}
+          </Typography>
+          <Typography sx={{ mt: '1.25mm', fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, textAlign: 'right', whiteSpace: 'nowrap' }}>วันที่ / Date : {invoiceData.issuedDate}</Typography>
         </Box>
       </Stack>
 
       <Stack spacing="0.8mm">
-        <Box sx={{ border: BORDER, px: '1.4mm', py: '1mm' }}>
-          <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2 }}>วันที่ / Date : {invoiceData.issuedDate}</Typography>
-        </Box>
-
-        <Box sx={{ border: BORDER, px: '1.4mm', py: '1mm' }}>
-          <InfoLine label="ลูกค้า / Customer : " value={invoiceData.customer.name} />
-          <InfoLine label="เลขประจำตัวผู้เสียภาษี Tax ID :" value={invoiceData.customer.taxId} />
-          <InfoLine label="ที่อยู่ / Address :" value={invoiceData.customer.address} minHeight="9.5mm" />
+        <Box sx={{ border: BORDER, px: '2mm', py: '1mm' }}>
+          <InfoLine label="ลูกค้า / Customer : " value={invoiceData.customer.name} labelFontSize="3.2mm" valueFontSize="3.1mm" />
+          <InfoLine label="ที่อยู่ / Address :" value={invoiceData.customer.address} minHeight="9.5mm" labelFontSize="3.2mm" valueFontSize="3.1mm" />
+          <InfoLine label="เลขประจำตัวผู้เสียภาษี Tax ID :" value={invoiceData.customer.taxId} labelFontSize="3.2mm" valueFontSize="3.1mm" />
         </Box>
       </Stack>
 
@@ -312,20 +361,20 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
             bgcolor: '#fff',
           }}>
           <Box sx={{ px: '1mm', py: '1mm', borderRight: BORDER, textAlign: 'center' }}>
-            <Typography sx={{ fontSize: '2.2mm', fontWeight: 700, lineHeight: 1.2 }}>จำนวน</Typography>
-            <Typography sx={{ fontSize: '2mm', lineHeight: 1.1 }}>/ Quantity</Typography>
+            <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2 }}>จำนวน</Typography>
+            <Typography sx={{ fontSize: '3mm', lineHeight: 1.1 }}>/ Quantity</Typography>
           </Box>
           <Box sx={{ px: '1mm', py: '1mm', borderRight: BORDER, textAlign: 'center' }}>
-            <Typography sx={{ fontSize: '2.2mm', fontWeight: 700, lineHeight: 1.2 }}>รายละเอียด</Typography>
-            <Typography sx={{ fontSize: '2mm', lineHeight: 1.1 }}>/ Description</Typography>
+            <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2 }}>รายละเอียด</Typography>
+            <Typography sx={{ fontSize: '3mm', lineHeight: 1.1 }}>/ Description</Typography>
           </Box>
           <Box sx={{ px: '1mm', py: '1mm', borderRight: BORDER, textAlign: 'center' }}>
-            <Typography sx={{ fontSize: '2.2mm', fontWeight: 700, lineHeight: 1.2 }}>ราคาต่อหน่วย</Typography>
-            <Typography sx={{ fontSize: '2mm', lineHeight: 1.1 }}>Price / Unit</Typography>
+            <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2 }}>ราคาต่อหน่วย</Typography>
+            <Typography sx={{ fontSize: '3mm', lineHeight: 1.1 }}>Price / Unit</Typography>
           </Box>
           <Box sx={{ px: '1mm', py: '1mm', textAlign: 'center' }}>
-            <Typography sx={{ fontSize: '2.2mm', fontWeight: 700, lineHeight: 1.2 }}>บาท</Typography>
-            <Typography sx={{ fontSize: '2mm', lineHeight: 1.1 }}>/ Stg.</Typography>
+            <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2 }}>บาท</Typography>
+            <Typography sx={{ fontSize: '3mm', lineHeight: 1.1 }}>/ Stg.</Typography>
           </Box>
         </Box>
 
@@ -359,35 +408,55 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
       </Box>
 
       <Stack spacing="0.8mm">
-        <Box sx={{ border: BORDER, px: '1.4mm', py: '1mm' }}>
-          <SummaryLine label="รวมมูลค่าสินค้า / TOTAL" value={formatCurrency(invoiceData.subtotal)} />
-          <SummaryLine label="ภาษีมูลค่าเพิ่ม 7% / VALUE ADDED TAX" value={formatCurrency(invoiceData.vat)} />
-          <Divider sx={{ my: '0.5mm', borderColor: '#000' }} />
-          <SummaryLine label="จำนวนเงินรวมทั้งสิ้น / TOTAL AMOUNT INCLUDED VAT" value={formatCurrency(invoiceData.totalAmount)} bold />
-        </Box>
+        <SummaryLine label="รวมมูลค่าสินค้า / TOTAL" value={formatCurrency(invoiceData.subtotal)} labelFontSize="4mm" valueFontSize="4mm" />
+        <SummaryLine label="ภาษีมูลค่าเพิ่ม 7% / VALUE ADDED TAX" value={formatCurrency(invoiceData.vat)} labelFontSize="4mm" valueFontSize="4mm" />
 
-        <Box sx={{ border: BORDER, px: '1.4mm', py: '0.9mm' }}>
-          <Typography sx={{ fontSize: '2.2mm', fontWeight: 700, lineHeight: 1.2 }}>จำนวนเงินเป็นอักษร / Amount in words</Typography>
-          <Typography sx={{ mt: '0.5mm', fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2 }}>{invoiceData.amountInWords}</Typography>
-        </Box>
-
-        <Box sx={{ border: BORDER, px: '1.4mm', py: '0.9mm' }}>
-          <Stack direction="row" spacing="4mm" alignItems="center">
-            <CheckboxField label="เงินสด" checked={invoiceData.paymentMethod === 'cash'} />
-            <CheckboxField label="โอนเงิน" checked={invoiceData.paymentMethod === 'transfer'} />
+        <SummaryLine label="จำนวนเงินรวมทั้งสิ้น / TOTAL AMOUNT INCLUDED VAT" value={formatCurrency(invoiceData.totalAmount)} bold labelFontSize="4mm" valueFontSize="4mm" />
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 50mm', gap: '0.8mm', alignItems: 'stretch' }}>
+          <Box />
+          <Stack spacing="0.35mm" sx={{ px: '0.2mm' }}>
+            <Box sx={{ px: '0.4mm', py: '0.15mm' }}></Box>
+            <Box sx={{ px: '0.4mm', py: '0.15mm' }}></Box>
+            <Box sx={{ px: '0.4mm', py: '0.15mm' }}></Box>
           </Stack>
-          <Typography sx={{ mt: '0.6mm', fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.15 }}>{invoiceData.bankTransferInfo}</Typography>
+        </Box>
+
+        <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 50mm', gap: '0.8mm', alignItems: 'stretch' }}>
+          <Box />
+          <Stack spacing="0.4mm">
+            <Box sx={{ border: BORDER, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+              <Box sx={{ px: '1.4mm', py: '1.2mm', bgcolor: '#d4d4d8', textAlign: 'center' }}>
+                <Typography sx={{ fontSize: '4mm', fontWeight: 700, lineHeight: 1.2 }}>{invoiceData.amountInWords}</Typography>
+              </Box>
+            </Box>
+            <Typography sx={{ px: '1.2mm', py: '0.3mm', fontSize: '4mm', lineHeight: 1.2, textAlign: 'center' }}>จำนวนเงินเป็นตัวอักษร Amount in Words</Typography>
+          </Stack>
         </Box>
       </Stack>
 
-      <Box sx={{ mt: 'auto', border: BORDER, px: '1.4mm', py: '0.9mm' }}>
-        <Stack direction="row" spacing="2.2mm">
-          <SignatureColumn label={invoiceData.collectorSignatureLabel} />
-          <SignatureColumn label={invoiceData.authorizedSignatureLabel} />
-          <SignatureColumn label={invoiceData.customerSignatureLabel} />
-        </Stack>
-        <Typography sx={{ mt: '1.3mm', fontSize: '2.2mm', lineHeight: 1.2 }}>วันที่ / Date ____________________ {invoiceData.dateLine}</Typography>
-        <Typography sx={{ mt: '0.7mm', fontSize: '1.85mm', lineHeight: 1.15 }}>{invoiceData.notes}</Typography>
+      <Box sx={{ mt: 'auto', border: BORDER }}>
+        <Box sx={{ px: '1.4mm', py: '1.1mm' }}>
+          <Stack direction="row" spacing="2.2mm">
+            <Box sx={{ flex: 2, minWidth: 0 }}>
+              <Box sx={{ borderBottom: BORDER, height: '9mm' }} />
+              <Typography sx={{ mt: '1.1mm', fontSize: '2.2mm', textAlign: 'center', lineHeight: 1.2 }}>{`${invoiceData.collectorSignatureLabel} `}</Typography>
+            </Box>
+            <SignatureColumn label={invoiceData.customerSignatureLabel} />
+          </Stack>
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-end" spacing="4mm" sx={{ mt: '1.2mm' }}>
+            <Stack spacing="0.4mm" sx={{ flex: 1, minWidth: 0 }}>
+              <Typography sx={{ fontSize: '2.15mm', lineHeight: 1.2, whiteSpace: 'nowrap' }}>วันที่ / Date ____________________ {invoiceData.dateLine}</Typography>
+              <Typography sx={{ fontSize: '1.85mm', lineHeight: 1.15 }}>{invoiceData.notes}</Typography>
+            </Stack>
+            <Stack spacing="0.7mm" sx={{ flexShrink: 0, minWidth: '30mm', alignItems: 'flex-start' }}>
+              <Typography sx={{ fontSize: '2.2mm', fontWeight: 700, lineHeight: 1.2 }}>การชำระ / Payment</Typography>
+              <Stack direction="row" spacing="3mm" alignItems="center">
+                <CheckboxField label="เงินสด" checked={invoiceData.paymentMethod === 'cash'} />
+                <CheckboxField label="โอนเงิน" checked={invoiceData.paymentMethod === 'transfer'} />
+              </Stack>
+            </Stack>
+          </Stack>
+        </Box>
       </Box>
     </Box>
   );

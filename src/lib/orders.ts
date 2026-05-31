@@ -1,5 +1,5 @@
 import { fetchApiJson } from './api';
-import { formatCustomerAddress, getDisplayOrderNumber, type ApiOrder, type CustomerInfo, type PendingOrderDraft } from './contracts';
+import { getDisplayOrderNumber, type ApiOrder, type PendingOrderDraft } from './contracts';
 
 type ApiOrderLike = Partial<ApiOrder> & { id?: string };
 
@@ -13,8 +13,16 @@ function normalizeApiOrder(value: unknown): ApiOrder | null {
   }
 
   const order = value as ApiOrderLike;
-  const _id = typeof order._id === 'string' && order._id.trim().length > 0 ? order._id : typeof order.id === 'string' && order.id.trim().length > 0 ? order.id : null;
-  const orderId = typeof order.orderId === 'string' && order.orderId.trim().length > 0 ? order.orderId : null;
+  const _id =
+    typeof order._id === 'string' && order._id.trim().length > 0
+      ? order._id
+      : typeof order.id === 'string' && order.id.trim().length > 0
+        ? order.id
+        : null;
+  const orderId =
+    typeof order.orderId === 'string' && order.orderId.trim().length > 0
+      ? order.orderId
+      : null;
   const orderNumber = getDisplayOrderNumber(order, '');
 
   if (!_id || !orderId || !orderNumber) {
@@ -61,8 +69,12 @@ function extractApiOrder(value: unknown): ApiOrder | null {
 
 function extractApiOrderArray(value: unknown): ApiOrder[] | null {
   if (Array.isArray(value)) {
-    const normalizedOrders = value.map(extractApiOrder).filter((order): order is ApiOrder => Boolean(order));
-    return normalizedOrders.length > 0 || value.length === 0 ? normalizedOrders : null;
+    const normalizedOrders = value
+      .map(extractApiOrder)
+      .filter((order): order is ApiOrder => Boolean(order));
+    return normalizedOrders.length > 0 || value.length === 0
+      ? normalizedOrders
+      : null;
   }
 
   if (!isRecord(value)) {
@@ -85,7 +97,9 @@ function extractApiOrderArray(value: unknown): ApiOrder[] | null {
       continue;
     }
 
-    const normalizedOrders = candidate.map(extractApiOrder).filter((order): order is ApiOrder => Boolean(order));
+    const normalizedOrders = candidate
+      .map(extractApiOrder)
+      .filter((order): order is ApiOrder => Boolean(order));
     if (normalizedOrders.length > 0 || candidate.length === 0) {
       return normalizedOrders;
     }
@@ -99,11 +113,18 @@ type RemainingPaymentPayload = {
   method: ApiOrder['payment'];
 };
 
-type UpdateCustomerInfoPayload = CustomerInfo;
+type UpdateCustomerInfoPayload = {
+  customerName: string;
+  taxId?: string;
+  address?: string;
+};
 
 export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (typeof payload.clientDraftId === 'string' && payload.clientDraftId.trim().length > 0) {
+  if (
+    typeof payload.clientDraftId === 'string' &&
+    payload.clientDraftId.trim().length > 0
+  ) {
     // Backend requirement: POST /orders should deduplicate repeated submissions using this key.
     headers['Idempotency-Key'] = payload.clientDraftId.trim();
   }
@@ -122,12 +143,18 @@ export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder>
   return createdOrder;
 }
 
-export async function payRemainingBalance(orderId: string, payload: RemainingPaymentPayload): Promise<ApiOrder> {
-  const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}/payments`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
-  });
+export async function payRemainingBalance(
+  orderId: string,
+  payload: RemainingPaymentPayload,
+): Promise<ApiOrder> {
+  const responseBody = await fetchApiJson<unknown>(
+    `/orders/${orderId}/payments`,
+    {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    },
+  );
 
   const updatedOrder = extractApiOrder(responseBody);
   if (!updatedOrder) {
@@ -138,7 +165,9 @@ export async function payRemainingBalance(orderId: string, payload: RemainingPay
 }
 
 export async function fetchOrders(): Promise<ApiOrder[]> {
-  const responseBody = await fetchApiJson<unknown>('/orders', { cache: 'no-store' });
+  const responseBody = await fetchApiJson<unknown>('/orders', {
+    cache: 'no-store',
+  });
   const orders = extractApiOrderArray(responseBody);
 
   if (!orders) {
@@ -159,36 +188,23 @@ export async function fetchOrderById(orderId: string): Promise<ApiOrder> {
   return order;
 }
 
-export async function updateOrderCustomerInfo(orderId: string, customerInfo: UpdateCustomerInfoPayload): Promise<ApiOrder> {
-  const formattedAddress = formatCustomerAddress(customerInfo);
-  const branchLabel =
-    customerInfo.branchType === 'สาขา'
-      ? `สาขา ${customerInfo.branchNo?.trim() || '-'}`
-      : customerInfo.branchType === 'สำนักงานใหญ่'
-        ? 'สำนักงานใหญ่'
-        : undefined;
+export async function updateOrderCustomerInfo(
+  orderId: string,
+  customerInfo: UpdateCustomerInfoPayload,
+): Promise<ApiOrder> {
+  const normalizedCustomerName = customerInfo.customerName.trim();
+  const normalizedTaxId = customerInfo.taxId?.trim();
+  const normalizedAddress = customerInfo.address?.trim();
 
   const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
-      customerName: customerInfo.customerName,
-      phoneNumber: customerInfo.phoneNumber,
-      email: customerInfo.email,
-      customerEmail: customerInfo.email,
-      taxId: customerInfo.taxId,
-      customerTaxId: customerInfo.taxId,
-      branchType: customerInfo.branchType,
-      branchNo: customerInfo.branchNo,
-      branch: branchLabel,
-      customerBranch: branchLabel,
-      address: formattedAddress,
-      customerAddress: formattedAddress,
-      subDistrict: customerInfo.subDistrict,
-      district: customerInfo.district,
-      province: customerInfo.province,
-      postalCode: customerInfo.postalCode,
-      shippingAddress: customerInfo.shippingAddress,
+      customerName: normalizedCustomerName || '-',
+      taxId: normalizedTaxId || undefined,
+      customerTaxId: normalizedTaxId || undefined,
+      address: normalizedAddress || undefined,
+      customerAddress: normalizedAddress || undefined,
     }),
   });
 

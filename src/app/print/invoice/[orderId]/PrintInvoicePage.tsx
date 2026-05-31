@@ -106,8 +106,8 @@ function CustomerEditDrawer({ open, saving, errorMessage, formValues, onClose, o
       }}>
       <Stack sx={{ height: '100%' }}>
         <Box sx={{ px: 3, py: 2.5, borderBottom: '1px solid #E5E7EB' }}>
-          <Typography sx={{ fontSize: 22, fontWeight: 800, color: '#0F172A' }}>Customer Information</Typography>
-          <Typography sx={{ mt: 0.7, fontSize: 13, color: '#64748B' }}>Manage billing and tax invoice information</Typography>
+          <Typography sx={{ fontSize: 22, fontWeight: 800, color: '#0F172A' }}>ข้อมูลลูกค้า</Typography>
+          <Typography sx={{ mt: 0.7, fontSize: 13, color: '#64748B' }}>จัดการข้อมูลการเรียกเก็บเงิน และใบกำกับภาษี</Typography>
         </Box>
 
         <Box sx={{ flex: 1, overflowY: 'auto', px: 3, py: 2.5 }}>
@@ -115,17 +115,11 @@ function CustomerEditDrawer({ open, saving, errorMessage, formValues, onClose, o
             {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
             <Stack spacing={1.6}>
-              <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>Editable Fields</Typography>
-              <TextField label="Customer Name" value={formValues.customerName} onChange={event => onChange('customerName', event.target.value)} fullWidth />
-              <TextField label="Tax ID" value={formValues.taxId} onChange={event => onChange('taxId', event.target.value)} fullWidth />
-              <TextField label="Address" value={formValues.address} onChange={event => onChange('address', event.target.value)} fullWidth multiline minRows={4} />
+              <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>แก้ไขข้อมูล</Typography>
+              <TextField label="ชื่อลูกค้า" value={formValues.customerName} onChange={event => onChange('customerName', event.target.value)} fullWidth />
+              <TextField label="เลขประจำตัวผู้เสียภาษี" value={formValues.taxId} onChange={event => onChange('taxId', event.target.value)} fullWidth />
+              <TextField label="ที่อยู่" value={formValues.address} onChange={event => onChange('address', event.target.value)} fullWidth multiline minRows={4} />
             </Stack>
-
-            <Divider sx={{ borderColor: '#E5E7EB' }} />
-
-            <Typography sx={{ fontSize: 13, color: '#64748B', lineHeight: 1.6 }}>
-              ฟอร์มนี้แก้ไขได้เฉพาะชื่อลูกค้า เลขประจำตัวผู้เสียภาษีลูกค้า และที่อยู่ลูกค้าเท่านั้น
-            </Typography>
           </Stack>
         </Box>
 
@@ -256,7 +250,6 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
 
     try {
       const updatedOrder = await updateOrderCustomerInfo(order.orderId, {
-        ...getCustomerInfoFromOrder(order),
         customerName: formValues.customerName.trim() || '-',
         taxId: formValues.taxId.trim() || undefined,
         address: formValues.address.trim() || undefined,
@@ -284,12 +277,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
   }
 
   if (!order) {
-    return (
-      <ErrorState
-        title="ไม่พบข้อมูลใบกำกับภาษี"
-        subtitle={loadError ?? 'ไม่พบข้อมูลออเดอร์ที่ต้องการพิมพ์ กรุณากลับไปตรวจสอบรายการอีกครั้ง'}
-      />
-    );
+    return <ErrorState title="ไม่พบข้อมูลใบกำกับภาษี" subtitle={loadError ?? 'ไม่พบข้อมูลออเดอร์ที่ต้องการพิมพ์ กรุณากลับไปตรวจสอบรายการอีกครั้ง'} />;
   }
 
   return (

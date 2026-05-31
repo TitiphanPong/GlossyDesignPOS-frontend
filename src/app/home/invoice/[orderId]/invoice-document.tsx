@@ -123,7 +123,7 @@ function formatThaiTaxDate(value: string): string {
 
 function getCompanyInfo(): CompanyInfo {
   return {
-    thaiName: readEnv(process.env.NEXT_PUBLIC_COMPANY_THAI_NAME, 'กลอสซี่ ปริ้น แอด์ พรีเมี่ยม'),
+    thaiName: readEnv(process.env.NEXT_PUBLIC_COMPANY_THAI_NAME, 'กรอสซี่ ปริ้น แอนด์ พรีเมี่ยม'),
     englishName: readEnv(process.env.NEXT_PUBLIC_COMPANY_ENGLISH_NAME, 'GLOSSY PRINT AND PREMIUM'),
     branchNumber: readEnv(process.env.NEXT_PUBLIC_COMPANY_BRANCH_NO, 'สำนักงานใหญ่'),
     address: readEnv(process.env.NEXT_PUBLIC_COMPANY_ADDRESS, '-'),
@@ -302,8 +302,8 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
 
         <Box sx={{ border: BORDER, px: '1.4mm', py: '1mm' }}>
           <InfoLine label="ลูกค้า / Customer" value={invoiceData.customer.name} />
-          <InfoLine label="เลขประจำตัวผู้เสียภาษี Tax ID" value={invoiceData.customer.taxId} />
           <InfoLine label="ที่อยู่ / Address" value={invoiceData.customer.address} minHeight="9.5mm" />
+          <InfoLine label="เลขประจำตัวผู้เสียภาษี Tax ID" value={invoiceData.customer.taxId} />
         </Box>
       </Stack>
 
@@ -371,7 +371,7 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
         </Box>
 
         <Box sx={{ border: BORDER, px: '1.5mm', py: '1.1mm' }}>
-          <Typography sx={{ fontSize: '2.2mm', fontWeight: 700, lineHeight: 1.2 }}>จำนวนเงินเป็นอักษร / Amount in words</Typography>
+          <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2 }}>จำนวนเงินเป็นอักษร / Amount in words</Typography>
           <Typography sx={{ mt: '0.6mm', fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.25 }}>{invoiceData.amountInWords}</Typography>
         </Box>
 
