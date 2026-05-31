@@ -345,8 +345,13 @@ function buildOrderPaymentTimelineSubtitle(order: OrderRow): string {
 
 function buildOrderTimelineItems(order: OrderRow): JobTimelineCardItem[] {
   const activeStage: 'created' | 'payment' = order.status === 'pending' ? 'created' : 'payment';
-  const productionSubtitle =
-    order.status === 'paid' || order.status === 'partial' ? 'พร้อมส่งต่อเข้ากระบวนการผลิต' : order.status === 'cancelled' ? 'หยุดการดำเนินการตามสถานะรายการงาน' : 'รอเข้าสู่กระบวนการผลิต';
+  let productionSubtitle = 'รอเข้าสู่กระบวนการผลิต';
+
+  if (order.status === 'paid' || order.status === 'partial') {
+    productionSubtitle = 'พร้อมส่งต่อเข้ากระบวนการผลิต';
+  } else if (order.status === 'cancelled') {
+    productionSubtitle = 'หยุดการดำเนินการตามสถานะรายการงาน';
+  }
 
   const steps: Array<{ id: string; title: string; subtitle: string; icon: React.ReactNode; active: boolean }> = [
     {
@@ -719,25 +724,32 @@ type OrderDetailDrawerProps = {
   onCancelOrder: (id: string) => void;
 };
 
+function getOrderDetailDrawerPaperSx(isMobile: boolean) {
+  return {
+    width: isMobile ? '100%' : { sm: 420, md: 480, lg: 560 },
+    maxHeight: isMobile ? '94vh' : '100vh',
+    height: isMobile ? 'min(94vh, 860px)' : '100%',
+    borderTopLeftRadius: isMobile ? 18 : 22,
+    borderTopRightRadius: isMobile ? 18 : 0,
+    borderBottomLeftRadius: isMobile ? 0 : 22,
+    borderBottomRightRadius: 0,
+    background: 'linear-gradient(180deg, #FBFDFF 0%, #FFFFFF 100%)',
+    overflow: 'hidden',
+  };
+}
+
 function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawer, updatingOrderId, onClose, onMarkAsPaid, onOpenPayRemaining, onCancelOrder }: Readonly<OrderDetailDrawerProps>) {
+  const drawerAnchor = isMobile ? 'bottom' : 'right';
+  const drawerPaperSx = getOrderDetailDrawerPaperSx(isMobile);
+
   return (
     <Drawer
-      anchor={isMobile ? 'bottom' : 'right'}
+      anchor={drawerAnchor}
       open={drawerOpen}
       onClose={onClose}
       slotProps={{
         paper: {
-          sx: {
-            width: isMobile ? '100%' : { sm: 420, md: 480, lg: 560 },
-            maxHeight: isMobile ? '94vh' : '100vh',
-            height: isMobile ? 'min(94vh, 860px)' : '100%',
-            borderTopLeftRadius: isMobile ? 18 : 22,
-            borderTopRightRadius: isMobile ? 18 : 0,
-            borderBottomLeftRadius: isMobile ? 0 : 22,
-            borderBottomRightRadius: 0,
-            background: 'linear-gradient(180deg, #FBFDFF 0%, #FFFFFF 100%)',
-            overflow: 'hidden',
-          },
+          sx: drawerPaperSx,
         },
       }}>
       {selectedOrder ? (
@@ -1104,10 +1116,15 @@ export default function OrderManagementPage() {
   );
 
   React.useEffect(() => {
-    if (!selectedOrder) return;
+    if (selectedOrder?.id == null) return;
     const latest = rowsById.get(selectedOrder.id) ?? null;
     setSelectedOrder(latest);
   }, [rowsById, selectedOrder]);
+
+  const labelDisplayedRows = React.useCallback(({ from, to, count }: { from: number; to: number; count: number }) => {
+    const totalLabel = count === -1 ? `เธกเธฒเธเธเธงเนเธฒ ${to}` : `${count}`;
+    return `${from}-${to} เธเธฒเธ ${totalLabel}`;
+  }, []);
 
   return (
     <AdminPageContainer>
@@ -1572,7 +1589,7 @@ export default function OrderManagementPage() {
             }}
             rowsPerPageOptions={[5, 8, 10, 20]}
             labelRowsPerPage="จำนวนรายการต่อหน้า"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count !== -1 ? count : `มากกว่า ${to}`}`}
+            labelDisplayedRows={labelDisplayedRows}
           />
         </Card>
       </Stack>

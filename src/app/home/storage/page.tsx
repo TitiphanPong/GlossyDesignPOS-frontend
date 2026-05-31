@@ -214,7 +214,13 @@ function statusChip(status: StorageStatus) {
 }
 
 function buildStorageTimelineItems(record: StorageRow): JobTimelineCardItem[] {
-  const activeIndex = record.status === 'pending' ? 1 : record.status === 'completed' ? 2 : 0;
+  let activeIndex = 0;
+
+  if (record.status === 'pending') {
+    activeIndex = 1;
+  } else if (record.status === 'completed') {
+    activeIndex = 2;
+  }
   const titles = ['อัปโหลดไฟล์เข้าสู่ระบบคลังเอกสาร', 'เจ้าหน้าที่รับงานและตรวจไฟล์เบื้องต้น', 'รอคิวดาวน์โหลดเพื่อพิมพ์'] as const;
   const subtitles = [
     activeIndex === 0 ? 'อัปเดตล่าสุดในระบบ' : 'บันทึกไว้ในลำดับงานก่อนหน้า',
@@ -296,9 +302,63 @@ function pickFileIcon(fileName: string) {
 
 function buildPersistedNote(note: string, batchId?: string, status?: StorageStatus) {
   const trimmed = note.trim();
-  const markers = [batchId ? `[[batch:${batchId}]]` : '', status === 'pending' ? '[[stage:pending]]' : status === 'waiting' ? '[[stage:waiting-download]]' : ''].filter(Boolean).join('\n');
+  let stageMarker = '';
+
+  if (status === 'pending') {
+    stageMarker = '[[stage:pending]]';
+  } else if (status === 'waiting') {
+    stageMarker = '[[stage:waiting-download]]';
+  }
+
+  const markers = [batchId ? `[[batch:${batchId}]]` : '', stageMarker].filter(Boolean).join('\n');
   if (!markers) return trimmed;
   return trimmed ? `${trimmed}\n\n${markers}` : markers;
+}
+
+function rowContainsAnySourceId(row: Pick<StorageRow, 'sourceIds'>, targetIds: string[]): boolean {
+  return row.sourceIds.some(sourceId => targetIds.includes(sourceId));
+}
+
+function applyStorageRowPatch(row: StorageRow, patch: StorageRowPatch): StorageRow {
+  return {
+    ...row,
+    ...(patch.status ? { status: patch.status } : {}),
+    ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+  };
+}
+
+function getBulkMutationTargetIds(selectedIds: string[], rowsById: Map<string, StorageRow>): string[] {
+  return Array.from(new Set(selectedIds.flatMap(rowId => rowsById.get(rowId)?.sourceIds ?? [rowId])));
+}
+
+function matchesStorageSearch(row: StorageRow, query: string): boolean {
+  if (!query) {
+    return true;
+  }
+
+  return row.customerName.toLowerCase().includes(query) || row.phone.toLowerCase().includes(query) || row.jobType.toLowerCase().includes(query) || row.notes.toLowerCase().includes(query);
+}
+
+function matchesStorageDateFilter(uploadDate: string, dateFilter: string): boolean {
+  if (!dateFilter) {
+    return true;
+  }
+
+  const day = new Date(uploadDate);
+  if (Number.isNaN(day.getTime())) {
+    return false;
+  }
+
+  return day.toISOString().slice(0, 10) === dateFilter;
+}
+
+function compareStorageRows(a: StorageRow, b: StorageRow, sortBy: SortType): number {
+  if (sortBy === 'customer') return a.customerName.localeCompare(b.customerName);
+  if (sortBy === 'status') return a.status.localeCompare(b.status);
+
+  const t1 = new Date(a.uploadDate).getTime();
+  const t2 = new Date(b.uploadDate).getTime();
+  return sortBy === 'newest' ? t2 - t1 : t1 - t2;
 }
 
 function toStructuredStage(status?: StorageStatus): 'waiting-download' | 'pending' | 'completed' | undefined {
@@ -460,29 +520,21 @@ export default function StoragePage() {
     (targetIds: string[], patch: StorageRowPatch) => {
       setRows(current =>
         current.map(row => {
-          if (!row.sourceIds.some(sourceId => targetIds.includes(sourceId))) return row;
-          return {
-            ...row,
-            ...(patch.status ? { status: patch.status } : {}),
-            ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
-          };
+          if (!rowContainsAnySourceId(row, targetIds)) return row;
+          return applyStorageRowPatch(row, patch);
         })
       );
 
       setActiveRecord(current => {
-        if (!current || !current.sourceIds.some(sourceId => targetIds.includes(sourceId))) return current;
-        return {
-          ...current,
-          ...(patch.status ? { status: patch.status } : {}),
-          ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
-        };
+        if (current?.sourceIds == null || !rowContainsAnySourceId(current, targetIds)) return current;
+        return applyStorageRowPatch(current, patch);
       });
 
-      if (activeRecord && activeRecord.sourceIds.some(sourceId => targetIds.includes(sourceId)) && patch.status) {
+      if (activeRecord?.sourceIds != null && rowContainsAnySourceId(activeRecord, targetIds) && patch.status) {
         setDrawerStatus(patch.status);
       }
 
-      if (activeRecord && activeRecord.sourceIds.some(sourceId => targetIds.includes(sourceId)) && patch.notes !== undefined) {
+      if (activeRecord?.sourceIds != null && rowContainsAnySourceId(activeRecord, targetIds) && patch.notes !== undefined) {
         setDrawerNotes(patch.notes);
       }
     },
@@ -491,10 +543,10 @@ export default function StoragePage() {
 
   const removeRows = React.useCallback(
     (targetIds: string[]) => {
-      setRows(current => current.filter(row => !row.sourceIds.some(sourceId => targetIds.includes(sourceId))));
+      setRows(current => current.filter(row => !rowContainsAnySourceId(row, targetIds)));
       setSelectedIds(current => current.filter(id => !targetIds.includes(id)));
 
-      if (activeRecord && activeRecord.sourceIds.some(sourceId => targetIds.includes(sourceId))) {
+      if (activeRecord?.sourceIds != null && rowContainsAnySourceId(activeRecord, targetIds)) {
         setDrawerOpen(false);
         setActiveRecord(null);
       }
@@ -534,28 +586,14 @@ export default function StoragePage() {
   }, []);
 
   const filteredRows = React.useMemo(() => {
+    const normalizedQuery = search.trim().toLowerCase();
+
     return rows
-      .filter(row => {
-        const q = search.trim().toLowerCase();
-        if (!q) return true;
-        return row.customerName.toLowerCase().includes(q) || row.phone.toLowerCase().includes(q) || row.jobType.toLowerCase().includes(q) || row.notes.toLowerCase().includes(q);
-      })
+      .filter(row => matchesStorageSearch(row, normalizedQuery))
       .filter(row => (statusFilter === 'all' ? true : row.status === statusFilter))
       .filter(row => (jobTypeFilter === 'all' ? true : row.jobType === jobTypeFilter))
-      .filter(row => {
-        if (!dateFilter) return true;
-        const day = new Date(row.uploadDate);
-        if (Number.isNaN(day.getTime())) return false;
-        return day.toISOString().slice(0, 10) === dateFilter;
-      })
-      .sort((a, b) => {
-        if (sortBy === 'customer') return a.customerName.localeCompare(b.customerName);
-        if (sortBy === 'status') return a.status.localeCompare(b.status);
-
-        const t1 = new Date(a.uploadDate).getTime();
-        const t2 = new Date(b.uploadDate).getTime();
-        return sortBy === 'newest' ? t2 - t1 : t1 - t2;
-      });
+      .filter(row => matchesStorageDateFilter(row.uploadDate, dateFilter))
+      .sort((a, b) => compareStorageRows(a, b, sortBy));
   }, [dateFilter, jobTypeFilter, rows, search, sortBy, statusFilter]);
 
   const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
@@ -625,7 +663,7 @@ export default function StoragePage() {
   const handleBulkStatus = React.useCallback(async () => {
     if (selectedIds.length === 0) return;
 
-    const targetIds = Array.from(new Set(selectedIds.flatMap(rowId => rowsById.get(rowId)?.sourceIds ?? [rowId])));
+    const targetIds = getBulkMutationTargetIds(selectedIds, rowsById);
     const nextStatus: StorageStatus = 'pending';
     setActionMessage(null);
     setBulkUpdating(true);
@@ -664,7 +702,7 @@ export default function StoragePage() {
     if (selectedIds.length === 0) return;
     if (!confirm('ยืนยันการลบรายการที่เลือก?')) return;
 
-    const targetIds = Array.from(new Set(selectedIds.flatMap(rowId => rowsById.get(rowId)?.sourceIds ?? [rowId])));
+    const targetIds = getBulkMutationTargetIds(selectedIds, rowsById);
     setActionMessage(null);
     setBulkDeleting(true);
     trackPersistingIds(targetIds, true);
@@ -696,7 +734,6 @@ export default function StoragePage() {
       trackPersistingIds(targetIds, false);
       setBulkDeleting(false);
     }
-    return;
   }, [persistUploadMutation, removeRows, rowsById, selectedIds, trackPersistingIds]);
 
   const allCurrentSelected = React.useMemo(() => filteredRows.length > 0 && filteredRows.every(row => selectedIdSet.has(row.id)), [filteredRows, selectedIdSet]);
@@ -772,7 +809,6 @@ export default function StoragePage() {
       trackPersistingIds(targetIds, false);
       setDrawerSaving(false);
     }
-    return;
   }, [activeRecord, applyRowPatch, drawerNotes, drawerStatus, persistUploadMutation, trackPersistingIds]);
 
   const openRowMenu = (event: React.MouseEvent<HTMLButtonElement>, rowId: string) => {

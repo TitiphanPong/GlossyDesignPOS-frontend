@@ -72,7 +72,6 @@ function buildSubmittedOrder(
   return {
     ...order,
     orderId: backendOrder.orderId,
-    // TODO(order-number): rely on backend-generated orderNumber once NestJS guarantees it on every order response.
     orderNumber: getDisplayOrderNumber(backendOrder),
     status: backendOrder.status ?? status,
     orderSyncStatus: 'submitted',
@@ -103,6 +102,28 @@ function getPrimaryActionColor(payment: PaymentMethod): 'success' | 'warning' {
 
 function getPaymentMethodLabel(payment: PaymentMethod): string {
   return payment === 'cash' ? 'เงินสด' : PAYMENT_METHOD_LABELS[payment];
+}
+
+function getOrderNumberColor(orderData: StoredPendingOrderDraft | null, submitError: string | null): string {
+  const hasOrderNumber = Boolean(orderData?.orderNumber || orderData?.orderId);
+
+  if (hasOrderNumber) {
+    return 'text.primary';
+  }
+
+  return submitError ? 'error.main' : 'warning.main';
+}
+
+function getOrderNumberFallback(isSubmitting: boolean, submitError: string | null): string {
+  if (isSubmitting) {
+    return 'Waiting for backend...';
+  }
+
+  if (submitError) {
+    return 'Not created yet';
+  }
+
+  return 'Pending confirmation';
 }
 
 export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrder }: Readonly<Props>) {
@@ -255,9 +276,9 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
               component="span"
               sx={{
                 fontWeight: 800,
-                color: (orderData?.orderNumber || orderData?.orderId) ? 'text.primary' : submitError ? 'error.main' : 'warning.main',
+                color: getOrderNumberColor(orderData, submitError),
               }}>
-              {getDisplayOrderNumber(orderData ?? {}, isSubmitting ? 'Waiting for backend...' : submitError ? 'Not created yet' : 'Pending confirmation')}
+              {getDisplayOrderNumber(orderData ?? {}, getOrderNumberFallback(isSubmitting, submitError))}
             </Box>
           </Typography>
         </Box>
