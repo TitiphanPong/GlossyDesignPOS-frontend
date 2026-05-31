@@ -1,5 +1,5 @@
 import { fetchApiJson } from './api';
-import { getOrderDisplayNumber, type ApiOrder, type PendingOrderDraft } from './contracts';
+import { getDisplayOrderNumber, type ApiOrder, type PendingOrderDraft } from './contracts';
 
 type ApiOrderLike = Partial<ApiOrder> & { id?: string };
 
@@ -15,7 +15,7 @@ function normalizeApiOrder(value: unknown): ApiOrder | null {
   const order = value as ApiOrderLike;
   const _id = typeof order._id === 'string' && order._id.trim().length > 0 ? order._id : typeof order.id === 'string' && order.id.trim().length > 0 ? order.id : null;
   const orderId = typeof order.orderId === 'string' && order.orderId.trim().length > 0 ? order.orderId : null;
-  const orderNumber = getOrderDisplayNumber(order, '');
+  const orderNumber = getDisplayOrderNumber(order, '');
 
   if (!_id || !orderId || !orderNumber) {
     return null;
@@ -25,6 +25,7 @@ function normalizeApiOrder(value: unknown): ApiOrder | null {
     ...order,
     _id,
     orderId,
+    // TODO(order-number): remove this frontend fallback once the backend always returns orderNumber.
     orderNumber,
   } as ApiOrder;
 }

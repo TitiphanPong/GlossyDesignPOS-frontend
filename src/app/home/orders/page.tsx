@@ -62,12 +62,11 @@ import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
-import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import EmailRoundedIcon from '@mui/icons-material/EmailRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
-import { ApiOrder, getOrderDisplayNumber, normalizeApiCartItem, normalizeApiOrderAmounts, type OrderStatus, type PaymentMethod } from '../../../lib/contracts';
+import { ApiOrder, getDisplayOrderNumber, normalizeApiCartItem, normalizeApiOrderAmounts, type OrderStatus, type PaymentMethod } from '../../../lib/contracts';
 
 type PaymentStatus = OrderStatus;
 type SortOrder = 'newest' | 'oldest' | 'high' | 'low';
@@ -179,7 +178,7 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
   return {
     id: order._id || order.orderId,
     orderId: order.orderId,
-    orderNumber: getOrderDisplayNumber(order),
+    orderNumber: getDisplayOrderNumber(order),
     customerName: order.customerName || 'ลูกค้าไม่ระบุชื่อ',
     phoneNumber: order.phoneNumber || '-',
     lineId: '-',

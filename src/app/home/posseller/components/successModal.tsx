@@ -6,7 +6,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ReplayIcon from '@mui/icons-material/Replay';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
-import { getOrderDisplayNumber, PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../../lib/contracts';
+import { getDisplayOrderNumber, PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../../lib/contracts';
 import { isMissingApiBaseError } from '../../../../lib/api';
 import { createOrder } from '../../../../lib/orders';
 import {
@@ -66,13 +66,14 @@ function buildSubmittingOrder(order: StoredPendingOrderDraft): StoredPendingOrde
 
 function buildSubmittedOrder(
   order: StoredPendingOrderDraft,
-  backendOrder: { orderId: string; orderNumber: string; status?: StoredPendingOrderDraft['status'] },
+  backendOrder: { orderId: string; orderNumber?: string; status?: StoredPendingOrderDraft['status'] },
   status: StoredPendingOrderDraft['status']
 ): StoredPendingOrderDraft {
   return {
     ...order,
     orderId: backendOrder.orderId,
-    orderNumber: getOrderDisplayNumber(backendOrder),
+    // TODO(order-number): rely on backend-generated orderNumber once NestJS guarantees it on every order response.
+    orderNumber: getDisplayOrderNumber(backendOrder),
     status: backendOrder.status ?? status,
     orderSyncStatus: 'submitted',
     lastSubmissionError: null,
@@ -256,7 +257,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
                 fontWeight: 800,
                 color: (orderData?.orderNumber || orderData?.orderId) ? 'text.primary' : submitError ? 'error.main' : 'warning.main',
               }}>
-              {getOrderDisplayNumber(orderData ?? {}, isSubmitting ? 'Waiting for backend...' : submitError ? 'Not created yet' : 'Pending confirmation')}
+              {getDisplayOrderNumber(orderData ?? {}, isSubmitting ? 'Waiting for backend...' : submitError ? 'Not created yet' : 'Pending confirmation')}
             </Box>
           </Typography>
         </Box>

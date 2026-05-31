@@ -6,7 +6,7 @@ import { CalendarDays, CircleDollarSign, Palette, ReceiptText, Sparkles, TimerRe
 import { QRCodeCanvas } from 'qrcode.react';
 import generatePayload from 'promptpay-qr';
 import type { PaymentSummaryResult } from '../../utils/computeTotal';
-import { getOrderDisplayNumber } from '../../../lib/contracts';
+import { getDisplayOrderNumber as getSharedDisplayOrderNumber } from '../../../lib/contracts';
 import { formatMoney, getCartKey, type CartItem, type Order } from './customerDisplayShared';
 
 const bankDetails = {
@@ -32,7 +32,7 @@ function getPaymentInstruction(order: Order): string {
 }
 
 function getDisplayOrderNumber(order: Order): string {
-  const displayNumber = getOrderDisplayNumber(order, '');
+  const displayNumber = getSharedDisplayOrderNumber(order, '');
   if (displayNumber) return displayNumber;
   if (order.lastSubmissionError) {
     return 'Order number unavailable';

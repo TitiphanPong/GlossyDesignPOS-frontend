@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { normalizeApiCartItem, normalizeApiCartItemForInvoice, normalizeApiOrderAmounts, normalizeApiOrderForInvoice } from './contracts';
+import { getDisplayOrderNumber, normalizeApiCartItem, normalizeApiCartItemForInvoice, normalizeApiOrderAmounts, normalizeApiOrderForInvoice } from './contracts';
 
 test('normalizeApiCartItemForInvoice supports qty and price fallbacks', () => {
   const item = normalizeApiCartItemForInvoice({
@@ -70,4 +70,10 @@ test('normalizeApiOrderAmounts supports grand total and remaining fallbacks', ()
   assert.equal(amounts.grandTotal, 107);
   assert.equal(amounts.remainingTotal, 20);
   assert.equal(amounts.paidAmount, 87);
+});
+
+test('getDisplayOrderNumber prefers orderNumber and falls back to orderId', () => {
+  assert.equal(getDisplayOrderNumber({ orderNumber: 'GD-2026-000001', orderId: 'legacy-001' }), 'GD-2026-000001');
+  assert.equal(getDisplayOrderNumber({ orderId: 'legacy-001' }), 'legacy-001');
+  assert.equal(getDisplayOrderNumber({}, '-'), '-');
 });

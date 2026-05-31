@@ -36,8 +36,6 @@ type JobOption = {
 type UploadFileItem = UploadQueueItem;
 
 type UploadFieldErrors = {
-  customerName: string;
-  phone: string;
   jobNote: string;
 };
 
@@ -74,16 +72,11 @@ const uploadJobTypeMap: Record<string, UploadPayload['jobType']> = {
 };
 
 const ACCEPT_ATTRIBUTE = buildAcceptAttribute(ACCEPTED_EXTENSIONS);
-const CUSTOMER_NAME_MAX_LENGTH = 120;
 const JOB_NOTE_MAX_LENGTH = 500;
-const PHONE_MIN_DIGITS = 9;
-const PHONE_MAX_DIGITS = 20;
+const UPLOAD_PLACEHOLDER_CUSTOMER_NAME = 'Upload Customer';
+const UPLOAD_PLACEHOLDER_PHONE = '0000000000';
 // Legacy customer detail limits kept for the old standalone customer-info section:
 // const CUSTOMER_NOTE_MAX_LENGTH = 500;
-
-function normalizePhoneDigits(phoneNumber: string): string {
-  return phoneNumber.replace(/\D/g, '');
-}
 
 function fileIconByName(name: string) {
   const ext = getFileExtension(name);
@@ -136,35 +129,13 @@ function createUploadBatchId(): string {
   return `batch-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-function getUploadFieldErrors(customerName: string, phone: string, jobNote: string): UploadFieldErrors {
-  const normalizedPhone = normalizePhoneDigits(phone);
-
+function getUploadFieldErrors(jobNote: string): UploadFieldErrors {
   return {
-    customerName:
-      !customerName
-        ? 'กรุณากรอกชื่อลูกค้า'
-        : customerName.length > CUSTOMER_NAME_MAX_LENGTH
-          ? `ชื่อลูกค้ายาวได้ไม่เกิน ${CUSTOMER_NAME_MAX_LENGTH} ตัวอักษร`
-          : '',
-    phone:
-      !phone
-        ? 'กรุณากรอกเบอร์โทรศัพท์'
-        : normalizedPhone.length < PHONE_MIN_DIGITS || normalizedPhone.length > PHONE_MAX_DIGITS
-          ? `เบอร์โทรควรมี ${PHONE_MIN_DIGITS}-${PHONE_MAX_DIGITS} ตัวเลข`
-          : '',
     jobNote: jobNote.length > JOB_NOTE_MAX_LENGTH ? `รายละเอียดงานยาวได้ไม่เกิน ${JOB_NOTE_MAX_LENGTH} ตัวอักษร` : '',
   };
 }
 
 function getUploadInputError(errors: UploadFieldErrors): { message: string; step: Step } | null {
-  if (errors.customerName) {
-    return { message: errors.customerName, step: 1 };
-  }
-
-  if (errors.phone) {
-    return { message: errors.phone, step: 1 };
-  }
-
   if (errors.jobNote) {
     return { message: errors.jobNote, step: 1 };
   }
@@ -247,22 +218,16 @@ export default function UploadPage() {
   const [openingFileId, setOpeningFileId] = useState<string | null>(null);
   const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>(null);
 
-  const [customerName, setCustomerName] = useState('');
-  const [phone, setPhone] = useState('');
   const [jobNote, setJobNote] = useState('');
   const [touchedFields, setTouchedFields] = useState({
-    customerName: false,
-    phone: false,
     jobNote: false,
   });
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const selectedJobLabel = useMemo(() => jobOptions.find(item => item.id === selectedJobType)?.label ?? '-', [selectedJobType]);
   const envError = process.env.NEXT_PUBLIC_API_URL ? null : 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL ก่อนใช้งานอัปโหลดไฟล์';
-  const trimmedCustomerName = customerName.trim();
-  const trimmedPhone = phone.trim();
   const trimmedJobNote = jobNote.trim();
-  const fieldErrors = useMemo(() => getUploadFieldErrors(trimmedCustomerName, trimmedPhone, trimmedJobNote), [trimmedCustomerName, trimmedPhone, trimmedJobNote]);
+  const fieldErrors = useMemo(() => getUploadFieldErrors(trimmedJobNote), [trimmedJobNote]);
 
   const uploadedCount = uploadedFiles.filter(item => item.status === 'uploaded').length;
   const errorItems = uploadedFiles.filter(item => item.status === 'error');
@@ -314,8 +279,6 @@ export default function UploadPage() {
   const markJobFieldsTouched = () => {
     setTouchedFields(prev => ({
       ...prev,
-      customerName: true,
-      phone: true,
       jobNote: true,
     }));
   };
@@ -431,8 +394,9 @@ export default function UploadPage() {
     const uploadResult = await uploadPendingFiles({
       items: uploadedFiles,
       payload: {
-        customerName: trimmedCustomerName,
-        phone: trimmedPhone,
+        // TODO(upload-backend): remove placeholder customer fields once the backend no longer requires them.
+        customerName: UPLOAD_PLACEHOLDER_CUSTOMER_NAME,
+        phone: UPLOAD_PLACEHOLDER_PHONE,
         jobType,
         note: legacyNote,
         statusNote: trimmedJobNote || undefined,
@@ -561,46 +525,6 @@ export default function UploadPage() {
                 <h2 className="text-base font-semibold text-slate-900">รายละเอียดงาน</h2>
               </div>
               <p className="mb-4 text-sm text-slate-600">เลือกประเภทงานและใส่รายละเอียดเพิ่มเติมเท่าที่จำเป็น เพื่อให้ทีมตรวจสอบและเริ่มงานต่อได้ง่ายขึ้น</p>
-              <div className="mb-4 grid gap-3 sm:grid-cols-2">
-                <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-slate-700">ชื่อลูกค้า *</span>
-                  <input
-                    type="text"
-                    value={customerName}
-                    onChange={e => setCustomerName(e.target.value)}
-                    onBlur={() => setTouchedFields(prev => ({ ...prev, customerName: true }))}
-                    maxLength={CUSTOMER_NAME_MAX_LENGTH}
-                    aria-invalid={touchedFields.customerName && Boolean(fieldErrors.customerName)}
-                    className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-black placeholder:text-slate-400 outline-none transition focus:ring-4 ${
-                      touchedFields.customerName && fieldErrors.customerName ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
-                    }`}
-                    placeholder="เช่น สมชาย ใจดี"
-                  />
-                  <span className={`mt-1 block text-xs ${touchedFields.customerName && fieldErrors.customerName ? 'text-rose-600' : 'text-slate-500'}`}>
-                    {touchedFields.customerName && fieldErrors.customerName ? fieldErrors.customerName : `${trimmedCustomerName.length}/${CUSTOMER_NAME_MAX_LENGTH}`}
-                  </span>
-                </label>
-
-                <label className="block">
-                  <span className="mb-1 block text-sm font-medium text-slate-700">เบอร์โทรศัพท์ *</span>
-                  <input
-                    type="tel"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    onBlur={() => setTouchedFields(prev => ({ ...prev, phone: true }))}
-                    inputMode="tel"
-                    maxLength={PHONE_MAX_DIGITS + 4}
-                    aria-invalid={touchedFields.phone && Boolean(fieldErrors.phone)}
-                    className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-black placeholder:text-slate-400 outline-none transition focus:ring-4 ${
-                      touchedFields.phone && fieldErrors.phone ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
-                    }`}
-                    placeholder="เช่น 0812345678"
-                  />
-                  <span className={`mt-1 block text-xs ${touchedFields.phone && fieldErrors.phone ? 'text-rose-600' : 'text-slate-500'}`}>
-                    {touchedFields.phone && fieldErrors.phone ? fieldErrors.phone : 'รองรับตัวเลข 9-20 หลัก'}
-                  </span>
-                </label>
-              </div>
               <p className="mb-3 text-sm font-medium text-slate-700">ประเภทงาน *</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2">
                 {jobOptions.map(job => {

@@ -3,7 +3,7 @@
 import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { getOrderDisplayNumber, type ApiCartItem, type ApiOrder } from '../../../../lib/contracts';
+import { getDisplayOrderNumber, type ApiCartItem, type ApiOrder } from '../../../../lib/contracts';
 import { EmptyState } from '../dashboardUi';
 
 interface RecentOrdersTableProps {
@@ -200,7 +200,7 @@ export default function RecentOrdersTable({ orders }: Readonly<RecentOrdersTable
                     <TableRow key={order._id} className="orders-table-row" sx={{ '& td': { py: 1.6, px: 2, borderBottom: '1px solid #F9FAFB', fontSize: 13, verticalAlign: 'top' } }}>
                       <TableCell>
                         <Typography component={Link} href={`/invoice/${order._id}`} sx={{ display: 'inline-block', fontSize: 13, fontWeight: 700, color: '#6C4DFF', textDecoration: 'none', fontVariantNumeric: 'tabular-nums', '&:hover': { textDecoration: 'underline' } }}>
-                          {getOrderDisplayNumber(order)}
+                          {getDisplayOrderNumber(order)}
                         </Typography>
                         <Typography sx={{ mt: 0.4, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{order.taxInvoice === 'yes' ? 'ใบกำกับภาษี' : 'บิลทั่วไป'}</Typography>
                       </TableCell>

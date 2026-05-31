@@ -352,6 +352,8 @@ Important scope note:
 
 ### 1. Show a loading state instead of a blank admin screen during guard checks
 
+- Status: Complete (admin guard loading UI added on 2026-05-31)
+
 - Title: Add admin guard loading UI
 - File path(s) involved:
   - `src/components/admin/AdminGuardLayout.tsx`
