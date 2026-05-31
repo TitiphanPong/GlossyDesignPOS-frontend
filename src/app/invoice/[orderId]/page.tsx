@@ -1,1 +1,1 @@
-export { default } from '../../home/invoice/[orderId]/page';
+export { default } from '../../print/invoice/[orderId]/page';

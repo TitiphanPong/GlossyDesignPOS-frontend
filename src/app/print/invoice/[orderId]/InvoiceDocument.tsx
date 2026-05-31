@@ -1,10 +1,8 @@
 'use client';
 
-import type { RefObject } from 'react';
-import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
-import { Box, Button, Divider, Stack, Typography } from '@mui/material';
-import type { NormalizedInvoiceOrder, PaymentMethod } from '../../../../lib/contracts';
-import { convertAmountToThaiText, formatCurrency, resolveInvoiceDocumentType, type InvoiceDocumentType } from './invoice-utils';
+import { Box, Divider, Stack, Typography } from '@mui/material';
+import { formatCustomerAddress, type NormalizedInvoiceOrder, type PaymentMethod } from '../../../../lib/contracts';
+import { convertAmountToThaiText, formatCurrency, resolveInvoiceDocumentType, type InvoiceDocumentType } from '../../../home/invoice/[orderId]/invoice-utils';
 
 export type InvoiceItem = {
   quantity: number;
@@ -65,18 +63,14 @@ type InvoiceCopyProps = TaxInvoiceTemplateProps & {
   copyIndex: number;
 };
 
-type InvoiceToolbarProps = {
-  documentRef: RefObject<HTMLDivElement | null>;
-};
-
 const PAGE_WIDTH_MM = 285;
-const PAGE_HEIGHT_MM = 198;
+const PAGE_HEIGHT_MM = 197;
 const COPY_WIDTH_MM = PAGE_WIDTH_MM / 2;
 const BORDER = '0.2mm solid #000';
 const DOTTED_BORDER = '0.2mm dotted #000';
 const BASE_FONT_MM = 2.55;
-const SECTION_GAP_MM = 1.2;
-const MIN_ITEM_ROWS = 8;
+const SECTION_GAP_MM = 1;
+const MIN_ITEM_ROWS = 7;
 
 function readEnv(value: string | undefined, fallback: string) {
   return value && value.trim().length > 0 ? value.trim() : fallback;
@@ -126,9 +120,9 @@ function getCompanyInfo(): CompanyInfo {
     thaiName: readEnv(process.env.NEXT_PUBLIC_COMPANY_THAI_NAME, 'กลอสซี่ ปริ้น แอด์ พรีเมี่ยม'),
     englishName: readEnv(process.env.NEXT_PUBLIC_COMPANY_ENGLISH_NAME, 'GLOSSY PRINT AND PREMIUM'),
     branchNumber: readEnv(process.env.NEXT_PUBLIC_COMPANY_BRANCH_NO, 'สำนักงานใหญ่'),
-    address: readEnv(process.env.NEXT_PUBLIC_COMPANY_ADDRESS, '-'),
-    phone: readEnv(process.env.NEXT_PUBLIC_COMPANY_PHONE, '-'),
-    taxId: readEnv(process.env.NEXT_PUBLIC_COMPANY_TAX_ID, '-'),
+    address: readEnv(process.env.NEXT_PUBLIC_COMPANY_ADDRESS, '55 ถนนศรีนครินทร์ แขวงหนองบอน เขตประเวศ จังหวัดกรุงเทพฯ 10250'),
+    phone: readEnv(process.env.NEXT_PUBLIC_COMPANY_PHONE, '081-555-2929'),
+    taxId: readEnv(process.env.NEXT_PUBLIC_COMPANY_TAX_ID, '3160100252587'),
     email: readEnv(process.env.NEXT_PUBLIC_COMPANY_EMAIL, 'glossy2929@gmail.com'),
     website: readEnv(process.env.NEXT_PUBLIC_COMPANY_WEBSITE, '-'),
   };
@@ -138,6 +132,7 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
   const company = getCompanyInfo();
   const issuedDate = formatThaiTaxDate(order.issueDate || order.orderDate);
   const totalAmount = order.grandTotal;
+  const customerAddress = formatCustomerAddress(order.customerInfo) || order.address;
   const items = order.cart.map(item => ({
     quantity: item.quantity,
     description: item.name,
@@ -151,9 +146,9 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
     copyTitle: getCopyTitle(documentType, order.taxInvoice),
     issuedDate,
     customer: {
-      name: order.customerName,
-      taxId: order.taxId,
-      address: order.address,
+      name: order.customerInfo.customerName || order.customerName,
+      taxId: order.customerInfo.taxId || order.taxId,
+      address: customerAddress,
     },
     items,
     subtotal: order.subtotal,
@@ -161,7 +156,7 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
     totalAmount,
     amountInWords: convertAmountToThaiText(totalAmount),
     paymentMethod: normalizePrintablePaymentMethod(order.paymentMethod),
-    bankTransferInfo: readEnv(process.env.NEXT_PUBLIC_COMPANY_BANK_INFO, 'ธนาคาร / พร้อมเพย์'),
+    bankTransferInfo: readEnv(process.env.NEXT_PUBLIC_COMPANY_BANK_INFO, 'ธนาคาร / พร้อมเพย์ __________________________________'),
     collectorSignatureLabel: 'ผู้รับเงิน / Collector',
     authorizedSignatureLabel: 'ผู้มีอำนาจลงนาม / Authorized',
     customerSignatureLabel: 'ผู้รับสินค้า / Customer',
@@ -184,7 +179,7 @@ function CheckboxField({ label, checked }: Readonly<{ label: string; checked: bo
           fontSize: '2.1mm',
           lineHeight: 1,
         }}>
-        {checked ? '✓' : ''}
+        {checked ? 'x' : ''}
       </Box>
       <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.15 }}>{label}</Typography>
     </Stack>
@@ -249,15 +244,15 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
 
   return (
     <Box
-      className="tax-invoice-copy"
+      className="invoice-copy"
       data-copy-index={copyIndex}
       sx={{
         width: `${COPY_WIDTH_MM}mm`,
-        minHeight: `${PAGE_HEIGHT_MM}mm`,
+        height: `${PAGE_HEIGHT_MM}mm`,
         border: BORDER,
         boxSizing: 'border-box',
-        px: '2.2mm',
-        py: '2mm',
+        px: '2mm',
+        py: '1.8mm',
         color: '#000',
         bgcolor: '#fff',
         display: 'flex',
@@ -266,8 +261,9 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
         fontFamily: '"Noto Sans Thai", Tahoma, sans-serif',
         printColorAdjust: 'exact',
         WebkitPrintColorAdjust: 'exact',
+        breakInside: 'avoid',
       }}>
-      <Stack spacing="1mm">
+      <Stack spacing="0.8mm">
         <Stack direction="row" sx={{ border: BORDER }}>
           <Box sx={{ width: '50%', px: '1.4mm', py: '1.1mm', borderRight: BORDER }}>
             <Typography sx={{ fontSize: '2.25mm', lineHeight: 1.2 }}>เล่มที่ Book No. {invoiceData.bookNo}</Typography>
@@ -283,10 +279,10 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
           <Typography sx={{ mt: '0.35mm', fontSize: '2.25mm', lineHeight: 1.2 }}>สาขา / Branch No. {invoiceData.company.branchNumber}</Typography>
           <Typography sx={{ mt: '0.35mm', fontSize: '2.15mm', lineHeight: 1.25 }}>{invoiceData.company.address}</Typography>
           <Typography sx={{ mt: '0.35mm', fontSize: '2.15mm', lineHeight: 1.25 }}>
-            โทร / Phone {invoiceData.company.phone} | Tax ID {invoiceData.company.taxId}
+            โทร / Phone : {invoiceData.company.phone} | Tax ID : {invoiceData.company.taxId}
           </Typography>
           <Typography sx={{ mt: '0.2mm', fontSize: '2.05mm', lineHeight: 1.25 }}>
-            Email {invoiceData.company.email} | Website {invoiceData.company.website}
+            Email : {invoiceData.company.email} | Website : {invoiceData.company.website}
           </Typography>
         </Box>
 
@@ -295,15 +291,15 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
         </Box>
       </Stack>
 
-      <Stack spacing="0.9mm">
+      <Stack spacing="0.8mm">
         <Box sx={{ border: BORDER, px: '1.4mm', py: '1mm' }}>
-          <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2 }}>วันที่ Date {invoiceData.issuedDate}</Typography>
+          <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2 }}>วันที่ / Date : {invoiceData.issuedDate}</Typography>
         </Box>
 
         <Box sx={{ border: BORDER, px: '1.4mm', py: '1mm' }}>
-          <InfoLine label="ลูกค้า / Customer" value={invoiceData.customer.name} />
-          <InfoLine label="เลขประจำตัวผู้เสียภาษี Tax ID" value={invoiceData.customer.taxId} />
-          <InfoLine label="ที่อยู่ / Address" value={invoiceData.customer.address} minHeight="9.5mm" />
+          <InfoLine label="ลูกค้า / Customer : " value={invoiceData.customer.name} />
+          <InfoLine label="เลขประจำตัวผู้เสียภาษี Tax ID :" value={invoiceData.customer.taxId} />
+          <InfoLine label="ที่อยู่ / Address :" value={invoiceData.customer.address} minHeight="9.5mm" />
         </Box>
       </Stack>
 
@@ -325,7 +321,7 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
           </Box>
           <Box sx={{ px: '1mm', py: '1mm', borderRight: BORDER, textAlign: 'center' }}>
             <Typography sx={{ fontSize: '2.2mm', fontWeight: 700, lineHeight: 1.2 }}>ราคาต่อหน่วย</Typography>
-            <Typography sx={{ fontSize: '2mm', lineHeight: 1.1 }}>/ Price/Unit</Typography>
+            <Typography sx={{ fontSize: '2mm', lineHeight: 1.1 }}>Price / Unit</Typography>
           </Box>
           <Box sx={{ px: '1mm', py: '1mm', textAlign: 'center' }}>
             <Typography sx={{ fontSize: '2.2mm', fontWeight: 700, lineHeight: 1.2 }}>บาท</Typography>
@@ -340,7 +336,7 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
               sx={{
                 display: 'grid',
                 gridTemplateColumns: '16mm 1fr 24mm 24mm',
-                minHeight: '8.2mm',
+                minHeight: '7.4mm',
                 '&:not(:last-of-type)': {
                   borderBottom: DOTTED_BORDER,
                 },
@@ -362,36 +358,36 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
         </Box>
       </Box>
 
-      <Stack spacing="0.9mm">
-        <Box sx={{ border: BORDER, px: '1.5mm', py: '1.2mm' }}>
+      <Stack spacing="0.8mm">
+        <Box sx={{ border: BORDER, px: '1.4mm', py: '1mm' }}>
           <SummaryLine label="รวมมูลค่าสินค้า / TOTAL" value={formatCurrency(invoiceData.subtotal)} />
           <SummaryLine label="ภาษีมูลค่าเพิ่ม 7% / VALUE ADDED TAX" value={formatCurrency(invoiceData.vat)} />
           <Divider sx={{ my: '0.5mm', borderColor: '#000' }} />
           <SummaryLine label="จำนวนเงินรวมทั้งสิ้น / TOTAL AMOUNT INCLUDED VAT" value={formatCurrency(invoiceData.totalAmount)} bold />
         </Box>
 
-        <Box sx={{ border: BORDER, px: '1.5mm', py: '1.1mm' }}>
+        <Box sx={{ border: BORDER, px: '1.4mm', py: '0.9mm' }}>
           <Typography sx={{ fontSize: '2.2mm', fontWeight: 700, lineHeight: 1.2 }}>จำนวนเงินเป็นอักษร / Amount in words</Typography>
-          <Typography sx={{ mt: '0.6mm', fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.25 }}>{invoiceData.amountInWords}</Typography>
+          <Typography sx={{ mt: '0.5mm', fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2 }}>{invoiceData.amountInWords}</Typography>
         </Box>
 
-        <Box sx={{ border: BORDER, px: '1.5mm', py: '1.1mm' }}>
+        <Box sx={{ border: BORDER, px: '1.4mm', py: '0.9mm' }}>
           <Stack direction="row" spacing="4mm" alignItems="center">
             <CheckboxField label="เงินสด" checked={invoiceData.paymentMethod === 'cash'} />
             <CheckboxField label="โอนเงิน" checked={invoiceData.paymentMethod === 'transfer'} />
           </Stack>
-          <Typography sx={{ mt: '0.8mm', fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2 }}>{invoiceData.bankTransferInfo}</Typography>
+          <Typography sx={{ mt: '0.6mm', fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.15 }}>{invoiceData.bankTransferInfo}</Typography>
         </Box>
       </Stack>
 
-      <Box sx={{ mt: 'auto', border: BORDER, px: '1.5mm', py: '1.2mm' }}>
+      <Box sx={{ mt: 'auto', border: BORDER, px: '1.4mm', py: '0.9mm' }}>
         <Stack direction="row" spacing="2.2mm">
           <SignatureColumn label={invoiceData.collectorSignatureLabel} />
           <SignatureColumn label={invoiceData.authorizedSignatureLabel} />
           <SignatureColumn label={invoiceData.customerSignatureLabel} />
         </Stack>
         <Typography sx={{ mt: '1.3mm', fontSize: '2.2mm', lineHeight: 1.2 }}>วันที่ / Date ____________________ {invoiceData.dateLine}</Typography>
-        <Typography sx={{ mt: '1mm', fontSize: '1.95mm', lineHeight: 1.25 }}>{invoiceData.notes}</Typography>
+        <Typography sx={{ mt: '0.7mm', fontSize: '1.85mm', lineHeight: 1.15 }}>{invoiceData.notes}</Typography>
       </Box>
     </Box>
   );
@@ -400,15 +396,16 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
 export function TaxInvoiceTemplate({ invoiceData, minItemRows = MIN_ITEM_ROWS }: Readonly<TaxInvoiceTemplateProps>) {
   return (
     <Box
-      className="tax-invoice-template"
+      className="invoice-document-sheet"
       sx={{
         width: `${PAGE_WIDTH_MM}mm`,
-        minHeight: `${PAGE_HEIGHT_MM}mm`,
+        height: `${PAGE_HEIGHT_MM}mm`,
         display: 'grid',
         gridTemplateColumns: `repeat(2, ${COPY_WIDTH_MM}mm)`,
         gap: 0,
         bgcolor: '#fff',
         boxSizing: 'border-box',
+        breakInside: 'avoid',
       }}>
       <InvoiceCopy invoiceData={invoiceData} minItemRows={minItemRows} copyIndex={0} />
       <InvoiceCopy invoiceData={invoiceData} minItemRows={minItemRows} copyIndex={1} />
@@ -418,23 +415,4 @@ export function TaxInvoiceTemplate({ invoiceData, minItemRows = MIN_ITEM_ROWS }:
 
 export function InvoiceDocument({ documentType, order }: Readonly<InvoiceDocumentProps>) {
   return <TaxInvoiceTemplate invoiceData={buildInvoiceDataFromOrder(order, documentType)} />;
-}
-
-export function InvoiceToolbar({ documentRef }: Readonly<InvoiceToolbarProps>) {
-  return (
-    <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} className="no-print" sx={{ alignItems: { xs: 'stretch', sm: 'center' } }}>
-      <Button
-        variant="contained"
-        startIcon={<LocalPrintshopRoundedIcon />}
-        onClick={async () => {
-          if (documentRef.current && typeof document !== 'undefined' && 'fonts' in document) {
-            await document.fonts.ready;
-          }
-
-          globalThis.print();
-        }}>
-        Print / Save PDF
-      </Button>
-    </Stack>
-  );
 }

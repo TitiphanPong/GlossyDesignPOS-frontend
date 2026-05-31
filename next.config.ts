@@ -37,7 +37,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: '/home/invoice/:orderId',
-        destination: '/invoice/:orderId',
+        destination: '/print/invoice/:orderId',
         permanent: false,
       },
     ];

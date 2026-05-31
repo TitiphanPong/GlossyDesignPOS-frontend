@@ -1,5 +1,5 @@
 import { fetchApiJson } from './api';
-import { getDisplayOrderNumber, type ApiOrder, type PendingOrderDraft } from './contracts';
+import { formatCustomerAddress, getDisplayOrderNumber, type ApiOrder, type CustomerInfo, type PendingOrderDraft } from './contracts';
 
 type ApiOrderLike = Partial<ApiOrder> & { id?: string };
 
@@ -99,6 +99,8 @@ type RemainingPaymentPayload = {
   method: ApiOrder['payment'];
 };
 
+type UpdateCustomerInfoPayload = CustomerInfo;
+
 export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (typeof payload.clientDraftId === 'string' && payload.clientDraftId.trim().length > 0) {
@@ -155,4 +157,45 @@ export async function fetchOrderById(orderId: string): Promise<ApiOrder> {
   }
 
   return order;
+}
+
+export async function updateOrderCustomerInfo(orderId: string, customerInfo: UpdateCustomerInfoPayload): Promise<ApiOrder> {
+  const formattedAddress = formatCustomerAddress(customerInfo);
+  const branchLabel =
+    customerInfo.branchType === 'สาขา'
+      ? `สาขา ${customerInfo.branchNo?.trim() || '-'}`
+      : customerInfo.branchType === 'สำนักงานใหญ่'
+        ? 'สำนักงานใหญ่'
+        : undefined;
+
+  const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      customerName: customerInfo.customerName,
+      phoneNumber: customerInfo.phoneNumber,
+      email: customerInfo.email,
+      customerEmail: customerInfo.email,
+      taxId: customerInfo.taxId,
+      customerTaxId: customerInfo.taxId,
+      branchType: customerInfo.branchType,
+      branchNo: customerInfo.branchNo,
+      branch: branchLabel,
+      customerBranch: branchLabel,
+      address: formattedAddress,
+      customerAddress: formattedAddress,
+      subDistrict: customerInfo.subDistrict,
+      district: customerInfo.district,
+      province: customerInfo.province,
+      postalCode: customerInfo.postalCode,
+      shippingAddress: customerInfo.shippingAddress,
+    }),
+  });
+
+  const updatedOrder = extractApiOrder(responseBody);
+  if (!updatedOrder) {
+    throw new Error('Backend did not return a valid updated order');
+  }
+
+  return updatedOrder;
 }

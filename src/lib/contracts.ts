@@ -109,6 +109,21 @@ export type ApiCartItem = {
   extra?: Record<string, unknown>;
 };
 
+export type CustomerInfo = {
+  customerName: string;
+  phoneNumber?: string;
+  email?: string;
+  taxId?: string;
+  branchType?: 'สำนักงานใหญ่' | 'สาขา';
+  branchNo?: string;
+  address?: string;
+  subDistrict?: string;
+  district?: string;
+  province?: string;
+  postalCode?: string;
+  shippingAddress?: string;
+};
+
 export type ApiOrder = {
   _id: string;
   orderId: string;
@@ -123,6 +138,13 @@ export type ApiOrder = {
   customerTaxId?: string;
   branch?: string;
   customerBranch?: string;
+  branchType?: CustomerInfo['branchType'];
+  branchNo?: string;
+  subDistrict?: string;
+  district?: string;
+  province?: string;
+  postalCode?: string;
+  shippingAddress?: string;
   note?: string;
   category?: string;
   total?: number;
@@ -205,6 +227,7 @@ export type NormalizedInvoiceOrder = {
   issueDate: string;
   orderDate: string;
   taxInvoice: 'yes' | 'no';
+  customerInfo: CustomerInfo;
   cart: NormalizedInvoiceCartItem[];
   subtotal: number;
   discount: number;
@@ -225,6 +248,19 @@ function readInvoiceString(
   }
 
   return null;
+}
+
+export function formatCustomerAddress(customerInfo: CustomerInfo): string {
+  const primary = readNonEmptyString(customerInfo.address);
+  const localityParts = [
+    readNonEmptyString(customerInfo.subDistrict),
+    readNonEmptyString(customerInfo.district),
+    readNonEmptyString(customerInfo.province),
+    readNonEmptyString(customerInfo.postalCode),
+  ].filter((value): value is string => Boolean(value));
+
+  const sections = [primary, localityParts.length > 0 ? localityParts.join(' ') : null].filter((value): value is string => Boolean(value));
+  return sections.join(' ').trim();
 }
 
 export function normalizeApiCartItem(item: Partial<ApiCartItem>): NormalizedOrderCartItem {
@@ -295,15 +331,30 @@ export function normalizeApiOrderForInvoice(
 ): NormalizedInvoiceOrder {
   const cart = Array.isArray(order.cart) ? order.cart.map(normalizeApiCartItemForInvoice) : [];
   const amounts = normalizeApiOrderAmounts(order);
+  const address = readInvoiceString(order, 'address', 'customerAddress') ?? '-';
+  const customerInfo: CustomerInfo = {
+    customerName: readNonEmptyString(order.customerName) ?? '-',
+    phoneNumber: readNonEmptyString(order.phoneNumber) ?? undefined,
+    email: readInvoiceString(order, 'email', 'customerEmail') ?? undefined,
+    taxId: readInvoiceString(order, 'taxId', 'customerTaxId') ?? undefined,
+    branchType: order.branchType === 'สำนักงานใหญ่' || order.branchType === 'สาขา' ? order.branchType : undefined,
+    branchNo: readNonEmptyString(order.branchNo) ?? undefined,
+    address: address !== '-' ? address : undefined,
+    subDistrict: readNonEmptyString(order.subDistrict) ?? undefined,
+    district: readNonEmptyString(order.district) ?? undefined,
+    province: readNonEmptyString(order.province) ?? undefined,
+    postalCode: readNonEmptyString(order.postalCode) ?? undefined,
+    shippingAddress: readNonEmptyString(order.shippingAddress) ?? undefined,
+  };
 
   return {
     orderId: readNonEmptyString(order.orderId) ?? readNonEmptyString(order._id) ?? '-',
     orderNumber: getDisplayOrderNumber(order),
-    customerName: readNonEmptyString(order.customerName) ?? '-',
-    phoneNumber: readNonEmptyString(order.phoneNumber) ?? '-',
-    email: readInvoiceString(order, 'email', 'customerEmail') ?? '-',
-    address: readInvoiceString(order, 'address', 'customerAddress') ?? '-',
-    taxId: readInvoiceString(order, 'taxId', 'customerTaxId') ?? '-',
+    customerName: customerInfo.customerName,
+    phoneNumber: customerInfo.phoneNumber ?? '-',
+    email: customerInfo.email ?? '-',
+    address: customerInfo.address ?? '-',
+    taxId: customerInfo.taxId ?? '-',
     branch: readInvoiceString(order, 'branch', 'customerBranch') ?? '-',
     note: readNonEmptyString(order.note) ?? '-',
     salesChannel: readNonEmptyString(order.salesChannel) ?? '-',
@@ -312,6 +363,7 @@ export function normalizeApiOrderForInvoice(
     issueDate: readInvoiceString(order, 'issueDate', 'updatedAt', 'createdAt') ?? '',
     orderDate: readInvoiceString(order, 'createdAt', 'updatedAt', 'issueDate') ?? '',
     taxInvoice: order.taxInvoice === 'yes' ? 'yes' : 'no',
+    customerInfo,
     cart,
     subtotal: amounts.subtotal,
     discount: amounts.discount,
