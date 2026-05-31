@@ -1,58 +1,19 @@
-﻿'use client';
+'use client';
 
-import { use, useEffect, useState } from 'react';
-import { Box, Button, Card, Divider, Stack, Table, TableBody, TableCell, TableHead, TableRow, Typography } from '@mui/material';
-import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
+import { use, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { Box, Stack, Typography } from '@mui/material';
 import { InvoiceLoadingState, MissingApiConfigState } from '../../components/dashboardUi';
 import { isMissingApiBaseError } from '../../../../lib/api';
 import { type NormalizedInvoiceOrder, normalizeApiOrderForInvoice } from '../../../../lib/contracts';
 import { fetchOrderById } from '../../../../lib/orders';
-
-function InvoiceCopy({ title, order }: Readonly<{ title: string; order: NormalizedInvoiceOrder }>) {
-  return (
-    <Card sx={{ p: 2.2, borderRadius: 3 }}>
-      <Typography variant="h6" fontWeight={800} sx={{ mb: 1 }}>{title}</Typography>
-      <Stack spacing={0.5} sx={{ mb: 1.8 }}>
-        <Typography><strong>เลขที่:</strong> {order.orderNumber}</Typography>
-        <Typography><strong>ลูกค้า:</strong> {order.customerName}</Typography>
-        <Typography><strong>เบอร์โทร:</strong> {order.phoneNumber}</Typography>
-      </Stack>
-
-      <Box sx={{ overflowX: 'auto' }}>
-        <Table size="small">
-          <TableHead>
-            <TableRow>
-              <TableCell>สินค้า</TableCell>
-              <TableCell>จำนวน</TableCell>
-              <TableCell>ราคา/หน่วย</TableCell>
-              <TableCell align="right">รวม</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {order.cart.map((item, i) => (
-              <TableRow key={`${item.name}-${i}`}>
-                <TableCell>{item.name}</TableCell>
-                <TableCell>{item.quantity}</TableCell>
-                <TableCell>{item.unitPrice.toFixed(2)}</TableCell>
-                <TableCell align="right">{item.totalPrice.toFixed(2)}</TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </Box>
-
-      <Divider sx={{ my: 1.8 }} />
-      <Stack spacing={0.5}>
-        <Typography>ยอดก่อน VAT: {order.finalTotal.toFixed(2)} บาท</Typography>
-        <Typography>VAT 7%: {order.vatAmount.toFixed(2)} บาท</Typography>
-        <Typography variant="h6" fontWeight={800}>ยอดรวมสุทธิ: {order.grandTotal.toFixed(2)} บาท</Typography>
-      </Stack>
-    </Card>
-  );
-}
+import { InvoiceDocument, InvoiceToolbar } from './invoice-document';
+import { resolveInvoiceDocumentType } from './invoice-utils';
 
 export default function InvoicePage({ params }: Readonly<{ params: Promise<{ orderId: string }> }>) {
   const { orderId } = use(params);
+  const searchParams = useSearchParams();
+  const invoiceRef = useRef<HTMLDivElement | null>(null);
   const [order, setOrder] = useState<NormalizedInvoiceOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [missingApiBase, setMissingApiBase] = useState(false);
@@ -75,8 +36,14 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
         setLoading(false);
       }
     };
+
     fetchOrder();
   }, [orderId]);
+
+  const documentType = useMemo(
+    () => resolveInvoiceDocumentType(searchParams.get('documentType'), order, order?.taxInvoice),
+    [order, searchParams]
+  );
 
   if (missingApiBase) {
     return (
@@ -99,31 +66,91 @@ export default function InvoicePage({ params }: Readonly<{ params: Promise<{ ord
   }
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', px: { xs: 2, md: 3 }, py: { xs: 3, md: 4 } }}>
-      <Box sx={{ maxWidth: 1280, mx: 'auto' }}>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.4} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" sx={{ mb: 2 }}>
-          <Typography variant="h4" fontWeight={800}>ใบกำกับภาษี</Typography>
-          <Button className="no-print" variant="contained" startIcon={<PrintRoundedIcon />} onClick={() => globalThis.print()}>
-            Print / Save PDF
-          </Button>
+    <Box
+      className="invoice-screen-root"
+      sx={{
+        minHeight: '100vh',
+        bgcolor: '#F3F4F6',
+        px: { xs: 2, md: 3 },
+        py: { xs: 2.5, md: 4 },
+      }}>
+      <Stack spacing={2.2} sx={{ maxWidth: 'calc(190mm + 32px)', mx: 'auto' }}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={1.5}
+          justifyContent="space-between"
+          alignItems={{ xs: 'stretch', md: 'center' }}
+          className="no-print">
+          <Box>
+            <Typography sx={{ fontSize: { xs: 24, md: 28 }, fontWeight: 800, color: '#111827' }}>Invoice Document</Typography>
+            <Typography sx={{ mt: 0.6, fontSize: 14, color: '#4B5563' }}>
+              A4-ready business document for print, PDF export, customer delivery, and accounting records.
+            </Typography>
+          </Box>
+          <InvoiceToolbar documentRef={invoiceRef} filename={`${order.orderNumber || order.orderId}.pdf`} />
         </Stack>
 
-        <Box id="invoice" sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
-          <InvoiceCopy title="ใบกำกับภาษี (ต้นฉบับ)" order={order} />
-          <InvoiceCopy title="ใบกำกับภาษี (สำเนา)" order={order} />
+        <Box
+          className="invoice-page"
+          sx={{
+            width: '100%',
+            overflowX: 'auto',
+            overflowY: 'visible',
+            pb: 1,
+          }}>
+          <Box ref={invoiceRef} className="invoice-print-root" sx={{ width: 'fit-content', mx: 'auto' }}>
+            <InvoiceDocument documentType={documentType} order={order} />
+          </Box>
         </Box>
-      </Box>
+      </Stack>
 
       <style jsx global>{`
+        @page {
+          size: A4;
+          margin: 10mm;
+        }
+
         @media print {
-          body * { visibility: hidden; }
-          #invoice, #invoice * { visibility: visible; }
-          #invoice { position: absolute; left: 0; top: 0; width: 100%; }
-          .no-print { display: none !important; }
+          html,
+          body {
+            background: white !important;
+          }
+
+          body * {
+            visibility: hidden !important;
+          }
+
+          .no-print {
+            display: none !important;
+          }
+
+          .invoice-print-root,
+          .invoice-print-root * {
+            visibility: visible !important;
+          }
+
+          .invoice-screen-root {
+            background: white !important;
+            padding: 0 !important;
+            margin: 0 !important;
+            min-height: auto !important;
+          }
+
+          .invoice-page {
+            width: 190mm !important;
+            margin: 0 auto !important;
+            overflow: visible !important;
+          }
+
+          .invoice-print-root {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 190mm !important;
+            margin: 0 !important;
+          }
         }
       `}</style>
     </Box>
   );
 }
-
-

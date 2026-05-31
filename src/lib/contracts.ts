@@ -75,6 +75,16 @@ export function getOrderDisplayNumber(
   return readNonEmptyString(value.orderNumber) ?? readNonEmptyString(value.orderId) ?? fallback;
 }
 
+export function getDisplayOrderNumber(
+  value: {
+    orderNumber?: unknown;
+    orderId?: unknown;
+  },
+  fallback = '-'
+): string {
+  return getOrderDisplayNumber(value, fallback);
+}
+
 export type ApiCartItem = {
   name: string;
   category?: string;
@@ -102,9 +112,17 @@ export type ApiCartItem = {
 export type ApiOrder = {
   _id: string;
   orderId: string;
-  orderNumber: string;
+  orderNumber?: string;
   customerName?: string;
   phoneNumber?: string;
+  email?: string;
+  customerEmail?: string;
+  address?: string;
+  customerAddress?: string;
+  taxId?: string;
+  customerTaxId?: string;
+  branch?: string;
+  customerBranch?: string;
   note?: string;
   category?: string;
   total?: number;
@@ -113,6 +131,9 @@ export type ApiOrder = {
   payment: PaymentMethod;
   status: OrderStatus;
   createdAt: string;
+  updatedAt?: string;
+  issueDate?: string;
+  salesChannel?: string;
   cart?: ApiCartItem[];
   taxInvoice?: 'yes' | 'no';
   vatAmount?: number;
@@ -127,6 +148,8 @@ export type OrdersSummary = {
 };
 
 export type PendingOrderDraft = {
+  orderId?: string;
+  orderNumber?: string;
   clientDraftId?: string;
   grandTotal?: number;
   total?: number;
@@ -171,11 +194,38 @@ export type NormalizedInvoiceOrder = {
   orderNumber: string;
   customerName: string;
   phoneNumber: string;
+  email: string;
+  address: string;
+  taxId: string;
+  branch: string;
+  note: string;
+  salesChannel: string;
+  paymentMethod: PaymentMethod;
+  status: OrderStatus;
+  issueDate: string;
+  orderDate: string;
+  taxInvoice: 'yes' | 'no';
   cart: NormalizedInvoiceCartItem[];
+  subtotal: number;
+  discount: number;
   finalTotal: number;
   vatAmount: number;
   grandTotal: number;
 };
+
+function readInvoiceString(
+  value: Partial<ApiOrder>,
+  ...keys: Array<keyof ApiOrder>
+): string | null {
+  for (const key of keys) {
+    const resolved = readNonEmptyString(value[key]);
+    if (resolved) {
+      return resolved;
+    }
+  }
+
+  return null;
+}
 
 export function normalizeApiCartItem(item: Partial<ApiCartItem>): NormalizedOrderCartItem {
   const quantity = Math.max(1, readNumber(item.quantity ?? item.qty) ?? 1);
@@ -248,10 +298,23 @@ export function normalizeApiOrderForInvoice(
 
   return {
     orderId: readNonEmptyString(order.orderId) ?? readNonEmptyString(order._id) ?? '-',
-    orderNumber: getOrderDisplayNumber(order),
+    orderNumber: getDisplayOrderNumber(order),
     customerName: readNonEmptyString(order.customerName) ?? '-',
     phoneNumber: readNonEmptyString(order.phoneNumber) ?? '-',
+    email: readInvoiceString(order, 'email', 'customerEmail') ?? '-',
+    address: readInvoiceString(order, 'address', 'customerAddress') ?? '-',
+    taxId: readInvoiceString(order, 'taxId', 'customerTaxId') ?? '-',
+    branch: readInvoiceString(order, 'branch', 'customerBranch') ?? '-',
+    note: readNonEmptyString(order.note) ?? '-',
+    salesChannel: readNonEmptyString(order.salesChannel) ?? '-',
+    paymentMethod: isPaymentMethod(order.payment) ? order.payment : 'cash',
+    status: normalizeOrderStatus(order.status, 'pending'),
+    issueDate: readInvoiceString(order, 'issueDate', 'updatedAt', 'createdAt') ?? '',
+    orderDate: readInvoiceString(order, 'createdAt', 'updatedAt', 'issueDate') ?? '',
+    taxInvoice: order.taxInvoice === 'yes' ? 'yes' : 'no',
     cart,
+    subtotal: amounts.subtotal,
+    discount: amounts.discount,
     finalTotal: amounts.finalTotal,
     vatAmount: amounts.vatAmount,
     grandTotal: amounts.grandTotal,
