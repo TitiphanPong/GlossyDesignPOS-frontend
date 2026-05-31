@@ -96,7 +96,7 @@ function normalizePrintablePaymentMethod(paymentMethod: PaymentMethod): 'cash' |
 
 function getRenderedCopyTitle(baseTitle: string, copyIndex: number): string {
   if (baseTitle.startsWith('ต้นฉบับ')) {
-    return copyIndex === 0 ? baseTitle.replace(/ต้นฉบับ/g, 'สำเนา') : baseTitle;
+    return copyIndex === 0 ? baseTitle.replaceAll('ต้นฉบับ', 'สำเนา') : baseTitle;
   }
 
   if (baseTitle.startsWith('ใบเสนอราคา')) {
@@ -168,7 +168,7 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
     totalAmount,
     amountInWords: convertAmountToThaiText(totalAmount),
     paymentMethod: normalizePrintablePaymentMethod(order.paymentMethod),
-    bankTransferInfo: readEnv(process.env.NEXT_PUBLIC_COMPANY_BANK_INFO),
+    bankTransferInfo: readEnv(process.env.NEXT_PUBLIC_COMPANY_BANK_INFO, '-'),
     collectorSignatureLabel: 'ผู้รับเงิน / Collector',
     authorizedSignatureLabel: 'ผู้มีอำนาจลงนาม / Authorized',
     customerSignatureLabel: 'ผู้รับสินค้า / Customer',
@@ -271,7 +271,16 @@ function SummaryLine({
 
 export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyIndex }: Readonly<InvoiceCopyProps>) {
   const emptyRowCount = Math.max(minItemRows - invoiceData.items.length, 0);
-  const rows = [...invoiceData.items, ...Array.from({ length: emptyRowCount }, () => null)];
+  const rows = [
+    ...invoiceData.items.map((item, itemIndex) => ({
+      key: `item-${item.description}-${item.quantity}-${item.unitPrice}-${itemIndex}`,
+      item,
+    })),
+    ...Array.from({ length: emptyRowCount }, (_value, emptyRowIndex) => ({
+      key: `empty-row-${invoiceData.invoiceNo}-${emptyRowIndex}`,
+      item: null,
+    })),
+  ];
   const renderedCopyTitle = getRenderedCopyTitle(invoiceData.copyTitle, copyIndex);
 
   return (
@@ -379,9 +388,9 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
         </Box>
 
         <Box>
-          {rows.map((item, index) => (
+          {rows.map(row => (
             <Box
-              key={`invoice-row-${index}`}
+              key={row.key}
               sx={{
                 display: 'grid',
                 gridTemplateColumns: '16mm 1fr 24mm 24mm',
@@ -391,16 +400,20 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
                 },
               }}>
               <Box sx={{ px: '1mm', py: '1mm', borderRight: BORDER, textAlign: 'center' }}>
-                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2 }}>{item ? item.quantity : ''}</Typography>
+                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2 }}>{row.item ? row.item.quantity : ''}</Typography>
               </Box>
               <Box sx={{ px: '1.2mm', py: '1mm', borderRight: BORDER }}>
-                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, wordBreak: 'break-word' }}>{item?.description ?? ''}</Typography>
+                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, wordBreak: 'break-word' }}>{row.item?.description ?? ''}</Typography>
               </Box>
               <Box sx={{ px: '1.2mm', py: '1mm', borderRight: BORDER, textAlign: 'right' }}>
-                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{item ? formatCurrency(item.unitPrice) : ''}</Typography>
+                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
+                  {row.item ? formatCurrency(row.item.unitPrice) : ''}
+                </Typography>
               </Box>
               <Box sx={{ px: '1.2mm', py: '1mm', textAlign: 'right' }}>
-                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{item ? formatCurrency(item.amount) : ''}</Typography>
+                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>
+                  {row.item ? formatCurrency(row.item.amount) : ''}
+                </Typography>
               </Box>
             </Box>
           ))}

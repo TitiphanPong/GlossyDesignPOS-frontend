@@ -2,7 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Alert, Box, Button, CircularProgress, Divider, Drawer, Snackbar, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, CircularProgress, Drawer, Snackbar, Stack, TextField, Typography } from '@mui/material';
 import { isMissingApiBaseError } from '../../../../lib/api';
 import { type CustomerInfo, type NormalizedInvoiceOrder, normalizeApiOrderForInvoice } from '../../../../lib/contracts';
 import { fetchOrderById, updateOrderCustomerInfo } from '../../../../lib/orders';
@@ -42,15 +42,19 @@ function ErrorState({ title, subtitle }: Readonly<{ title: string; subtitle: str
   );
 }
 
+function normalizeOptionalValue(value: string | undefined): string | undefined {
+  return value && value !== '-' ? value : undefined;
+}
+
 function getCustomerInfoFromOrder(order: NormalizedInvoiceOrder): CustomerInfo {
   return {
     customerName: order.customerInfo.customerName || order.customerName,
-    phoneNumber: order.customerInfo.phoneNumber || (order.phoneNumber !== '-' ? order.phoneNumber : undefined),
-    email: order.customerInfo.email || (order.email !== '-' ? order.email : undefined),
-    taxId: order.customerInfo.taxId || (order.taxId !== '-' ? order.taxId : undefined),
+    phoneNumber: order.customerInfo.phoneNumber || normalizeOptionalValue(order.phoneNumber),
+    email: order.customerInfo.email || normalizeOptionalValue(order.email),
+    taxId: order.customerInfo.taxId || normalizeOptionalValue(order.taxId),
     branchType: order.customerInfo.branchType,
     branchNo: order.customerInfo.branchNo,
-    address: order.customerInfo.address || (order.address !== '-' ? order.address : undefined),
+    address: order.customerInfo.address || normalizeOptionalValue(order.address),
     subDistrict: order.customerInfo.subDistrict,
     district: order.customerInfo.district,
     province: order.customerInfo.province,
@@ -98,10 +102,12 @@ function CustomerEditDrawer({ open, saving, errorMessage, formValues, onClose, o
       anchor="right"
       open={open}
       onClose={onClose}
-      PaperProps={{
-        sx: {
-          width: { xs: '100%', md: 520 },
-          bgcolor: '#FFFFFF',
+      slotProps={{
+        paper: {
+          sx: {
+            width: { xs: '100%', md: 520 },
+            bgcolor: '#FFFFFF',
+          },
         },
       }}>
       <Stack sx={{ height: '100%' }}>

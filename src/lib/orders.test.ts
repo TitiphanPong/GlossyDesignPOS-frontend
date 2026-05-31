@@ -9,6 +9,23 @@ import {
   updateOrderCustomerInfo,
 } from './orders';
 
+function getHeaderValue(headers: HeadersInit | undefined, key: string): string | null {
+  if (!headers) {
+    return null;
+  }
+
+  if (headers instanceof Headers) {
+    return headers.get(key);
+  }
+
+  if (Array.isArray(headers)) {
+    const match = headers.find(([headerName]) => headerName === key);
+    return match?.[1] ?? null;
+  }
+
+  return headers[key] ?? null;
+}
+
 test('createOrder accepts a direct order response with orderNumber', async () => {
   const originalFetch = globalThis.fetch;
   const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
@@ -17,7 +34,7 @@ test('createOrder accepts a direct order response with orderNumber', async () =>
 
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
-  globalThis.fetch = (async (_input, init) => {
+  const mockFetch: typeof fetch = async (_input, init) => {
     capturedHeaders = init?.headers;
     capturedBody = typeof init?.body === 'string' ? init.body : undefined;
 
@@ -29,13 +46,14 @@ test('createOrder accepts a direct order response with orderNumber', async () =>
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
-  }) as typeof fetch;
+  };
+  globalThis.fetch = mockFetch;
 
   try {
     const result = await createOrder({ status: 'paid', clientDraftId: 'draft-001' });
     assert.equal(result.orderNumber, 'ORD-20260527-0001');
     assert.equal(result._id, 'abc123');
-    assert.equal(capturedHeaders instanceof Headers ? capturedHeaders.get('Idempotency-Key') : (capturedHeaders as Record<string, string>)['Idempotency-Key'], 'draft-001');
+    assert.equal(getHeaderValue(capturedHeaders, 'Idempotency-Key'), 'draft-001');
     assert.match(capturedBody ?? '', /"clientDraftId":"draft-001"/);
   } finally {
     globalThis.fetch = originalFetch;
@@ -49,7 +67,7 @@ test('createOrder accepts a wrapped order response with orderNumber', async () =
 
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
-  globalThis.fetch = (async () =>
+  const mockFetch: typeof fetch = async () =>
     new Response(
       JSON.stringify({
         data: {
@@ -61,7 +79,8 @@ test('createOrder accepts a wrapped order response with orderNumber', async () =
         },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
-    )) as typeof fetch;
+    );
+  globalThis.fetch = mockFetch;
 
   try {
     const result = await createOrder({ status: 'partial' });
@@ -79,14 +98,15 @@ test('createOrder falls back to orderId when backend omits orderNumber', async (
 
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
-  globalThis.fetch = (async () =>
+  const mockFetch: typeof fetch = async () =>
     new Response(
       JSON.stringify({
         _id: 'abc125',
         orderId: 'legacy-003',
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
-    )) as typeof fetch;
+    );
+  globalThis.fetch = mockFetch;
 
   try {
     const result = await createOrder({ status: 'paid' });
@@ -105,7 +125,7 @@ test('payRemainingBalance accepts a wrapped updated order response', async () =>
 
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
-  globalThis.fetch = (async () =>
+  const mockFetch: typeof fetch = async () =>
     new Response(
       JSON.stringify({
         order: {
@@ -118,7 +138,8 @@ test('payRemainingBalance accepts a wrapped updated order response', async () =>
         },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
-    )) as typeof fetch;
+    );
+  globalThis.fetch = mockFetch;
 
   try {
     const result = await payRemainingBalance('abc126', { amount: 120, method: 'promptpay' });
@@ -137,7 +158,7 @@ test('fetchOrders accepts a wrapped orders list response', async () => {
 
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
-  globalThis.fetch = (async () =>
+  const mockFetch: typeof fetch = async () =>
     new Response(
       JSON.stringify({
         data: {
@@ -154,7 +175,8 @@ test('fetchOrders accepts a wrapped orders list response', async () => {
         },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
-    )) as typeof fetch;
+    );
+  globalThis.fetch = mockFetch;
 
   try {
     const result = await fetchOrders();
@@ -172,7 +194,7 @@ test('fetchOrderById accepts a wrapped single-order response', async () => {
 
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
-  globalThis.fetch = (async () =>
+  const mockFetch: typeof fetch = async () =>
     new Response(
       JSON.stringify({
         data: {
@@ -187,7 +209,8 @@ test('fetchOrderById accepts a wrapped single-order response', async () => {
         },
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
-    )) as typeof fetch;
+    );
+  globalThis.fetch = mockFetch;
 
   try {
     const result = await fetchOrderById('abc128');
@@ -206,7 +229,7 @@ test('updateOrderCustomerInfo sends only tax invoice customer fields', async () 
 
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
-  globalThis.fetch = (async (_input, init) => {
+  const mockFetch: typeof fetch = async (_input, init) => {
     capturedBody = typeof init?.body === 'string' ? init.body : undefined;
 
     return new Response(
@@ -225,7 +248,8 @@ test('updateOrderCustomerInfo sends only tax invoice customer fields', async () 
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } },
     );
-  }) as typeof fetch;
+  };
+  globalThis.fetch = mockFetch;
 
   try {
     const result = await updateOrderCustomerInfo('abc129', {
