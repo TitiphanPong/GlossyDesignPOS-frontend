@@ -1,6 +1,7 @@
 import type { PaymentMethod, PendingOrderDraft } from './contracts';
 
 export type PendingOrderSyncStatus = 'pending' | 'submitting' | 'submitted';
+export const PENDING_ORDER_SUBMIT_LOCK_TTL_MS = 60 * 1000;
 
 export type StoredPendingOrderDraft = PendingOrderDraft & {
   orderId?: string;
@@ -13,6 +14,7 @@ export type StoredPendingOrderDraft = PendingOrderDraft & {
   note?: string;
   cart?: unknown[];
   orderSyncStatus?: PendingOrderSyncStatus;
+  orderSyncStartedAt?: number;
   lastSubmissionError?: string | null;
 };
 
@@ -103,6 +105,21 @@ export function isPendingOrderSubmitted(order: Pick<StoredPendingOrderDraft, 'or
   return order.orderSyncStatus === 'submitted' || order.status === 'paid' || order.status === 'partial';
 }
 
+export function isPendingOrderSubmissionLocked(
+  order: Pick<StoredPendingOrderDraft, 'orderSyncStatus' | 'orderSyncStartedAt'>,
+  now = Date.now(),
+): boolean {
+  if (order.orderSyncStatus !== 'submitting') {
+    return false;
+  }
+
+  if (typeof order.orderSyncStartedAt !== 'number' || !Number.isFinite(order.orderSyncStartedAt)) {
+    return false;
+  }
+
+  return now - order.orderSyncStartedAt < PENDING_ORDER_SUBMIT_LOCK_TTL_MS;
+}
+
 export function isPendingOrderSettled(order: Pick<StoredPendingOrderDraft, 'status' | 'remainingTotal'>): boolean {
   return order.status === 'paid' || (order.status === 'partial' && Number(order.remainingTotal ?? 0) === 0);
 }
@@ -110,6 +127,7 @@ export function isPendingOrderSettled(order: Pick<StoredPendingOrderDraft, 'stat
 export function buildPendingOrderPayload(order: StoredPendingOrderDraft, status: 'partial' | 'paid'): PendingOrderDraft {
   const payload = { ...order };
   delete payload.orderSyncStatus;
+  delete payload.orderSyncStartedAt;
   delete payload.lastSubmissionError;
 
   return {
@@ -144,6 +162,7 @@ export function buildPendingOrderDraft({
     discount,
     status: 'pending',
     orderSyncStatus: 'pending',
+    orderSyncStartedAt: undefined,
     lastSubmissionError: null,
     depositTotal: totals.depositTotal,
     remainingTotal: totals.remainingTotal,

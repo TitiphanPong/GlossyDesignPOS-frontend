@@ -627,13 +627,15 @@ type RowActionsMenuProps = {
   updatingOrderId: string | null;
   onClose: () => void;
   onOpenDrawer: (row: OrderRow) => void;
+  onOpenPayRemaining: (row: OrderRow) => void;
   onMarkAsPaid: (id: string) => void;
   onCancelOrder: (id: string) => void;
 };
 
-function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onOpenDrawer, onMarkAsPaid, onCancelOrder }: Readonly<RowActionsMenuProps>) {
+function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onOpenDrawer, onOpenPayRemaining, onMarkAsPaid, onCancelOrder }: Readonly<RowActionsMenuProps>) {
   const rowMenuTargetId = rowMenuTarget?.id ?? '';
-  const confirmPaymentDisabled = !rowMenuTarget || rowMenuTarget.status === 'paid' || rowMenuTarget.status === 'cancelled' || updatingOrderId === rowMenuTargetId;
+  const confirmPaymentDisabled = !rowMenuTarget || rowMenuTarget.status !== 'pending' || updatingOrderId === rowMenuTargetId;
+  const payRemainingDisabled = !rowMenuTarget || rowMenuTarget.status !== 'partial' || updatingOrderId === rowMenuTargetId;
   const cancelOrderDisabled = !rowMenuTarget || updatingOrderId === rowMenuTargetId;
 
   return (
@@ -679,6 +681,19 @@ function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onO
         <Stack direction="row" spacing={1} alignItems="center">
           <ReceiptRoundedIcon fontSize="small" />
           <Typography sx={{ fontSize: 14 }}>พิมพ์ใบกำกับภาษี</Typography>
+        </Stack>
+      </MenuItem>
+      <MenuItem
+        disabled={payRemainingDisabled}
+        onClick={() => {
+          if (rowMenuTarget) {
+            onOpenPayRemaining(rowMenuTarget);
+          }
+          onClose();
+        }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <PaymentsRoundedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14 }}>รับชำระยอดคงเหลือ</Typography>
         </Stack>
       </MenuItem>
       <MenuItem
@@ -947,7 +962,7 @@ function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawe
               <Button
                 variant="contained"
                 startIcon={<CheckCircleRoundedIcon />}
-                disabled={!['pending', 'partial'].includes(selectedOrder.status) || updatingOrderId === selectedOrder.id}
+                disabled={selectedOrder.status !== 'pending' || updatingOrderId === selectedOrder.id}
                 onClick={() => {
                   onMarkAsPaid(selectedOrder.id);
                 }}
@@ -1071,7 +1086,7 @@ export default function OrderManagementPage() {
   const markAsPaid = React.useCallback(
     async (targetId: string) => {
       const target = rowsById.get(targetId);
-      if (!target || target.status === 'cancelled') return;
+      if (!target || target.status !== 'pending') return;
 
       setUpdatingOrderId(targetId);
       try {
@@ -1602,6 +1617,9 @@ export default function OrderManagementPage() {
         updatingOrderId={updatingOrderId}
         onClose={closeRowMenu}
         onOpenDrawer={openDrawer}
+        onOpenPayRemaining={order => {
+          setPayRemainingTarget(order);
+        }}
         onMarkAsPaid={targetId => {
           void markAsPaid(targetId);
         }}

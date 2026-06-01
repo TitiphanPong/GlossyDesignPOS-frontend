@@ -2,6 +2,13 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 ## Getting Started
 
+1. Copy `.env.example` to `.env.local`
+2. Set the backend URL in `NEXT_PUBLIC_API_URL`
+3. Set admin auth secrets:
+   - `ADMIN_LOGIN_USERNAME`
+   - `ADMIN_LOGIN_PASSWORD`
+   - `ADMIN_SESSION_SECRET`
+
 First, run the development server:
 
 ```bash

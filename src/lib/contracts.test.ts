@@ -57,6 +57,29 @@ test('normalizeApiOrderForInvoice derives invoice totals from shared order field
   ]);
 });
 
+test('normalizeApiOrderForInvoice normalizes legacy invoice customer and cart fallbacks', () => {
+  const order = normalizeApiOrderForInvoice({
+    _id: 'mongo-456',
+    orderId: 'POS-002',
+    customerName: 'Legacy Customer',
+    customerAddress: '88/8 Moo Baan Klang Muang',
+    customerTaxId: '0123456789012',
+    customerBranch: 'สำนักงานใหญ่',
+    cart: [
+      { name: 'Poster', quantity: 2, lineTotal: 90 },
+      { name: 'Sticker', qty: 5, price: 12 },
+    ],
+  });
+
+  assert.equal(order.address, '88/8 Moo Baan Klang Muang');
+  assert.equal(order.taxId, '0123456789012');
+  assert.equal(order.branch, 'สำนักงานใหญ่');
+  assert.deepEqual(order.cart, [
+    { name: 'Poster', quantity: 2, unitPrice: 45, totalPrice: 90 },
+    { name: 'Sticker', quantity: 5, unitPrice: 12, totalPrice: 60 },
+  ]);
+});
+
 test('normalizeApiOrderAmounts supports grand total and remaining fallbacks', () => {
   const amounts = normalizeApiOrderAmounts({
     total: 100,

@@ -12,6 +12,7 @@ import { createOrder } from '../../../../lib/orders';
 import {
   buildPendingOrderPayload,
   getPendingOrderFinalStatus,
+  isPendingOrderSubmissionLocked,
   isPendingOrderSubmitted,
   PENDING_ORDER_KEY,
   persistPendingOrderDraft,
@@ -60,6 +61,7 @@ function buildSubmittingOrder(order: StoredPendingOrderDraft): StoredPendingOrde
     ...order,
     clientDraftId: order.clientDraftId ?? globalThis.crypto.randomUUID(),
     orderSyncStatus: 'submitting',
+    orderSyncStartedAt: Date.now(),
     lastSubmissionError: null,
   };
 }
@@ -75,6 +77,7 @@ function buildSubmittedOrder(
     orderNumber: getDisplayOrderNumber(backendOrder),
     status: backendOrder.status ?? status,
     orderSyncStatus: 'submitted',
+    orderSyncStartedAt: undefined,
     lastSubmissionError: null,
   };
 }
@@ -175,7 +178,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         return;
       }
 
-      if (order.orderSyncStatus === 'submitting') {
+      if (isPendingOrderSubmissionLocked(order)) {
         alert('ระบบกำลังยืนยันออเดอร์นี้อยู่แล้ว กรุณารอสักครู่ก่อนลองใหม่');
         return;
       }
@@ -213,6 +216,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         const resetOrder: StoredPendingOrderDraft = {
           ...latestOrder,
           orderSyncStatus: 'pending',
+          orderSyncStartedAt: undefined,
           lastSubmissionError: message,
         };
         persistPendingOrderDraft(resetOrder);

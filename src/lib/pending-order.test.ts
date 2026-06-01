@@ -7,7 +7,9 @@ import {
   getPendingOrderFinalStatus,
   hasPendingOrderCartItems,
   isPendingOrderSettled,
+  isPendingOrderSubmissionLocked,
   isPendingOrderSubmitted,
+  PENDING_ORDER_SUBMIT_LOCK_TTL_MS,
   shouldDisplayPendingOrder,
 } from './pending-order';
 
@@ -35,6 +37,7 @@ test('buildPendingOrderDraft creates the pending localStorage shape used by POS 
   assert.equal(draft.clientDraftId, 'draft-001');
   assert.equal(draft.status, 'pending');
   assert.equal(draft.orderSyncStatus, 'pending');
+  assert.equal(draft.orderSyncStartedAt, undefined);
   assert.equal(draft.lastSubmissionError, null);
   assert.equal(draft.customerName, 'Alice');
   assert.equal(draft.phoneNumber, '0812345678');
@@ -83,7 +86,19 @@ test('buildPendingOrderPayload preserves clientDraftId but removes transient syn
   assert.equal(payload.grandTotal, 298.2);
   assert.equal(payload.clientDraftId, 'draft-001');
   assert.equal('orderSyncStatus' in payload, false);
+  assert.equal('orderSyncStartedAt' in payload, false);
   assert.equal('lastSubmissionError' in payload, false);
+});
+
+test('isPendingOrderSubmissionLocked only blocks fresh in-flight submissions', () => {
+  const now = Date.now();
+
+  assert.equal(isPendingOrderSubmissionLocked({ orderSyncStatus: 'pending', orderSyncStartedAt: now }, now), false);
+  assert.equal(isPendingOrderSubmissionLocked({ orderSyncStatus: 'submitting', orderSyncStartedAt: now }, now), true);
+  assert.equal(
+    isPendingOrderSubmissionLocked({ orderSyncStatus: 'submitting', orderSyncStartedAt: now - PENDING_ORDER_SUBMIT_LOCK_TTL_MS - 1 }, now),
+    false,
+  );
 });
 
 test('isPendingOrderSettled matches the customer display clear-after-paid behavior', () => {
