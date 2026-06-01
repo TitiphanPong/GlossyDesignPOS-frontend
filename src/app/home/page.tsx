@@ -5,7 +5,7 @@ import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
 import { ApiOrder, type OrderStatus } from '../../lib/contracts';
 import { hasApiBaseUrl } from '../../lib/api';
-import { fetchOrders } from '../../lib/orders';
+import { fetchOrders, sortOrdersByNewest } from '../../lib/orders';
 
 import DashboardHeader from './components/dashboard/DashboardHeader';
 import KPICards from './components/dashboard/KPICards';
@@ -62,7 +62,7 @@ export default function DashboardPage() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<Date | null>(null);
 
-  const loadDashboard = () => {
+  const loadDashboard = async () => {
     if (!hasApiBaseUrl()) {
       setMissingApiBase(true);
       setLoading(false);
@@ -71,23 +71,22 @@ export default function DashboardPage() {
 
     setMissingApiBase(false);
     setLoading(true);
-    Promise.all([fetchOrders()])
-      .then(([orders]) => {
-        setLoadError(null);
-        setLastSyncedAt(new Date());
-        const sorted = [...orders].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setOrders(sorted);
-      })
-      .catch(error => {
-        console.error('Dashboard load failed:', error);
-        setOrders([]);
-        setLoadError(error instanceof Error && error.message ? error.message : 'ไม่สามารถโหลดข้อมูลสรุปของแดชบอร์ดได้ในขณะนี้ กรุณาลองรีเฟรชอีกครั้ง');
-      })
-      .finally(() => setLoading(false));
+    try {
+      const orders = await fetchOrders();
+      setLoadError(null);
+      setLastSyncedAt(new Date());
+      setOrders(sortOrdersByNewest(orders));
+    } catch (error) {
+      console.error('Dashboard load failed:', error);
+      setOrders([]);
+      setLoadError(error instanceof Error && error.message ? error.message : 'ไม่สามารถโหลดข้อมูลสรุปของแดชบอร์ดได้ในขณะนี้ กรุณาลองรีเฟรชอีกครั้ง');
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    loadDashboard();
+    void loadDashboard();
   }, []);
 
   const dashboardData = useMemo(() => {

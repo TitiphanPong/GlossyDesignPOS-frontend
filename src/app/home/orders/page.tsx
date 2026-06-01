@@ -40,7 +40,7 @@ import JobTimelineCard, { type JobTimelineCardItem } from '../components/JobTime
 import { commonButtonSx, statusChipSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import { fetchApi, isMissingApiBaseError } from '../../../lib/api';
-import { fetchOrders } from '../../../lib/orders';
+import { fetchOrders, sortOrdersByNewest } from '../../../lib/orders';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
@@ -202,7 +202,7 @@ function mapApiOrderToRow(order: ApiOrder): OrderRow {
 
 async function fetchOrderRows(): Promise<OrderRow[]> {
   const orders = await fetchOrders();
-  return orders.map(mapApiOrderToRow);
+  return sortOrdersByNewest(orders).map(mapApiOrderToRow);
 }
 
 async function updateOrderStatus(orderId: string, status: PaymentStatus): Promise<void> {

@@ -6,6 +6,7 @@ import {
   fetchOrderById,
   fetchOrders,
   payRemainingBalance,
+  sortOrdersByNewest,
   updateOrderCustomerInfo,
 } from './orders';
 
@@ -188,6 +189,74 @@ test('fetchOrders accepts a wrapped orders list response', async () => {
   }
 });
 
+test('fetchOrders accepts a raw array response', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+
+  const mockFetch: typeof fetch = async () =>
+    new Response(
+      JSON.stringify([
+        {
+          _id: 'abc127b',
+          orderId: 'legacy-005b',
+          orderNumber: 'ORD-20260527-0005B',
+          payment: 'cash',
+          status: 'pending',
+          createdAt: '2026-05-31T10:00:00.000Z',
+        },
+      ]),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  globalThis.fetch = mockFetch;
+
+  try {
+    const result = await fetchOrders();
+    assert.equal(result.length, 1);
+    assert.equal(result[0]?.orderNumber, 'ORD-20260527-0005B');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('fetchOrders accepts payload.orders envelopes', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+
+  const mockFetch: typeof fetch = async () =>
+    new Response(
+      JSON.stringify({
+        payload: {
+          orders: [
+            {
+              _id: 'abc127c',
+              orderId: 'legacy-005c',
+              orderNumber: 'ORD-20260527-0005C',
+              payment: 'promptpay',
+              status: 'paid',
+              createdAt: '2026-05-31T11:00:00.000Z',
+            },
+          ],
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  globalThis.fetch = mockFetch;
+
+  try {
+    const result = await fetchOrders();
+    assert.equal(result.length, 1);
+    assert.equal(result[0]?.orderNumber, 'ORD-20260527-0005C');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
 test('fetchOrderById accepts a wrapped single-order response', async () => {
   const originalFetch = globalThis.fetch;
   const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
@@ -275,4 +344,16 @@ test('updateOrderCustomerInfo sends only tax invoice customer fields', async () 
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;
   }
+});
+
+test('sortOrdersByNewest sorts newest createdAt first without mutating the original array', () => {
+  const orders = [
+    { _id: '1', orderId: '1', payment: 'cash', status: 'pending', createdAt: '2026-05-30T10:00:00.000Z' },
+    { _id: '2', orderId: '2', payment: 'cash', status: 'pending', createdAt: '2026-05-31T10:00:00.000Z' },
+  ];
+
+  const sorted = sortOrdersByNewest(orders);
+
+  assert.deepEqual(sorted.map(order => order.orderId), ['2', '1']);
+  assert.deepEqual(orders.map(order => order.orderId), ['1', '2']);
 });

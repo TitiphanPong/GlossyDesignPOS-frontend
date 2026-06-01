@@ -116,6 +116,10 @@ type UpdateCustomerInfoPayload = {
   address?: string;
 };
 
+export function sortOrdersByNewest<T extends Pick<ApiOrder, 'createdAt'>>(orders: T[]): T[] {
+  return [...orders].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
+}
+
 export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (
