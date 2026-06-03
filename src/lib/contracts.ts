@@ -191,6 +191,9 @@ export type NormalizedInvoiceCartItem = {
 };
 
 export type NormalizedOrderCartItem = NormalizedInvoiceCartItem & {
+  qty: number;
+  price: number;
+  total: number;
   category?: string;
   deposit: number;
   remaining: number;
@@ -206,6 +209,39 @@ export type NormalizedOrderAmounts = {
   discount: number;
   vatAmount: number;
   finalTotal: number;
+  total: number;
+  grandTotal: number;
+  remainingTotal: number;
+  paidAmount: number;
+};
+
+export type NormalizedOrder = {
+  _id: string;
+  orderId: string;
+  orderNumber: string;
+  customerName: string;
+  phoneNumber: string;
+  email: string;
+  address: string;
+  taxId: string;
+  branch: string;
+  note: string;
+  category?: string;
+  salesChannel: string;
+  payment: PaymentMethod;
+  paymentMethod: PaymentMethod;
+  status: OrderStatus;
+  createdAt: string;
+  updatedAt?: string;
+  issueDate: string;
+  taxInvoice: 'yes' | 'no';
+  customerInfo: CustomerInfo;
+  cart: NormalizedOrderCartItem[];
+  subtotal: number;
+  discount: number;
+  finalTotal: number;
+  total: number;
+  vatAmount: number;
   grandTotal: number;
   remainingTotal: number;
   paidAmount: number;
@@ -274,8 +310,11 @@ export function normalizeApiCartItem(item: Partial<ApiCartItem>): NormalizedOrde
     name: readNonEmptyString(item.name) ?? '-',
     category: readNonEmptyString(item.category) ?? undefined,
     quantity,
+    qty: quantity,
     unitPrice,
+    price: unitPrice,
     totalPrice,
+    total: totalPrice,
     deposit: Math.max(readNumber(item.deposit) ?? 0, 0),
     remaining: Math.max(readNumber(item.remaining) ?? 0, 0),
     fullPayment: typeof item.fullPayment === 'boolean' ? item.fullPayment : undefined,
@@ -299,7 +338,7 @@ export function normalizeApiCartItemForInvoice(item: ApiCartItem): NormalizedInv
 export function normalizeApiOrderAmounts(
   order: Partial<ApiOrder> & {
     finalTotal?: number;
-    cart?: ApiCartItem[];
+    cart?: Array<Partial<ApiCartItem>>;
   }
 ): NormalizedOrderAmounts {
   const cart = Array.isArray(order.cart) ? order.cart.map(normalizeApiCartItem) : [];
@@ -316,9 +355,69 @@ export function normalizeApiOrderAmounts(
     discount,
     vatAmount,
     finalTotal,
+    total: finalTotal,
     grandTotal,
     remainingTotal,
     paidAmount,
+  };
+}
+
+export function normalizeApiOrder(
+  order: Partial<ApiOrder> & {
+    id?: string;
+    finalTotal?: number;
+    cart?: Array<Partial<ApiCartItem>>;
+  }
+): NormalizedOrder {
+  const cart = Array.isArray(order.cart) ? order.cart.map(normalizeApiCartItem) : [];
+  const amounts = normalizeApiOrderAmounts({ ...order, cart });
+  const paymentMethod = isPaymentMethod(order.payment) ? order.payment : 'cash';
+  const address = readInvoiceString(order, 'address', 'customerAddress') ?? '-';
+  const customerInfo: CustomerInfo = {
+    customerName: readNonEmptyString(order.customerName) ?? '-',
+    phoneNumber: readNonEmptyString(order.phoneNumber) ?? undefined,
+    email: readInvoiceString(order, 'email', 'customerEmail') ?? undefined,
+    taxId: readInvoiceString(order, 'taxId', 'customerTaxId') ?? undefined,
+    branchType: order.branchType,
+    branchNo: readNonEmptyString(order.branchNo) ?? undefined,
+    address: address !== '-' ? address : undefined,
+    subDistrict: readNonEmptyString(order.subDistrict) ?? undefined,
+    district: readNonEmptyString(order.district) ?? undefined,
+    province: readNonEmptyString(order.province) ?? undefined,
+    postalCode: readNonEmptyString(order.postalCode) ?? undefined,
+    shippingAddress: readNonEmptyString(order.shippingAddress) ?? undefined,
+  };
+
+  return {
+    _id: readNonEmptyString(order._id) ?? readNonEmptyString(order.id) ?? readNonEmptyString(order.orderId) ?? '-',
+    orderId: readNonEmptyString(order.orderId) ?? readNonEmptyString(order._id) ?? readNonEmptyString(order.id) ?? '-',
+    orderNumber: getDisplayOrderNumber(order),
+    customerName: customerInfo.customerName,
+    phoneNumber: customerInfo.phoneNumber ?? '-',
+    email: customerInfo.email ?? '-',
+    address: customerInfo.address ?? '-',
+    taxId: customerInfo.taxId ?? '-',
+    branch: readInvoiceString(order, 'branch', 'customerBranch') ?? '-',
+    note: readNonEmptyString(order.note) ?? '-',
+    category: readNonEmptyString(order.category) ?? undefined,
+    salesChannel: readNonEmptyString(order.salesChannel) ?? '-',
+    payment: paymentMethod,
+    paymentMethod,
+    status: normalizeOrderStatus(order.status, 'pending'),
+    createdAt: readInvoiceString(order, 'createdAt', 'updatedAt', 'issueDate') ?? '',
+    updatedAt: readNonEmptyString(order.updatedAt) ?? undefined,
+    issueDate: readInvoiceString(order, 'issueDate', 'updatedAt', 'createdAt') ?? '',
+    taxInvoice: order.taxInvoice === 'yes' ? 'yes' : 'no',
+    customerInfo,
+    cart,
+    subtotal: amounts.subtotal,
+    discount: amounts.discount,
+    finalTotal: amounts.finalTotal,
+    total: amounts.total,
+    vatAmount: amounts.vatAmount,
+    grandTotal: amounts.grandTotal,
+    remainingTotal: amounts.remainingTotal,
+    paidAmount: amounts.paidAmount,
   };
 }
 
@@ -370,5 +469,32 @@ export function normalizeApiOrderForInvoice(
     finalTotal: amounts.finalTotal,
     vatAmount: amounts.vatAmount,
     grandTotal: amounts.grandTotal,
+  };
+}
+
+export function createInvoiceOrderFromNormalizedOrder(order: NormalizedOrder): NormalizedInvoiceOrder {
+  return {
+    orderId: order.orderId,
+    orderNumber: order.orderNumber,
+    customerName: order.customerName,
+    phoneNumber: order.phoneNumber,
+    email: order.email,
+    address: order.address,
+    taxId: order.taxId,
+    branch: order.branch,
+    note: order.note,
+    salesChannel: order.salesChannel,
+    paymentMethod: order.paymentMethod,
+    status: order.status,
+    issueDate: order.issueDate,
+    orderDate: order.createdAt,
+    taxInvoice: order.taxInvoice,
+    customerInfo: order.customerInfo,
+    cart: order.cart.map(normalizeApiCartItemForInvoice),
+    subtotal: order.subtotal,
+    discount: order.discount,
+    finalTotal: order.finalTotal,
+    vatAmount: order.vatAmount,
+    grandTotal: order.grandTotal,
   };
 }

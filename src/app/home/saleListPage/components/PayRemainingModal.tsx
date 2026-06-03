@@ -1,8 +1,8 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
-import type { ApiOrder, PaymentMethod } from '../../../../lib/contracts';
+import type { NormalizedOrder, PaymentMethod } from '../../../../lib/contracts';
 import { isMissingApiBaseError } from '../../../../lib/api';
 import { payRemainingBalance } from '../../../../lib/orders';
 
@@ -11,28 +11,51 @@ type Props = {
   orderId: string;
   remaining: number;
   onClose: () => void;
-  onSuccess: (updated: ApiOrder) => void;
+  onSuccess: (updated: NormalizedOrder) => void;
 };
 
+function validateRemainingPaymentAmount(rawAmount: string, remaining: number): string {
+  const trimmed = rawAmount.trim();
+
+  if (trimmed.length === 0) {
+    return 'กรุณากรอกจำนวนเงินที่ต้องการรับชำระ';
+  }
+
+  const amount = Number(trimmed);
+
+  if (Number.isNaN(amount)) {
+    return 'กรุณากรอกจำนวนเงินเป็นตัวเลข';
+  }
+
+  if (!Number.isFinite(amount)) {
+    return 'จำนวนเงินต้องเป็นตัวเลขที่ถูกต้อง';
+  }
+
+  if (amount <= 0) {
+    return 'จำนวนเงินต้องมากกว่า 0 บาท';
+  }
+
+  if (amount > remaining) {
+    return 'จำนวนเงินต้องไม่เกินยอดคงเหลือ';
+  }
+
+  return '';
+}
+
 export default function PayRemainingModal({ open, orderId, remaining, onClose, onSuccess }: Readonly<Props>) {
-  const [amount, setAmount] = useState(remaining);
+  const [amountInput, setAmountInput] = useState('');
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    setAmount(remaining);
+    setAmountInput(remaining > 0 ? String(remaining) : '');
     setMethod('cash');
     setErrorMessage(null);
   }, [open, remaining]);
 
-  const normalizedAmount = Number.isFinite(amount) ? amount : Number.NaN;
-  const amountError =
-    Number.isNaN(normalizedAmount) || normalizedAmount <= 0
-      ? 'กรุณากรอกจำนวนเงินที่มากกว่า 0'
-      : normalizedAmount > remaining
-        ? 'จำนวนเงินต้องไม่เกินยอดคงเหลือ'
-        : '';
+  const amountError = useMemo(() => validateRemainingPaymentAmount(amountInput, remaining), [amountInput, remaining]);
+  const normalizedAmount = Number(amountInput.trim());
 
   const handleConfirm = async () => {
     if (loading) return;
@@ -75,8 +98,8 @@ export default function PayRemainingModal({ open, orderId, remaining, onClose, o
           <TextField
             label="จำนวนเงิน"
             type="number"
-            value={amount}
-            onChange={event => setAmount(Number(event.target.value))}
+            value={amountInput}
+            onChange={event => setAmountInput(event.target.value)}
             error={Boolean(amountError)}
             helperText={amountError || 'จำนวนเงินต้องมากกว่า 0 และไม่เกินยอดคงเหลือ'}
             fullWidth

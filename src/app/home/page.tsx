@@ -3,7 +3,7 @@
 import { Box } from '@mui/material';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
-import { ApiOrder, type OrderStatus } from '../../lib/contracts';
+import { type NormalizedOrder, type OrderStatus } from '../../lib/contracts';
 import { hasApiBaseUrl } from '../../lib/api';
 import { fetchOrders, sortOrdersByNewest } from '../../lib/orders';
 
@@ -31,16 +31,15 @@ type DashboardKpiItem = {
 type DashboardPaymentSlice = { name: string; value: number; color: string };
 type DashboardStatusItem = { key: OrderStatus; count: number };
 
-function getOrderAmount(order: ApiOrder): number {
-  const value = order.grandTotal ?? order.total;
-  return typeof value === 'number' && Number.isFinite(value) ? value : 0;
+function getOrderAmount(order: NormalizedOrder): number {
+  return Number.isFinite(order.grandTotal) ? order.grandTotal : order.total;
 }
 
 function isSameDay(target: dayjs.Dayjs, compare: dayjs.Dayjs) {
   return target.format('YYYY-MM-DD') === compare.format('YYYY-MM-DD');
 }
 
-function buildRangeSeries(orders: ApiOrder[], items: number, unit: 'day' | 'month', labelFormatter: (date: dayjs.Dayjs) => string) {
+function buildRangeSeries(orders: NormalizedOrder[], items: number, unit: 'day' | 'month', labelFormatter: (date: dayjs.Dayjs) => string) {
   const now = dayjs();
   return Array.from({ length: items }, (_, index) => {
     const date = now.subtract(items - index - 1, unit);
@@ -56,7 +55,7 @@ function buildRangeSeries(orders: ApiOrder[], items: number, unit: 'day' | 'mont
 }
 
 export default function DashboardPage() {
-  const [orders, setOrders] = useState<ApiOrder[]>([]);
+  const [orders, setOrders] = useState<NormalizedOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [missingApiBase, setMissingApiBase] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);

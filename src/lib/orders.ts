@@ -1,42 +1,39 @@
 import { fetchApiJson } from './api';
-import { getDisplayOrderNumber, type ApiOrder, type PendingOrderDraft } from './contracts';
+import { normalizeApiOrder, type ApiOrder, type NormalizedOrder, type PendingOrderDraft } from './contracts';
 
-type ApiOrderLike = Partial<ApiOrder> & { id?: string };
+type ApiOrderLike = Partial<ApiOrder> & {
+  id?: string;
+  finalTotal?: number;
+  cart?: unknown;
+};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object';
 }
 
-function normalizeApiOrder(value: unknown): ApiOrder | null {
+function normalizeApiOrderCandidate(value: unknown): NormalizedOrder | null {
   if (!isRecord(value)) {
     return null;
   }
 
   const order = value as ApiOrderLike;
-  let _id: string | null = null;
-  if (typeof order._id === 'string' && order._id.trim().length > 0) {
-    _id = order._id;
-  } else if (typeof order.id === 'string' && order.id.trim().length > 0) {
-    _id = order.id;
-  }
+  const hasIdentifier =
+    (typeof order._id === 'string' && order._id.trim().length > 0) ||
+    (typeof order.id === 'string' && order.id.trim().length > 0);
+  const hasOrderId = typeof order.orderId === 'string' && order.orderId.trim().length > 0;
 
-  const orderId = typeof order.orderId === 'string' && order.orderId.trim().length > 0 ? order.orderId : null;
-  const orderNumber = getDisplayOrderNumber(order, '');
-
-  if (!_id || !orderId || !orderNumber) {
+  if (!hasIdentifier || !hasOrderId) {
     return null;
   }
 
-  return {
+  return normalizeApiOrder({
     ...order,
-    _id,
-    orderId,
-    orderNumber,
-  } as ApiOrder;
+    cart: Array.isArray(order.cart) ? order.cart : [],
+  });
 }
 
-function extractApiOrder(value: unknown): ApiOrder | null {
-  const directOrder = normalizeApiOrder(value);
+export function extractOrderFromResponse(value: unknown): NormalizedOrder | null {
+  const directOrder = normalizeApiOrderCandidate(value);
   if (directOrder) {
     return directOrder;
   }
@@ -52,10 +49,11 @@ function extractApiOrder(value: unknown): ApiOrder | null {
     value.payload,
     isRecord(value.data) ? value.data.order : null,
     isRecord(value.result) ? value.result.order : null,
+    isRecord(value.payload) ? value.payload.order : null,
   ];
 
   for (const candidate of wrappedCandidates) {
-    const normalizedOrder = normalizeApiOrder(candidate);
+    const normalizedOrder = normalizeApiOrderCandidate(candidate);
     if (normalizedOrder) {
       return normalizedOrder;
     }
@@ -64,14 +62,12 @@ function extractApiOrder(value: unknown): ApiOrder | null {
   return null;
 }
 
-function extractApiOrderArray(value: unknown): ApiOrder[] | null {
+export function extractOrdersFromResponse(value: unknown): NormalizedOrder[] | null {
   if (Array.isArray(value)) {
     const normalizedOrders = value
-      .map(extractApiOrder)
-      .filter((order): order is ApiOrder => Boolean(order));
-    return normalizedOrders.length > 0 || value.length === 0
-      ? normalizedOrders
-      : null;
+      .map(extractOrderFromResponse)
+      .filter((order): order is NormalizedOrder => Boolean(order));
+    return normalizedOrders.length > 0 || value.length === 0 ? normalizedOrders : null;
   }
 
   if (!isRecord(value)) {
@@ -95,8 +91,9 @@ function extractApiOrderArray(value: unknown): ApiOrder[] | null {
     }
 
     const normalizedOrders = candidate
-      .map(extractApiOrder)
-      .filter((order): order is ApiOrder => Boolean(order));
+      .map(extractOrderFromResponse)
+      .filter((order): order is NormalizedOrder => Boolean(order));
+
     if (normalizedOrders.length > 0 || candidate.length === 0) {
       return normalizedOrders;
     }
@@ -116,17 +113,13 @@ type UpdateCustomerInfoPayload = {
   address?: string;
 };
 
-export function sortOrdersByNewest<T extends Pick<ApiOrder, 'createdAt'>>(orders: T[]): T[] {
+export function sortOrdersByNewest<T extends Pick<NormalizedOrder, 'createdAt'>>(orders: T[]): T[] {
   return [...orders].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
 }
 
-export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder> {
+export async function createOrder(payload: PendingOrderDraft): Promise<NormalizedOrder> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (
-    typeof payload.clientDraftId === 'string' &&
-    payload.clientDraftId.trim().length > 0
-  ) {
-    // Backend requirement: POST /orders should deduplicate repeated submissions using this key.
+  if (typeof payload.clientDraftId === 'string' && payload.clientDraftId.trim().length > 0) {
     headers['Idempotency-Key'] = payload.clientDraftId.trim();
   }
 
@@ -136,7 +129,7 @@ export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder>
     body: JSON.stringify(payload),
   });
 
-  const createdOrder = extractApiOrder(responseBody);
+  const createdOrder = extractOrderFromResponse(responseBody);
   if (!createdOrder) {
     throw new Error('Backend did not return a valid order identifier');
   }
@@ -147,17 +140,14 @@ export async function createOrder(payload: PendingOrderDraft): Promise<ApiOrder>
 export async function payRemainingBalance(
   orderId: string,
   payload: RemainingPaymentPayload,
-): Promise<ApiOrder> {
-  const responseBody = await fetchApiJson<unknown>(
-    `/orders/${orderId}/payments`,
-    {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    },
-  );
+): Promise<NormalizedOrder> {
+  const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}/payments`, {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload),
+  });
 
-  const updatedOrder = extractApiOrder(responseBody);
+  const updatedOrder = extractOrderFromResponse(responseBody);
   if (!updatedOrder) {
     throw new Error('Backend did not return a valid updated order');
   }
@@ -165,11 +155,11 @@ export async function payRemainingBalance(
   return updatedOrder;
 }
 
-export async function fetchOrders(): Promise<ApiOrder[]> {
+export async function fetchOrders(): Promise<NormalizedOrder[]> {
   const responseBody = await fetchApiJson<unknown>('/orders', {
     cache: 'no-store',
   });
-  const orders = extractApiOrderArray(responseBody);
+  const orders = extractOrdersFromResponse(responseBody);
 
   if (!orders) {
     throw new Error('Backend did not return a valid orders list');
@@ -178,9 +168,9 @@ export async function fetchOrders(): Promise<ApiOrder[]> {
   return orders;
 }
 
-export async function fetchOrderById(orderId: string): Promise<ApiOrder> {
+export async function fetchOrderById(orderId: string): Promise<NormalizedOrder> {
   const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}`);
-  const order = extractApiOrder(responseBody);
+  const order = extractOrderFromResponse(responseBody);
 
   if (!order) {
     throw new Error('Backend did not return a valid order');
@@ -192,7 +182,7 @@ export async function fetchOrderById(orderId: string): Promise<ApiOrder> {
 export async function updateOrderCustomerInfo(
   orderId: string,
   customerInfo: UpdateCustomerInfoPayload,
-): Promise<ApiOrder> {
+): Promise<NormalizedOrder> {
   const normalizedCustomerName = customerInfo.customerName.trim();
   const normalizedTaxId = customerInfo.taxId?.trim();
   const normalizedAddress = customerInfo.address?.trim();
@@ -209,7 +199,7 @@ export async function updateOrderCustomerInfo(
     }),
   });
 
-  const updatedOrder = extractApiOrder(responseBody);
+  const updatedOrder = extractOrderFromResponse(responseBody);
   if (!updatedOrder) {
     throw new Error('Backend did not return a valid updated order');
   }

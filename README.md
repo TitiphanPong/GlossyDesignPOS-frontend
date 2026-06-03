@@ -1,152 +1,217 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Glossy POS Frontend
+
+Glossy POS is a Next.js 15 + TypeScript frontend for a print-shop workflow. It includes:
+
+- admin dashboard
+- POS seller / checkout
+- orders and partial-payment follow-up
+- printable invoice and tax invoice views
+- storage / upload management
+- customer display screen
+- public landing and upload flows
+
+This repository is frontend-only. The NestJS backend, MongoDB schemas, and persistence logic are not included here.
+
+## Tech Stack
+
+- Next.js 15 App Router
+- React 19
+- TypeScript
+- MUI for admin surfaces
+- Tailwind-style utility CSS in public/upload areas
+- local `node:test` + `tsx` test runner
 
 ## Getting Started
 
-1. Copy `.env.example` to `.env.local`
-2. Set the backend URL in `NEXT_PUBLIC_API_URL`
-3. Set admin auth secrets:
-   - `ADMIN_LOGIN_USERNAME`
-   - `ADMIN_LOGIN_PASSWORD`
-   - `ADMIN_SESSION_SECRET`
+1. Install dependencies:
 
-First, run the development server:
+```bash
+npm install
+```
+
+2. Copy the example environment file:
+
+```bash
+copy .env.example .env.local
+```
+
+3. Fill in the required environment variables.
+
+4. Start the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open `http://localhost:3000`.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Scripts
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- `npm run dev` starts the local dev server
+- `npm run lint` runs ESLint
+- `npm test` runs the TypeScript test suite
+- `npm run build` creates a production build
+- `npm run check:utf8` validates text file encoding
+- `npm run format` formats source files with Prettier
+
+## Environment Variables
+
+Required for normal frontend operation:
+
+- `NEXT_PUBLIC_API_URL`
+  Backend base URL used by shared API helpers.
+
+- `NEXT_PUBLIC_PROMPTPAY_ID`
+  PromptPay target shown on the customer display.
+
+Required for current admin login/session flow:
+
+- `ADMIN_LOGIN_USERNAME`
+- `ADMIN_LOGIN_PASSWORD`
+- `ADMIN_SESSION_SECRET`
+
+Used by printable invoice views:
+
+- `NEXT_PUBLIC_COMPANY_THAI_NAME`
+- `NEXT_PUBLIC_COMPANY_ENGLISH_NAME`
+- `NEXT_PUBLIC_COMPANY_BRANCH_NO`
+- `NEXT_PUBLIC_COMPANY_ADDRESS`
+- `NEXT_PUBLIC_COMPANY_PHONE`
+- `NEXT_PUBLIC_COMPANY_TAX_ID`
+- `NEXT_PUBLIC_COMPANY_EMAIL`
+- `NEXT_PUBLIC_COMPANY_WEBSITE`
+- `NEXT_PUBLIC_COMPANY_BANK_INFO`
+
+## Project Structure
+
+- `src/app/home`
+  Admin application routes and shared admin shell.
+
+- `src/app/home/page.tsx`
+  Dashboard summary.
+
+- `src/app/home/posseller/page.tsx`
+  POS seller screen for cashier order creation.
+
+- `src/app/home/orders/page.tsx`
+  Orders management, status updates, and remaining-balance payments.
+
+- `src/app/home/storage/page.tsx`
+  Upload and file management screen.
+
+- `src/app/print/invoice/[orderId]`
+  Printable invoice and tax invoice rendering.
+
+- `src/app/customer/page.tsx`
+  Full-screen customer display and payment presentation.
+
+- `src/app/upload/page.tsx`
+  Public upload intake flow.
+
+- `src/app/landing/page.tsx`
+  Marketing / landing page.
+
+- `src/lib/contracts.ts`
+  Shared frontend/backend order, payment, and normalization contracts.
+
+- `src/lib/orders.ts`
+  Shared order API helpers and response extraction.
+
+- `src/lib/upload-api.ts`
+  Canonical upload helper logic.
+
+- `src/app/utils/computeTotal.ts`
+  Shared total, VAT, deposit, and remaining-balance calculations.
+
+## Main Frontend Flows
+
+### POS Checkout
+
+1. Cashier opens the POS seller screen.
+2. Products load from `GET /products`.
+3. Product-specific modal returns cart items with price and payment-split fields.
+4. Checkout stores a pending draft in local storage.
+5. Success modal posts the finalized draft to `POST /orders`.
+6. Customer display reads the same local pending order state.
+
+### Orders and Payments
+
+- Orders list comes from `GET /orders`
+- Single-order invoice fetch uses `GET /orders/:orderId`
+- Remaining-balance payment uses `PATCH /orders/:id/payments`
+- Frontend currently supports mixed backend response envelopes and cart field variants
+
+### Storage
+
+- Preferred listing endpoint: `GET /uploads`
+- Legacy fallback listing endpoint: `GET /upload`
+- Signed download/open URL: `GET /uploads/:id/signed-url`
+- Upload creation: `POST /uploads`
+
+## Current Data Compatibility Rules
+
+The frontend normalizes inconsistent order/cart payloads so it can safely handle:
+
+- `qty` and `quantity`
+- `price` and `unitPrice`
+- `total`, `lineTotal`, and `totalPrice`
+- raw array order responses
+- `{ data: [...] }`
+- `{ orders: [...] }`
+- `{ order: {...} }`
+- other nested wrapped order payloads already tolerated by `src/lib/orders.ts`
+
+This compatibility layer exists to keep dashboard, orders, and invoice screens stable during backend migration.
+
+## Backend Expectations
+
+This frontend assumes a separate NestJS + MongoDB style backend with:
+
+- `_id` document identifiers
+- REST endpoints such as `/orders`, `/products`, and `/uploads`
+- Mongo-style order records containing `orderId`, `status`, `payment`, `cart`, and totals
+
+Important backend dependencies still pending:
+
+- true idempotent `POST /orders` deduplication using `clientDraftId` / `Idempotency-Key`
+- standardized `/orders` response envelopes
+- long-term convergence on one canonical stored cart schema
+
+## Routing Notes
+
+- `/` redirects to `/landing` through `src/app/page.tsx`
+- `/home` redirects to `/dashboard`
+- legacy admin aliases like `/home/orders`, `/home/posseller`, and `/home/storage` are preserved
+- `/home/invoice/:orderId` redirects to `/print/invoice/:orderId`
+
+## Validation Workflow
+
+Before shipping frontend changes, run:
+
+```bash
+npm run lint
+npm test
+npm run build
+```
+
+## Security Notes
+
+- `.env.local` and `.env.production` should not remain tracked in git
+- do not commit real environment values
+- current admin authentication is only a transitional frontend/server-env flow and is not a substitute for real backend auth
+
+Recommended cleanup if env files are tracked:
+
+```bash
+git rm --cached .env.local .env.production
+```
 
 ## Codex Automation
 
-This repo includes a queue-driven draft PR automation flow:
+This repo also includes local and GitHub-based TODO automation helpers:
 
-- `.github/workflows/codex-queue.yml` refreshes the `Codex Queue` issue with the real next task and claimed PRs
-- `.github/workflows/codex-auto-pr.yml` picks the next unfinished task from `TODO.md`
-- `scripts/codex-run-task.cjs` asks OpenAI for a bounded change set
-- `scripts/codex-check-quota.cjs` can block AI runs when configured cost thresholds are exceeded
-- `scripts/codex-write-summary.cjs` writes a human-readable run summary for quick review
-- the workflow runs `npm run check:utf8`, `npm run lint`, and `npm run build`
-- a draft PR is opened only when those checks pass
-- `.github/workflows/codex-auto-complete.yml` marks the matching TODO task as completed after the PR is merged
+- `npm run codex:todo:prepare`
+- `npm run codex:todo:complete`
+- `npm run codex:todo:cycle`
 
-Required repository secret:
-
-- `OPENAI_API_KEY`
-
-Optional repository secret and variables for quota guard:
-
-- `OPENAI_ADMIN_API_KEY`
-- `OPENAI_PROJECT_ID`
-- `OPENAI_DAILY_USD_LIMIT`
-- `OPENAI_MONTHLY_USD_LIMIT`
-
-Recommended GitHub Actions setup:
-
-- add `OPENAI_API_KEY` in `Settings > Secrets and variables > Actions > Secrets`
-- add `OPENAI_ADMIN_API_KEY` only if you want the quota guard to enforce spend limits
-- add `OPENAI_PROJECT_ID` if your costs endpoint should be scoped to one OpenAI project
-- add `OPENAI_DAILY_USD_LIMIT` and `OPENAI_MONTHLY_USD_LIMIT` in `Settings > Secrets and variables > Actions > Variables`
-- if `OPENAI_API_KEY` is missing, the workflow now skips cleanly and leaves a readable note in the Actions summary and `Codex Queue` issue instead of failing deep in the AI step
-
-Optional manual trigger inputs:
-
-- `task_id` to force a specific TODO task
-- `openai_model` to override the default model
-- `daily_usd_limit` to override the 24h spend threshold for that run
-- `monthly_usd_limit` to override the month-to-date spend threshold for that run
-
-The automation is intentionally narrow:
-
-- it only updates files listed in a task's `Affected files`
-- it may create adjacent test files for those paths
-- it will skip tasks that need broader context or backend work
-
-Notes:
-
-- the schedule runs every 3 hours
-- quota guard uses OpenAI's organization Costs endpoint, so it needs an Admin API key to enforce spend limits
-- if no spend limits are configured, the quota guard stays disabled and the workflow proceeds normally
-- each run writes a GitHub Actions summary, and quota-blocked or no-task runs also leave a note on the `Codex Queue` issue
-
-## Use Codex Session Quota Locally
-
-If you want Codex to pick the next TODO during an interactive Codex session, use the local queue helper instead of the GitHub Actions flow.
-
-```bash
-npm run codex:todo:prepare
-```
-
-That command does two things:
-
-- writes the next eligible task to `selected-task.json`
-- writes a ready-to-use Codex prompt to `selected-task-prompt.md`
-
-Suggested local loop:
-
-1. Run `npm run codex:todo:prepare`
-2. Ask Codex to open `selected-task-prompt.md` and implement the task
-3. After verification passes, run `npm run codex:todo:complete`
-
-One-command local cycle:
-
-```bash
-npm run codex:todo:cycle
-```
-
-What it does:
-
-- selects the next eligible task from `TODO.md`
-- switches to the task branch
-- runs `codex exec` with the generated prompt
-- runs `npm run check:utf8`, `npm run lint`, and `npm run build`
-- marks the task as completed in `TODO.md`
-- commits the result
-- pushes the task branch
-- tries to open a draft PR through the GitHub REST API when `GITHUB_TOKEN`, `GH_TOKEN`, or `GIT_TOKEN` is available
-
-Useful flags:
-
-- `node scripts/codex-cycle-local-task.cjs --task-id QW-01`
-- `node scripts/codex-cycle-local-task.cjs --allow-dirty`
-- `node scripts/codex-cycle-local-task.cjs --skip-push --skip-pr`
-- `node scripts/codex-cycle-local-task.cjs --model gpt-5.5`
-
-Recommended Codex prompt:
-
-```txt
-Open `selected-task-prompt.md` and `selected-task.json`, then implement the task end-to-end.
-```
-
-Notes:
-
-- this local path is meant for Codex sessions like the one you are using now, so it fits the "use Codex quota" workflow better than the GitHub Action
-- the GitHub Actions workflow still uses `OPENAI_API_KEY`, so it is separate from your interactive Codex session quota
-- if you want a specific task, run `node scripts/codex-prepare-local-task.cjs --task-id QW-01`
-- `npm run codex:todo:complete` reads `selected-task.json` and marks that task as completed in `TODO.md`
-- `npm run codex:todo:cycle` expects a clean working tree by default; use `--allow-dirty` only when you intentionally want current changes included in the branch
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+These scripts read from `TODO.md`, prepare a selected task, and help automate bounded change sets and verification.

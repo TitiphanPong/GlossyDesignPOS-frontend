@@ -3,6 +3,8 @@ import assert from 'node:assert/strict';
 
 import {
   createOrder,
+  extractOrderFromResponse,
+  extractOrdersFromResponse,
   fetchOrderById,
   fetchOrders,
   payRemainingBalance,
@@ -144,9 +146,10 @@ test('payRemainingBalance accepts a wrapped updated order response', async () =>
 
   try {
     const result = await payRemainingBalance('abc126', { amount: 120, method: 'promptpay' });
-    assert.equal(result.orderNumber, 'ORD-20260527-0004');
-    assert.equal(result.status, 'paid');
-    assert.equal(result._id, 'abc126');
+  assert.equal(result.orderNumber, 'ORD-20260527-0004');
+  assert.equal(result.status, 'paid');
+  assert.equal(result._id, 'abc126');
+  assert.equal(result.paymentMethod, 'promptpay');
   } finally {
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;
@@ -255,6 +258,45 @@ test('fetchOrders accepts payload.orders envelopes', async () => {
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;
   }
+});
+
+test('extractOrderFromResponse supports payload.order envelopes and normalizes cart aliases', () => {
+  const result = extractOrderFromResponse({
+    payload: {
+      order: {
+        _id: 'abc127d',
+        orderId: 'legacy-005d',
+        payment: 'cash',
+        status: 'partial',
+        createdAt: '2026-05-31T11:30:00.000Z',
+        cart: [{ name: 'Poster', quantity: 2, unitPrice: 15 }],
+      },
+    },
+  });
+
+  assert.ok(result);
+  assert.equal(result.orderNumber, 'legacy-005d');
+  assert.equal(result.cart[0]?.qty, 2);
+  assert.equal(result.cart[0]?.price, 15);
+  assert.equal(result.grandTotal, 30);
+});
+
+test('extractOrdersFromResponse supports top-level orders envelopes', () => {
+  const result = extractOrdersFromResponse({
+    orders: [
+      {
+        _id: 'abc127e',
+        orderId: 'legacy-005e',
+        payment: 'cash',
+        status: 'pending',
+        createdAt: '2026-05-31T12:00:00.000Z',
+      },
+    ],
+  });
+
+  assert.ok(result);
+  assert.equal(result.length, 1);
+  assert.equal(result[0]?.orderNumber, 'legacy-005e');
 });
 
 test('fetchOrderById accepts a wrapped single-order response', async () => {

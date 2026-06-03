@@ -4,7 +4,7 @@ import { use, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Alert, Box, Button, CircularProgress, Drawer, Snackbar, Stack, TextField, Typography } from '@mui/material';
 import { isMissingApiBaseError } from '../../../../lib/api';
-import { type CustomerInfo, type NormalizedInvoiceOrder, normalizeApiOrderForInvoice } from '../../../../lib/contracts';
+import { createInvoiceOrderFromNormalizedOrder, type CustomerInfo, type NormalizedInvoiceOrder } from '../../../../lib/contracts';
 import { fetchOrderById, updateOrderCustomerInfo } from '../../../../lib/orders';
 import { InvoiceDocument } from './InvoiceDocument';
 import { PrintDocumentLayout } from './PrintDocumentLayout';
@@ -196,7 +196,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
           return;
         }
 
-        const normalized = normalizeApiOrderForInvoice(data);
+        const normalized = createInvoiceOrderFromNormalizedOrder(data);
         setOrder(normalized);
         setFormValues(createFormValues(getCustomerInfoFromOrder(normalized)));
         setLoadError(null);
@@ -260,7 +260,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
         taxId: formValues.taxId.trim() || undefined,
         address: formValues.address.trim() || undefined,
       });
-      const normalized = normalizeApiOrderForInvoice(updatedOrder);
+      const normalized = createInvoiceOrderFromNormalizedOrder(updatedOrder);
 
       setOrder(normalized);
       setFormValues(createFormValues(getCustomerInfoFromOrder(normalized)));

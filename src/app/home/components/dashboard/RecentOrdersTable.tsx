@@ -3,11 +3,11 @@
 import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
-import { getDisplayOrderNumber, type ApiCartItem, type ApiOrder } from '../../../../lib/contracts';
+import { getDisplayOrderNumber, type NormalizedOrder } from '../../../../lib/contracts';
 import { EmptyState } from '../dashboardUi';
 
 interface RecentOrdersTableProps {
-  orders: ApiOrder[];
+  orders: NormalizedOrder[];
 }
 
 const STATUS_MAP: Record<string, { label: string; cls: string }> = {
@@ -41,16 +41,11 @@ function getCustomerInitial(name?: string): string {
   return trimmed ? trimmed[0].toUpperCase() : '?';
 }
 
-function getCartQuantity(item?: ApiCartItem): number {
-  const rawQty = item?.qty ?? item?.quantity ?? 0;
-  return typeof rawQty === 'number' && Number.isFinite(rawQty) ? rawQty : 0;
-}
-
-function buildOrderSummary(order: ApiOrder): { primary: string; secondary: string } {
+function buildOrderSummary(order: NormalizedOrder): { primary: string; secondary: string } {
   const items = Array.isArray(order.cart) ? order.cart : [];
   const primaryItem = items[0];
   const itemCount = items.length;
-  const totalQty = items.reduce((sum, item) => sum + getCartQuantity(item), 0);
+  const totalQty = items.reduce((sum, item) => sum + item.qty, 0);
 
   const primary = primaryItem?.name?.trim() || order.category?.trim() || 'ไม่มีรายละเอียด';
 
@@ -193,7 +188,7 @@ export default function RecentOrdersTable({ orders }: Readonly<RecentOrdersTable
                   const paymentLabel = PAYMENT_LABEL[order.payment] ?? order.payment;
                   const summary = buildOrderSummary(order);
                   const createdAt = formatCreatedAt(order.createdAt);
-                  const remaining = typeof order.remainingTotal === 'number' && order.remainingTotal > 0 ? order.remainingTotal : 0;
+                  const remaining = order.remainingTotal > 0 ? order.remainingTotal : 0;
                   const avatarHue = (index * 47) % 360;
 
                   return (
@@ -248,8 +243,8 @@ export default function RecentOrdersTable({ orders }: Readonly<RecentOrdersTable
                       </TableCell>
 
                       <TableCell align="right">
-                        <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#1a1035', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{formatCurrency(order.grandTotal ?? order.total ?? 0)}</Typography>
-                        {typeof order.discount === 'number' && order.discount > 0 ? (
+                        <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#1a1035', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{formatCurrency(order.grandTotal)}</Typography>
+                        {order.discount > 0 ? (
                           <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>ส่วนลด {formatCurrency(order.discount)}</Typography>
                         ) : null}
                       </TableCell>
@@ -258,7 +253,7 @@ export default function RecentOrdersTable({ orders }: Readonly<RecentOrdersTable
                         <Typography sx={{ fontSize: 13, fontWeight: 800, color: remaining > 0 ? '#B45309' : '#16A34A', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
                           {remaining > 0 ? formatCurrency(remaining) : 'ไม่มีค้าง'}
                         </Typography>
-                        {typeof order.vatAmount === 'number' && order.vatAmount > 0 ? (
+                        {order.vatAmount > 0 ? (
                           <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>VAT {formatCurrency(order.vatAmount)}</Typography>
                         ) : null}
                       </TableCell>
