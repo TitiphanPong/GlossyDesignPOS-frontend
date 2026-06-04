@@ -8,10 +8,12 @@ import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import { motion } from 'framer-motion';
 import { EmptyState } from '../dashboardUi';
 import type { OrderStatus } from '../../../../lib/contracts';
+import { getOrderStatusConfig } from '../../../../lib/order-status';
+import type { ElementType } from 'react';
 
 type DashboardStatusItem = { key: OrderStatus; count: number };
 
-const STATUS_META: Record<OrderStatus, { label: string; icon: typeof HourglassEmptyRoundedIcon; bg: string; color: string; iconBg: string; bar: string }> = {
+const STATUS_META: Partial<Record<OrderStatus, { label: string; icon: ElementType; bg: string; color: string; iconBg: string; bar: string }>> = {
   pending: {
     label: 'รอดำเนินการ',
     icon: HourglassEmptyRoundedIcon,
@@ -76,7 +78,15 @@ export default function OrderStatusSummary({ statuses }: Readonly<OrderStatusSum
       {statuses.length > 0 ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.8 }}>
           {statuses.map((status, index) => {
-            const meta = STATUS_META[status.key];
+            const sharedMeta = getOrderStatusConfig(status.key);
+            const meta = STATUS_META[status.key] ?? {
+              label: sharedMeta.label,
+              icon: sharedMeta.icon,
+              bg: sharedMeta.bg,
+              color: sharedMeta.hex,
+              iconBg: `${sharedMeta.hex}20`,
+              bar: sharedMeta.hex,
+            };
             const Icon = meta.icon;
             const pct = total > 0 ? Math.round((status.count / total) * 100) : 0;
             return (

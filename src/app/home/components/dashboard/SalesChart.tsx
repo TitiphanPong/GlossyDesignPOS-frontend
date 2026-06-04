@@ -9,10 +9,10 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import CountUp from 'react-countup';
 import dayjs, { type Dayjs } from 'dayjs';
 import { EmptyState } from '../dashboardUi';
-import type { ApiOrder } from '../../../../lib/contracts';
+import type { NormalizedOrder } from '../../../../lib/contracts';
 
 type SalesChartProps = {
-  orders: ApiOrder[];
+  orders: NormalizedOrder[];
 };
 
 type ChartPoint = {
@@ -20,7 +20,7 @@ type ChartPoint = {
   value: number;
 };
 
-function getOrderAmount(order: ApiOrder): number {
+function getOrderAmount(order: NormalizedOrder): number {
   const value = order.grandTotal ?? order.total;
   return typeof value === 'number' && Number.isFinite(value) ? value : 0;
 }

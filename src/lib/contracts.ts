@@ -2,13 +2,49 @@ export type PaymentMethod = 'cash' | 'promptpay';
 
 export type CustomerDisplayPaymentMethod = PaymentMethod | 'transfer' | 'card';
 
-export type OrderStatus = 'pending' | 'paid' | 'cancelled' | 'partial';
+export type WorkflowOrderStatus = 'pending' | 'producing' | 'awaiting_payment' | 'ready_for_pickup' | 'delivered' | 'cancelled';
+
+export type LegacyPaymentOrderStatus = 'paid' | 'partial';
+
+export type OrderStatus = WorkflowOrderStatus | LegacyPaymentOrderStatus;
+
+export type ProductVariant = {
+  id?: string;
+  _id?: string;
+  name: string;
+  price: number;
+  note?: string;
+  material?: string;
+  sides?: string;
+  size?: string;
+  active: boolean;
+};
+
+export type Product = {
+  id: string;
+  _id?: string;
+  name: string;
+  category: string;
+  code: string;
+  typeCode: string;
+  cover?: string;
+  icon?: string;
+  emoji?: string;
+  tint?: string;
+  badge?: 'NEW' | 'HIT' | string;
+  active: boolean;
+  variants: ProductVariant[];
+};
 
 export const PAYMENT_METHOD_VALUES = ['cash', 'promptpay'] as const;
 
 export const CUSTOMER_DISPLAY_PAYMENT_METHOD_VALUES = ['cash', 'promptpay', 'transfer', 'card'] as const;
 
-export const ORDER_STATUS_VALUES = ['pending', 'paid', 'cancelled', 'partial'] as const;
+export const WORKFLOW_ORDER_STATUS_VALUES = ['pending', 'producing', 'awaiting_payment', 'ready_for_pickup', 'delivered', 'cancelled'] as const;
+
+export const LEGACY_PAYMENT_ORDER_STATUS_VALUES = ['paid', 'partial'] as const;
+
+export const ORDER_STATUS_VALUES = [...WORKFLOW_ORDER_STATUS_VALUES, ...LEGACY_PAYMENT_ORDER_STATUS_VALUES] as const;
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   cash: 'Cash',
@@ -23,9 +59,13 @@ export const CUSTOMER_DISPLAY_PAYMENT_METHOD_LABELS: Record<CustomerDisplayPayme
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   pending: 'Pending',
+  producing: 'Producing',
+  awaiting_payment: 'Awaiting Payment',
+  ready_for_pickup: 'Ready for Pickup',
+  delivered: 'Delivered',
+  cancelled: 'Cancelled',
   partial: 'Partial Payment',
   paid: 'Paid',
-  cancelled: 'Cancelled',
 };
 
 export function isPaymentMethod(value: unknown): value is PaymentMethod {
@@ -105,7 +145,7 @@ export type ApiCartItem = {
   size?: string;
   shape?: string;
   type?: string;
-  variant?: { name?: string };
+  variant?: Partial<ProductVariant>;
   extra?: Record<string, unknown>;
 };
 

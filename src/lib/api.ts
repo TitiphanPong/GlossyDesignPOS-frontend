@@ -93,3 +93,48 @@ export async function fetchApiJson<T>(path: string, init?: RequestInit): Promise
 export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   return fetchApiJson<T>(path, init);
 }
+
+export function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+export function extractArrayPayload(value: unknown, keys: string[] = ['data', 'items', 'results', 'payload']): unknown[] | null {
+  if (Array.isArray(value)) {
+    return value;
+  }
+
+  if (!isRecord(value)) {
+    return null;
+  }
+
+  for (const key of keys) {
+    const candidate = value[key];
+    if (Array.isArray(candidate)) {
+      return candidate;
+    }
+
+    if (isRecord(candidate)) {
+      const nested = extractArrayPayload(candidate, keys);
+      if (nested) {
+        return nested;
+      }
+    }
+  }
+
+  return null;
+}
+
+export function extractObjectPayload(value: unknown, keys: string[] = ['data', 'item', 'result', 'payload']): Record<string, unknown> | null {
+  if (isRecord(value)) {
+    for (const key of keys) {
+      const candidate = value[key];
+      if (isRecord(candidate)) {
+        return candidate;
+      }
+    }
+
+    return value;
+  }
+
+  return null;
+}

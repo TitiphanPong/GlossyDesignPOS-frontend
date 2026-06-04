@@ -12,16 +12,14 @@ import { statusChipSx } from '../components/adminUi';
 import { fetchApi } from '../../../lib/api';
 import { getDisplayOrderNumber, type NormalizedOrder, type PaymentMethod } from '../../../lib/contracts';
 import { fetchOrders, sortOrdersByNewest } from '../../../lib/orders';
+import { getOrderStatusConfig, ORDER_STATUS_CONFIG } from '../../../lib/order-status';
 import type { ExportType, OrderRow, PaymentStatus, SortOrder } from './orderManagementTypes';
 
 export const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 export const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-export const STATUS_LABELS_TH: Record<PaymentStatus, string> = {
-  pending: 'รอชำระเงิน',
-  partial: 'ชำระบางส่วน',
-  paid: 'ชำระแล้ว',
-  cancelled: 'ยกเลิกงาน',
-};
+export const STATUS_LABELS_TH: Record<PaymentStatus, string> = Object.fromEntries(
+  Object.entries(ORDER_STATUS_CONFIG).map(([status, config]) => [status, config.label])
+) as Record<PaymentStatus, string>;
 export const FILTER_STATUS_LABELS: Record<'all' | PaymentStatus, string> = {
   all: 'ทั้งหมด',
   ...STATUS_LABELS_TH,
@@ -36,12 +34,9 @@ export const SORT_ORDER_LABELS: Record<SortOrder, string> = {
   high: 'ยอดรวมสูงสุด',
   low: 'ยอดรวมต่ำสุด',
 };
-export const ORDER_TABLE_STATUS_UI: Record<PaymentStatus, { label: string; dot: string }> = {
-  paid: { label: STATUS_LABELS_TH.paid, dot: '#16A34A' },
-  pending: { label: STATUS_LABELS_TH.pending, dot: '#4F46E5' },
-  partial: { label: STATUS_LABELS_TH.partial, dot: '#B45309' },
-  cancelled: { label: STATUS_LABELS_TH.cancelled, dot: '#9CA3AF' },
-};
+export const ORDER_TABLE_STATUS_UI: Record<PaymentStatus, { label: string; dot: string }> = Object.fromEntries(
+  Object.entries(ORDER_STATUS_CONFIG).map(([status, config]) => [status, { label: config.label, dot: config.hex }])
+) as Record<PaymentStatus, { label: string; dot: string }>;
 export const ORDER_TABLE_PAYMENT_LABEL: Record<PaymentMethod, string> = {
   cash: PAYMENT_METHOD_LABELS_TH.cash,
   promptpay: PAYMENT_METHOD_LABELS_TH.promptpay,
@@ -60,6 +55,18 @@ export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
 
   if (status === 'paid') {
     timeline.push({ title: 'ชำระเงินเรียบร้อย', at: createdAt });
+  }
+  if (status === 'producing') {
+    timeline.push({ title: 'กำลังผลิต', at: createdAt });
+  }
+  if (status === 'awaiting_payment') {
+    timeline.push({ title: 'รอชำระเงิน', at: createdAt });
+  }
+  if (status === 'ready_for_pickup') {
+    timeline.push({ title: 'พร้อมรับสินค้า', at: createdAt });
+  }
+  if (status === 'delivered') {
+    timeline.push({ title: 'ส่งมอบแล้ว', at: createdAt });
   }
   if (status === 'pending') {
     timeline.push({ title: 'รอชำระเงิน', at: createdAt });
@@ -218,11 +225,12 @@ export function buildOrderPaymentTimelineSubtitle(order: OrderRow): string {
     return 'รายการนี้ถูกยกเลิกและหยุดการดำเนินงานแล้ว';
   }
 
-  return `สถานะปัจจุบัน: ${STATUS_LABELS_TH[order.status]}`;
+  return getOrderStatusConfig(order.status).description;
 }
 
 export function buildOrderTimelineItems(order: OrderRow): JobTimelineCardItem[] {
-  const activeStage: 'created' | 'payment' = order.status === 'pending' ? 'created' : 'payment';
+  const activeStage: 'created' | 'payment' | 'production' =
+    order.status === 'pending' ? 'created' : order.status === 'producing' || order.status === 'ready_for_pickup' || order.status === 'delivered' ? 'production' : 'payment';
   let productionSubtitle = 'รอเข้าสู่กระบวนการผลิต';
 
   if (order.status === 'paid' || order.status === 'partial') {
@@ -258,7 +266,7 @@ export function buildOrderTimelineItems(order: OrderRow): JobTimelineCardItem[] 
       title: 'เตรียมงานผลิต / พิมพ์',
       subtitle: productionSubtitle,
       icon: <PrintRoundedIcon sx={{ fontSize: 18 }} />,
-      active: false,
+      active: activeStage === 'production',
     },
   ];
 
@@ -273,16 +281,8 @@ export function buildOrderTimelineItems(order: OrderRow): JobTimelineCardItem[] 
 }
 
 export function statusChip(status: PaymentStatus) {
-  if (status === 'paid') {
-    return <Chip label={STATUS_LABELS_TH[status]} color="success" size="small" sx={statusChipSx} />;
-  }
-  if (status === 'pending') {
-    return <Chip label={STATUS_LABELS_TH[status]} color="warning" size="small" sx={statusChipSx} />;
-  }
-  if (status === 'partial') {
-    return <Chip label={STATUS_LABELS_TH[status]} color="info" size="small" sx={statusChipSx} />;
-  }
-  return <Chip label={STATUS_LABELS_TH[status]} color="error" size="small" sx={statusChipSx} />;
+  const config = getOrderStatusConfig(status);
+  return <Chip label={config.label} color={config.color} size="small" sx={statusChipSx} />;
 }
 
 export function getLoadOrdersErrorMessage(error: unknown): string {
@@ -333,10 +333,10 @@ export function buildOrderStats(rows: OrderRow[]) {
     (stats, row) => {
       stats.totalSales += row.total;
 
-      if (row.status === 'pending' || row.status === 'partial') {
+      if (row.status === 'pending' || row.status === 'partial' || row.status === 'awaiting_payment') {
         stats.pendingPayments += Math.max(row.total - row.paidAmount, 0);
       }
-      if (row.status === 'paid') {
+      if (row.status === 'paid' || row.status === 'delivered') {
         stats.paidOrders += 1;
       }
       if (dayjs(row.date).format('YYYY-MM-DD') === todayKey) {

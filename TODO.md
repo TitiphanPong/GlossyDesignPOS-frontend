@@ -334,6 +334,8 @@ Important scope note:
 
 ### 3. Reuse shared order extraction logic on all order reads
 
+- Status: Complete (verified shared `fetchOrderById` extraction and aligned dashboard chart order typing on 2026-06-04)
+
 - Title: Add a shared single-order response normalizer
 - File path(s) involved:
   - `src/lib/orders.ts`

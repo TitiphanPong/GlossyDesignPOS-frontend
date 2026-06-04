@@ -22,31 +22,21 @@ import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
 import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
 import { MissingApiConfigState } from '../components/dashboardUi';
-import { fetchApiJson, isMissingApiBaseError } from '../../../lib/api';
+import { isMissingApiBaseError } from '../../../lib/api';
 import { buildPendingOrderDraft, persistPendingOrderDraft } from '../../../lib/pending-order';
 import { computeTotals } from '../../utils/computeTotal';
 import { ActiveProduct, CartItem } from './types/cart';
 import Link from 'next/link';
+import { fetchProducts } from '@/lib/products';
+import type { Product } from '@/lib/contracts';
 
-type Variant = { name: string; price: number; note?: string };
 type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
 type CustomerInfo = { customerName: string; phoneNumber: string; note: string };
-export type Product = {
-  id: string;
-  name: string;
-  cover: string;
-  tint: string;
-  badge?: 'NEW' | 'HIT';
-  category: Category;
-  variants: Variant[];
-};
 
 const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
-const normalizeVariant = (variant: Variant): Variant => ({ ...variant, price: Number(variant.price) });
-const normalizeProduct = (product: Product): Product => ({ ...product, variants: product.variants.map(normalizeVariant) });
-const toActiveProduct = (product: Product): ActiveProduct => ({ id: product.id, name: product.name, category: product.category });
+const toActiveProduct = (product: Product): ActiveProduct => ({ id: product.id, name: product.name, category: product.category, code: product.code, typeCode: product.typeCode });
 const sanitizeCustomerInfo = (customer: CustomerInfo): CustomerInfo => ({
   customerName: customer.customerName.trim(),
   phoneNumber: customer.phoneNumber.trim(),
@@ -153,9 +143,8 @@ export default function SellPage() {
   const loadProducts = React.useCallback(async () => {
     setLoading(true);
     try {
-      const data = await fetchApiJson<Product[]>('/products');
-      const fixedData = Array.isArray(data) ? data.map(normalizeProduct) : [];
-      setProducts(fixedData);
+      const data = await fetchProducts();
+      setProducts(data.filter(product => product.active));
       setErrorMsg(null);
       setMissingApiBase(false);
       setLastSyncedAt(new Date());

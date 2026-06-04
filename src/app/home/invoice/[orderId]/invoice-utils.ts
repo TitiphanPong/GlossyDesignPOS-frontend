@@ -1,6 +1,7 @@
 'use client';
 
 import { ORDER_STATUS_LABELS, PAYMENT_METHOD_LABELS, type NormalizedInvoiceOrder, type OrderStatus, type PaymentMethod } from '../../../../lib/contracts';
+import { getOrderStatusConfig } from '../../../../lib/order-status';
 
 export type InvoiceDocumentType = 'quotation' | 'tax-invoice' | 'receipt';
 
@@ -29,7 +30,7 @@ const DATETIME_FORMATTER = new Intl.DateTimeFormat('th-TH', {
   minute: '2-digit',
 });
 
-const STATUS_LABELS_TH: Record<OrderStatus, string> = {
+const STATUS_LABELS_TH: Partial<Record<OrderStatus, string>> = {
   pending: 'รอชำระเงิน',
   partial: 'ชำระบางส่วน',
   paid: 'ชำระแล้ว',
@@ -106,7 +107,7 @@ export function formatDateTime(value: string): string {
 }
 
 export function getStatusLabel(status: OrderStatus): string {
-  return STATUS_LABELS_TH[status] ?? ORDER_STATUS_LABELS[status] ?? status;
+  return STATUS_LABELS_TH[status] ?? getOrderStatusConfig(status).label ?? ORDER_STATUS_LABELS[status] ?? status;
 }
 
 export function getPaymentMethodLabel(paymentMethod: PaymentMethod): string {

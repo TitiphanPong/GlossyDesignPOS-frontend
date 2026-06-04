@@ -3,7 +3,7 @@
 import { Box } from '@mui/material';
 import dayjs from 'dayjs';
 import { useEffect, useMemo, useState } from 'react';
-import { type NormalizedOrder, type OrderStatus } from '../../lib/contracts';
+import { ORDER_STATUS_VALUES, type NormalizedOrder, type OrderStatus } from '../../lib/contracts';
 import { hasApiBaseUrl } from '../../lib/api';
 import { fetchOrders, sortOrdersByNewest } from '../../lib/orders';
 
@@ -96,8 +96,8 @@ export default function DashboardPage() {
     const salesToday = ordersToday.reduce((sum, order) => sum + getOrderAmount(order), 0);
     const cashToday = ordersToday.filter(order => order.payment === 'cash').reduce((sum, order) => sum + getOrderAmount(order), 0);
     const promptPayToday = ordersToday.filter(order => order.payment === 'promptpay').reduce((sum, order) => sum + getOrderAmount(order), 0);
-    const completedToday = ordersToday.filter(order => order.status === 'paid').length;
-    const openOrders = orders.filter(order => order.status === 'pending' || order.status === 'partial').length;
+    const completedToday = ordersToday.filter(order => order.status === 'paid' || order.status === 'delivered').length;
+    const openOrders = orders.filter(order => !['paid', 'delivered', 'cancelled'].includes(order.status)).length;
     const uniqueCustomersToday = new Set(ordersToday.map(order => order.customerName?.trim()).filter(Boolean)).size;
 
     const paymentData: DashboardPaymentSlice[] = [
@@ -105,7 +105,7 @@ export default function DashboardPage() {
       { name: 'โอนเงิน', value: promptPayToday, color: '#3B82F6' },
     ].filter(item => item.value > 0);
 
-    const statusData: DashboardStatusItem[] = (['pending', 'partial', 'paid', 'cancelled'] as OrderStatus[])
+    const statusData: DashboardStatusItem[] = ORDER_STATUS_VALUES
       .map(key => ({ key, count: orders.filter(order => order.status === key).length }))
       .filter(item => item.count > 0);
 

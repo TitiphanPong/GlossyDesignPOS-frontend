@@ -50,7 +50,7 @@ import { commonButtonSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
-import { type NormalizedOrder } from '../../../lib/contracts';
+import { ORDER_STATUS_VALUES, type NormalizedOrder, type OrderStatus } from '../../../lib/contracts';
 import type { OrderRow, PaymentStatus, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import {
@@ -404,10 +404,11 @@ export default function OrderManagementPage() {
                     onChange={event => setStatusFilter(event.target.value)}
                     sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
                     <MenuItem value="all">{FILTER_STATUS_LABELS.all}</MenuItem>
-                    <MenuItem value="paid">{FILTER_STATUS_LABELS.paid}</MenuItem>
-                    <MenuItem value="pending">{FILTER_STATUS_LABELS.pending}</MenuItem>
-                    <MenuItem value="partial">{FILTER_STATUS_LABELS.partial}</MenuItem>
-                    <MenuItem value="cancelled">{FILTER_STATUS_LABELS.cancelled}</MenuItem>
+                    {ORDER_STATUS_VALUES.map(status => (
+                      <MenuItem key={status} value={status}>
+                        {FILTER_STATUS_LABELS[status as OrderStatus]}
+                      </MenuItem>
+                    ))}
                   </Select>
                 </FormControl>
 

@@ -1,6 +1,7 @@
-'use client';
+﻿'use client';
 
 import type { CustomerDisplayPaymentMethod, OrderStatus } from '../../../lib/contracts';
+import { getOrderStatusConfig } from '../../../lib/order-status';
 
 export type CartItem = {
   name: string;
@@ -54,26 +55,26 @@ type WorkflowStep = {
 };
 
 export const WORKFLOW_STEPS: WorkflowStep[] = [
-  { id: 1, label: 'รับไฟล์', sub: 'File Received' },
-  { id: 2, label: 'ตรวจงาน', sub: 'Reviewing' },
-  { id: 3, label: 'รอชำระเงิน', sub: 'Awaiting Payment' },
-  { id: 4, label: 'กำลังผลิต', sub: 'In Production' },
-  { id: 5, label: 'พร้อมรับสินค้า', sub: 'Ready for Pickup' },
+  { id: 1, label: 'เธฃเธฑเธเนเธเธฅเน', sub: 'File Received' },
+  { id: 2, label: 'เธ•เธฃเธงเธเธเธฒเธ', sub: 'Reviewing' },
+  { id: 3, label: 'เธฃเธญเธเธณเธฃเธฐเน€เธเธดเธ', sub: 'Awaiting Payment' },
+  { id: 4, label: 'เธเธณเธฅเธฑเธเธเธฅเธดเธ•', sub: 'In Production' },
+  { id: 5, label: 'เธเธฃเนเธญเธกเธฃเธฑเธเธชเธดเธเธเนเธฒ', sub: 'Ready for Pickup' },
 ];
 
 export const STATUS_MESSAGES: Record<number, string> = {
-  1: 'กำลังรับไฟล์งานของท่าน...',
-  2: 'กำลังตรวจสอบไฟล์งาน...',
-  3: 'รอการชำระเงิน Please Proceed to Payment',
-  4: 'กำลังผลิตสินค้าของท่าน...',
-  5: 'สินค้าพร้อมรับแล้ว Ready for Pickup',
+  1: 'เธเธณเธฅเธฑเธเธฃเธฑเธเนเธเธฅเนเธเธฒเธเธเธญเธเธ—เนเธฒเธ...',
+  2: 'เธเธณเธฅเธฑเธเธ•เธฃเธงเธเธชเธญเธเนเธเธฅเนเธเธฒเธ...',
+  3: 'เธฃเธญเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธ Please Proceed to Payment',
+  4: 'เธเธณเธฅเธฑเธเธเธฅเธดเธ•เธชเธดเธเธเนเธฒเธเธญเธเธ—เนเธฒเธ...',
+  5: 'เธชเธดเธเธเนเธฒเธเธฃเนเธญเธกเธฃเธฑเธเนเธฅเนเธง Ready for Pickup',
 };
 
-export const PAYMENT_CONFIRMING_MESSAGE = 'กำลังยืนยันการชำระเงิน กรุณารอสักครู่';
+export const PAYMENT_CONFIRMING_MESSAGE = 'เธเธณเธฅเธฑเธเธขเธทเธเธขเธฑเธเธเธฒเธฃเธเธณเธฃเธฐเน€เธเธดเธ เธเธฃเธธเธ“เธฒเธฃเธญเธชเธฑเธเธเธฃเธนเน';
 
-export const UNKNOWN_STATUS_MESSAGE = 'กำลังตรวจสอบสถานะคำสั่งซื้อ';
-export const CANCELLED_STATUS_MESSAGE = 'คำสั่งซื้อนี้ถูกยกเลิกแล้ว กรุณาติดต่อเจ้าหน้าที่';
-export const UNKNOWN_PAYMENT_MESSAGE = 'เจ้าหน้าที่กำลังตรวจสอบวิธีชำระเงินสำหรับออเดอร์นี้';
+export const UNKNOWN_STATUS_MESSAGE = 'เธเธณเธฅเธฑเธเธ•เธฃเธงเธเธชเธญเธเธชเธ–เธฒเธเธฐเธเธณเธชเธฑเนเธเธเธทเนเธญ';
+export const CANCELLED_STATUS_MESSAGE = 'เธเธณเธชเธฑเนเธเธเธทเนเธญเธเธตเนเธ–เธนเธเธขเธเน€เธฅเธดเธเนเธฅเนเธง เธเธฃเธธเธ“เธฒเธ•เธดเธ”เธ•เนเธญเน€เธเนเธฒเธซเธเนเธฒเธ—เธตเน';
+export const UNKNOWN_PAYMENT_MESSAGE = 'เน€เธเนเธฒเธซเธเนเธฒเธ—เธตเนเธเธณเธฅเธฑเธเธ•เธฃเธงเธเธชเธญเธเธงเธดเธเธตเธเธณเธฃเธฐเน€เธเธดเธเธชเธณเธซเธฃเธฑเธเธญเธญเน€เธ”เธญเธฃเนเธเธตเน';
 
 export const BANNERS = [
   { title: 'Glossy Design', sub: 'Premium Printing Services', img: '/banners/Banner1.png' },
@@ -83,9 +84,9 @@ export const BANNERS = [
   { title: 'Banner 5', sub: 'Glossy Promotion', img: '/banners/Banner5.png' },
   { title: 'Banner 6', sub: 'Glossy Promotion', img: '/banners/Banner6.png' },
   { title: 'Banner 7', sub: 'Glossy Promotion', img: '/banners/Banner7.png' },
-  { title: 'งานสติกเกอร์ครบวงจร', sub: 'Sticker & Label Printing', img: '/banners/Banner8.png' },
-  { title: 'งานด่วน รอรับได้เลย', sub: 'Express Print Service', img: '/banners/Banner9.png' },
-  { title: 'พิมพ์งานคุณภาพสูง', sub: 'Premium Print Production', img: '/banners/Banner10.png' },
+  { title: 'เธเธฒเธเธชเธ•เธดเธเน€เธเธญเธฃเนเธเธฃเธเธงเธเธเธฃ', sub: 'Sticker & Label Printing', img: '/banners/Banner8.png' },
+  { title: 'เธเธฒเธเธ”เนเธงเธ เธฃเธญเธฃเธฑเธเนเธ”เนเน€เธฅเธข', sub: 'Express Print Service', img: '/banners/Banner9.png' },
+  { title: 'เธเธดเธกเธเนเธเธฒเธเธเธธเธ“เธ เธฒเธเธชเธนเธ', sub: 'Premium Print Production', img: '/banners/Banner10.png' },
 ];
 
 export function formatMoney(value: number): string {
@@ -98,43 +99,18 @@ export function getOrderStatusMeta(status: OrderStatus, hasUnsupportedStatus = f
       bg: 'rgba(148,163,184,0.15)',
       border: 'rgba(148,163,184,0.4)',
       color: '#CBD5E1',
-      label: 'กำลังตรวจสอบสถานะ',
+      label: 'เธเธณเธฅเธฑเธเธ•เธฃเธงเธเธชเธญเธเธชเธ–เธฒเธเธฐ',
     };
   }
 
-  if (status === 'pending') {
-    return {
-      bg: 'rgba(255,152,0,0.15)',
-      border: 'rgba(255,152,0,0.45)',
-      color: '#FFB74D',
-      label: 'รอชำระเงิน',
-    };
-  }
-
-  if (status === 'partial') {
-    return {
-      bg: 'rgba(41,121,255,0.15)',
-      border: 'rgba(41,121,255,0.45)',
-      color: '#64B5F6',
-      label: 'มัดจำแล้ว',
-    };
-  }
-
-  if (status === 'cancelled') {
-    return {
-      bg: 'rgba(255,82,82,0.15)',
-      border: 'rgba(255,82,82,0.45)',
-      color: '#FF8A80',
-      label: 'ยกเลิกคำสั่งซื้อ',
-    };
-  }
-
+  const config = getOrderStatusConfig(status);
   return {
-    bg: 'rgba(0,200,100,0.15)',
-    border: 'rgba(0,200,100,0.45)',
-    color: '#69F0AE',
-    label: 'ชำระแล้ว',
+    bg: config.bg,
+    border: config.hex,
+    color: config.hex,
+    label: config.label,
   };
+
 }
 
 export function getCartKey(item: CartItem): string {

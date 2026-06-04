@@ -4,12 +4,13 @@ import React, { useEffect, useState } from 'react';
 import styles from './checkoutRight.module.css';
 import ButtonEdit from './buttonEdit';
 import ButtonDelete from './buttonDelete';
+import type { ProductVariant } from '@/lib/contracts';
 
 type CartItem = {
   key: string;
   name: string;
   category?: string;
-  variant?: any;
+  variant?: Omit<Partial<ProductVariant>, 'name'> & { name: string; custom?: boolean; width: number; height: number };
   qty: number;
   unitPrice: number;
   totalPrice: number;

@@ -394,6 +394,7 @@ export default function UploadPage() {
     const uploadResult = await uploadPendingFiles({
       items: uploadedFiles,
       payload: {
+        // TODO(upload-liff): fill customerName, phone, lineUserId, and displayName from LINE LIFF profile when available.
         // TODO(upload-backend): remove placeholder customer fields once the backend no longer requires them.
         customerName: UPLOAD_PLACEHOLDER_CUSTOMER_NAME,
         phone: UPLOAD_PLACEHOLDER_PHONE,
@@ -607,30 +608,6 @@ export default function UploadPage() {
           </div>
 
           <aside className="space-y-4 xl:col-span-4">
-            {/* Legacy helper card kept for future reuse:
-            <article className={`${glassCard()} p-4 sm:p-5`}>
-              <h3 className="mb-1 text-base font-semibold text-slate-900">ส่งงานได้จากทุกที่</h3>
-
-              <p className="mb-3 text-sm leading-6 text-slate-600">
-                อัปโหลดไฟล์ สรุปรายละเอียดงาน และส่งต่อให้ทีมผลิตได้ในหน้าเดียว เหมาะทั้งงานด่วน งานพิมพ์ทั่วไป และงานที่ต้องการตรวจข้อมูลให้ครบก่อนเริ่มผลิต
-              </p>
-
-              <h3 className="mb-1 text-base font-semibold text-slate-900">สิ่งที่คุณจะได้รับ</h3>
-              <ul className="leading-6 text-sm text-slate-600">
-                <li>ส่งไฟล์และรายละเอียดงานได้ครบในครั้งเดียว</li>
-                <li>รองรับไฟล์งานขนาดใหญ่สูงสุด 100MB ต่อไฟล์</li>
-                <li>ตรวจสอบสถานะการอัปโหลดได้ทันทีบนหน้าจอ</li>
-              </ul>
-              <div className="mt-4 rounded-2xl border border-indigo-100 bg-indigo-50/70 p-3 text-sm">
-                <p className="font-semibold text-slate-800">ต้องการให้ช่วยเช็กไฟล์ก่อนผลิต?</p>
-                <p className="mt-1 text-slate-600">ทักหาเราได้ทาง LINE หรือ Facebook เพื่อสอบถามราคา</p>
-                <p className="mt-1 text-slate-600">ระยะเวลาและความพร้อมของไฟล์งานที่จะใช้งาน</p>
-                <p className="mt-2 text-slate-600">LINE : @glossydesign</p>
-                <p className="mt-1 text-slate-600">Facebook : Glossy Design</p>
-              </div>
-            </article>
-            */}
-
             <AnimatePresence mode="wait">
               <motion.article
                 key={showUploadProgress ? 'progress-active' : 'progress-idle'}

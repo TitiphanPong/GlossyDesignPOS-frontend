@@ -12,20 +12,70 @@ import { ActiveProduct, CartItem, ProductModalComponentProps } from '../types/ca
 
 type ProductModalDefinition = {
   key: string;
+  typeCodes: string[];
   component: React.ComponentType<ProductModalComponentProps>;
-  matches: (product: ActiveProduct) => boolean;
+  matchesLegacyProduct: (product: ActiveProduct) => boolean;
 };
 
+function hasText(value: string | undefined, needle: string): boolean {
+  return Boolean(value?.includes(needle));
+}
+
 const PRODUCT_MODAL_DEFINITIONS: ProductModalDefinition[] = [
-  { key: 'name-card', component: NameCardModal, matches: product => product.category?.trim() === 'นามบัตร' },
-  { key: 'stamp', component: StampModal, matches: product => product.category?.trim() === 'ตรายาง' },
-  { key: 'document-print', component: DocumentPrintModal, matches: product => product.category?.trim() === 'ปริ้นท์เอกสาร' },
-  { key: 'postcard', component: PostCardModal, matches: product => product.category?.trim() === 'โพสการ์ด' },
-  { key: 'inkjet', component: InkjetModal, matches: product => product.category?.trim() === 'อิงค์เจ็ท' },
-  { key: 'plot-plan', component: PlotPlanModal, matches: product => product.category?.trim() === 'พล็อตแพลน' },
-  { key: 'premium-product', component: PremiumProductModal, matches: product => product.category?.trim() === 'สินค้าพรีเมียม' },
-  { key: 'sticker-pvc', component: StickerPVCModal, matches: product => product.name.includes('สติ๊กเกอร์ PVC Inkjet') },
-  { key: 'sticker-pp', component: StickerPPModal, matches: product => product.name.includes('สติ๊กเกอร์ PP Laser') },
+  {
+    key: 'name-card',
+    typeCodes: ['name-card', 'business-card', 'namecard'],
+    component: NameCardModal,
+    matchesLegacyProduct: product => hasText(product.category, 'นามบัตร') || hasText(product.category, 'เธเธฒเธก'),
+  },
+  {
+    key: 'stamp',
+    typeCodes: ['stamp', 'rubber-stamp'],
+    component: StampModal,
+    matchesLegacyProduct: product => hasText(product.category, 'ตรายาง') || hasText(product.category, 'เธ•เธฃเธฒ'),
+  },
+  {
+    key: 'document-print',
+    typeCodes: ['document-print', 'document', 'print-document'],
+    component: DocumentPrintModal,
+    matchesLegacyProduct: product => hasText(product.category, 'เอกสาร') || hasText(product.category, 'เธเธฃเธด'),
+  },
+  {
+    key: 'postcard',
+    typeCodes: ['postcard', 'post-card'],
+    component: PostCardModal,
+    matchesLegacyProduct: product => hasText(product.category, 'โปสการ์ด') || hasText(product.category, 'เนเธเธช'),
+  },
+  {
+    key: 'inkjet',
+    typeCodes: ['inkjet', 'large-format'],
+    component: InkjetModal,
+    matchesLegacyProduct: product => hasText(product.category, 'อิงค์เจ็ท') || hasText(product.category, 'เธญเธดเธ'),
+  },
+  {
+    key: 'plot-plan',
+    typeCodes: ['plot-plan', 'blueprint'],
+    component: PlotPlanModal,
+    matchesLegacyProduct: product => hasText(product.category, 'พล็อตแปลน') || hasText(product.category, 'เธเธฅ'),
+  },
+  {
+    key: 'premium-product',
+    typeCodes: ['premium-product', 'premium'],
+    component: PremiumProductModal,
+    matchesLegacyProduct: product => hasText(product.category, 'พรีเมียม') || hasText(product.category, 'เธเธฃเธต'),
+  },
+  {
+    key: 'sticker-pvc',
+    typeCodes: ['sticker-pvc', 'pvc-inkjet'],
+    component: StickerPVCModal,
+    matchesLegacyProduct: product => hasText(product.name, 'PVC Inkjet'),
+  },
+  {
+    key: 'sticker-pp',
+    typeCodes: ['sticker-pp', 'pp-laser'],
+    component: StickerPPModal,
+    matchesLegacyProduct: product => hasText(product.name, 'PP Laser'),
+  },
 ];
 
 const findProductModalDefinition = (activeProduct: ActiveProduct | null) => {
@@ -33,7 +83,14 @@ const findProductModalDefinition = (activeProduct: ActiveProduct | null) => {
     return null;
   }
 
-  return PRODUCT_MODAL_DEFINITIONS.find(definition => definition.matches(activeProduct)) ?? null;
+  const normalizedTypeCode = activeProduct.typeCode?.trim().toLowerCase();
+  const normalizedCode = activeProduct.code?.trim().toLowerCase();
+
+  return (
+    PRODUCT_MODAL_DEFINITIONS.find(definition => definition.typeCodes.includes(normalizedTypeCode ?? '') || definition.typeCodes.includes(normalizedCode ?? '')) ??
+    PRODUCT_MODAL_DEFINITIONS.find(definition => definition.matchesLegacyProduct(activeProduct)) ??
+    null
+  );
 };
 
 export const createCartItemKey = (productId: string) => `${productId}-${Date.now()}`;
@@ -42,6 +99,7 @@ export const buildEditingProduct = (item: CartItem): ActiveProduct => ({
   id: item.key,
   name: item.name,
   category: item.category,
+  typeCode: item.type,
 });
 
 export function useProductModals() {

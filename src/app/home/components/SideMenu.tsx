@@ -9,6 +9,7 @@ import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
 import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
@@ -38,6 +39,7 @@ const DEFAULT_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
   { label: 'Orders', href: '/orders', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
   { label: 'POS Seller', href: '/pos', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
+  { label: 'Products', href: '/home/products', icon: <Inventory2RoundedIcon fontSize="small" /> },
   { label: 'Storage', href: '/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
 ];
 

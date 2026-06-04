@@ -2,7 +2,7 @@
 import { Box, Card, CardContent, CardActions, Button, Chip, Typography, Stack } from '@mui/material';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import Image from 'next/image';
-import type { Product } from '../page';
+import type { Product } from '@/lib/contracts';
 import { commonButtonSx, interactiveCardSx } from '../../components/adminUi';
 import { EmptyState, ProductGridLoadingState } from '../../components/dashboardUi';
 
@@ -62,7 +62,7 @@ export function ProductList({ loading, filtered, onAddProduct }: ProductListProp
                 {p.badge && <Chip size="small" label={p.badge} color={p.badge === 'NEW' ? 'secondary' : 'primary'} />}
               </Stack>
               <Typography variant="body2" sx={{ mt: 0.35, color: '#5B6980', fontWeight: 500 }}>
-                {p.variants[0].price.toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 })}
+                {(p.variants[0]?.price ?? 0).toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 0 })}
               </Typography>
             </CardContent>
             <CardActions sx={{ p: 1.5, pt: 0.1 }}>

@@ -1,5 +1,14 @@
 // src/types/cart.ts
 
+import type { ProductVariant } from '@/lib/contracts';
+
+export type CartItemVariant = Omit<Partial<ProductVariant>, 'name'> & {
+  name: string;
+  custom?: boolean;
+  width: number;
+  height: number;
+};
+
 export type SizeItem = {
   height: string;
   width: string;
@@ -9,6 +18,8 @@ export type ActiveProduct = {
   id: string;
   name: string;
   category?: string;
+  code?: string;
+  typeCode?: string;
 };
 
 export type ProductModalComponentProps = {
@@ -24,7 +35,7 @@ export type CartItem = {
   name: string;
   category?: string;
 
-  variant?: any;
+  variant?: CartItemVariant;
 
   qty: number;
   unitPrice: number;
