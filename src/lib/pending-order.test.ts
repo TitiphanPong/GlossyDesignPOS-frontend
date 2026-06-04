@@ -90,6 +90,45 @@ test('buildPendingOrderPayload preserves clientDraftId but removes transient syn
   assert.equal('lastSubmissionError' in payload, false);
 });
 
+test('buildPendingOrderPayload removes frontend-only variant fields rejected by backend validation', () => {
+  const payload = buildPendingOrderPayload(
+    {
+      clientDraftId: 'draft-variant-001',
+      customerName: 'Alice',
+      payment: 'cash',
+      total: 374.5,
+      discount: 0,
+      status: 'pending',
+      depositTotal: 374.5,
+      remainingTotal: 0,
+      cart: [
+        {
+          name: 'Name Card',
+          qty: 100,
+          unitPrice: 3.745,
+          totalPrice: 374.5,
+          variant: {
+            name: '90 x 55 mm / MATTE',
+            width: 90,
+            height: 55,
+            paperKind: 'MATTE',
+          },
+        },
+      ],
+      taxInvoice: 'yes',
+      vatAmount: 24.5,
+      grandTotal: 374.5,
+    },
+    'paid'
+  );
+
+  const firstItem = payload.cart?.[0] as { variant?: Record<string, unknown> };
+  assert.equal(firstItem.variant?.name, '90 x 55 mm / MATTE');
+  assert.equal(firstItem.variant?.width, 90);
+  assert.equal(firstItem.variant?.height, 55);
+  assert.equal('paperKind' in (firstItem.variant ?? {}), false);
+});
+
 test('isPendingOrderSubmissionLocked only blocks fresh in-flight submissions', () => {
   const now = Date.now();
 

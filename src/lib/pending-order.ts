@@ -35,6 +35,37 @@ type CheckoutTotals = {
 
 export const PENDING_ORDER_KEY = 'pendingOrder';
 const PENDING_ORDER_CHANNEL = 'glossy-pending-order';
+const BACKEND_VARIANT_FIELDS = ['id', '_id', 'name', 'price', 'note', 'material', 'sides', 'size', 'active', 'custom', 'width', 'height'] as const;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object';
+}
+
+function sanitizeOrderItemForBackend(item: unknown): unknown {
+  if (!isRecord(item)) {
+    return item;
+  }
+
+  const variant = item.variant;
+  if (!isRecord(variant)) {
+    return item;
+  }
+
+  const sanitizedVariant = Object.fromEntries(
+    BACKEND_VARIANT_FIELDS
+      .filter(field => variant[field] !== undefined)
+      .map(field => [field, variant[field]])
+  );
+
+  return {
+    ...item,
+    variant: sanitizedVariant,
+  };
+}
+
+function sanitizeCartForBackend(cart: unknown): unknown {
+  return Array.isArray(cart) ? cart.map(sanitizeOrderItemForBackend) : cart;
+}
 
 function getPendingOrderBroadcastChannel(): BroadcastChannel | null {
   if (typeof window === 'undefined' || typeof window.BroadcastChannel === 'undefined') {
@@ -136,6 +167,7 @@ export function buildPendingOrderPayload(order: StoredPendingOrderDraft, status:
     taxInvoice: payload.taxInvoice,
     vatAmount: payload.vatAmount,
     grandTotal: payload.grandTotal,
+    cart: sanitizeCartForBackend(payload.cart),
   };
 }
 

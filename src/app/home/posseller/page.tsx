@@ -1,7 +1,7 @@
 ﻿'use client';
 
 import * as React from 'react';
-import { alpha, Alert, Box, Button, Card, CardContent, Chip, Stack, Typography } from '@mui/material';
+import { alpha, Alert, Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
 
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
@@ -12,7 +12,6 @@ import TvRoundedIcon from '@mui/icons-material/TvRounded';
 
 import { CheckoutSidebar } from './components/CheckoutSidebar';
 import { ProductList } from './components/ProductList';
-import { SearchBar } from './components/SearchBar';
 
 import { useCart } from './components/useCart';
 import { createCartItemKey, useProductModals } from './components/useProductModals';
@@ -23,14 +22,13 @@ import { uiCardSx } from '../components/adminUi';
 import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
 import { MissingApiConfigState } from '../components/dashboardUi';
 import { isMissingApiBaseError } from '../../../lib/api';
-import { buildPendingOrderDraft, persistPendingOrderDraft } from '../../../lib/pending-order';
+import { buildPendingOrderDraft, PENDING_ORDER_KEY, persistPendingOrderDraft } from '../../../lib/pending-order';
 import { computeTotals } from '../../utils/computeTotal';
 import { ActiveProduct, CartItem } from './types/cart';
 import Link from 'next/link';
 import { fetchProducts } from '@/lib/products';
 import type { Product } from '@/lib/contracts';
 
-type Category = 'นามบัตร' | 'Postcard' | 'Print A3/A4' | 'Photo' | 'Sticker Laser' | (string & {});
 type CustomerInfo = { customerName: string; phoneNumber: string; note: string };
 
 const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
@@ -42,6 +40,28 @@ const sanitizeCustomerInfo = (customer: CustomerInfo): CustomerInfo => ({
   phoneNumber: customer.phoneNumber.trim(),
   note: customer.note.trim(),
 });
+
+function readExistingPendingDraftId(): string | null {
+  if (typeof window === 'undefined') return null;
+
+  try {
+    const stored = window.localStorage.getItem(PENDING_ORDER_KEY);
+    if (!stored) return null;
+
+    const parsed = JSON.parse(stored) as { clientDraftId?: unknown };
+    return typeof parsed.clientDraftId === 'string' && parsed.clientDraftId.trim() ? parsed.clientDraftId : null;
+  } catch {
+    return null;
+  }
+}
+
+function createDraftId(): string {
+  if (typeof globalThis.crypto?.randomUUID === 'function') {
+    return globalThis.crypto.randomUUID();
+  }
+
+  return `draft-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
 
 function formatLastSynced(date: Date | null) {
   if (!date) return '-';
@@ -101,19 +121,7 @@ function PosStatCard({ title, value, subtitle, tone, icon }: Readonly<PosStatCar
   );
 }
 
-function useDebouncedValue<T>(value: T, ms = 250) {
-  const [v, setV] = React.useState(value);
-  React.useEffect(() => {
-    const t = setTimeout(() => setV(value), ms);
-    return () => clearTimeout(t);
-  }, [value, ms]);
-  return v;
-}
-
 export default function SellPage() {
-  const [activeCat, setActiveCat] = React.useState<Category | 'ทั้งหมด'>('ทั้งหมด');
-  const [q, setQ] = React.useState('');
-  const qDebounced = useDebouncedValue(q, 200);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [errorMsg, setErrorMsg] = React.useState<string | null>(null);
@@ -127,6 +135,7 @@ export default function SellPage() {
   const [successOpen, setSuccessOpen] = React.useState(false);
   const [lastPayment, setLastPayment] = React.useState<'cash' | 'promptpay'>('cash');
   const [taxInvoice, setTaxInvoice] = React.useState<'yes' | 'no'>('no');
+  const liveDraftIdRef = React.useRef<string | null>(null);
 
   const total = cartState.total;
   const cart = cartState.cart;
@@ -164,21 +173,32 @@ export default function SellPage() {
   }, [loadProducts]);
 
   React.useEffect(() => {
-    if (customerModalOpen || successOpen) return;
-    if (cart.length > 0) return;
+    if (successOpen) return;
 
-    persistPendingOrderDraft(null);
-  }, [cart.length, customerModalOpen, successOpen]);
+    if (cart.length === 0) {
+      if (!customerModalOpen) {
+        liveDraftIdRef.current = null;
+        persistPendingOrderDraft(null);
+      }
+      return;
+    }
 
-  const filtered = React.useMemo(
-    () => products.filter(p => (activeCat === 'ทั้งหมด' ? true : p.category === activeCat)).filter(p => p.name.toLowerCase().includes(qDebounced.toLowerCase())),
-    [products, activeCat, qDebounced]
-  );
-
-  const categories = React.useMemo<Array<Category | 'ทั้งหมด'>>(
-    () => ['ทั้งหมด', ...Array.from(new Set(products.map(product => product.category)))],
-    [products]
-  );
+    liveDraftIdRef.current = readExistingPendingDraftId() ?? liveDraftIdRef.current ?? createDraftId();
+    persistPendingOrderDraft(
+      buildPendingOrderDraft({
+        draftId: liveDraftIdRef.current,
+        customer: {
+          customerName: customer.customerName.trim() || 'Walk-in Customer',
+          phoneNumber: customer.phoneNumber.trim(),
+          note: customer.note.trim(),
+        },
+        payment: lastPayment,
+        discount,
+        taxInvoice,
+        totals,
+      })
+    );
+  }, [cart.length, customer.customerName, customer.note, customer.phoneNumber, customerModalOpen, discount, lastPayment, successOpen, taxInvoice, totals]);
 
   const summaryStats = React.useMemo(() => {
     const itemCount = cart.reduce((acc, item) => acc + Number(item.qty || 0), 0);
@@ -273,24 +293,9 @@ export default function SellPage() {
       {/* Main Content */}
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 3fr) minmax(320px, 1fr)' }, gap: 2 }}>
         <Card sx={{ ...uiCardSx, p: 1.4 }}>
-          <Stack spacing={1.5} sx={{ mb: 1.5 }}>
-            <SearchBar q={q} setQ={setQ} />
-            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-              {categories.map(category => (
-                <Chip
-                  key={category}
-                  label={category}
-                  clickable
-                  color={activeCat === category ? 'primary' : 'default'}
-                  onClick={() => setActiveCat(category)}
-                  variant={activeCat === category ? 'filled' : 'outlined'}
-                />
-              ))}
-            </Box>
-          </Stack>
           <ProductList
             loading={loading}
-            filtered={filtered}
+            filtered={products}
             onAddProduct={p => {
               openForProduct(toActiveProduct(p));
             }}
