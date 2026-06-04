@@ -99,11 +99,33 @@ export type ProductPayload = Omit<Product, 'id' | '_id'> & {
   _id?: string;
 };
 
+type ProductVariantPayload = Omit<ProductVariant, 'id' | '_id'>;
+
+type ProductRequestPayload = Omit<ProductPayload, 'id' | '_id' | 'variants'> & {
+  variants: ProductVariantPayload[];
+};
+
+function sanitizeProductPayload(payload: ProductPayload): ProductRequestPayload {
+  const productFields = { ...payload };
+  delete productFields.id;
+  delete productFields._id;
+
+  return {
+    ...productFields,
+    variants: payload.variants.map(variant => {
+      const variantFields = { ...variant };
+      delete variantFields.id;
+      delete variantFields._id;
+      return variantFields;
+    }),
+  };
+}
+
 export async function createProduct(payload: ProductPayload): Promise<Product> {
   const responseBody = await fetchApiJson<unknown>('/products', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(sanitizeProductPayload(payload)),
   });
   const product = extractProductFromResponse(responseBody);
   if (!product) throw new Error('Backend did not return a valid product');
@@ -114,7 +136,7 @@ export async function updateProduct(productId: string, payload: ProductPayload):
   const responseBody = await fetchApiJson<unknown>(`/products/${encodeURIComponent(productId)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    body: JSON.stringify(sanitizeProductPayload(payload)),
   });
   const product = extractProductFromResponse(responseBody);
   if (!product) throw new Error('Backend did not return a valid product');

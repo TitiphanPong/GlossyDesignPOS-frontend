@@ -9,7 +9,15 @@ export async function trackOrder(query: string): Promise<NormalizedOrder[]> {
   }
 
   const params = new URLSearchParams({ q: normalizedQuery });
-  const endpoints = [`/orders/track?${params.toString()}`, `/tracking/orders?${params.toString()}`, `/orders?${params.toString()}`];
+  const trackingOrderNumberParams = new URLSearchParams({ orderNumber: normalizedQuery });
+  const trackingPhoneParams = new URLSearchParams({ phone: normalizedQuery });
+  const endpoints = [
+    `/orders/track?${params.toString()}`,
+    `/tracking/search?${trackingOrderNumberParams.toString()}`,
+    `/tracking/search?${trackingPhoneParams.toString()}`,
+    `/tracking/${encodeURIComponent(normalizedQuery)}`,
+    `/orders?${params.toString()}`,
+  ];
   let lastError: Error | null = null;
 
   for (const endpoint of endpoints) {
