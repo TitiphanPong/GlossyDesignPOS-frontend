@@ -1,4 +1,4 @@
-import * as React from 'react';
+﻿import * as React from 'react';
 
 import { Chip } from '@mui/material';
 import dayjs from 'dayjs';
@@ -375,48 +375,7 @@ export function downloadCsv(rows: OrderRow[], label: ExportType) {
 }
 
 export function printDocument(row: OrderRow, mode: 'receipt' | 'invoice') {
-  const win = window.open('', '_blank', 'noopener,noreferrer,width=900,height=720');
-  if (!win) return;
-
-  const content = `
-    <html>
-      <head>
-        <title>${mode === 'receipt' ? 'ใบเสร็จรับเงิน' : 'ใบกำกับภาษี'} ${row.orderNumber}</title>
-        <style>
-          body { font-family: Arial, sans-serif; padding: 24px; color: #0F172A; }
-          .header { border-bottom: 2px solid #1E5EFF; padding-bottom: 12px; margin-bottom: 16px; }
-          .title { font-size: 22px; font-weight: bold; }
-          .meta { font-size: 13px; color: #334155; margin-top: 6px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 16px; }
-          th, td { border: 1px solid #CBD5E1; padding: 8px; text-align: left; font-size: 13px; }
-          th { background: #F8FAFC; }
-          .sum { margin-top: 14px; text-align: right; font-weight: 700; }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="title">Glossy Design - ${mode === 'receipt' ? 'ใบเสร็จรับเงิน' : 'ใบกำกับภาษี'}</div>
-          <div class="meta">เลขที่งาน: ${row.orderNumber} | ลูกค้า: ${row.customerName} | วันที่: ${dayjs(row.date).format('DD/MM/YYYY HH:mm')}</div>
-        </div>
-        <table>
-          <thead>
-            <tr><th>รายการ</th><th>จำนวน</th><th>ราคา</th><th>ยอดรวม</th></tr>
-          </thead>
-          <tbody>
-            ${row.products.map(product => `<tr><td>${product.name}</td><td>${product.qty}</td><td>${formatMoney(product.price)}</td><td>${formatMoney(product.qty * product.price)}</td></tr>`).join('')}
-          </tbody>
-        </table>
-        <div class="sum">ยอดรวม: ${formatMoney(row.total)} THB</div>
-      </body>
-    </html>
-  `;
-
-  const blob = new Blob([content], { type: 'text/html;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  win.location.replace(url);
-  win.focus();
-  win.addEventListener('load', () => {
-    win.print();
-    URL.revokeObjectURL(url);
-  });
+  const documentType = mode === 'invoice' ? 'tax-invoice' : 'receipt';
+  const targetPath = `/print/invoice/${encodeURIComponent(row.orderId)}?documentType=${documentType}`;
+  window.open(targetPath, '_blank', 'noopener,noreferrer');
 }

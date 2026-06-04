@@ -393,6 +393,15 @@ export function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompa
               </Button>
               <Button
                 variant="outlined"
+                startIcon={<ReceiptRoundedIcon />}
+                onClick={() => {
+                  printDocument(selectedOrder, 'invoice');
+                }}
+                sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
+                ใบกำกับภาษี
+              </Button>
+              <Button
+                variant="outlined"
                 startIcon={<CancelRoundedIcon />}
                 disabled={updatingOrderId === selectedOrder.id}
                 onClick={() => {

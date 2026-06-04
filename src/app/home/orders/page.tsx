@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import * as React from 'react';
 import {
@@ -43,6 +43,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
 
 import AdminPageContainer from '../components/AdminPageContainer';
 import { commonButtonSx, uiCardSx } from '../components/adminUi';
@@ -69,6 +70,7 @@ import {
   getCustomerInitial,
   getLoadOrdersErrorMessage,
   mapApiOrderToRow,
+  printDocument,
   statusChip,
   updateOrderStatus,
 } from './orderManagementUtils';
@@ -225,8 +227,8 @@ export default function OrderManagementPage() {
   }, [rowsById, selectedOrder]);
 
   const labelDisplayedRows = React.useCallback(({ from, to, count }: { from: number; to: number; count: number }) => {
-    const totalLabel = count === -1 ? `เธกเธฒเธเธเธงเนเธฒ ${to}` : `${count}`;
-    return `${from}-${to} เธเธฒเธ ${totalLabel}`;
+    const totalLabel = count === -1 ? `มากกว่า ${to}` : `${count}`;
+    return `${from}-${to} จาก ${totalLabel}`;
   }, []);
 
   return (
@@ -501,6 +503,14 @@ export default function OrderManagementPage() {
                         <Button variant="outlined" size="small" onClick={() => openDrawer(row)} sx={{ ...commonButtonSx, minHeight: 34 }}>
                           ดูรายละเอียด
                         </Button>
+                        <Button
+                          variant="outlined"
+                          size="small"
+                          startIcon={<ReceiptRoundedIcon fontSize="small" />}
+                          onClick={() => printDocument(row, 'invoice')}
+                          sx={{ ...commonButtonSx, minHeight: 34 }}>
+                          ใบกำกับภาษี
+                        </Button>
                         <IconButton size="small" onClick={event => openRowMenu(event, row.id)}>
                           <MoreHorizRoundedIcon fontSize="small" />
                         </IconButton>
@@ -663,6 +673,11 @@ export default function OrderManagementPage() {
                             <Tooltip title="ดูรายละเอียด">
                               <IconButton size="small" onClick={() => openDrawer(row)}>
                                 <VisibilityRoundedIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="ใบกำกับภาษี">
+                              <IconButton size="small" onClick={() => printDocument(row, 'invoice')}>
+                                <ReceiptRoundedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="จัดการ">

@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { Box, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from '@mui/material';
 import { motion } from 'framer-motion';
@@ -33,7 +33,7 @@ const PAYMENT_LABEL: Record<string, string> = {
 
 function formatCurrency(value?: number | null): string {
   const amount = typeof value === 'number' && Number.isFinite(value) ? value : 0;
-  return `฿ ${amount.toLocaleString('th-TH')}`;
+  return `${amount.toLocaleString('th-TH')}`;
 }
 
 function getCustomerInitial(name?: string): string {
@@ -194,10 +194,7 @@ export default function RecentOrdersTable({ orders }: Readonly<RecentOrdersTable
                   return (
                     <TableRow key={order._id} className="orders-table-row" sx={{ '& td': { py: 1.6, px: 2, borderBottom: '1px solid #F9FAFB', fontSize: 13, verticalAlign: 'top' } }}>
                       <TableCell>
-                        <Typography component={Link} href={`/print/invoice/${order._id}`} sx={{ display: 'inline-block', fontSize: 13, fontWeight: 700, color: '#6C4DFF', textDecoration: 'none', fontVariantNumeric: 'tabular-nums', '&:hover': { textDecoration: 'underline' } }}>
-                          {getDisplayOrderNumber(order)}
-                        </Typography>
-                        <Typography sx={{ mt: 0.4, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{order.taxInvoice === 'yes' ? 'ใบกำกับภาษี' : 'บิลทั่วไป'}</Typography>
+                        <Typography sx={{ display: 'inline-block', fontSize: 13, fontWeight: 700, color: '#6C4DFF', fontVariantNumeric: 'tabular-nums' }}>{getDisplayOrderNumber(order)}</Typography>
                       </TableCell>
 
                       <TableCell>
@@ -229,9 +226,7 @@ export default function RecentOrdersTable({ orders }: Readonly<RecentOrdersTable
                         <Box sx={{ minWidth: 220 }}>
                           <Typography sx={{ fontSize: 12.8, fontWeight: 700, color: '#374151', lineHeight: 1.35 }}>{summary.primary}</Typography>
                           <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', lineHeight: 1.35 }}>{summary.secondary}</Typography>
-                          {order.note ? (
-                            <Typography sx={{ mt: 0.6, fontSize: 11.5, color: '#6B7280', lineHeight: 1.35 }}>หมายเหตุ: {order.note}</Typography>
-                          ) : null}
+                          {order.note ? <Typography sx={{ mt: 0.6, fontSize: 11.5, color: '#6B7280', lineHeight: 1.35 }}>หมายเหตุ: {order.note}</Typography> : null}
                         </Box>
                       </TableCell>
 
@@ -244,18 +239,14 @@ export default function RecentOrdersTable({ orders }: Readonly<RecentOrdersTable
 
                       <TableCell align="right">
                         <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#1a1035', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{formatCurrency(order.grandTotal)}</Typography>
-                        {order.discount > 0 ? (
-                          <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>ส่วนลด {formatCurrency(order.discount)}</Typography>
-                        ) : null}
+                        {order.discount > 0 ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>ส่วนลด {formatCurrency(order.discount)}</Typography> : null}
                       </TableCell>
 
                       <TableCell align="right">
                         <Typography sx={{ fontSize: 13, fontWeight: 800, color: remaining > 0 ? '#B45309' : '#16A34A', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>
                           {remaining > 0 ? formatCurrency(remaining) : 'ไม่มีค้าง'}
                         </Typography>
-                        {order.vatAmount > 0 ? (
-                          <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>VAT {formatCurrency(order.vatAmount)}</Typography>
-                        ) : null}
+                        {order.vatAmount > 0 ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>VAT {formatCurrency(order.vatAmount)}</Typography> : null}
                       </TableCell>
 
                       <TableCell>
