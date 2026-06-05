@@ -70,7 +70,7 @@ const BORDER = '0.2mm solid #000';
 const DOTTED_BORDER = '0.2mm dotted #000';
 const BASE_FONT_MM = 2.55;
 const SECTION_GAP_MM = 1;
-const MIN_ITEM_ROWS = 9;
+const MIN_ITEM_ROWS = 8;
 
 function readEnv(value: string | undefined, fallback: string) {
   return value && value.trim().length > 0 ? value.trim() : fallback;
@@ -124,7 +124,7 @@ function formatThaiTaxDate(value: string): string {
   const year = parts.find(part => part.type === 'year')?.value ?? '0';
   const buddhistYear = Number(year) + 543;
 
-  return `${day}/${month}/${buddhistYear}`;
+  return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${buddhistYear}`;
 }
 
 function getCompanyInfo(): CompanyInfo {
@@ -358,16 +358,16 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
                 },
               }}>
               <Box sx={{ px: '1mm', py: '1mm', borderRight: BORDER, textAlign: 'center' }}>
-                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2 }}>{row.item ? row.item.quantity : ''}</Typography>
+                <Typography sx={{ fontSize: `3.5mm`, lineHeight: 1.2 }}>{row.item ? row.item.quantity : ''}</Typography>
               </Box>
               <Box sx={{ px: '1.2mm', py: '1mm', borderRight: BORDER }}>
-                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, wordBreak: 'break-word' }}>{row.item?.description ?? ''}</Typography>
+                <Typography sx={{ fontSize: `3.5mm`, lineHeight: 1.2, wordBreak: 'break-word' }}>{row.item?.description ?? ''}</Typography>
               </Box>
               <Box sx={{ px: '1.2mm', py: '1mm', borderRight: BORDER, textAlign: 'right' }}>
-                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{row.item ? formatCurrency(row.item.unitPrice) : ''}</Typography>
+                <Typography sx={{ fontSize: `3.5mm`, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{row.item ? formatCurrency(row.item.unitPrice) : ''}</Typography>
               </Box>
               <Box sx={{ px: '1.2mm', py: '1mm', textAlign: 'right' }}>
-                <Typography sx={{ fontSize: `${BASE_FONT_MM}mm`, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{row.item ? formatCurrency(row.item.amount) : ''}</Typography>
+                <Typography sx={{ fontSize: `3.5mm`, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{row.item ? formatCurrency(row.item.amount) : ''}</Typography>
               </Box>
             </Box>
           ))}
