@@ -6,10 +6,12 @@ import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
-import AccountCircleRoundedIcon from '@mui/icons-material/AccountCircleRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
+import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
+import ContactPageRoundedIcon from '@mui/icons-material/ContactPageRounded';
+import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import dayjs from 'dayjs';
 
 import JobTimelineCard from '../components/JobTimelineCard';
@@ -303,7 +305,7 @@ export function OrderDetailDrawer({
                           bgcolor: alpha('#4F46E5', 0.14),
                           color: '#4F46E5',
                         }}>
-                        <AccountCircleRoundedIcon sx={{ fontSize: 18 }} />
+                        <ContactPageRoundedIcon sx={{ fontSize: 18 }} />
                       </Avatar>
 
                       <Typography sx={{ fontWeight: 700 }}>ข้อมูลลูกค้า</Typography>
@@ -316,16 +318,17 @@ export function OrderDetailDrawer({
 
                     <Stack direction="row" spacing={1} alignItems="center">
                       <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+
                       <Typography>เบอร์โทรศัพท์ : {selectedOrder.phoneNumber}</Typography>
                     </Stack>
 
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                      <BadgeRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
                       <Typography>เลขประจำตัวผู้เสียภาษี : {selectedOrder.taxId}</Typography>
                     </Stack>
 
                     <Stack direction="row" spacing={1} alignItems="center">
-                      <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                      <LocationOnRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
                       <Typography>ที่อยู่ : {selectedOrder.address}</Typography>
                     </Stack>
                   </Stack>

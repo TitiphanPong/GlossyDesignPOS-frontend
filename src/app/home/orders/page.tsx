@@ -50,7 +50,7 @@ import { commonButtonSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
-import { ORDER_STATUS_VALUES, type NormalizedOrder, type OrderStatus } from '../../../lib/contracts';
+import { type NormalizedOrder } from '../../../lib/contracts';
 import type { OrderRow, PaymentStatus, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import {
@@ -76,6 +76,12 @@ import {
 } from './orderManagementUtils';
 
 const MotionDiv = motion.div;
+const ORDER_STATUS_FILTER_VALUES = ['cancelled', 'paid', 'partial'] as const satisfies readonly PaymentStatus[];
+const ORDER_STATUS_FILTER_LABELS: Record<(typeof ORDER_STATUS_FILTER_VALUES)[number], string> = {
+  cancelled: FILTER_STATUS_LABELS.cancelled,
+  paid: FILTER_STATUS_LABELS.paid,
+  partial: 'ค้างชำระ',
+};
 
 export default function OrderManagementPage() {
   const theme = useTheme();
@@ -404,9 +410,9 @@ export default function OrderManagementPage() {
                     onChange={event => setStatusFilter(event.target.value)}
                     sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
                     <MenuItem value="all">{FILTER_STATUS_LABELS.all}</MenuItem>
-                    {ORDER_STATUS_VALUES.map(status => (
+                    {ORDER_STATUS_FILTER_VALUES.map(status => (
                       <MenuItem key={status} value={status}>
-                        {FILTER_STATUS_LABELS[status as OrderStatus]}
+                        {ORDER_STATUS_FILTER_LABELS[status]}
                       </MenuItem>
                     ))}
                   </Select>
