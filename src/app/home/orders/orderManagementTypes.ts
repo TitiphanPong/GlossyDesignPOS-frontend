@@ -24,6 +24,8 @@ export type OrderRow = {
   orderNumber: string;
   customerName: string;
   phoneNumber: string;
+  taxId: string;
+  address: string;
   date: string;
   month: string;
   status: PaymentStatus;

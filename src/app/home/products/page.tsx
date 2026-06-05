@@ -78,9 +78,17 @@ const emptyForm = (): ProductFormState => ({
   variants: [emptyVariant()],
 });
 
+const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
+const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
+
 function formatLastSynced(date: Date | null) {
   if (!date) return '-';
   return date.toLocaleString('th-TH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+}
+
+function formatThaiFullDate(date: Date | null) {
+  if (!date) return 'กำลังโหลดวันที่';
+  return `วัน${DAYS_TH[date.getDay()]}ที่ ${date.getDate()} ${MONTHS_TH[date.getMonth()]} พ.ศ. ${date.getFullYear() + 543}`;
 }
 
 function productToForm(product: Product): ProductFormState {
@@ -239,7 +247,7 @@ export default function ProductManagementPage() {
         title="Products"
         description="จัดการสินค้า หมวดหมู่ รหัสสินค้า และราคา variant สำหรับหน้าขาย POS"
         lastSynced={formatLastSynced(lastSyncedAt)}
-        thaiDate="Product catalog"
+        thaiDate={formatThaiFullDate(lastSyncedAt)}
         notice={missingApiBase ? <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อจัดการสินค้า" /> : null}
         actions={
           <>

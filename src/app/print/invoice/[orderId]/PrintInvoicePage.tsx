@@ -46,12 +46,23 @@ function normalizeOptionalValue(value: string | undefined): string | undefined {
   return value && value !== '-' ? value : undefined;
 }
 
+function resolvePrefilledTaxId(order: NormalizedInvoiceOrder): string | undefined {
+  const phoneNumber = normalizeOptionalValue(order.customerInfo.phoneNumber || order.phoneNumber);
+  const taxId = normalizeOptionalValue(order.customerInfo.taxId || order.taxId);
+
+  if (!taxId) {
+    return undefined;
+  }
+
+  return phoneNumber && taxId === phoneNumber ? undefined : taxId;
+}
+
 function getCustomerInfoFromOrder(order: NormalizedInvoiceOrder): CustomerInfo {
   return {
     customerName: order.customerInfo.customerName || order.customerName,
     phoneNumber: order.customerInfo.phoneNumber || normalizeOptionalValue(order.phoneNumber),
     email: order.customerInfo.email || normalizeOptionalValue(order.email),
-    taxId: order.customerInfo.taxId || normalizeOptionalValue(order.taxId),
+    taxId: resolvePrefilledTaxId(order),
     branchType: order.customerInfo.branchType,
     branchNo: order.customerInfo.branchNo,
     address: order.customerInfo.address || normalizeOptionalValue(order.address),

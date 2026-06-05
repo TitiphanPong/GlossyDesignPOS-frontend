@@ -190,7 +190,17 @@ function getOrderDetailDrawerPaperSx(isMobile: boolean) {
   };
 }
 
-export function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompactDrawer, updatingOrderId, onClose, onMarkAsPaid, onOpenPayRemaining, onCancelOrder }: Readonly<OrderDetailDrawerProps>) {
+export function OrderDetailDrawer({
+  drawerOpen,
+  selectedOrder,
+  isMobile,
+  isCompactDrawer,
+  updatingOrderId,
+  onClose,
+  onMarkAsPaid,
+  onOpenPayRemaining,
+  onCancelOrder,
+}: Readonly<OrderDetailDrawerProps>) {
   const drawerAnchor = isMobile ? 'bottom' : 'right';
   const drawerPaperSx = getOrderDetailDrawerPaperSx(isMobile);
 
@@ -263,7 +273,7 @@ export function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompa
                         <ReceiptLongRoundedIcon sx={{ fontSize: 18 }} />
                       </Avatar>
 
-                      <Typography sx={{ fontWeight: 700 }}>ข้อมูลรายการสั่งผลิต</Typography>
+                      <Typography sx={{ fontWeight: 700 }}>ข้อมูลรายการ</Typography>
                     </Stack>
 
                     <Typography sx={{ color: '#334155' }}>
@@ -307,6 +317,16 @@ export function OrderDetailDrawer({ drawerOpen, selectedOrder, isMobile, isCompa
                     <Stack direction="row" spacing={1} alignItems="center">
                       <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
                       <Typography>เบอร์โทรศัพท์ : {selectedOrder.phoneNumber}</Typography>
+                    </Stack>
+
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                      <Typography>เลขประจำตัวผู้เสียภาษี : {selectedOrder.taxId}</Typography>
+                    </Stack>
+
+                    <Stack direction="row" spacing={1} alignItems="center">
+                      <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                      <Typography>ที่อยู่ : {selectedOrder.address}</Typography>
                     </Stack>
                   </Stack>
                 </CardContent>

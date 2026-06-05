@@ -84,6 +84,8 @@ export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
     orderNumber: getDisplayOrderNumber(order),
     customerName: order.customerName || 'ลูกค้าไม่ระบุชื่อ',
     phoneNumber: order.phoneNumber || '-',
+    taxId: order.taxId || '-',
+    address: order.address || '-',
     date: createdAt,
     month: dayjs(createdAt).format('YYYY-MM'),
     status,

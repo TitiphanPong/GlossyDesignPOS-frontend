@@ -849,7 +849,7 @@ export default function StoragePage() {
               <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
                 <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Storage</Typography>
                 <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร</Typography>
-                <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>Last synced {formatLastSynced(lastSyncedAt)}</Typography>
+                <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>อัปเดตล่าสุด {formatLastSynced(lastSyncedAt)}</Typography>
                 <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{formatThaiFullDate(lastSyncedAt)}</Typography>
               </Box>
 
@@ -977,8 +977,9 @@ export default function StoragePage() {
               <Box
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: '1.2fr 0.7fr 0.8fr 0.8fr 0.8fr' },
-                  gap: 1.3,
+                  gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.7fr) repeat(3, minmax(180px, 0.8fr))' },
+                  alignItems: 'end',
+                  gap: 1.25,
                 }}>
                 <OutlinedInput
                   value={search}
@@ -994,6 +995,7 @@ export default function StoragePage() {
                     borderRadius: 3,
                     bgcolor: '#FFFFFF',
                     boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)',
+                    minWidth: 0,
                   }}
                 />
 
@@ -1038,42 +1040,46 @@ export default function StoragePage() {
                 </FormControl>
               </Box>
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2}>
-                <Button
-                  onClick={downloadSelected}
-                  disabled={selectedRows.length === 0}
-                  variant="contained"
-                  startIcon={<DownloadRoundedIcon />}
-                  sx={{
-                    borderRadius: 3,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    bgcolor: '#215AE8',
-                    boxShadow: '0 14px 24px rgba(26, 89, 247, 0.28)',
-                  }}>
-                  ดาวน์โหลดที่เลือก
-                </Button>
-                <Button
-                  onClick={() => {
-                    void handleBulkStatus();
-                  }}
-                  disabled={selectedRows.length === 0 || bulkUpdating || bulkDeleting}
-                  variant="outlined"
-                  startIcon={<EditNoteRoundedIcon />}
-                  sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
-                  {bulkUpdating ? 'กำลังอัปเดต...' : 'ตั้งเป็นรอดำเนินการ'}
-                </Button>
-                <Button
-                  onClick={() => {
-                    void handleBulkDelete();
-                  }}
-                  disabled={selectedRows.length === 0 || bulkDeleting || bulkUpdating}
-                  variant="outlined"
-                  color="error"
-                  startIcon={<DeleteOutlineRoundedIcon />}
-                  sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700 }}>
-                  {bulkDeleting ? 'กำลังลบ...' : 'ลบที่เลือก'}
-                </Button>
+              <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.2} useFlexGap alignItems={{ xs: 'stretch', lg: 'center' }} justifyContent="space-between">
+                <Typography sx={{ ml: 1, fontSize: 12.5, color: '#7B8797', fontWeight: 500 }}>เลือกหลายรายการเพื่อดาวน์โหลด อัปเดตสถานะ หรือลบออกจากรายการ</Typography>
+                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} useFlexGap flexWrap="wrap">
+                  <Button
+                    onClick={downloadSelected}
+                    disabled={selectedRows.length === 0}
+                    variant="contained"
+                    startIcon={<DownloadRoundedIcon />}
+                    sx={{
+                      borderRadius: 3,
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      minWidth: { sm: 156 },
+                      bgcolor: '#215AE8',
+                      boxShadow: '0 14px 24px rgba(26, 89, 247, 0.28)',
+                    }}>
+                    ดาวน์โหลดที่เลือก
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      void handleBulkStatus();
+                    }}
+                    disabled={selectedRows.length === 0 || bulkUpdating || bulkDeleting}
+                    variant="outlined"
+                    startIcon={<EditNoteRoundedIcon />}
+                    sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, minWidth: { sm: 180 } }}>
+                    {bulkUpdating ? 'กำลังอัปเดต...' : 'ตั้งเป็นรอดำเนินการ'}
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      void handleBulkDelete();
+                    }}
+                    disabled={selectedRows.length === 0 || bulkDeleting || bulkUpdating}
+                    variant="outlined"
+                    color="error"
+                    startIcon={<DeleteOutlineRoundedIcon />}
+                    sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, minWidth: { sm: 132 } }}>
+                    {bulkDeleting ? 'กำลังลบ...' : 'ลบที่เลือก'}
+                  </Button>
+                </Stack>
               </Stack>
             </Stack>
           </CardContent>

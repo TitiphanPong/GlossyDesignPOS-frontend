@@ -25,6 +25,8 @@ test('buildPendingOrderDraft creates the pending localStorage shape used by POS 
     customer: {
       customerName: 'Alice',
       phoneNumber: '0812345678',
+      taxId: '0123456789012',
+      address: '88/8 Moo Baan Klang Muang',
       note: 'Pickup after 5 PM',
     },
     payment: 'promptpay',
@@ -41,6 +43,8 @@ test('buildPendingOrderDraft creates the pending localStorage shape used by POS 
   assert.equal(draft.lastSubmissionError, null);
   assert.equal(draft.customerName, 'Alice');
   assert.equal(draft.phoneNumber, '0812345678');
+  assert.equal(draft.taxId, '0123456789012');
+  assert.equal(draft.address, '88/8 Moo Baan Klang Muang');
   assert.equal(draft.payment, 'promptpay');
   assert.equal(draft.total, totals.total);
   assert.equal(draft.depositTotal, totals.depositTotal);

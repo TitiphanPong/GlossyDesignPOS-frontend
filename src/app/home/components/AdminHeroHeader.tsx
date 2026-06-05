@@ -59,7 +59,7 @@ export default function AdminHeroHeader({ title, description, lastSynced, thaiDa
           <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
             <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>{title}</Typography>
             <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>{description}</Typography>
-            <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>Last synced {lastSynced}</Typography>
+            <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>อัปเดตล่าสุด {lastSynced}</Typography>
             <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{thaiDate}</Typography>
           </Box>
 

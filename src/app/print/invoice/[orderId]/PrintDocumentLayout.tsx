@@ -1,9 +1,10 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
-import { Box, Button, Stack, Typography } from '@mui/material';
+import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
 
 type PrintDocumentLayoutProps = Readonly<{
   title: string;
@@ -70,7 +71,7 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
         minHeight: '100vh',
         bgcolor: '#F3F4F6',
       }}>
-      <Stack
+        <Stack
         className="print-toolbar"
         direction="row"
         justifyContent="space-between"
@@ -86,20 +87,32 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
           bgcolor: '#FFFFFF',
         }}>
         <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 0 }}>
-          <Box
+          <ButtonBase
+            component={Link}
+            href="/home"
             sx={{
-              width: 48,
-              height: 48,
               borderRadius: '14px',
-              border: '1px solid #E5E7EB',
-              bgcolor: '#FFFFFF',
-              display: 'grid',
-              placeItems: 'center',
-              boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
               flexShrink: 0,
+              transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+              '&:hover': {
+                transform: 'translateY(-1px)',
+                boxShadow: '0 10px 24px rgba(15, 23, 42, 0.08)',
+              },
             }}>
-            <Image src="/logo/logo.png" alt="Glossy Design logo" width={34} height={34} priority />
-          </Box>
+            <Box
+              sx={{
+                width: 48,
+                height: 48,
+                borderRadius: '14px',
+                border: '1px solid #E5E7EB',
+                bgcolor: '#FFFFFF',
+                display: 'grid',
+                placeItems: 'center',
+                boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+              }}>
+              <Image src="/logo/logo.png" alt="Glossy Design logo" width={34} height={34} priority />
+            </Box>
+          </ButtonBase>
 
           <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ mt: 0.55, fontSize: 20, fontWeight: 800, color: '#0F172A', lineHeight: 1.1, letterSpacing: '-0.03em' }}>{title}</Typography>

@@ -29,7 +29,7 @@ import Link from 'next/link';
 import { fetchProducts } from '@/lib/products';
 import type { Product } from '@/lib/contracts';
 
-type CustomerInfo = { customerName: string; phoneNumber: string; note: string };
+type CustomerInfo = { customerName: string; phoneNumber: string; taxId: string; address: string; note: string };
 
 const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
@@ -38,6 +38,8 @@ const toActiveProduct = (product: Product): ActiveProduct => ({ id: product.id, 
 const sanitizeCustomerInfo = (customer: CustomerInfo): CustomerInfo => ({
   customerName: customer.customerName.trim(),
   phoneNumber: customer.phoneNumber.trim(),
+  taxId: customer.taxId.trim(),
+  address: customer.address.trim(),
   note: customer.note.trim(),
 });
 
@@ -130,7 +132,7 @@ export default function SellPage() {
   const cartState = useCart();
   const modalState = useProductModals();
   const { activeModal, activeProduct, closeModal, editingItem, openForEdit, openForProduct, openModal } = modalState;
-  const [customer, setCustomer] = React.useState<CustomerInfo>({ customerName: '', phoneNumber: '', note: '' });
+  const [customer, setCustomer] = React.useState<CustomerInfo>({ customerName: '', phoneNumber: '', taxId: '', address: '', note: '' });
   const [customerModalOpen, setCustomerModalOpen] = React.useState(false);
   const [successOpen, setSuccessOpen] = React.useState(false);
   const [lastPayment, setLastPayment] = React.useState<'cash' | 'promptpay'>('cash');
@@ -190,6 +192,8 @@ export default function SellPage() {
         customer: {
           customerName: customer.customerName.trim() || 'Walk-in Customer',
           phoneNumber: customer.phoneNumber.trim(),
+          taxId: customer.taxId.trim() || undefined,
+          address: customer.address.trim() || undefined,
           note: customer.note.trim(),
         },
         payment: lastPayment,
@@ -198,7 +202,7 @@ export default function SellPage() {
         totals,
       })
     );
-  }, [cart.length, customer.customerName, customer.note, customer.phoneNumber, customerModalOpen, discount, lastPayment, successOpen, taxInvoice, totals]);
+  }, [cart.length, customer.address, customer.customerName, customer.note, customer.phoneNumber, customer.taxId, customerModalOpen, discount, lastPayment, successOpen, taxInvoice, totals]);
 
   const summaryStats = React.useMemo(() => {
     const itemCount = cart.reduce((acc, item) => acc + Number(item.qty || 0), 0);
@@ -348,6 +352,7 @@ export default function SellPage() {
 
       <CustomerInfoModal
         open={customerModalOpen}
+        taxInvoice={taxInvoice}
         onClose={() => setCustomerModalOpen(false)}
         customer={customer}
         onSubmit={data => {

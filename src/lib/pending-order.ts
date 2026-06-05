@@ -11,6 +11,8 @@ export type StoredPendingOrderDraft = PendingOrderDraft & {
   discount?: number;
   customerName?: string;
   phoneNumber?: string;
+  taxId?: string;
+  address?: string;
   note?: string;
   cart?: unknown[];
   orderSyncStatus?: PendingOrderSyncStatus;
@@ -21,6 +23,8 @@ export type StoredPendingOrderDraft = PendingOrderDraft & {
 type CheckoutCustomerInfo = {
   customerName: string;
   phoneNumber: string;
+  taxId?: string;
+  address?: string;
   note: string;
 };
 
