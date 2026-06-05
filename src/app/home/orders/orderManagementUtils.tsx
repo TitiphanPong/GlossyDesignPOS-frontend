@@ -376,6 +376,6 @@ export function downloadCsv(rows: OrderRow[], label: ExportType) {
 
 export function printDocument(row: OrderRow, mode: 'receipt' | 'invoice') {
   const documentType = mode === 'invoice' ? 'tax-invoice' : 'receipt';
-  const targetPath = `/print/invoice/${encodeURIComponent(row.orderId)}?documentType=${documentType}`;
+  const targetPath = `/print/invoice/${encodeURIComponent(row.id)}?documentType=${documentType}`;
   window.open(targetPath, '_blank', 'noopener,noreferrer');
 }

@@ -169,14 +169,25 @@ export async function fetchOrders(): Promise<NormalizedOrder[]> {
 }
 
 export async function fetchOrderById(orderId: string): Promise<NormalizedOrder> {
-  const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}`);
-  const order = extractOrderFromResponse(responseBody);
+  const endpoints = [`/orders/${orderId}`, `/orders/by-order-id/${encodeURIComponent(orderId)}`];
+  let lastError: Error | null = null;
 
-  if (!order) {
-    throw new Error('Backend did not return a valid order');
+  for (const endpoint of endpoints) {
+    try {
+      const responseBody = await fetchApiJson<unknown>(endpoint);
+      const order = extractOrderFromResponse(responseBody);
+
+      if (!order) {
+        throw new Error('Backend did not return a valid order');
+      }
+
+      return order;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error('fetch_order_failed');
+    }
   }
 
-  return order;
+  throw lastError ?? new Error('Backend did not return a valid order');
 }
 
 export async function updateOrderCustomerInfo(

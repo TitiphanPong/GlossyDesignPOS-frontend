@@ -333,6 +333,49 @@ test('fetchOrderById accepts a wrapped single-order response', async () => {
   }
 });
 
+test('fetchOrderById falls back to by-order-id for legacy identifiers', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  const requestedUrls: string[] = [];
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+
+  const mockFetch: typeof fetch = async input => {
+    const url = typeof input === 'string' ? input : input instanceof URL ? input.toString() : input.url;
+    requestedUrls.push(url);
+
+    if (url.endsWith('/orders/OrderID0144')) {
+      return new Response(JSON.stringify({ message: 'Invalid order id.' }), {
+        status: 400,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    }
+
+    return new Response(
+      JSON.stringify({
+        _id: '68cbcdce3764c210c8bb25bc',
+        orderId: 'OrderID0144',
+        orderNumber: 'ORD-20250918-0144',
+        payment: 'promptpay',
+        status: 'paid',
+        createdAt: '2025-09-18T09:15:58.936Z',
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  };
+  globalThis.fetch = mockFetch;
+
+  try {
+    const result = await fetchOrderById('OrderID0144');
+    assert.equal(result._id, '68cbcdce3764c210c8bb25bc');
+    assert.equal(result.orderId, 'OrderID0144');
+    assert.deepEqual(requestedUrls, ['http://localhost:3001/orders/OrderID0144', 'http://localhost:3001/orders/by-order-id/OrderID0144']);
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
 test('updateOrderCustomerInfo sends only tax invoice customer fields', async () => {
   const originalFetch = globalThis.fetch;
   const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
