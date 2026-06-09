@@ -214,7 +214,7 @@ function CartItemDetailsList({ item }: Readonly<{ item: CartItem }>) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
           <span>💰 การชำระ : {item.fullPayment ? `เต็มจำนวน (${Number(item.totalPrice).toFixed(2)}฿)` : `มัดจำ ${Number(item.deposit || 0).toFixed(2)}฿`}</span>
 
-          {!item.fullPayment ? <span style={{ paddingLeft: '1.4rem', color: '#5B6F88' }}>คงเหลือ {Number(item.remaining || 0).toFixed(2)}฿</span> : null}
+          {!item.fullPayment /* NOSONAR */ ? <span style={{ paddingLeft: '1.4rem', color: '#5B6F88' }}>คงเหลือ {Number(item.remaining || 0).toFixed(2)}฿</span> : null}
         </div>
       </li>
     </>

@@ -85,8 +85,8 @@ export function ExportMenu({ anchorEl, rows, onClose }: Readonly<ExportMenuProps
 
 export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onOpenDrawer, onOpenPayRemaining, onMarkAsPaid, onCancelOrder }: Readonly<RowActionsMenuProps>) {
   const rowMenuTargetId = rowMenuTarget?.id ?? '';
-  const confirmPaymentDisabled = !rowMenuTarget || rowMenuTarget.status !== 'pending' || updatingOrderId === rowMenuTargetId;
-  const payRemainingDisabled = !rowMenuTarget || rowMenuTarget.status !== 'partial' || updatingOrderId === rowMenuTargetId;
+  const confirmPaymentDisabled = rowMenuTarget?.status !== 'pending' || updatingOrderId === rowMenuTargetId;
+  const payRemainingDisabled = rowMenuTarget?.status !== 'partial' || updatingOrderId === rowMenuTargetId;
   const cancelOrderDisabled = !rowMenuTarget || updatingOrderId === rowMenuTargetId;
 
   return (

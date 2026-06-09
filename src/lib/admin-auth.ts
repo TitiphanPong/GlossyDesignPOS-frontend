@@ -32,18 +32,18 @@ function toBase64Url(value: string): string {
   let binary = '';
 
   bytes.forEach(byte => {
-    binary += String.fromCharCode(byte);
+    binary += String.fromCodePoint(byte);
   });
 
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/u, '');
+  return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/u, '');
 }
 
 function fromBase64Url(value: string): string | null {
   try {
-    const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
+    const normalized = value.replaceAll('-', '+').replaceAll('_', '/');
     const padding = normalized.length % 4 === 0 ? '' : '='.repeat(4 - (normalized.length % 4));
     const binary = atob(`${normalized}${padding}`);
-    const bytes = Uint8Array.from(binary, char => char.charCodeAt(0));
+    const bytes = Uint8Array.from(binary, char => char.codePointAt(0) ?? 0);
     return new TextDecoder().decode(bytes);
   } catch {
     return null;
@@ -57,7 +57,7 @@ function constantTimeEqual(left: string, right: string): boolean {
 
   let mismatch = 0;
   for (let index = 0; index < left.length; index += 1) {
-    mismatch |= left.charCodeAt(index) ^ right.charCodeAt(index);
+    mismatch |= (left.codePointAt(index) ?? 0) ^ (right.codePointAt(index) ?? 0);
   }
 
   return mismatch === 0;
@@ -70,10 +70,10 @@ async function signValue(value: string, secret: string): Promise<string> {
   let binary = '';
 
   bytes.forEach(byte => {
-    binary += String.fromCharCode(byte);
+    binary += String.fromCodePoint(byte);
   });
 
-  return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/u, '');
+  return btoa(binary).replaceAll('+', '-').replaceAll('/', '_').replace(/=+$/u, '');
 }
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -205,6 +205,6 @@ export async function destroyAdminBrowserSession(): Promise<void> {
       credentials: 'same-origin',
     });
   } finally {
-    clearAdminAuthSession(window.localStorage);
+    clearAdminAuthSession(globalThis.localStorage);
   }
 }

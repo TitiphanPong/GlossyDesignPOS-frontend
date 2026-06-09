@@ -24,8 +24,8 @@ export default function LoginPage() {
   const [redirectTo, setRedirectTo] = useState(ADMIN_LOGIN_REDIRECT_PATH);
 
   useEffect(() => {
-    clearAdminAuthSession(window.localStorage);
-    const redirectParam = new URLSearchParams(window.location.search).get('redirectTo');
+    clearAdminAuthSession(globalThis.localStorage);
+    const redirectParam = new URLSearchParams(globalThis.location.search).get('redirectTo');
     setRedirectTo(redirectParam || ADMIN_LOGIN_REDIRECT_PATH);
 
     const checkSession = async () => {

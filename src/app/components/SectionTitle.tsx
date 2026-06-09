@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Stack, Chip, Typography } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 
-export function SectionTitle({ label, title, desc }: { label: string; title: string; desc: string }) {
+export function SectionTitle({ label, title, desc }: Readonly<{ label: string; title: string; desc: string }>) {
   return (
     <Stack spacing={1.5} alignItems="center" textAlign="center" sx={{ mb: 6 }}>
       <Chip

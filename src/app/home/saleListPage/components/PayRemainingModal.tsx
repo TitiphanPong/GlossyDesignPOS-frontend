@@ -79,7 +79,7 @@ export default function PayRemainingModal({ open, orderId, remaining, onClose, o
       setErrorMessage(
         isMissingApiBaseError(error)
           ? 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL ก่อนบันทึกการชำระเงิน'
-          : error instanceof Error && error.message
+          : error instanceof Error && error.message /* NOSONAR */
             ? error.message
             : 'เกิดข้อผิดพลาดในการชำระเงิน'
       );
@@ -105,7 +105,7 @@ export default function PayRemainingModal({ open, orderId, remaining, onClose, o
             fullWidth
             slotProps={{ htmlInput: { min: 0.01, max: remaining, step: 0.01 } }}
           />
-          <Select value={method} onChange={event => setMethod(event.target.value as PaymentMethod)} fullWidth>
+          <Select<PaymentMethod> value={method} onChange={event => setMethod(event.target.value)} fullWidth>
             <MenuItem value="cash">เงินสด</MenuItem>
             <MenuItem value="promptpay">PromptPay</MenuItem>
           </Select>

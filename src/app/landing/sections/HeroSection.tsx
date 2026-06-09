@@ -49,7 +49,7 @@ export function HeroSection({ highlights }: Readonly<{ highlights: Highlight[] }
         <div className="max-w-2xl">
           <SectionLabel>Printing Shop</SectionLabel>
           <h1 className="mt-5 text-[2.85rem] font-semibold leading-[1.12] tracking-[-0.06em] text-slate-950 sm:text-[4.25rem]">
-            งานพิมพ์ที่ทำให้แบรนด์
+            <span className="block">งานพิมพ์ที่ทำให้แบรนด์</span>
             <span className="block text-sky-700">ดูนิ่ง ดูแพง และน่าจดจำ</span>
           </h1>
           <p className="mt-5 max-w-xl text-[1rem] leading-7 text-slate-600 sm:text-[1.08rem]">

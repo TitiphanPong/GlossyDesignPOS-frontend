@@ -55,8 +55,8 @@ function ClockBlock() {
   const [now, setNow] = useState<Date>(new Date());
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => setNow(new Date()), 1000);
-    return () => window.clearInterval(intervalId);
+    const intervalId = globalThis.setInterval(() => setNow(new Date()), 1000);
+    return () => globalThis.clearInterval(intervalId);
   }, []);
 
   return (
@@ -133,10 +133,10 @@ export function ActiveOrderScreen({
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   useEffect(() => {
-    const intervalId = window.setInterval(() => {
+    const intervalId = globalThis.setInterval(() => {
       setQrRefreshIn(prev => (prev <= 1 ? 45 : prev - 1));
     }, 1000);
-    return () => window.clearInterval(intervalId);
+    return () => globalThis.clearInterval(intervalId);
   }, []);
 
   useEffect(() => {
@@ -151,9 +151,8 @@ export function ActiveOrderScreen({
   }, []);
 
   const orderNumber = useMemo(() => getDisplayOrderNumber(order), [order]);
-  const showDigitalPayment = order.payment !== 'cash';
   const totalLines = order.cart.length;
-  const qrSize = isFullscreen ? (showDigitalPayment ? 300 : 300) : showDigitalPayment ? 350 : 350;
+  const qrSize = isFullscreen ? 300 : 350;
 
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_52%,#eef5ff_100%)] text-slate-900">

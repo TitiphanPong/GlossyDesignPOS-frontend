@@ -17,7 +17,7 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
   const [desktopCollapsed, setDesktopCollapsed] = React.useState(false);
 
   React.useEffect(() => {
-    const saved = window.localStorage.getItem('glossy-admin-sidemenu-collapsed');
+    const saved = globalThis.localStorage.getItem('glossy-admin-sidemenu-collapsed');
     setDesktopCollapsed(saved === 'true');
   }, []);
 
@@ -30,7 +30,7 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
   const handleToggleDesktopMenu = React.useCallback(() => {
     setDesktopCollapsed(prev => {
       const next = !prev;
-      window.localStorage.setItem('glossy-admin-sidemenu-collapsed', String(next));
+      globalThis.localStorage.setItem('glossy-admin-sidemenu-collapsed', String(next));
       return next;
     });
   }, []);

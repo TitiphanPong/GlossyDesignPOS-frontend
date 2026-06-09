@@ -89,7 +89,7 @@ export default function JobTimelineCard({
                         zIndex: 1,
                       }}
                     />
-                    {!isLast ? (
+                    {isLast ? null : (
                       <Box
                         sx={{
                           position: 'absolute',
@@ -100,7 +100,7 @@ export default function JobTimelineCard({
                           bgcolor: '#D7E6F8',
                         }}
                       />
-                    ) : null}
+                    )}
                   </Box>
 
                   <Box

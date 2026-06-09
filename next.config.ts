@@ -5,6 +5,7 @@ const nextConfig: NextConfig = {
   // Keep development artifacts separate so `next dev` does not corrupt
   // production build output when both workflows run on the same machine.
   distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
+  outputFileTracingRoot: process.cwd(),
   eslint: {
     ignoreDuringBuilds: true, // ✅ ตรงนี้ถึงจะทำงาน
   },

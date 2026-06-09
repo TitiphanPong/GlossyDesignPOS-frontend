@@ -46,6 +46,7 @@ function buildOrderSummary(order: NormalizedOrder): { primary: string; secondary
   const primaryItem = items[0];
   const itemCount = items.length;
   const totalQty = items.reduce((sum, item) => sum + item.qty, 0);
+  const categorySuffix = order.category ? ` • ${order.category}` : '';
 
   const primary = primaryItem?.name?.trim() || order.category?.trim() || 'ไม่มีรายละเอียด';
 
@@ -60,14 +61,14 @@ function buildOrderSummary(order: NormalizedOrder): { primary: string; secondary
     const quantityLabel = totalQty > 0 ? `${totalQty} ชิ้น` : '1 รายการ';
     return {
       primary,
-      secondary: `${quantityLabel}${order.category ? ` • ${order.category}` : ''}`,
+      secondary: `${quantityLabel}${categorySuffix}`,
     };
   }
 
   const quantityLabel = totalQty > 0 ? `${totalQty} ชิ้น` : `${itemCount} รายการ`;
   return {
     primary,
-    secondary: `${itemCount} รายการ • ${quantityLabel}${order.category ? ` • ${order.category}` : ''}`,
+    secondary: `${itemCount} รายการ • ${quantityLabel}${categorySuffix}`,
   };
 }
 
@@ -188,7 +189,7 @@ export default function RecentOrdersTable({ orders }: Readonly<RecentOrdersTable
                   const paymentLabel = PAYMENT_LABEL[order.payment] ?? order.payment;
                   const summary = buildOrderSummary(order);
                   const createdAt = formatCreatedAt(order.createdAt);
-                  const remaining = order.remainingTotal > 0 ? order.remainingTotal : 0;
+                  const remaining = Math.max(order.remainingTotal, 0);
                   const avatarHue = (index * 47) % 360;
 
                   return (

@@ -72,7 +72,7 @@ function sanitizeCartForBackend(cart: unknown): unknown {
 }
 
 function getPendingOrderBroadcastChannel(): BroadcastChannel | null {
-  if (typeof window === 'undefined' || typeof window.BroadcastChannel === 'undefined') {
+  if (globalThis.window === undefined || globalThis.BroadcastChannel === undefined) {
     return null;
   }
 
@@ -84,22 +84,22 @@ export function getPendingOrderFinalStatus(order: Pick<StoredPendingOrderDraft, 
 }
 
 export function persistPendingOrderDraft(order: StoredPendingOrderDraft | null): void {
-  if (typeof window === 'undefined') return;
+  if (globalThis.window === undefined) return;
 
   if (order) {
-    window.localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(order));
+    globalThis.localStorage.setItem(PENDING_ORDER_KEY, JSON.stringify(order));
   } else {
-    window.localStorage.removeItem(PENDING_ORDER_KEY);
+    globalThis.localStorage.removeItem(PENDING_ORDER_KEY);
   }
 
   const channel = getPendingOrderBroadcastChannel();
   channel?.postMessage({ key: PENDING_ORDER_KEY, order });
   channel?.close();
-  window.dispatchEvent(new Event('storage'));
+  globalThis.dispatchEvent(new Event('storage'));
 }
 
 export function subscribePendingOrderDraft(onChange: () => void): () => void {
-  if (typeof window === 'undefined') {
+  if (globalThis.window === undefined) {
     return () => undefined;
   }
 
@@ -107,12 +107,12 @@ export function subscribePendingOrderDraft(onChange: () => void): () => void {
     onChange();
   };
 
-  window.addEventListener('storage', handleStorage);
+  globalThis.addEventListener('storage', handleStorage);
 
   const channel = getPendingOrderBroadcastChannel();
   if (!channel) {
     return () => {
-      window.removeEventListener('storage', handleStorage);
+      globalThis.removeEventListener('storage', handleStorage);
     };
   }
 
@@ -123,7 +123,7 @@ export function subscribePendingOrderDraft(onChange: () => void): () => void {
   };
 
   return () => {
-    window.removeEventListener('storage', handleStorage);
+    globalThis.removeEventListener('storage', handleStorage);
     channel.close();
   };
 }

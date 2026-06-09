@@ -96,13 +96,19 @@ function extractUploadMetadata(raw: Pick<UploadApiRecord, 'note' | 'statusNote' 
   const structuredStage = normalizeStage(raw.stage);
   const structuredNote = typeof raw.statusNote === 'string' ? raw.statusNote.trim() : '';
   const rawNote = String(raw.note ?? '');
-  const batchMatch = rawNote.match(BATCH_MARKER_PATTERN);
-  const stageMatch = rawNote.match(STAGE_MARKER_PATTERN);
+  const batchMatch = BATCH_MARKER_PATTERN.exec(rawNote);
+  const stageMatch = STAGE_MARKER_PATTERN.exec(rawNote);
   const cleanNote = rawNote.replace(BATCH_MARKER_PATTERN, '').replace(STAGE_MARKER_PATTERN, '').replace(/\n{3,}/g, '\n\n').trim();
+  let markerStage: 'waiting' | 'pending' | undefined;
+  if (stageMatch?.[1] === 'pending') {
+    markerStage = 'pending';
+  } else if (stageMatch?.[1] === 'waiting-download') {
+    markerStage = 'waiting';
+  }
 
   return {
     batchId: structuredBatchId ?? batchMatch?.[1],
-    stage: structuredStage ?? (stageMatch?.[1] === 'pending' ? 'pending' : stageMatch?.[1] === 'waiting-download' ? 'waiting' : undefined),
+    stage: structuredStage ?? markerStage,
     cleanNote: structuredNote || cleanNote,
   };
 }
@@ -198,7 +204,7 @@ export function groupStorageRows(rows: readonly StorageRow[]): StorageRow[] {
       uploadDate: new Date(row.uploadDate).getTime() < new Date(existing.uploadDate).getTime() ? row.uploadDate : existing.uploadDate,
       files: mergedFiles,
       sourceIds: Array.from(new Set([...existing.sourceIds, ...row.sourceIds])),
-      notes: existing.notes !== '-' ? existing.notes : row.notes,
+      notes: existing.notes === '-' ? row.notes : existing.notes,
       activities: Array.from(new Set([...existing.activities, ...row.activities])),
     });
   }

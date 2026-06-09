@@ -231,8 +231,16 @@ export function buildOrderPaymentTimelineSubtitle(order: OrderRow): string {
 }
 
 export function buildOrderTimelineItems(order: OrderRow): JobTimelineCardItem[] {
-  const activeStage: 'created' | 'payment' | 'production' =
-    order.status === 'pending' ? 'created' : order.status === 'producing' || order.status === 'ready_for_pickup' || order.status === 'delivered' ? 'production' : 'payment';
+  let activeStage: 'created' | 'payment' | 'production' = 'payment';
+  if (order.status === 'pending') {
+    activeStage = 'created';
+  } else if (
+    order.status === 'producing' ||
+    order.status === 'ready_for_pickup' ||
+    order.status === 'delivered'
+  ) {
+    activeStage = 'production';
+  }
   let productionSubtitle = 'รอเข้าสู่กระบวนการผลิต';
 
   if (order.status === 'paid' || order.status === 'partial') {
@@ -379,5 +387,5 @@ export function downloadCsv(rows: OrderRow[], label: ExportType) {
 export function printDocument(row: OrderRow, mode: 'receipt' | 'invoice') {
   const documentType = mode === 'invoice' ? 'tax-invoice' : 'receipt';
   const targetPath = `/print/invoice/${encodeURIComponent(row.id)}?documentType=${documentType}`;
-  window.location.assign(targetPath);
+  globalThis.location.assign(targetPath);
 }

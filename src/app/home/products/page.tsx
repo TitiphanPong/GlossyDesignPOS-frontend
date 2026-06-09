@@ -225,7 +225,7 @@ export default function ProductManagementPage() {
   };
 
   const handleDelete = async (product: Product) => {
-    if (!window.confirm(`ลบสินค้า ${product.name}?`)) return;
+    if (!globalThis.confirm(`ลบสินค้า ${product.name}?`)) return;
     try {
       await deleteProduct(product._id ?? product.id);
       await loadProducts();
@@ -238,6 +238,13 @@ export default function ProductManagementPage() {
     setForm(prev => ({
       ...prev,
       variants: prev.variants.map((variant, currentIndex) => (currentIndex === index ? { ...variant, ...patch } : variant)),
+    }));
+  };
+
+  const removeVariant = (index: number) => {
+    setForm(prev => ({
+      ...prev,
+      variants: prev.variants.filter((_, currentIndex) => currentIndex !== index),
     }));
   };
 
@@ -392,7 +399,7 @@ export default function ProductManagementPage() {
                       <Switch checked={variant.active} onChange={event => updateVariant(index, { active: event.target.checked })} />
                       <Typography sx={{ fontSize: 13 }}>Active variant</Typography>
                     </Stack>
-                    <IconButton disabled={form.variants.length === 1} onClick={() => setForm(prev => ({ ...prev, variants: prev.variants.filter((_, currentIndex) => currentIndex !== index) }))}>
+                    <IconButton disabled={form.variants.length === 1} onClick={() => removeVariant(index)}>
                       <DeleteRoundedIcon fontSize="small" />
                     </IconButton>
                   </Stack>

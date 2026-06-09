@@ -1,3 +1,1 @@
-import { PrintInvoicePage } from './PrintInvoicePage';
-
-export default PrintInvoicePage;
+export { PrintInvoicePage as default } from './PrintInvoicePage';

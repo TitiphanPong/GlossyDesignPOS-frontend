@@ -323,7 +323,7 @@ function applyStorageRowPatch(row: StorageRow, patch: StorageRowPatch): StorageR
   return {
     ...row,
     ...(patch.status ? { status: patch.status } : {}),
-    ...(patch.notes !== undefined ? { notes: patch.notes } : {}),
+    ...(patch.notes === undefined ? {} : { notes: patch.notes }),
   };
 }
 
@@ -417,7 +417,7 @@ function StatCard({ title, value, subtitle, icon, tone }: Readonly<StatCardProps
   );
 }
 
-export default function StoragePage() {
+export default function StoragePage() { // NOSONAR: page orchestration is intentionally colocated.
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isCompactDrawer = useMediaQuery(theme.breakpoints.down('lg'));

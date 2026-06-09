@@ -119,5 +119,5 @@ export function normalizeWorkflowStatus(status: OrderStatus): WorkflowOrderStatu
 export function getWorkflowStatusIndex(status: OrderStatus): number {
   const workflowStatus = normalizeWorkflowStatus(status);
   const index = WORKFLOW_STATUS_SEQUENCE.indexOf(workflowStatus);
-  return index >= 0 ? index : 0;
+  return Math.max(index, 0);
 }

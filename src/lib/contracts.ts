@@ -31,7 +31,7 @@ export type Product = {
   icon?: string;
   emoji?: string;
   tint?: string;
-  badge?: 'NEW' | 'HIT' | string;
+  badge?: string;
   active: boolean;
   variants: ProductVariant[];
 };
@@ -420,7 +420,7 @@ export function normalizeApiOrder(
     taxId: readInvoiceString(order, 'taxId', 'customerTaxId') ?? undefined,
     branchType: order.branchType,
     branchNo: readNonEmptyString(order.branchNo) ?? undefined,
-    address: address !== '-' ? address : undefined,
+    address: address === '-' ? undefined : address,
     subDistrict: readNonEmptyString(order.subDistrict) ?? undefined,
     district: readNonEmptyString(order.district) ?? undefined,
     province: readNonEmptyString(order.province) ?? undefined,
@@ -478,7 +478,7 @@ export function normalizeApiOrderForInvoice(
     taxId: readInvoiceString(order, 'taxId', 'customerTaxId') ?? undefined,
     branchType: order.branchType === 'สำนักงานใหญ่' || order.branchType === 'สาขา' ? order.branchType : undefined,
     branchNo: readNonEmptyString(order.branchNo) ?? undefined,
-    address: address !== '-' ? address : undefined,
+    address: address === '-' ? undefined : address,
     subDistrict: readNonEmptyString(order.subDistrict) ?? undefined,
     district: readNonEmptyString(order.district) ?? undefined,
     province: readNonEmptyString(order.province) ?? undefined,

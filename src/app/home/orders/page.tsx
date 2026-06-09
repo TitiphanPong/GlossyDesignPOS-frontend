@@ -182,7 +182,7 @@ export default function OrderManagementPage() {
   const markAsPaid = React.useCallback(
     async (targetId: string) => {
       const target = rowsById.get(targetId);
-      if (!target || target.status !== 'pending') return;
+      if (target?.status !== 'pending') return;
 
       setUpdatingOrderId(targetId);
       try {
@@ -219,7 +219,7 @@ export default function OrderManagementPage() {
     async (updatedOrder: NormalizedOrder) => {
       const updatedRow = mapApiOrderToRow(updatedOrder);
       setRows(prev => prev.map(row => (row.id === updatedRow.id ? updatedRow : row)));
-      setSelectedOrder(prev => (prev && prev.id === updatedRow.id ? updatedRow : prev));
+      setSelectedOrder(prev => (prev?.id === updatedRow.id ? updatedRow : prev));
       setPayRemainingTarget(null);
       await loadOrders();
     },

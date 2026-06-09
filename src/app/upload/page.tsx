@@ -110,7 +110,7 @@ function getValidationError(file: File): string | null {
   }
 
   if (!validation.valid && validation.reason === 'size') {
-    return `ไฟล์ ${file.name} มีขนาดเกิน 100MB`;
+    return `ไฟล์ ${file.name} มีขนาดเกิน 8MB`;
   }
 
   return null;
@@ -210,7 +210,61 @@ function UploadQueueEmptyState() {
   );
 }
 
-export default function UploadPage() {
+function getCurrentStep(
+  isUploading: boolean,
+  uploadedCount: number,
+  errorCount: number,
+  totalFiles: number,
+): Step {
+  if (isUploading || uploadedCount > 0 || errorCount > 0) return 3;
+  return totalFiles > 0 ? 2 : 1;
+}
+
+function getUploadProgressSummary(isUploading: boolean, totalFiles: number): string {
+  if (isUploading) return 'ระบบกำลังส่งไฟล์ขึ้นเซิร์ฟเวอร์';
+  if (totalFiles > 0) return 'อัปโหลดเสร็จแล้วบางส่วนหรือทั้งหมด';
+  return 'ยังไม่มีไฟล์ในคิวอัปโหลด';
+}
+
+function getFooterDetail(
+  totalFiles: number,
+  selectedJobLabel: string,
+  hasJobNote: boolean,
+): string {
+  if (totalFiles === 0) {
+    return 'เลือกประเภทงานและเพิ่มไฟล์อย่างน้อย 1 ไฟล์ก่อนส่ง';
+  }
+
+  const noteSummary = hasJobNote ? ' • มีรายละเอียดเพิ่มเติมแล้ว' : '';
+  return `ประเภทงาน ${selectedJobLabel}${noteSummary}`;
+}
+
+function statusPill(status: UploadStatus) {
+  if (status === 'uploaded') {
+    return <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">อัปโหลดแล้ว</span>;
+  }
+  if (status === 'uploading') {
+    return <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700">กำลังอัปโหลด</span>;
+  }
+  if (status === 'error') {
+    return <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700">ผิดพลาด</span>;
+  }
+  return <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">รออัปโหลด</span>;
+}
+
+function getStepItemClass(active: boolean, done: boolean) {
+  if (active) return 'border-indigo-300 bg-indigo-50 text-indigo-700';
+  if (done) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
+  return 'border-slate-200 bg-white text-slate-500';
+}
+
+function getStepBadgeClass(active: boolean, done: boolean) {
+  if (active) return 'bg-indigo-600 text-white';
+  if (done) return 'bg-emerald-600 text-white';
+  return 'bg-slate-200 text-slate-600';
+}
+
+export default function UploadPage() { // NOSONAR: event orchestration remains colocated with page state.
   const [selectedJobType, setSelectedJobType] = useState<string>('document');
   const [uploadedFiles, setUploadedFiles] = useState<UploadFileItem[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
@@ -233,35 +287,10 @@ export default function UploadPage() {
   const errorItems = uploadedFiles.filter(item => item.status === 'error');
   const waitingItems = uploadedFiles.filter(item => item.status === 'waiting');
   const totalFiles = uploadedFiles.length;
-  const currentStep: Step = isUploading || uploadedCount > 0 || errorItems.length > 0 ? 3 : totalFiles > 0 ? 2 : 1;
+  const currentStep = getCurrentStep(isUploading, uploadedCount, errorItems.length, totalFiles);
   const uploadProgress = totalFiles === 0 ? 0 : Math.round((uploadedCount / totalFiles) * 100);
   const showUploadProgress = isUploading || uploadedCount > 0;
   const primaryActionDisabled = Boolean(envError) || isUploading || uploadedFiles.length === 0;
-
-  const statusPill = (status: UploadStatus) => {
-    if (status === 'uploaded') {
-      return <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">อัปโหลดแล้ว</span>;
-    }
-    if (status === 'uploading') {
-      return <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700">กำลังอัปโหลด</span>;
-    }
-    if (status === 'error') {
-      return <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700">ผิดพลาด</span>;
-    }
-    return <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">รออัปโหลด</span>;
-  };
-
-  const getStepItemClass = (active: boolean, done: boolean) => {
-    if (active) return 'border-indigo-300 bg-indigo-50 text-indigo-700';
-    if (done) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-    return 'border-slate-200 bg-white text-slate-500';
-  };
-
-  const getStepBadgeClass = (active: boolean, done: boolean) => {
-    if (active) return 'bg-indigo-600 text-white';
-    if (done) return 'bg-emerald-600 text-white';
-    return 'bg-slate-200 text-slate-600';
-  };
 
   const clearFeedback = () => {
     setFeedbackModal(null);
@@ -394,8 +423,7 @@ export default function UploadPage() {
     const uploadResult = await uploadPendingFiles({
       items: uploadedFiles,
       payload: {
-        // TODO(upload-liff): fill customerName, phone, lineUserId, and displayName from LINE LIFF profile when available.
-        // TODO(upload-backend): remove placeholder customer fields once the backend no longer requires them.
+        // Placeholder identity fields remain until LINE profile data is available.
         customerName: UPLOAD_PLACEHOLDER_CUSTOMER_NAME,
         phone: UPLOAD_PLACEHOLDER_PHONE,
         jobType,
@@ -458,7 +486,7 @@ export default function UploadPage() {
             <div className="min-w-0 max-w-3xl">
               <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-600">
                 <span className="h-2 w-2 rounded-full bg-emerald-500" />
-                Upload Status
+                <span>Upload Status</span>
               </div>
               <div className="flex flex-wrap items-center gap-3">
                 <p className="text-xl font-black tracking-[-0.02em] text-slate-900 sm:text-2xl">Glossy Design</p>
@@ -467,7 +495,7 @@ export default function UploadPage() {
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-[15px]">อัปโหลดงานพิมพ์ได้เร็วขึ้น เหมาะกับทั้งงานด่วน งานเอกสาร และไฟล์พร้อมพิมพ์</p>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">รองรับไฟล์สูงสุด 100MB</span>
+                <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">รองรับไฟล์สูงสุด 8MB</span>
                 <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700">อัปโหลดได้หลายไฟล์</span>
               </div>
             </div>
@@ -592,7 +620,7 @@ export default function UploadPage() {
                 <p className="text-base font-semibold text-slate-800">ลากไฟล์มาวางที่นี่</p>
                 <p className="mt-1 text-sm text-slate-500">หรือกดเลือกไฟล์จากอุปกรณ์ของคุณ</p>
                 <p className="mt-3 text-xs text-slate-500">รองรับไฟล์: {ACCEPTED_EXTENSIONS.map(extension => extension.toUpperCase()).join(', ')}</p>
-                <p className="text-xs text-slate-500">ขนาดไฟล์สูงสุด 100MB / ไฟล์</p>
+                <p className="text-xs text-slate-500">ขนาดไฟล์สูงสุด 8MB / ไฟล์</p>
               </button>
 
               <div className="mt-4 space-y-2.5">
@@ -621,7 +649,7 @@ export default function UploadPage() {
                     <span className="text-sm font-bold">{uploadProgress}%</span>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-600">{isUploading ? 'ระบบกำลังส่งไฟล์ขึ้นเซิร์ฟเวอร์' : totalFiles > 0 ? 'อัปโหลดเสร็จแล้วบางส่วนหรือทั้งหมด' : 'ยังไม่มีไฟล์ในคิวอัปโหลด'}</p>
+                    <p className="text-sm text-slate-600">{getUploadProgressSummary(isUploading, totalFiles)}</p>
                     <p className="text-xs text-slate-500">
                       สำเร็จ {uploadedCount} / {totalFiles} ไฟล์
                     </p>
@@ -669,7 +697,7 @@ export default function UploadPage() {
             <div className="hidden min-w-0 sm:block">
               <p className="text-sm font-semibold text-slate-900">{totalFiles > 0 ? `พร้อมส่ง ${totalFiles} ไฟล์` : 'ยังไม่มีไฟล์สำหรับส่ง'}</p>
               <p className="mt-1 text-xs text-slate-500">
-                {totalFiles > 0 ? `ประเภทงาน ${selectedJobLabel}${trimmedJobNote ? ' • มีรายละเอียดเพิ่มเติมแล้ว' : ''}` : 'เลือกประเภทงานและเพิ่มไฟล์อย่างน้อย 1 ไฟล์ก่อนส่ง'}
+                {getFooterDetail(totalFiles, selectedJobLabel, Boolean(trimmedJobNote))}
               </p>
             </div>
             <button
@@ -698,7 +726,7 @@ export default function UploadPage() {
               className={`w-full max-w-md rounded-[28px] border p-6 shadow-[0_24px_80px_rgba(15,23,42,0.28)] ${
                 feedbackModal.kind === 'success' ? 'border-emerald-100 bg-white' : 'border-rose-100 bg-white'
               }`}>
-              <div className={`flex ${feedbackModal.kind === 'success' ? 'justify-center text-center' : 'justify-center text-center'}`}>
+              <div className="flex justify-center text-center">
                 <div className={`inline-flex rounded-full p-3 ${feedbackModal.kind === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
                   {feedbackModal.kind === 'success' ? <CheckRounded className="h-6 w-6" /> : <ErrorOutlineRounded className="h-6 w-6" />}
                 </div>

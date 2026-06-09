@@ -3,7 +3,7 @@ import { Box } from '@mui/material';
 import CheckOutRight from './checkoutRight';
 import { CartItem } from '../types/cart';
 
-export function CheckoutSidebar({ cart, total, onCheckout, discount, onDiscountChange, onPaymentChange, onTaxInvoiceChange, onEditItem, onDeleteItem }: {
+export function CheckoutSidebar({ cart, total, onCheckout, discount, onDiscountChange, onPaymentChange, onTaxInvoiceChange, onEditItem, onDeleteItem }: Readonly<{
   cart: CartItem[];
   total: number;
   onCheckout: (payment: 'cash' | 'promptpay') => void;
@@ -13,7 +13,7 @@ export function CheckoutSidebar({ cart, total, onCheckout, discount, onDiscountC
   onTaxInvoiceChange: (v: 'yes' | 'no') => void;
   onEditItem: (item: CartItem) => void;
   onDeleteItem: (key: string) => void;
-}) {
+}>) {
   return (
     <Box sx={{ display: { xs: 'none', md: 'block' } }}>
       <CheckOutRight

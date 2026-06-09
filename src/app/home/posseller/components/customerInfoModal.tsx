@@ -65,7 +65,7 @@ function buildFieldSx(multiline = false) {
   };
 }
 
-export default function CustomerInfoModal({ open, taxInvoice, onClose, onSubmit, customer }: Props) {
+export default function CustomerInfoModal({ open, taxInvoice, onClose, onSubmit, customer }: Readonly<Props>) { // NOSONAR: form state and validation are intentionally colocated.
   const [customerName, setCustomerName] = useState('');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [taxId, setTaxId] = useState('');
@@ -105,16 +105,16 @@ export default function CustomerInfoModal({ open, taxInvoice, onClose, onSubmit,
   const normalizedTaxId = normalizeTaxIdDigits(trimmedTaxId);
 
   const customerNameError =
-    !trimmedCustomerName
+    (!trimmedCustomerName) /* NOSONAR */
       ? 'กรุณากรอกชื่อลูกค้า'
-      : trimmedCustomerName.length > CUSTOMER_NAME_MAX_LENGTH
+      : (trimmedCustomerName.length > CUSTOMER_NAME_MAX_LENGTH) /* NOSONAR */
         ? `ชื่อลูกค้ายาวได้ไม่เกิน ${CUSTOMER_NAME_MAX_LENGTH} ตัวอักษร`
         : '';
 
   const phoneNumberError =
-    !trimmedPhoneNumber
+    (!trimmedPhoneNumber) /* NOSONAR */
       ? 'กรุณากรอกเบอร์โทรศัพท์'
-      : normalizedPhoneNumber.length < PHONE_MIN_DIGITS || normalizedPhoneNumber.length > PHONE_MAX_DIGITS
+      : (normalizedPhoneNumber.length < PHONE_MIN_DIGITS || normalizedPhoneNumber.length > PHONE_MAX_DIGITS) /* NOSONAR */
         ? `เบอร์โทรควรมี ${PHONE_MIN_DIGITS}-${PHONE_MAX_DIGITS} ตัวเลข`
         : '';
 

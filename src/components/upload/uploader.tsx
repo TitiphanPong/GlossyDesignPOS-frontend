@@ -69,7 +69,7 @@ export default function Uploader() {
 
     if (!validation.valid && validation.reason === 'size') {
       setSelectedFile(null);
-      setErrorMessage('File size exceeds 100MB. Please select a smaller file.');
+      setErrorMessage('File size exceeds 8MB. Please select a smaller file.');
       return;
     }
 

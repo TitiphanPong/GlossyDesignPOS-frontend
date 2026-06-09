@@ -83,7 +83,7 @@ const drawerItems = [
   { href: '/storage', label: 'ไฟล์ลูกค้า', icon: <InsertDriveFileRoundedIcon /> },
 ];
 
-function DrawerMenu({ onClose }: { onClose: () => void }) {
+function DrawerMenu({ onClose }: Readonly<{ onClose: () => void }>) {
   return (
     <Box sx={{ width: 280, display: 'flex', flexDirection: 'column', height: '100%' }}>
       <Brand />
@@ -109,9 +109,11 @@ function DrawerMenu({ onClose }: { onClose: () => void }) {
             <ListItemIcon sx={{ minWidth: 36, color: 'text.secondary' }}>{item.icon}</ListItemIcon>
             <ListItemText
               primary={item.label}
-              primaryTypographyProps={{
-                fontSize: 14,
-                fontWeight: 500,
+              slotProps={{
+                primary: {
+                  fontSize: 14,
+                  fontWeight: 500,
+                },
               }}
             />
             <ChevronRightRoundedIcon fontSize="small" sx={{ opacity: 0.3 }} />
@@ -221,7 +223,7 @@ function getLabel(value: string) {
 
 function formatLabel(value: string) {
   return value
-    .replace(/-/g, ' ')
+    .replaceAll('-', ' ')
     .replace(/([A-Z])/g, ' $1')
     .replace(/^./, str => str.toUpperCase())
     .trim();

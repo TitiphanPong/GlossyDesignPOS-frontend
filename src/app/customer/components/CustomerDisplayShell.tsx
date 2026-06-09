@@ -233,7 +233,7 @@ export function OrderTimeline({ currentStep }: Readonly<{ currentStep: number }>
 export function IdleScreen() {
   useEffect(() => {
     BANNERS.forEach(item => {
-      const preloadedImage = new window.Image();
+      const preloadedImage = new globalThis.Image();
       preloadedImage.src = item.img;
     });
   }, []);

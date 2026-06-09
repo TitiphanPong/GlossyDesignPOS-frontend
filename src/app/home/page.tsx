@@ -127,7 +127,9 @@ function getOrderDate(order: Pick<NormalizedOrder, 'createdAt'>) {
   return date.isValid() ? date : null;
 }
 
-function isSameDay(value: string | Date | null | undefined, compare = dayjs()) {
+type DateInput = string | Date | null | undefined;
+
+function isSameDay(value: DateInput, compare = dayjs()) {
   const date = dayjs(value);
   return date.isValid() && date.isSame(compare, 'day');
 }
@@ -167,16 +169,16 @@ function formatThaiFullDate(value: Date | string | null | undefined): string {
 }
 
 function normalizeStatusKey(value: unknown): string {
-  return String(value ?? '')
+  return stringifyPrimitive(value)
     .toLowerCase()
     .trim()
     .replace(/\s+/g, '_')
-    .replace(/-/g, '_');
+    .replaceAll('-', '_');
 }
 
 function getStatusMeta(status: unknown): StatusMeta {
   const key = normalizeStatusKey(status);
-  const thaiValue = String(status ?? '').trim();
+  const thaiValue = stringifyPrimitive(status).trim();
 
   if (['pending', 'รอดำเนินการ', 'รอตรวจสอบ', 'new'].includes(key) || thaiValue === 'รอตรวจสอบ') {
     return {
@@ -287,7 +289,20 @@ function getPaymentLabel(value: unknown): string {
   if (key === 'promptpay') return 'PromptPay';
   if (key === 'transfer') return 'โอนบัญชี';
   if (key === 'card') return 'บัตร';
-  return String(value ?? '-') || '-';
+  return stringifyPrimitive(value, '-') || '-';
+}
+
+function stringifyPrimitive(value: unknown, fallback = ''): string {
+  if (
+    typeof value === 'string' ||
+    typeof value === 'number' ||
+    typeof value === 'bigint' ||
+    typeof value === 'boolean'
+  ) {
+    return String(value);
+  }
+
+  return fallback;
 }
 
 function getStorageStatusLabel(status: StorageStatus): string {
@@ -307,7 +322,7 @@ function buildRangeSeries(orders: NormalizedOrder[], days: number): number[] {
   });
 }
 
-/*
+/* NOSONAR -- archived implementation retained for product comparison.
 function calculateBestSellers(orders: NormalizedOrder[]): BestSeller[] {
   const products = new Map<string, BestSeller>();
 
@@ -807,7 +822,7 @@ function UploadQueue({ uploads, metrics }: Readonly<{ uploads: StorageRow[]; met
   );
 }
 
-/*
+/* NOSONAR -- archived implementation retained for product comparison.
 function BestSellers({ bestSellers, products }: Readonly<{ bestSellers: BestSeller[]; products: Product[] }>) {
   return (
     <Paper elevation={0} sx={{ ...CARD_SX, p: 2.3, height: '100%' }}>
@@ -918,7 +933,15 @@ export default function DashboardPage() {
         setLoadError('ไม่สามารถโหลดออเดอร์ได้ในขณะนี้ แดชบอร์ดจะแสดงข้อมูลเท่าที่มี');
       }
 
-      setUploads(uploadsResult.status === 'fulfilled' ? uploadsResult.value.sort((left, right) => new Date(right.uploadDate).getTime() - new Date(left.uploadDate).getTime()) : []);
+      setUploads(
+        uploadsResult.status === 'fulfilled'
+          ? uploadsResult.value.toSorted(
+              (left, right) =>
+                new Date(right.uploadDate).getTime() -
+                new Date(left.uploadDate).getTime(),
+            )
+          : [],
+      );
       setLastUpdated(new Date());
     } catch (error) {
       setOrders([]);

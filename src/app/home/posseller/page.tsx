@@ -44,10 +44,10 @@ const sanitizeCustomerInfo = (customer: CustomerInfo): CustomerInfo => ({
 });
 
 function readExistingPendingDraftId(): string | null {
-  if (typeof window === 'undefined') return null;
+  if (globalThis.window === undefined) return null;
 
   try {
-    const stored = window.localStorage.getItem(PENDING_ORDER_KEY);
+    const stored = globalThis.localStorage.getItem(PENDING_ORDER_KEY);
     if (!stored) return null;
 
     const parsed = JSON.parse(stored) as { clientDraftId?: unknown };

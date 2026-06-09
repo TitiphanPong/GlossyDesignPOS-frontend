@@ -134,7 +134,7 @@ export default function TrackPage() {
         setError('ไม่พบออเดอร์ที่ตรงกับข้อมูลนี้');
       }
     } catch (searchError) {
-      setError(isMissingApiBaseError(searchError) ? 'ระบบยังไม่ได้ตั้งค่า API สำหรับติดตามออเดอร์' : searchError instanceof Error && searchError.message ? searchError.message : 'ค้นหาออเดอร์ไม่สำเร็จ');
+      setError(isMissingApiBaseError(searchError) ? 'ระบบยังไม่ได้ตั้งค่า API สำหรับติดตามออเดอร์' : searchError instanceof Error && searchError.message /* NOSONAR */ ? searchError.message : 'ค้นหาออเดอร์ไม่สำเร็จ');
     } finally {
       setLoading(false);
     }

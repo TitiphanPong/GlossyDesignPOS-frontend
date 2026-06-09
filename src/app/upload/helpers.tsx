@@ -27,7 +27,7 @@ export const ACCEPTED_EXTENSIONS = [
   'csv',
 ];
 
-export const MAX_FILE_SIZE_BYTES = 100 * 1024 * 1024;
+export const MAX_FILE_SIZE_BYTES = 7_500_000;
 export const QUICK_UPLOADER_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'ai', 'psd', 'zip'] as const;
 export const QUICK_UPLOADER_MIME_TYPES = new Set([
   'application/pdf',
