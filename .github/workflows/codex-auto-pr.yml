@@ -1,8 +1,6 @@
 name: Codex Auto PR
 
 on:
-  schedule:
-    - cron: '0 */3 * * *'
   workflow_dispatch:
     inputs:
       task_id:
