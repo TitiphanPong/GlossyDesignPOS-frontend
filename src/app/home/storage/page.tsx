@@ -28,6 +28,7 @@ import {
   TableCell,
   TableContainer,
   TableHead,
+  TablePagination,
   TableRow,
   TextField,
   Tooltip,
@@ -438,6 +439,10 @@ export default function StoragePage() { // NOSONAR: page orchestration is intent
   const [jobTypeFilter] = React.useState('all');
   const [dateFilter, setDateFilter] = React.useState('');
   const [sortBy, setSortBy] = React.useState<SortType>('newest');
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(20);
+  const [totalRows, setTotalRows] = React.useState(0);
+  const deferredSearch = React.useDeferredValue(search.trim());
 
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -460,20 +465,31 @@ export default function StoragePage() { // NOSONAR: page orchestration is intent
 
       for (const endpoint of endpointCandidates) {
         try {
-          const response = await axios.get(`${base}${endpoint}`);
+          const response = await axios.get(`${base}${endpoint}`, {
+            params: {
+              page: page + 1,
+              limit: rowsPerPage,
+              ...(deferredSearch ? { q: deferredSearch } : {}),
+            },
+          });
           const payload = response.data as unknown;
 
           let list: unknown[] = [];
+          let total = 0;
           if (Array.isArray(payload)) {
             list = payload;
+            total = payload.length;
           } else {
-            const nested = (payload as { data?: unknown[] })?.data;
+            const paginatedPayload = payload as { data?: unknown[]; total?: unknown };
+            const nested = paginatedPayload?.data;
             if (Array.isArray(nested)) list = nested;
+            if (typeof paginatedPayload.total === 'number') total = paginatedPayload.total;
           }
 
           const normalized = groupStorageRows(list.filter((item): item is UploadApiRecord => typeof item === 'object' && item !== null).map(normalizeRecord));
 
           setRows(normalized);
+          setTotalRows(total || list.length);
           setLastSyncedAt(new Date());
           loaded = true;
           break;
@@ -484,10 +500,12 @@ export default function StoragePage() { // NOSONAR: page orchestration is intent
 
       if (!loaded) {
         setRows([]);
+        setTotalRows(0);
         setErrorMessage('ไม่สามารถโหลดข้อมูลจาก API ได้ กรุณาตรวจสอบ endpoint /uploads หรือ /upload');
       }
     } catch (error) {
       setRows([]);
+      setTotalRows(0);
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
       } else {
@@ -496,7 +514,11 @@ export default function StoragePage() { // NOSONAR: page orchestration is intent
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [deferredSearch, page, rowsPerPage]);
+
+  React.useEffect(() => {
+    setPage(0);
+  }, [deferredSearch]);
 
   React.useEffect(() => {
     fetchUploads();
@@ -1097,7 +1119,7 @@ export default function StoragePage() { // NOSONAR: page orchestration is intent
             <Stack direction="row" justifyContent="space-between" alignItems="center">
               <Typography sx={{ fontWeight: 800, color: '#102A43' }}>รายการไฟล์</Typography>
               <Chip
-                label={`${filteredRows.length} รายการ`}
+                label={`${totalRows} รายการ`}
                 sx={{
                   borderRadius: 2.5,
                   bgcolor: '#EEF4FF',
@@ -1243,6 +1265,24 @@ export default function StoragePage() { // NOSONAR: page orchestration is intent
               </TableBody>
             </Table>
           </TableContainer>
+          <TablePagination
+            component="div"
+            count={totalRows}
+            page={page}
+            onPageChange={(_, nextPage) => {
+              setSelectedIds([]);
+              setPage(nextPage);
+            }}
+            rowsPerPage={rowsPerPage}
+            onRowsPerPageChange={event => {
+              setSelectedIds([]);
+              setRowsPerPage(Number(event.target.value));
+              setPage(0);
+            }}
+            rowsPerPageOptions={[20, 50, 100]}
+            labelRowsPerPage="รายการต่อหน้า"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
+          />
         </Card>
       </Stack>
 
