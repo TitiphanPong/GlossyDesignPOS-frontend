@@ -29,7 +29,6 @@ import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
 import DesignServicesRoundedIcon from '@mui/icons-material/DesignServicesRounded';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import FileDownloadRoundedIcon from '@mui/icons-material/FileDownloadRounded';
-import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import LocalAtmRoundedIcon from '@mui/icons-material/LocalAtmRounded';
 import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
@@ -169,11 +168,7 @@ function formatThaiFullDate(value: Date | string | null | undefined): string {
 }
 
 function normalizeStatusKey(value: unknown): string {
-  return stringifyPrimitive(value)
-    .toLowerCase()
-    .trim()
-    .replace(/\s+/g, '_')
-    .replaceAll('-', '_');
+  return stringifyPrimitive(value).toLowerCase().trim().replace(/\s+/g, '_').replaceAll('-', '_');
 }
 
 function getStatusMeta(status: unknown): StatusMeta {
@@ -293,12 +288,7 @@ function getPaymentLabel(value: unknown): string {
 }
 
 function stringifyPrimitive(value: unknown, fallback = ''): string {
-  if (
-    typeof value === 'string' ||
-    typeof value === 'number' ||
-    typeof value === 'bigint' ||
-    typeof value === 'boolean'
-  ) {
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint' || typeof value === 'boolean') {
     return String(value);
   }
 
@@ -688,7 +678,7 @@ function SalesChart({ orders }: Readonly<{ orders: NormalizedOrder[] }>) {
             </defs>
             <CartesianGrid stroke="#E5E7EB" strokeDasharray="4 6" vertical={false} />
             <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12 }} interval={chartData.length > 20 ? Math.ceil(chartData.length / 8) : 0} />
-            <YAxis axisLine={false} tickLine={false} width={58} tick={{ fill: '#64748B', fontSize: 12 }} tickFormatter={value => `฿${Number(value) / 1000}k`} />
+            <YAxis axisLine={false} tickLine={false} width={50} tick={{ fill: '#64748B', fontSize: 12 }} tickFormatter={value => `฿${Number(value) / 1000}k`} />
             <Tooltip
               formatter={(value: number) => [formatCurrencyTHB(value), 'ยอดขาย']}
               labelStyle={{ color: '#0F172A', fontWeight: 800 }}
@@ -864,7 +854,6 @@ function QuickActions() {
     { label: 'สร้างออเดอร์ใหม่', href: '/home/posseller', icon: AddShoppingCartRoundedIcon, color: '#4A90E2' },
     { label: 'ขายด่วน', href: '/home/posseller', icon: PointOfSaleRoundedIcon, color: '#10B981' },
     { label: 'ดูออเดอร์ทั้งหมด', href: '/home/orders', icon: ReceiptLongRoundedIcon, color: '#3B82F6' },
-    { label: 'จัดการสินค้า', href: '/home/products', icon: Inventory2RoundedIcon, color: '#F59E0B' },
     { label: 'ดูไฟล์อัปโหลด', href: '/home/storage', icon: CloudUploadRoundedIcon, color: '#06B6D4' },
     { label: 'สรุปรายงานขาย', href: '/home/orders', icon: BarChartRoundedIcon, color: '#7C3AED' },
   ];
@@ -933,15 +922,7 @@ export default function DashboardPage() {
         setLoadError('ไม่สามารถโหลดออเดอร์ได้ในขณะนี้ แดชบอร์ดจะแสดงข้อมูลเท่าที่มี');
       }
 
-      setUploads(
-        uploadsResult.status === 'fulfilled'
-          ? uploadsResult.value.toSorted(
-              (left, right) =>
-                new Date(right.uploadDate).getTime() -
-                new Date(left.uploadDate).getTime(),
-            )
-          : [],
-      );
+      setUploads(uploadsResult.status === 'fulfilled' ? uploadsResult.value.toSorted((left, right) => new Date(right.uploadDate).getTime() - new Date(left.uploadDate).getTime()) : []);
       setLastUpdated(new Date());
     } catch (error) {
       setOrders([]);
