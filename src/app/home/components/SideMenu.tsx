@@ -14,6 +14,7 @@ import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import { useRouter } from 'next/navigation';
 import Face2Icon from '@mui/icons-material/Face2';
+import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import { destroyAdminBrowserSession } from '@/lib/admin-auth';
 
 export type NavItem = {
@@ -37,7 +38,8 @@ export interface SideMenuProps {
 const DEFAULT_ITEMS: NavItem[] = [
   { label: 'Dashboard', href: '/dashboard', icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
   { label: 'Orders', href: '/orders', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
-  { label: 'POS Seller', href: '/pos', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
+  { label: 'POS', href: '/pos', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
+  { label: 'Quick Seller', href: '/home/quick-sale', icon: <PointOfSaleRoundedIcon fontSize="small" /> },
   { label: 'Storage', href: '/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
 ];
 

@@ -2,6 +2,7 @@
 
 import { Chip } from '@mui/material';
 import dayjs from 'dayjs';
+import { createExcelCompatibleCsv, downloadCsvFile } from '@/lib/csv';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
@@ -371,17 +372,8 @@ export function buildOrderStats(rows: OrderRow[]) {
 export function downloadCsv(rows: OrderRow[], label: ExportType) {
   const headers = ['เลขที่งาน', 'ลูกค้า', 'เบอร์โทรศัพท์', 'วันที่', 'สถานะ', 'ยอดรวม'];
   const lines = rows.map(row => [row.orderNumber, row.customerName, row.phoneNumber, dayjs(row.date).format('DD/MM/YYYY HH:mm'), STATUS_LABELS_TH[row.status], row.total]);
-  const csv = [headers, ...lines].map(line => line.map(item => `"${String(item).replaceAll('"', '""')}"`).join(',')).join('\n');
-
-  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = `cashierprint-${label}-${dayjs().format('YYYY-MM-DD')}.csv`;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  URL.revokeObjectURL(url);
+  const csv = createExcelCompatibleCsv([headers, ...lines]);
+  downloadCsvFile(csv, `cashierprint-${label}-${dayjs().format('YYYY-MM-DD')}.csv`);
 }
 
 export function printDocument(row: OrderRow, mode: 'receipt' | 'invoice') {

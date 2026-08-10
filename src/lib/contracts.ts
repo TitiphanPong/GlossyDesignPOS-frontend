@@ -33,6 +33,9 @@ export type Product = {
   tint?: string;
   badge?: string;
   active: boolean;
+  quickSaleEnabled?: boolean;
+  isHotMenu?: boolean;
+  quickSaleSortOrder?: number;
   variants: ProductVariant[];
 };
 
@@ -168,6 +171,9 @@ export type ApiOrder = {
   _id: string;
   orderId: string;
   orderNumber?: string;
+  orderType?: 'NORMAL' | 'QUICK_SALE';
+  receivedAmount?: number;
+  changeAmount?: number;
   customerName?: string;
   phoneNumber?: string;
   email?: string;

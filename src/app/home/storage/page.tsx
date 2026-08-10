@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import * as React from 'react';
+import { createExcelCompatibleCsv, downloadCsvFile } from '@/lib/csv';
 import {
   Alert,
   alpha,
@@ -372,7 +373,7 @@ function toStructuredStage(status?: StorageStatus): 'waiting-download' | 'pendin
 function toCsv(rows: StorageRow[]) {
   const headers = ['วันที่อัปโหลด', 'ชื่อลูกค้า', 'เบอร์โทร', 'LINE ID', 'ประเภทงาน', 'สถานะ', 'หมายเหตุ'];
   const body = rows.map(row => [formatDate(row.uploadDate), row.customerName, row.phone, row.lineId, row.jobType, storageStatusLabel(row.status), row.notes]);
-  return [headers, ...body].map(line => line.map(item => `"${String(item).replaceAll('"', '""')}"`).join(',')).join('\n');
+  return createExcelCompatibleCsv([headers, ...body]);
 }
 
 type StatCardProps = {
@@ -671,15 +672,7 @@ export default function StoragePage() { // NOSONAR: page orchestration is intent
 
   const exportFiltered = React.useCallback(() => {
     const csv = toCsv(filteredRows);
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-    const href = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = href;
-    anchor.download = `storage-export-${new Date().toISOString().slice(0, 10)}.csv`;
-    document.body.appendChild(anchor);
-    anchor.click();
-    anchor.remove();
-    URL.revokeObjectURL(href);
+    downloadCsvFile(csv, `storage-export-${new Date().toISOString().slice(0, 10)}.csv`);
   }, [filteredRows]);
 
   const handleBulkStatus = React.useCallback(async () => {

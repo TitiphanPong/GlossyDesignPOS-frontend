@@ -71,6 +71,9 @@ export function normalizeProduct(value: unknown): Product | null {
     tint: readString(value.tint, '#F4F7FB'),
     badge: readString(value.badge) || undefined,
     active: readBoolean(value.active, true),
+    quickSaleEnabled: readBoolean(value.quickSaleEnabled, false),
+    isHotMenu: readBoolean(value.isHotMenu, false),
+    quickSaleSortOrder: readNumber(value.quickSaleSortOrder, Number.MAX_SAFE_INTEGER),
     variants,
   };
 }
