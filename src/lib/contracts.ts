@@ -36,6 +36,8 @@ export type Product = {
   quickSaleEnabled?: boolean;
   isHotMenu?: boolean;
   quickSaleSortOrder?: number;
+  unitLabel?: string;
+  priceDisplayMode?: 'FIXED' | 'STARTING_AT';
   variants: ProductVariant[];
 };
 

@@ -1,5 +1,9 @@
 export type DiscountMode = 'amount' | 'percent';
 
+export function isDefaultVariantName(value: string): boolean {
+  return value.trim().toLowerCase() === 'default';
+}
+
 export function roundMoney(value: number): number {
   return Math.round((Number.isFinite(value) ? value : 0) * 100) / 100;
 }

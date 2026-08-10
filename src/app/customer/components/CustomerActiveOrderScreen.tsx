@@ -187,6 +187,7 @@ export function ActiveOrderScreen({
                 <div>
                   <div className="text-[11px] font-semibold tracking-[0.18em] text-slate-400 uppercase">Order Number</div>
                   <div className="mt-1.5 text-[1.7rem] font-semibold tracking-tight text-blue-700 sm:text-[1.95rem] md:text-[2.15rem] xl:text-[2.35rem]">{orderNumber}</div>
+                  {order.customerName ? <div className="mt-1 text-sm font-semibold text-slate-600">{order.customerName}</div> : null}
                 </div>
               </div>
             </div>

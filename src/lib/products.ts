@@ -74,6 +74,8 @@ export function normalizeProduct(value: unknown): Product | null {
     quickSaleEnabled: readBoolean(value.quickSaleEnabled, false),
     isHotMenu: readBoolean(value.isHotMenu, false),
     quickSaleSortOrder: readNumber(value.quickSaleSortOrder, Number.MAX_SAFE_INTEGER),
+    unitLabel: readString(value.unitLabel) || undefined,
+    priceDisplayMode: value.priceDisplayMode === 'STARTING_AT' ? 'STARTING_AT' : 'FIXED',
     variants,
   };
 }
@@ -94,6 +96,13 @@ export function extractProductFromResponse(value: unknown): Product | null {
 
 export async function fetchProducts(): Promise<Product[]> {
   const responseBody = await fetchApiJson<unknown>('/products', { cache: 'no-store' });
+  return extractProductsFromResponse(responseBody);
+}
+
+export async function fetchQuickProducts(): Promise<Product[]> {
+  const responseBody = await fetchApiJson<unknown>('/quick-products', {
+    cache: 'no-store',
+  });
   return extractProductsFromResponse(responseBody);
 }
 

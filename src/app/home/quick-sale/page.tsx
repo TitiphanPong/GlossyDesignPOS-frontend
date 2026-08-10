@@ -2,22 +2,50 @@
 
 import * as React from 'react';
 import {
-  Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Drawer,
-  IconButton, InputAdornment, Paper, Stack, TextField, Typography, useMediaQuery, useTheme,
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Drawer,
+  IconButton,
+  InputAdornment,
+  Paper,
+  Stack,
+  TextField,
+  Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
+import ArticleRoundedIcon from '@mui/icons-material/ArticleRounded';
+import KeyboardArrowRightRoundedIcon from '@mui/icons-material/KeyboardArrowRightRounded';
+import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
+import ApprovalRoundedIcon from '@mui/icons-material/ApprovalRounded';
+import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
+import ContentCutRoundedIcon from '@mui/icons-material/ContentCutRounded';
+import LayersRoundedIcon from '@mui/icons-material/LayersRounded';
+import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import PhotoRoundedIcon from '@mui/icons-material/PhotoRounded';
+import ScannerRoundedIcon from '@mui/icons-material/ScannerRounded';
+import SellRoundedIcon from '@mui/icons-material/SellRounded';
+import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import { createOrder } from '@/lib/orders';
-import { fetchProducts } from '@/lib/products';
+import { fetchQuickProducts } from '@/lib/products';
 import type { PaymentMethod, Product } from '@/lib/contracts';
-import { calculateChange, calculateQuickSale, roundMoney, type DiscountMode } from './quickSale';
+import { buildPendingOrderDraft, PENDING_ORDER_KEY, persistPendingOrderDraft, type StoredPendingOrderDraft } from '@/lib/pending-order';
+import AdminPageContainer from '../components/AdminPageContainer';
+import QuickSellerCart, { type QuickSaleCartItem } from './components/QuickSellerCart';
+import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
+import { calculateChange, calculateQuickSale, isDefaultVariantName, roundMoney, type DiscountMode } from './quickSale';
 
-type QuickItem = { key: string; productId?: string; productCode?: string; productName: string; category: string; quantity: number; unitPrice: number };
+type QuickItem = QuickSaleCartItem;
 type CompletedSale = { orderId: string; orderNumber: string; grandTotal: number; changeAmount: number };
 
 const money = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -27,42 +55,20 @@ function firstActiveVariant(product: Product) {
   return product.variants.find(variant => variant.active);
 }
 
-function CartPanel({ items, setItems, totals, discountValue, discountMode, setDiscountValue, setDiscountMode, onCheckout }:
-  Readonly<{ items: QuickItem[]; setItems: React.Dispatch<React.SetStateAction<QuickItem[]>>; totals: ReturnType<typeof calculateQuickSale>; discountValue: number; discountMode: DiscountMode; setDiscountValue: (value: number) => void; setDiscountMode: (mode: DiscountMode) => void; onCheckout: () => void }>) {
-  const [discountOpen, setDiscountOpen] = React.useState(false);
-  const update = (key: string, values: Partial<QuickItem>) => setItems(previous => previous.map(item => item.key === key ? { ...item, ...values } : item));
-  return <Stack sx={{ height: '100%', minHeight: 0 }}>
-    <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2.5 }}>
-      <Box><Typography variant="h6" fontWeight={800}>รายการขาย</Typography><Typography color="text.secondary" variant="body2">{items.length} รายการ</Typography></Box>
-      <ShoppingCartRoundedIcon color="primary" />
-    </Stack>
-    <Divider />
-    <Stack spacing={1.5} sx={{ p: 2, flex: 1, overflowY: 'auto' }}>
-      {items.length === 0 && <Box sx={{ py: 8, textAlign: 'center', color: 'text.secondary' }}><ShoppingCartRoundedIcon sx={{ fontSize: 46, opacity: .3 }} /><Typography>กดสินค้าเพื่อเริ่มรายการขาย</Typography></Box>}
-      {items.map(item => <Paper variant="outlined" key={item.key} sx={{ p: 1.5, borderRadius: 3 }}>
-        <Stack direction="row" justifyContent="space-between" gap={1}><Typography fontWeight={700}>{item.productName}</Typography><IconButton size="small" aria-label={`ลบ ${item.productName}`} onClick={() => setItems(previous => previous.filter(row => row.key !== item.key))}><DeleteOutlineRoundedIcon fontSize="small" /></IconButton></Stack>
-        <Stack direction="row" alignItems="center" gap={1} sx={{ mt: 1 }}>
-          <IconButton sx={touchButton} onClick={() => update(item.key, { quantity: Math.max(1, item.quantity - 1) })}><RemoveRoundedIcon /></IconButton>
-          <TextField type="number" size="small" value={item.quantity} inputProps={{ min: 1, 'aria-label': `จำนวน ${item.productName}` }} onChange={event => update(item.key, { quantity: Math.max(1, Math.floor(Number(event.target.value) || 1)) })} sx={{ width: 72, '& input': { textAlign: 'center' } }} />
-          <IconButton sx={touchButton} onClick={() => update(item.key, { quantity: item.quantity + 1 })}><AddRoundedIcon /></IconButton>
-          <TextField label="ราคา/หน่วย" type="number" size="small" value={item.unitPrice} inputProps={{ min: 0, step: .01 }} onChange={event => update(item.key, { unitPrice: Math.max(0, Number(event.target.value) || 0) })} sx={{ ml: 'auto', width: 112 }} />
-        </Stack>
-        <Typography textAlign="right" fontWeight={700} sx={{ mt: 1 }}>฿{money.format(roundMoney(item.quantity * item.unitPrice))}</Typography>
-      </Paper>)}
-    </Stack>
-    <Divider />
-    <Stack spacing={1.25} sx={{ p: 2.5 }}>
-      <Stack direction="row" justifyContent="space-between"><Typography color="text.secondary">ยอดรวม</Typography><Typography>฿{money.format(totals.subtotal)}</Typography></Stack>
-      {discountOpen ? <Stack direction="row" gap={1}>
-        <Button variant={discountMode === 'amount' ? 'contained' : 'outlined'} onClick={() => setDiscountMode('amount')}>บาท</Button>
-        <Button variant={discountMode === 'percent' ? 'contained' : 'outlined'} onClick={() => setDiscountMode('percent')}>%</Button>
-        <TextField autoFocus size="small" type="number" value={discountValue} inputProps={{ min: 0 }} onChange={event => setDiscountValue(Math.max(0, Number(event.target.value) || 0))} />
-      </Stack> : <Button size="small" sx={{ alignSelf: 'flex-start' }} onClick={() => setDiscountOpen(true)}>+ ส่วนลด</Button>}
-      <Stack direction="row" justifyContent="space-between"><Typography color="text.secondary">ส่วนลด</Typography><Typography>-฿{money.format(totals.discount)}</Typography></Stack>
-      <Divider /><Stack direction="row" justifyContent="space-between" alignItems="baseline"><Typography fontWeight={800}>ยอดสุทธิ</Typography><Typography variant="h5" color="primary" fontWeight={900}>฿{money.format(totals.grandTotal)}</Typography></Stack>
-      <Button variant="contained" size="large" disabled={!items.length} onClick={onCheckout} startIcon={<PointOfSaleRoundedIcon />} sx={{ minHeight: 58, borderRadius: 3, fontSize: 17, fontWeight: 800 }}>ชำระเงิน ฿{money.format(totals.grandTotal)}</Button>
-    </Stack>
-  </Stack>;
+function getProductVisual(product: Product): { Icon: React.ElementType; background: string; color: string } {
+  const identity = `${product.name} ${product.category} ${product.code} ${product.typeCode}`.toLowerCase();
+
+  if (/ตรายาง|stamp/u.test(identity)) return { Icon: ApprovalRoundedIcon, background: '#F3E8FF', color: '#9333EA' };
+  if (/นามบัตร|name.?card|business.?card/u.test(identity)) return { Icon: BadgeRoundedIcon, background: '#E0F2FE', color: '#0284C7' };
+  if (/สติ๊กเกอร์|sticker|label/u.test(identity)) return { Icon: SellRoundedIcon, background: '#FEF3C7', color: '#D97706' };
+  if (/รูป|photo|ภาพ/u.test(identity)) return { Icon: PhotoRoundedIcon, background: '#FCE7F3', color: '#DB2777' };
+  if (/สแกน|scan/u.test(identity)) return { Icon: ScannerRoundedIcon, background: '#E0F2FE', color: '#0369A1' };
+  if (/เข้าเล่ม|binding|book/u.test(identity)) return { Icon: MenuBookRoundedIcon, background: '#EDE9FE', color: '#7C3AED' };
+  if (/เคลือบ|laminat|coat/u.test(identity)) return { Icon: LayersRoundedIcon, background: '#DCFCE7', color: '#16A34A' };
+  if (/ตัด|cut/u.test(identity)) return { Icon: ContentCutRoundedIcon, background: '#FFEDD5', color: '#EA580C' };
+  if (/พรีเมียม|premium/u.test(identity)) return { Icon: WorkspacePremiumRoundedIcon, background: '#FEF9C3', color: '#CA8A04' };
+  if (/พิมพ์|ปริ้น|print|inkjet|plot/u.test(identity)) return { Icon: LocalPrintshopRoundedIcon, background: '#DBEAFE', color: '#2563EB' };
+  return { Icon: ArticleRoundedIcon, background: '#E2E8F0', color: '#52657C' };
 }
 
 export default function QuickSalePage() {
@@ -88,10 +94,87 @@ export default function QuickSalePage() {
   const [receivedAmount, setReceivedAmount] = React.useState(0);
   const [submitting, setSubmitting] = React.useState(false);
   const [completed, setCompleted] = React.useState<CompletedSale | null>(null);
+  const [checkoutDraftId, setCheckoutDraftId] = React.useState<string | null>(null);
 
-  React.useEffect(() => { void fetchProducts().then(setProducts).catch(() => setError('โหลดสินค้าไม่สำเร็จ กรุณาลองใหม่')).finally(() => setLoading(false)); }, []);
+  const clearQuickSaleCustomerDisplay = React.useCallback(() => {
+    const draftId = checkoutDraftId;
+    if (globalThis.window === undefined || !draftId) return;
+
+    try {
+      const stored = globalThis.localStorage.getItem(PENDING_ORDER_KEY);
+      const pending = stored ? (JSON.parse(stored) as StoredPendingOrderDraft) : null;
+      if (pending?.clientDraftId === draftId) {
+        persistPendingOrderDraft(null);
+      }
+    } catch {
+      persistPendingOrderDraft(null);
+    }
+  }, [checkoutDraftId]);
+
+  const openCheckout = React.useCallback(() => {
+    setCheckoutDraftId(crypto.randomUUID());
+    setCheckoutOpen(true);
+  }, []);
+
+  const closeCheckout = React.useCallback(() => {
+    clearQuickSaleCustomerDisplay();
+    setCheckoutDraftId(null);
+    setCheckoutOpen(false);
+  }, [clearQuickSaleCustomerDisplay]);
+
+  React.useEffect(() => {
+    void fetchQuickProducts()
+      .then(data => {
+        setProducts(data);
+      })
+      .catch(() => setError('โหลดสินค้าไม่สำเร็จ กรุณาลองใหม่'))
+      .finally(() => setLoading(false));
+  }, []);
   const subtotal = React.useMemo(() => roundMoney(items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)), [items]);
   const totals = React.useMemo(() => calculateQuickSale(subtotal, discountValue, discountMode), [subtotal, discountValue, discountMode]);
+  const customerDisplayDraft = React.useMemo(() => {
+    const draftId = checkoutDraftId;
+    if (!draftId || !items.length) return null;
+
+    return buildPendingOrderDraft({
+      draftId,
+      customer: {
+        customerName: 'ลูกค้าหน้าร้าน',
+        phoneNumber: '',
+        note: '',
+      },
+      payment: paymentMethod,
+      discount: totals.discount,
+      taxInvoice: 'no',
+      totals: {
+        total: totals.subtotal,
+        depositTotal: totals.grandTotal,
+        remainingTotal: 0,
+        adjustedCart: items.map(item => ({
+          productId: item.productId,
+          productCode: item.productCode,
+          name: item.productName,
+          category: item.category,
+          qty: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: roundMoney(item.quantity * item.unitPrice),
+          lineTotal: roundMoney(item.quantity * item.unitPrice),
+          fullPayment: true,
+        })),
+        vatAmount: 0,
+        grandTotal: totals.grandTotal,
+      },
+    });
+  }, [checkoutDraftId, items, paymentMethod, totals]);
+
+  React.useEffect(() => {
+    if (!checkoutOpen) return;
+    if (!customerDisplayDraft) {
+      clearQuickSaleCustomerDisplay();
+      return;
+    }
+    persistPendingOrderDraft(customerDisplayDraft);
+  }, [checkoutOpen, clearQuickSaleCustomerDisplay, customerDisplayDraft]);
   const categories = React.useMemo(() => ['ทั้งหมด', ...Array.from(new Set(products.map(product => product.category))).sort()], [products]);
   const visible = React.useMemo(() => {
     const sellable = products.filter(product => product.active && firstActiveVariant(product));
@@ -102,55 +185,364 @@ export default function QuickSalePage() {
       .filter(product => `${product.name} ${product.code} ${product.typeCode} ${product.category}`.toLowerCase().includes(query.trim().toLowerCase()))
       .sort((a, b) => (a.quickSaleSortOrder ?? Number.MAX_SAFE_INTEGER) - (b.quickSaleSortOrder ?? Number.MAX_SAFE_INTEGER));
   }, [products, category, query]);
+  const popularProducts = React.useMemo(() => {
+    const configured = visible.filter(product => product.isHotMenu || product.quickSaleEnabled);
+    return (configured.length ? configured : visible).slice(0, 12);
+  }, [visible]);
+  const otherProducts = React.useMemo(() => {
+    const popularIds = new Set(popularProducts.map(product => product.id));
+    return visible.filter(product => !popularIds.has(product.id));
+  }, [popularProducts, visible]);
 
   const addProduct = React.useCallback((product: Product) => {
-    const variant = firstActiveVariant(product); if (!variant) return;
+    const variant = firstActiveVariant(product);
+    if (!variant) return;
     const key = `${product.id}:${variant.id || variant._id || variant.name}`;
-    setItems(previous => previous.some(item => item.key === key) ? previous.map(item => item.key === key ? { ...item, quantity: item.quantity + 1 } : item) : [...previous, { key, productId: product.id, productCode: product.code, productName: variant.name && variant.name !== 'Default' ? `${product.name} — ${variant.name}` : product.name, category: product.category, quantity: 1, unitPrice: variant.price }]);
+    setItems(previous =>
+      previous.some(item => item.key === key)
+        ? previous.map(item => (item.key === key ? { ...item, quantity: item.quantity + 1 } : item))
+        : [
+            ...previous,
+            {
+              key,
+              productId: product.id,
+              productCode: product.code,
+              productName: !isDefaultVariantName(variant.name) ? `${product.name} — ${variant.name}` : product.name,
+              category: product.category,
+              quantity: 1,
+              unitPrice: variant.price,
+            },
+          ]
+    );
   }, []);
 
   React.useEffect(() => {
     const handler = (event: KeyboardEvent) => {
-      const target = event.target as HTMLElement | null; const typing = target?.matches('input, textarea, [contenteditable="true"]');
-      if (event.key === 'Escape') { setCheckoutOpen(false); setCustomOpen(false); setCartOpen(false); return; }
+      const target = event.target as HTMLElement | null;
+      const typing = target?.matches('input, textarea, [contenteditable="true"]');
+      if (event.key === 'Escape') {
+        closeCheckout();
+        setCustomOpen(false);
+        setCartOpen(false);
+        return;
+      }
       if (typing) return;
-      if (event.key === 'F2') { event.preventDefault(); searchRef.current?.focus(); }
-      if (event.key === 'F9' && items.length) { event.preventDefault(); setCheckoutOpen(true); }
+      if (event.key === 'F2') {
+        event.preventDefault();
+        searchRef.current?.focus();
+      }
+      if (event.key === 'F9' && items.length) {
+        event.preventDefault();
+        openCheckout();
+      }
       if (event.key === 'Enter' && visible.length) addProduct(visible[0]);
     };
-    globalThis.addEventListener('keydown', handler); return () => globalThis.removeEventListener('keydown', handler);
-  }, [addProduct, items.length, visible]);
+    globalThis.addEventListener('keydown', handler);
+    return () => globalThis.removeEventListener('keydown', handler);
+  }, [addProduct, closeCheckout, items.length, openCheckout, visible]);
 
-  const addCustom = () => { const price = Number(customPrice); if (!customName.trim() || !Number.isFinite(price) || price < 0) return; setItems(previous => [...previous, { key: `custom:${crypto.randomUUID()}`, productName: customName.trim(), category: 'อื่นๆ', quantity: Math.max(1, customQuantity), unitPrice: price }]); setCustomName(''); setCustomQuantity(1); setCustomPrice(''); setCustomOpen(false); };
-  const startNew = () => { setItems([]); setDiscountValue(0); setCompleted(null); setReceivedAmount(0); setPaymentMethod('cash'); };
+  const addCustom = () => {
+    const price = Number(customPrice);
+    if (!customName.trim() || !Number.isFinite(price) || price < 0) return;
+    setItems(previous => [...previous, { key: `custom:${crypto.randomUUID()}`, productName: customName.trim(), category: 'อื่นๆ', quantity: Math.max(1, customQuantity), unitPrice: price }]);
+    setCustomName('');
+    setCustomQuantity(1);
+    setCustomPrice('');
+    setCustomOpen(false);
+  };
+  const startNew = () => {
+    setItems([]);
+    setDiscountValue(0);
+    setCompleted(null);
+    setReceivedAmount(0);
+    setPaymentMethod('cash');
+  };
   const submitSale = async () => {
     if (!items.length || (paymentMethod === 'cash' && receivedAmount < totals.grandTotal)) return;
-    setSubmitting(true); setError(null);
+    setSubmitting(true);
+    setError(null);
     try {
-      const result = await createOrder({ clientDraftId: crypto.randomUUID(), orderType: 'QUICK_SALE', salesChannel: 'quick_sale', customerName: '', phoneNumber: '', note: '', cart: items.map(item => ({ productId: item.productId, productCode: item.productCode, name: item.productName, category: item.category, qty: item.quantity, unitPrice: item.unitPrice, totalPrice: roundMoney(item.quantity * item.unitPrice), lineTotal: roundMoney(item.quantity * item.unitPrice), fullPayment: true })), subtotal: totals.subtotal, total: totals.subtotal, discount: totals.discount, grandTotal: totals.grandTotal, payment: paymentMethod, paymentMethod, paidAmount: totals.grandTotal, depositTotal: totals.grandTotal, remainingTotal: 0, receivedAmount: paymentMethod === 'cash' ? receivedAmount : totals.grandTotal, changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, totals.grandTotal) : 0, status: 'paid', taxInvoice: 'no', vatAmount: 0 });
-      setCompleted({ orderId: result.orderId, orderNumber: result.orderNumber, grandTotal: totals.grandTotal, changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, totals.grandTotal) : 0 }); setCheckoutOpen(false); setCartOpen(false); setItems([]); setDiscountValue(0);
-    } catch (caught) { setError(caught instanceof Error ? caught.message : 'บันทึกการขายไม่สำเร็จ'); } finally { setSubmitting(false); }
+      const clientDraftId = checkoutDraftId ?? crypto.randomUUID();
+      const result = await createOrder({
+        clientDraftId,
+        orderType: 'QUICK_SALE',
+        salesChannel: 'quick_sale',
+        customerName: '',
+        phoneNumber: '',
+        note: '',
+        cart: items.map(item => ({
+          productId: item.productId,
+          productCode: item.productCode,
+          name: item.productName,
+          category: item.category,
+          qty: item.quantity,
+          unitPrice: item.unitPrice,
+          totalPrice: roundMoney(item.quantity * item.unitPrice),
+          lineTotal: roundMoney(item.quantity * item.unitPrice),
+          fullPayment: true,
+        })),
+        subtotal: totals.subtotal,
+        total: totals.subtotal,
+        discount: totals.discount,
+        grandTotal: totals.grandTotal,
+        payment: paymentMethod,
+        paymentMethod,
+        paidAmount: totals.grandTotal,
+        depositTotal: totals.grandTotal,
+        remainingTotal: 0,
+        receivedAmount: paymentMethod === 'cash' ? receivedAmount : totals.grandTotal,
+        changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, totals.grandTotal) : 0,
+        status: 'paid',
+        taxInvoice: 'no',
+        vatAmount: 0,
+      });
+      setCompleted({
+        orderId: result.orderId,
+        orderNumber: result.orderNumber,
+        grandTotal: totals.grandTotal,
+        changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, totals.grandTotal) : 0,
+      });
+      if (customerDisplayDraft) {
+        persistPendingOrderDraft({
+          ...customerDisplayDraft,
+          orderId: result.orderId,
+          orderNumber: result.orderNumber,
+          status: 'paid',
+          orderSyncStatus: 'submitted',
+        });
+      }
+      setCheckoutDraftId(null);
+      setCheckoutOpen(false);
+      setCartOpen(false);
+      setItems([]);
+      setDiscountValue(0);
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : 'บันทึกการขายไม่สำเร็จ');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
-  const cart = <CartPanel items={items} setItems={setItems} totals={totals} discountValue={discountValue} discountMode={discountMode} setDiscountValue={setDiscountValue} setDiscountMode={setDiscountMode} onCheckout={() => setCheckoutOpen(true)} />;
-  return <Box sx={{ minHeight: '100vh', bgcolor: '#F5F7FB', p: { xs: 2, md: 3 }, pt: { xs: 8, md: 3 } }}>
-    <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={2} sx={{ mb: 2.5 }}><Box><Typography variant="h4" fontWeight={900}>ขายหน้าร้าน</Typography><Typography color="text.secondary">Quick Sale · F2 ค้นหา · F9 ชำระเงิน</Typography></Box><TextField inputRef={searchRef} value={query} onChange={event => setQuery(event.target.value)} placeholder="ค้นหาสินค้า..." sx={{ width: { xs: '100%', sm: 360 }, bgcolor: 'white' }} InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon /></InputAdornment> }} /></Stack>
-    {error && <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>{error}</Alert>}
-    <Box sx={{ display: 'grid', gridTemplateColumns: compact ? '1fr' : 'minmax(0, 65fr) minmax(340px, 35fr)', gap: 2.5, alignItems: 'start' }}>
-      <Paper variant="outlined" sx={{ p: { xs: 2, md: 2.5 }, borderRadius: 4, minHeight: 600 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}><Box><Typography fontWeight={900} color="primary">HOT MENU</Typography><Typography variant="body2" color="text.secondary">แตะสินค้าเพื่อเพิ่มเข้ารายการทันที</Typography></Box><Button variant="outlined" startIcon={<AddRoundedIcon />} onClick={() => setCustomOpen(true)} sx={{ minHeight: 46, borderRadius: 3 }}>รายการอื่น</Button></Stack>
-        <Stack direction="row" gap={1} sx={{ overflowX: 'auto', pb: 2 }}>{categories.map(value => <Chip key={value} label={value} clickable color={category === value ? 'primary' : 'default'} onClick={() => setCategory(value)} sx={{ minHeight: 38, px: .5 }} />)}</Stack>
-        {loading ? <Typography sx={{ py: 8, textAlign: 'center' }}>กำลังโหลดสินค้า...</Typography> : visible.length === 0 ? <Box sx={{ py: 8, textAlign: 'center' }}><Typography fontWeight={700}>ไม่พบสินค้า Quick Sale</Typography><Typography color="text.secondary">ค้นหาสินค้าทั้งหมด หรือกำหนด quickSaleEnabled ใน Product</Typography></Box> : <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>{visible.map(product => { const variant = firstActiveVariant(product)!; return <Button key={product.id} variant="outlined" onClick={() => addProduct(product)} sx={{ minHeight: 126, p: 2, borderRadius: 3.5, textAlign: 'left', alignItems: 'stretch', justifyContent: 'space-between', flexDirection: 'column', textTransform: 'none', bgcolor: 'white', borderColor: product.isHotMenu ? 'primary.light' : 'divider' }}><Typography color="text.primary" fontSize={17} fontWeight={800}>{product.name}</Typography><Box><Typography variant="caption" color="text.secondary">{product.category}</Typography><Typography color="primary" fontWeight={800}>฿{money.format(variant.price)}{variant.name !== 'Default' ? ` · ${variant.name}` : ''}</Typography></Box></Button>; })}</Box>}
-      </Paper>
-      {!compact && <Paper variant="outlined" sx={{ position: 'sticky', top: 24, height: 'calc(100vh - 48px)', borderRadius: 4, overflow: 'hidden' }}>{cart}</Paper>}
-    </Box>
-    {compact && <Paper sx={{ position: 'fixed', bottom: 0, left: mobile ? 0 : 92, right: 0, zIndex: 1000, p: 1.5, borderRadius: 0 }}><Button fullWidth variant="contained" size="large" onClick={() => setCartOpen(true)} disabled={!items.length} sx={{ minHeight: 54 }}>ดูรายการ ({items.length}) · ฿{money.format(totals.grandTotal)}</Button></Paper>}
-    <Drawer anchor="right" open={cartOpen} onClose={() => setCartOpen(false)} PaperProps={{ sx: { width: { xs: '100%', sm: 430 } } }}>{cart}</Drawer>
+  const cart = (
+    <QuickSellerCart
+      items={items}
+      setItems={setItems}
+      totals={totals}
+      discountValue={discountValue}
+      discountMode={discountMode}
+      setDiscountValue={setDiscountValue}
+      setDiscountMode={setDiscountMode}
+      onCheckout={openCheckout}
+    />
+  );
+  return (
+    <AdminPageContainer>
+      {error && (
+        <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+      <Box sx={{ display: 'grid', gridTemplateColumns: compact ? '1fr' : 'minmax(0, 1.85fr) minmax(370px, 1fr)', gap: 2, alignItems: 'start' }}>
+        <Paper variant="outlined" sx={{ p: { xs: 1.75, md: 2.25 }, borderRadius: 4, minHeight: 600, borderColor: '#E2E8F0', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.04)' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.25} sx={{ mb: 1.5 }}>
+            <TextField
+              inputRef={searchRef}
+              fullWidth
+              value={query}
+              onChange={event => setQuery(event.target.value)}
+              placeholder="ค้นหาสินค้า / สแกนบาร์โค้ด (F2)"
+              sx={{ '& .MuiOutlinedInput-root': { minHeight: 52, borderRadius: 2.5, bgcolor: '#FFFFFF', fontSize: 15 } }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <SearchRoundedIcon sx={{ color: '#64748B' }} />
+                  </InputAdornment>
+                ),
+                endAdornment: <InputAdornment position="end"><Chip size="small" label="F2" sx={{ borderRadius: 1.5, color: '#64748B' }} /></InputAdornment>,
+              }}
+            />
+            <Button variant="outlined" startIcon={<AddRoundedIcon />} onClick={() => setCustomOpen(true)} sx={{ minWidth: 132, minHeight: 52, borderRadius: 2.5, bgcolor: '#FFFFFF', fontWeight: 800 }}>
+              รายการอื่น
+            </Button>
+          </Stack>
+          <Stack direction="row" gap={1} sx={{ overflowX: 'auto', pb: 2, scrollbarWidth: 'none' }}>
+            {categories.map(value => (
+              <Chip
+                key={value}
+                label={value}
+                clickable
+                color={category === value ? 'primary' : 'default'}
+                variant={category === value ? 'filled' : 'outlined'}
+                onClick={() => setCategory(value)}
+                sx={{ minHeight: 40, px: 0.5, flexShrink: 0, fontWeight: category === value ? 700 : 500, borderColor: '#E2E8F0' }}
+              />
+            ))}
+          </Stack>
+          <Stack direction="row" alignItems="center" gap={0.75} sx={{ mb: 1.25 }}>
+            <LocalFireDepartmentRoundedIcon sx={{ color: '#F97316', fontSize: 22 }} />
+            <Typography fontWeight={900} color="#172033">สินค้ายอดนิยม</Typography>
+            <Typography variant="body2" color="text.secondary">(กดเพิ่มลงรายการทันที)</Typography>
+          </Stack>
+          {loading ? (
+            <Typography sx={{ py: 8, textAlign: 'center' }}>กำลังโหลดสินค้า...</Typography>
+          ) : visible.length === 0 ? (
+            <Box sx={{ py: 8, textAlign: 'center' }}>
+              <Typography fontWeight={700}>ไม่พบสินค้า Quick Sale</Typography>
+              <Typography color="text.secondary">ค้นหาสินค้าทั้งหมด หรือกำหนด quickSaleEnabled ใน Product</Typography>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' }, gap: 1.25 }}>
+              {popularProducts.map(product => {
+                const variant = firstActiveVariant(product)!;
+                const visual = getProductVisual(product);
+                return (
+                  <Button
+                    key={product.id}
+                    variant="outlined"
+                    onClick={() => addProduct(product)}
+                    sx={{
+                      minHeight: 148,
+                      p: 1.75,
+                      borderRadius: 3,
+                      textAlign: 'center',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      flexDirection: 'column',
+                      textTransform: 'none',
+                      bgcolor: '#FFFFFF',
+                      borderColor: product.isHotMenu ? '#93B4FF' : '#E2E8F0',
+                      boxShadow: product.isHotMenu ? '0 5px 16px rgba(37, 99, 235, 0.08)' : 'none',
+                      transition: 'border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease',
+                      '&:hover': { borderColor: '#2563EB', bgcolor: '#F8FBFF', boxShadow: '0 8px 20px rgba(37, 99, 235, 0.12)', transform: 'translateY(-1px)' },
+                    }}>
+                    <Box sx={{ width: 54, height: 54, borderRadius: 2.5, display: 'grid', placeItems: 'center', bgcolor: product.emoji ? product.tint || visual.background : visual.background, color: visual.color, fontSize: 30 }}>
+                      {product.emoji || <visual.Icon sx={{ fontSize: 34 }} />}
+                    </Box>
+                    <Box>
+                      <Typography color="#0F172A" fontSize={16} fontWeight={900} lineHeight={1.3}>{product.name}</Typography>
+                      <Typography color="#53657D" fontSize={13} fontWeight={600} sx={{ mt: 0.35 }}>
+                        {product.priceDisplayMode === 'STARTING_AT' ? 'เริ่มต้น ' : ''}฿{money.format(variant.price)}
+                        {product.unitLabel ? ` / ${product.unitLabel}` : ''}
+                        {!isDefaultVariantName(variant.name) ? ` · ${variant.name}` : ''}
+                      </Typography>
+                    </Box>
+                  </Button>
+                );
+              })}
+            </Box>
+          )}
+          {!loading && otherProducts.length > 0 && (
+            <Box sx={{ mt: 2.25 }}>
+              <Typography fontWeight={900} color="#172033" sx={{ mb: 1.1 }}>สินค้าทั้งหมด</Typography>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1 }}>
+                {otherProducts.map(product => {
+                  const variant = firstActiveVariant(product)!;
+                  const visual = getProductVisual(product);
+                  return (
+                    <Button
+                      key={product.id}
+                      variant="outlined"
+                      onClick={() => addProduct(product)}
+                      sx={{ minHeight: 62, px: 1.25, borderRadius: 2.5, borderColor: '#E2E8F0', bgcolor: '#FFFFFF', textTransform: 'none', justifyContent: 'flex-start', textAlign: 'left' }}>
+                      <Box sx={{ width: 38, height: 38, mr: 1.25, flexShrink: 0, borderRadius: 2, display: 'grid', placeItems: 'center', bgcolor: visual.background, color: visual.color }}>
+                        <visual.Icon fontSize="small" />
+                      </Box>
+                      <Box sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography noWrap color="#172033" fontWeight={800}>{product.name}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {product.priceDisplayMode === 'STARTING_AT' ? 'เริ่มต้น ' : ''}฿{money.format(variant.price)}{product.unitLabel ? ` / ${product.unitLabel}` : ''}
+                        </Typography>
+                      </Box>
+                      <KeyboardArrowRightRoundedIcon sx={{ color: '#64748B' }} />
+                    </Button>
+                  );
+                })}
+              </Box>
+            </Box>
+          )}
+        </Paper>
+        {!compact && (
+          <Paper variant="outlined" sx={{ position: 'sticky', top: 20, height: 'min(760px, calc(100vh - 40px))', borderRadius: 4, overflow: 'hidden', borderColor: '#DCE4EF', boxShadow: '0 12px 32px rgba(15, 23, 42, 0.07)' }}>
+            {cart}
+          </Paper>
+        )}
+      </Box>
+      {compact && (
+        <Paper sx={{ position: 'fixed', bottom: 0, left: mobile ? 0 : 92, right: 0, zIndex: 1000, p: 1.5, borderRadius: 0, borderTop: '1px solid #DCE4EF', boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.1)' }}>
+          <Button fullWidth variant="contained" size="large" onClick={() => setCartOpen(true)} disabled={!items.length} sx={{ minHeight: 54 }}>
+            ดูรายการ ({items.length}) · ฿{money.format(totals.grandTotal)}
+          </Button>
+        </Paper>
+      )}
+      <Drawer anchor="right" open={cartOpen} onClose={() => setCartOpen(false)} PaperProps={{ sx: { width: { xs: '100%', sm: 430 } } }}>
+        {cart}
+      </Drawer>
 
-    <Dialog open={customOpen} onClose={() => setCustomOpen(false)} fullWidth maxWidth="xs"><DialogTitle>เพิ่มรายการอื่น</DialogTitle><DialogContent><Stack gap={2} sx={{ pt: 1 }}><TextField autoFocus label="ชื่อรายการ" value={customName} onChange={event => setCustomName(event.target.value)} /><Stack direction="row" alignItems="center" gap={1}><IconButton sx={touchButton} onClick={() => setCustomQuantity(value => Math.max(1, value - 1))}><RemoveRoundedIcon /></IconButton><TextField label="จำนวน" type="number" value={customQuantity} onChange={event => setCustomQuantity(Math.max(1, Math.floor(Number(event.target.value) || 1)))} /><IconButton sx={touchButton} onClick={() => setCustomQuantity(value => value + 1)}><AddRoundedIcon /></IconButton></Stack><TextField label="ราคา/หน่วย" type="number" value={customPrice} inputProps={{ min: 0, step: .01 }} onChange={event => setCustomPrice(event.target.value)} /></Stack></DialogContent><DialogActions><Button onClick={() => setCustomOpen(false)}>ยกเลิก</Button><Button variant="contained" disabled={!customName.trim() || customPrice === ''} onClick={addCustom}>เพิ่มรายการ</Button></DialogActions></Dialog>
+      <Dialog open={customOpen} onClose={() => setCustomOpen(false)} fullWidth maxWidth="xs">
+        <DialogTitle>เพิ่มรายการอื่น</DialogTitle>
+        <DialogContent>
+          <Stack gap={2} sx={{ pt: 1 }}>
+            <TextField autoFocus label="ชื่อรายการ" value={customName} onChange={event => setCustomName(event.target.value)} />
+            <Stack direction="row" alignItems="center" gap={1}>
+              <IconButton sx={touchButton} onClick={() => setCustomQuantity(value => Math.max(1, value - 1))}>
+                <RemoveRoundedIcon />
+              </IconButton>
+              <TextField label="จำนวน" type="number" value={customQuantity} onChange={event => setCustomQuantity(Math.max(1, Math.floor(Number(event.target.value) || 1)))} />
+              <IconButton sx={touchButton} onClick={() => setCustomQuantity(value => value + 1)}>
+                <AddRoundedIcon />
+              </IconButton>
+            </Stack>
+            <TextField label="ราคา/หน่วย" type="number" value={customPrice} inputProps={{ min: 0, step: 0.01 }} onChange={event => setCustomPrice(event.target.value)} />
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setCustomOpen(false)}>ยกเลิก</Button>
+          <Button variant="contained" disabled={!customName.trim() || customPrice === ''} onClick={addCustom}>
+            เพิ่มรายการ
+          </Button>
+        </DialogActions>
+      </Dialog>
 
-    <Dialog open={checkoutOpen} onClose={() => !submitting && setCheckoutOpen(false)} fullWidth maxWidth="sm"><DialogTitle sx={{ fontWeight: 800 }}>ชำระเงิน <IconButton onClick={() => setCheckoutOpen(false)} sx={{ float: 'right' }}><CloseRoundedIcon /></IconButton></DialogTitle><DialogContent><Stack gap={2.5}><Box textAlign="center"><Typography color="text.secondary">ยอดทั้งหมด</Typography><Typography variant="h3" color="primary" fontWeight={900}>฿{money.format(totals.grandTotal)}</Typography></Box><Typography fontWeight={700}>วิธีชำระเงิน</Typography><Stack direction="row" gap={1.5}><Button fullWidth size="large" variant={paymentMethod === 'cash' ? 'contained' : 'outlined'} onClick={() => setPaymentMethod('cash')} sx={{ minHeight: 56 }}>เงินสด</Button><Button fullWidth size="large" variant={paymentMethod === 'promptpay' ? 'contained' : 'outlined'} onClick={() => setPaymentMethod('promptpay')} sx={{ minHeight: 56 }}>โอนเงิน / PromptPay</Button></Stack>{paymentMethod === 'cash' && <><TextField autoFocus label="จำนวนเงินที่รับ" type="number" value={receivedAmount || ''} inputProps={{ min: 0, step: .01 }} onChange={event => setReceivedAmount(Math.max(0, Number(event.target.value) || 0))} /><Stack direction="row" gap={1} flexWrap="wrap">{[{ label: 'พอดี', value: totals.grandTotal }, { label: '100', value: 100 }, { label: '500', value: 500 }, { label: '1,000', value: 1000 }].map(option => <Button key={option.label} variant="outlined" onClick={() => setReceivedAmount(option.value)} sx={touchButton}>{option.label}</Button>)}</Stack><Paper variant="outlined" sx={{ p: 2, borderRadius: 3, textAlign: 'center' }}><Typography color="text.secondary">เงินทอน</Typography><Typography variant="h4" fontWeight={900}>฿{money.format(calculateChange(receivedAmount, totals.grandTotal))}</Typography></Paper>{receivedAmount < totals.grandTotal && <Alert severity="warning">จำนวนเงินที่รับยังไม่ครบ</Alert>}</>}</Stack></DialogContent><DialogActions sx={{ p: 3 }}><Button fullWidth variant="contained" size="large" disabled={submitting || (paymentMethod === 'cash' && receivedAmount < totals.grandTotal)} onClick={() => void submitSale()} sx={{ minHeight: 58, fontWeight: 800 }}>{submitting ? 'กำลังบันทึก...' : 'ยืนยันการขาย'}</Button></DialogActions></Dialog>
+      <QuickSalePaymentDialog
+        open={checkoutOpen}
+        itemCount={items.length}
+        grandTotal={totals.grandTotal}
+        paymentMethod={paymentMethod}
+        receivedAmount={receivedAmount}
+        submitting={submitting}
+        onClose={closeCheckout}
+        onPaymentMethodChange={setPaymentMethod}
+        onReceivedAmountChange={setReceivedAmount}
+        onConfirm={() => void submitSale()}
+      />
 
-    <Dialog open={Boolean(completed)} fullWidth maxWidth="xs"><DialogContent><Stack alignItems="center" gap={2} sx={{ py: 3 }}><Box sx={{ width: 68, height: 68, borderRadius: '50%', bgcolor: 'success.light', color: 'success.dark', display: 'grid', placeItems: 'center', fontSize: 38 }}>✓</Box><Typography variant="h5" fontWeight={900}>ขายสำเร็จ</Typography><Typography variant="h6" color="primary" fontWeight={800}>{completed?.orderNumber}</Typography><Stack direction="row" justifyContent="space-between" width="100%"><Typography>ยอดชำระ</Typography><Typography fontWeight={800}>฿{money.format(completed?.grandTotal ?? 0)}</Typography></Stack><Stack direction="row" justifyContent="space-between" width="100%"><Typography>เงินทอน</Typography><Typography fontWeight={800}>฿{money.format(completed?.changeAmount ?? 0)}</Typography></Stack><Button fullWidth variant="contained" size="large" onClick={startNew}>ขายรายการใหม่</Button><Button fullWidth variant="outlined" onClick={() => completed && globalThis.open(`/print/invoice/${encodeURIComponent(completed.orderId)}`, '_blank')}>พิมพ์ใบเสร็จ</Button></Stack></DialogContent></Dialog>
-  </Box>;
+      <Dialog open={Boolean(completed)} fullWidth maxWidth="xs">
+        <DialogContent>
+          <Stack alignItems="center" gap={2} sx={{ py: 3 }}>
+            <Box sx={{ width: 68, height: 68, borderRadius: '50%', bgcolor: 'success.light', color: 'success.dark', display: 'grid', placeItems: 'center', fontSize: 38 }}>✓</Box>
+            <Typography variant="h5" fontWeight={900}>
+              ขายสำเร็จ
+            </Typography>
+            <Typography variant="h6" color="primary" fontWeight={800}>
+              {completed?.orderNumber}
+            </Typography>
+            <Stack direction="row" justifyContent="space-between" width="100%">
+              <Typography>ยอดชำระ</Typography>
+              <Typography fontWeight={800}>฿{money.format(completed?.grandTotal ?? 0)}</Typography>
+            </Stack>
+            <Stack direction="row" justifyContent="space-between" width="100%">
+              <Typography>เงินทอน</Typography>
+              <Typography fontWeight={800}>฿{money.format(completed?.changeAmount ?? 0)}</Typography>
+            </Stack>
+            <Button fullWidth variant="contained" size="large" onClick={startNew}>
+              ขายรายการใหม่
+            </Button>
+            <Button fullWidth variant="outlined" onClick={() => completed && globalThis.open(`/print/invoice/${encodeURIComponent(completed.orderId)}`, '_blank')}>
+              พิมพ์ใบเสร็จ
+            </Button>
+          </Stack>
+        </DialogContent>
+      </Dialog>
+    </AdminPageContainer>
+  );
 }
