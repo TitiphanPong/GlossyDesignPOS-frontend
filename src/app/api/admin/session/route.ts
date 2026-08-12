@@ -1,10 +1,22 @@
 import { NextResponse } from 'next/server';
-import { ADMIN_AUTH_COOKIE_NAME, ADMIN_AUTH_SESSION_TTL_MS, canAdminLogin, createAdminSession, getAdminAuthConfig, verifyAdminSession } from '@/lib/admin-auth';
+import { ADMIN_AUTH_COOKIE_NAME, ADMIN_AUTH_SESSION_TTL_MS, createAdminSession, getAdminAuthConfig, verifyAdminSession } from '@/lib/admin-auth';
 
 type LoginRequestBody = {
   username?: string;
   password?: string;
 };
+
+type BackendLoginResponse = {
+  accessToken: string;
+  expiresAt: string;
+  user: { username: string; role: 'staff' | 'manager' | 'admin' };
+};
+
+function backendUrl(path: string): string {
+  const base = process.env.BACKEND_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (!base) throw new Error('Backend API is not configured');
+  return `${base.replace(/\/+$/u, '')}${path}`;
+}
 
 function clearSessionCookie(response: NextResponse) {
   response.cookies.set({
@@ -38,7 +50,7 @@ export async function POST(request: Request) {
       {
         message: 'Admin authentication is not configured. Set ADMIN_LOGIN_USERNAME, ADMIN_LOGIN_PASSWORD, and ADMIN_SESSION_SECRET.',
       },
-      { status: 503 },
+      { status: 503 }
     );
   }
 
@@ -56,13 +68,28 @@ export async function POST(request: Request) {
     return NextResponse.json({ message: 'Username and password are required.' }, { status: 400 });
   }
 
-  const authorized = await canAdminLogin(username, password);
-  if (!authorized) {
-    return NextResponse.json({ message: 'Invalid username or password.' }, { status: 401 });
+  let backendSession: BackendLoginResponse;
+  try {
+    const backendResponse = await fetch(backendUrl('/auth/login'), {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ username, password }),
+      cache: 'no-store',
+    });
+    if (!backendResponse.ok) {
+      return NextResponse.json({ message: 'Invalid username or password.' }, { status: backendResponse.status === 429 ? 429 : 401 });
+    }
+    backendSession = (await backendResponse.json()) as BackendLoginResponse;
+  } catch {
+    return NextResponse.json({ message: 'Authentication service is unavailable.' }, { status: 503 });
   }
 
-  const token = await createAdminSession(username);
-  const response = NextResponse.json({ authenticated: true, username });
+  const token = await createAdminSession(backendSession.user.username, Date.now(), process.env, {
+    accessToken: backendSession.accessToken,
+    expiresAt: backendSession.expiresAt,
+    role: backendSession.user.role,
+  });
+  const response = NextResponse.json({ authenticated: true, username: backendSession.user.username, role: backendSession.user.role });
   response.cookies.set({
     name: ADMIN_AUTH_COOKIE_NAME,
     value: token,
@@ -76,8 +103,16 @@ export async function POST(request: Request) {
   return response;
 }
 
-export async function DELETE() {
+export async function DELETE(request: Request) {
   const response = NextResponse.json({ authenticated: false });
+  const token = request.headers.get('cookie')?.match(new RegExp(`${ADMIN_AUTH_COOKIE_NAME}=([^;]+)`))?.[1] ?? null;
+  const session = await verifyAdminSession(token);
+  if (session?.accessToken) {
+    await fetch(backendUrl('/auth/logout'), {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${session.accessToken}` },
+    }).catch(() => undefined);
+  }
   clearSessionCookie(response);
   return response;
 }

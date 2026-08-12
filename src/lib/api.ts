@@ -5,7 +5,7 @@ function normalizeApiBaseUrl(value: string): string {
 }
 
 export function hasApiBaseUrl(): boolean {
-  return Boolean(process.env.NEXT_PUBLIC_API_URL?.trim());
+  return typeof window !== 'undefined' || Boolean(process.env.NEXT_PUBLIC_API_URL?.trim());
 }
 
 export function isMissingApiBaseError(error: unknown): boolean {
@@ -13,6 +13,10 @@ export function isMissingApiBaseError(error: unknown): boolean {
 }
 
 export function getApiBaseUrl(): string {
+  if (typeof window !== 'undefined') {
+    return '/api/backend';
+  }
+
   const apiBase = process.env.NEXT_PUBLIC_API_URL;
   if (!apiBase?.trim()) {
     throw new Error(MISSING_API_BASE_ERROR);
@@ -35,9 +39,7 @@ function readMessageFromBody(body: unknown): string | null {
   }
 
   if (Array.isArray(body)) {
-    const messages = body
-      .filter((value): value is string => typeof value === 'string' && value.trim().length > 0)
-      .map(value => value.trim());
+    const messages = body.filter((value): value is string => typeof value === 'string' && value.trim().length > 0).map(value => value.trim());
 
     if (messages.length > 0) {
       return messages.join(', ');

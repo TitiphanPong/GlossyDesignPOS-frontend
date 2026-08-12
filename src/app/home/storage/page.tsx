@@ -256,6 +256,14 @@ function toEditableStorageStatus(status: StorageStatus): StorageStatus {
 function jobTypeChipSx(jobType: string) {
   const normalized = jobType.toLowerCase();
 
+  if (normalized.includes('document')) {
+    return {
+      color: '#1D4ED8',
+      bgcolor: '#DBEAFE',
+      border: '1px solid #93C5FD',
+    };
+  }
+
   if (normalized.includes('sticker')) {
     return {
       color: '#8A3FFC',
@@ -285,6 +293,14 @@ function jobTypeChipSx(jobType: string) {
       color: '#166534',
       bgcolor: '#ECFDF3',
       border: '1px solid #BBE7D0',
+    };
+  }
+
+  if (normalized.includes('other')) {
+    return {
+      color: '#B45309',
+      bgcolor: '#FEF3C7',
+      border: '1px solid #FCD34D',
     };
   }
 

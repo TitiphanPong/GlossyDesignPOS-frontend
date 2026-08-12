@@ -2,11 +2,13 @@ export const ADMIN_AUTH_STORAGE_KEY = 'auth_token';
 export const ADMIN_AUTH_COOKIE_NAME = 'glossy_admin_session';
 export const ADMIN_LOGIN_REDIRECT_PATH = '/dashboard';
 export const ADMIN_GUARD_REDIRECT_PATH = '/login';
-export const ADMIN_AUTH_SESSION_VERSION = 2;
+export const ADMIN_AUTH_SESSION_VERSION = 3;
 export const ADMIN_AUTH_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
 
 export type AdminAuthSession = {
   username: string;
+  role?: 'staff' | 'manager' | 'admin';
+  accessToken?: string;
   version: number;
   issuedAt: number;
   expiresAt: number;
@@ -96,7 +98,12 @@ export function hasAdminAuthConfig(env: NodeJS.ProcessEnv = process.env): boolea
   return Boolean(getAdminAuthConfig(env));
 }
 
-export async function createAdminSession(username: string, now = Date.now(), env: NodeJS.ProcessEnv = process.env): Promise<string> {
+export async function createAdminSession(
+  username: string,
+  now = Date.now(),
+  env: NodeJS.ProcessEnv = process.env,
+  backend?: { accessToken: string; role: 'staff' | 'manager' | 'admin'; expiresAt: string }
+): Promise<string> {
   const config = getAdminAuthConfig(env);
   if (!config) {
     throw new Error('Admin authentication is not configured');
@@ -104,6 +111,8 @@ export async function createAdminSession(username: string, now = Date.now(), env
 
   const payload = JSON.stringify({
     username,
+    role: backend?.role,
+    accessToken: backend?.accessToken,
     version: ADMIN_AUTH_SESSION_VERSION,
     issuedAt: now,
     expiresAt: now + ADMIN_AUTH_SESSION_TTL_MS,
@@ -149,12 +158,24 @@ export async function verifyAdminSession(token: string | null | undefined, now =
     const version = parsed.version;
     const issuedAt = parsed.issuedAt;
     const expiresAt = parsed.expiresAt;
+    const role = parsed.role;
+    const accessToken = parsed.accessToken;
 
-    if (username !== config.username) {
+    if (typeof username !== 'string' || !username.trim()) {
       return null;
     }
 
     if (version !== ADMIN_AUTH_SESSION_VERSION) {
+      return null;
+    }
+
+    // Version 3 sessions must carry the revocable backend identity used by
+    // the same-origin BFF. Older frontend-only cookies must log in again.
+    if (typeof accessToken !== 'string' || !accessToken) {
+      return null;
+    }
+
+    if (role !== 'staff' && role !== 'manager' && role !== 'admin') {
       return null;
     }
 
@@ -172,6 +193,8 @@ export async function verifyAdminSession(token: string | null | undefined, now =
 
     return {
       username,
+      role,
+      accessToken,
       version,
       issuedAt,
       expiresAt,

@@ -25,7 +25,7 @@ const TEST_ENV: NodeJS.ProcessEnv = {
 
 test('admin auth constants expose the cookie-based contract', () => {
   assert.equal(ADMIN_AUTH_COOKIE_NAME, 'glossy_admin_session');
-  assert.equal(ADMIN_AUTH_SESSION_VERSION, 2);
+  assert.equal(ADMIN_AUTH_SESSION_VERSION, 3);
   assert.equal(ADMIN_AUTH_SESSION_TTL_MS, 12 * 60 * 60 * 1000);
   assert.equal(ADMIN_LOGIN_REDIRECT_PATH, '/dashboard');
   assert.equal(ADMIN_GUARD_REDIRECT_PATH, '/login');
@@ -43,7 +43,11 @@ test('getAdminAuthConfig requires all server-side auth values', () => {
 
 test('createAdminSession and verifyAdminSession round-trip a valid signed cookie', async () => {
   const now = Date.now();
-  const token = await createAdminSession('glossydesign', now, TEST_ENV);
+  const token = await createAdminSession('glossydesign', now, TEST_ENV, {
+    accessToken: 'backend-token',
+    role: 'admin',
+    expiresAt: new Date(now + ADMIN_AUTH_SESSION_TTL_MS).toISOString(),
+  });
   const session = await verifyAdminSession(token, now + 1000, TEST_ENV);
 
   assert.ok(session);
@@ -52,9 +56,46 @@ test('createAdminSession and verifyAdminSession round-trip a valid signed cookie
   assert.equal(session?.issuedAt, now);
 });
 
-test('verifyAdminSession rejects tampered, expired, and malformed cookies', async () => {
+test('backend access token and role remain server-only session claims', async () => {
+  const now = Date.now();
+  const token = await createAdminSession('glossydesign', now, TEST_ENV, {
+    accessToken: 'opaque-backend-token',
+    role: 'admin',
+    expiresAt: new Date(now + ADMIN_AUTH_SESSION_TTL_MS).toISOString(),
+  });
+  const session = await verifyAdminSession(token, now + 1000, TEST_ENV);
+
+  assert.equal(session?.accessToken, 'opaque-backend-token');
+  assert.equal(session?.role, 'admin');
+});
+
+test('verifyAdminSession rejects frontend-only legacy cookies without backend identity', async () => {
   const now = Date.now();
   const token = await createAdminSession('glossydesign', now, TEST_ENV);
+
+  assert.equal(await verifyAdminSession(token, now + 1000, TEST_ENV), null);
+});
+
+test('signed sessions support backend-managed users beyond the bootstrap admin', async () => {
+  const now = Date.now();
+  const token = await createAdminSession('cashier-01', now, TEST_ENV, {
+    accessToken: 'staff-token',
+    role: 'staff',
+    expiresAt: new Date(now + ADMIN_AUTH_SESSION_TTL_MS).toISOString(),
+  });
+
+  const session = await verifyAdminSession(token, now + 1000, TEST_ENV);
+  assert.equal(session?.username, 'cashier-01');
+  assert.equal(session?.role, 'staff');
+});
+
+test('verifyAdminSession rejects tampered, expired, and malformed cookies', async () => {
+  const now = Date.now();
+  const token = await createAdminSession('glossydesign', now, TEST_ENV, {
+    accessToken: 'backend-token',
+    role: 'admin',
+    expiresAt: new Date(now + ADMIN_AUTH_SESSION_TTL_MS).toISOString(),
+  });
   const [payload, signature] = token.split('.');
   const tamperedToken = `${payload}.tampered${signature}`;
 
