@@ -17,6 +17,7 @@ import Face2Icon from '@mui/icons-material/Face2';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded';
 import { destroyAdminBrowserSession } from '@/lib/admin-auth';
+import { transitionDuration, transitionEasing } from '@/components/transitions/transition.config';
 
 export type NavItem = {
   label: string;
@@ -37,16 +38,17 @@ export interface SideMenuProps {
 }
 
 const DEFAULT_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
-  { label: 'Orders', href: '/orders', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
-  { label: 'POS', href: '/pos', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
+  { label: 'Dashboard', href: '/home', icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
+  { label: 'Orders', href: '/home/orders', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
+  { label: 'POS', href: '/home/posseller', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
   { label: 'Quick Seller', href: '/home/quick-sale', icon: <PointOfSaleRoundedIcon fontSize="small" /> },
-  { label: 'Storage', href: '/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
+  { label: 'Storage', href: '/home/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
   { label: 'Staff & Audit', href: '/home/staff', icon: <ManageAccountsRoundedIcon fontSize="small" /> },
 ];
 
 function isActivePath(currentPath: string, href: string) {
   if (href === '#') return false;
+  if (href === '/home') return currentPath === href;
   return currentPath === href || currentPath.startsWith(`${href}/`);
 }
 
@@ -124,8 +126,11 @@ export default function SideMenu({
   onToggleCollapsed,
 }: Readonly<SideMenuProps>) {
   const router = useRouter();
+  const [pendingPath, setPendingPath] = React.useState<string | null>(null);
   const drawerWidth = variant === 'permanent' && collapsed ? collapsedWidth : width;
   const showCollapsedState = variant === 'permanent' && collapsed;
+
+  React.useEffect(() => setPendingPath(null), [currentPath]);
 
   const handleLogout = React.useCallback(() => {
     void (async () => {
@@ -163,14 +168,17 @@ export default function SideMenu({
 
         <List sx={{ px: showCollapsedState ? 1 : 1.3, py: 0.8, flex: 1 }}>
           {items.map(item => {
-            const active = isActivePath(currentPath, item.href);
+            const active = isActivePath(pendingPath ?? currentPath, item.href);
 
             return (
               <Tooltip key={item.label} title={item.href === '#' ? 'Coming soon' : item.label} placement="right" disableHoverListener={!showCollapsedState}>
                 <ListItemButton
                   component={Link}
                   href={item.href}
-                  onClick={onClose}
+                  onClick={() => {
+                    setPendingPath(item.href);
+                    onClose?.();
+                  }}
                   sx={{
                     mb: 0.8,
                     minHeight: 46,
@@ -181,7 +189,7 @@ export default function SideMenu({
                     border: active ? '1px solid rgba(139, 181, 255, 0.55)' : '1px solid transparent',
                     boxShadow: active ? '0 16px 26px rgba(32, 97, 222, 0.32)' : 'none',
                     justifyContent: showCollapsedState ? 'center' : 'flex-start',
-                    transition: 'all 170ms ease',
+                    transition: `background-color ${transitionDuration.menu}ms ${transitionEasing.standard}, color ${transitionDuration.menu}ms ${transitionEasing.standard}, border-color ${transitionDuration.menu}ms ${transitionEasing.standard}, box-shadow ${transitionDuration.menu}ms ${transitionEasing.standard}, transform ${transitionDuration.hover}ms ${transitionEasing.standard}`,
                     '&:hover': {
                       bgcolor: active ? 'rgba(86, 141, 255, 0.3)' : 'rgba(255,255,255,0.09)',
                       transform: 'translateY(-1px)',

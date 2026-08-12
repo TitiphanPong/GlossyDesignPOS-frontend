@@ -14,7 +14,7 @@ type ProductListProps = Readonly<{
 
 const skeletonKeys = ['sk-1', 'sk-2', 'sk-3', 'sk-4', 'sk-5', 'sk-6', 'sk-7', 'sk-8'];
 
-export function ProductList({ loading, filtered, onAddProduct }: ProductListProps) {
+export const ProductList = React.memo(function ProductList({ loading, filtered, onAddProduct }: ProductListProps) {
   return (
     <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: 'repeat(2, minmax(140px, 1fr))', sm: 'repeat(3, minmax(180px, 1fr))', xl: 'repeat(4, minmax(180px, 1fr))' } }}>
       {loading && (
@@ -34,9 +34,9 @@ export function ProductList({ loading, filtered, onAddProduct }: ProductListProp
         </Box>
       )}
       {!loading &&
-        filtered.map((p, index) => (
+        filtered.map(p => (
           <Card
-            key={`${p.id || 'product'}-${index}`}
+            key={p.id}
             variant="outlined"
             sx={{
               ...interactiveCardSx,
@@ -44,7 +44,7 @@ export function ProductList({ loading, filtered, onAddProduct }: ProductListProp
               borderColor: '#E3EAF4',
               boxShadow: '0 10px 24px rgba(14, 38, 74, 0.08)',
               overflow: 'hidden',
-              transition: 'transform 0.22s ease, box-shadow 0.22s ease, border-color 0.22s ease',
+              transition: 'transform 100ms ease, box-shadow 120ms ease, border-color 120ms ease',
               '&:hover': {
                 transform: 'translateY(-3px)',
                 boxShadow: '0 18px 32px rgba(14, 38, 74, 0.16)',
@@ -52,7 +52,7 @@ export function ProductList({ loading, filtered, onAddProduct }: ProductListProp
               },
             }}>
             <Box sx={{ position: 'relative', height: 210, width: '100%', bgcolor: p.tint || '#f5f5f5', overflow: 'hidden' }}>
-              <Image src={p.cover || '/covers/4.png'} alt={p.name} fill unoptimized sizes="(max-width: 900px) 50vw, 25vw" style={{ objectFit: 'cover' }} />
+              <Image src={p.cover || '/covers/4.png'} alt={p.name} fill sizes="(max-width: 900px) 50vw, 25vw" style={{ objectFit: 'cover' }} />
             </Box>
             <CardContent sx={{ pb: 1.1, px: 1.7, pt: 1.6 }}>
               <Stack direction="row" alignItems="center" spacing={1}>
@@ -84,4 +84,4 @@ export function ProductList({ loading, filtered, onAddProduct }: ProductListProp
         ))}
     </Box>
   );
-}
+});

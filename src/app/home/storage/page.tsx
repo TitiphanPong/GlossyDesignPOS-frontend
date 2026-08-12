@@ -435,7 +435,8 @@ function StatCard({ title, value, subtitle, icon, tone }: Readonly<StatCardProps
   );
 }
 
-export default function StoragePage() { // NOSONAR: page orchestration is intentionally colocated.
+export default function StoragePage() {
+  // NOSONAR: page orchestration is intentionally colocated.
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isCompactDrawer = useMediaQuery(theme.breakpoints.down('lg'));
@@ -1188,7 +1189,7 @@ export default function StoragePage() { // NOSONAR: page orchestration is intent
                         onClick={() => openDrawer(row)}
                         sx={{
                           cursor: 'pointer',
-                          transition: 'all 180ms ease',
+                          transition: 'background-color 120ms ease, box-shadow 120ms ease, transform 100ms ease',
                           '& td': { borderBottomColor: '#EEF2F7' },
                           '&:hover': { bgcolor: '#F7FAFF' },
                         }}>

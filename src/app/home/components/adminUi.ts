@@ -9,7 +9,7 @@ export const adminSurface = {
   cardBorderColor: 'divider',
   cardShadow: '0 8px 26px rgba(15, 23, 42, 0.06)',
   cardShadowHover: '0 16px 34px rgba(15, 23, 42, 0.12)',
-  transition: 'all 0.22s ease',
+  transition: 'box-shadow 160ms ease, transform 100ms ease, border-color 120ms ease, background-color 120ms ease',
   rowHeight: 54,
   headerHeight: 50,
   buttonHeight: 40,
@@ -109,4 +109,3 @@ export const statusChipSx: SxProps<Theme> = {
   fontWeight: 600,
   '& .MuiChip-label': { px: 1.1 },
 };
-

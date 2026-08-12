@@ -27,7 +27,6 @@ import {
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import { motion } from 'framer-motion';
 import dayjs from 'dayjs';
 import Link from 'next/link';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
@@ -75,7 +74,6 @@ import {
   updateOrderStatus,
 } from './orderManagementUtils';
 
-const MotionDiv = motion.div;
 const ORDER_STATUS_FILTER_VALUES = ['cancelled', 'paid', 'partial'] as const satisfies readonly PaymentStatus[];
 const ORDER_STATUS_FILTER_LABELS: Record<(typeof ORDER_STATUS_FILTER_VALUES)[number], string> = {
   cancelled: FILTER_STATUS_LABELS.cancelled,
@@ -240,7 +238,7 @@ export default function OrderManagementPage() {
   return (
     <AdminPageContainer>
       <Stack spacing={2.5}>
-        <MotionDiv initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }}>
+        <Box>
           <Card
             sx={{
               borderRadius: 5.6,
@@ -332,7 +330,7 @@ export default function OrderManagementPage() {
               </Stack>
             </CardContent>
           </Card>
-        </MotionDiv>
+        </Box>
 
         <Box
           sx={{
@@ -340,21 +338,21 @@ export default function OrderManagementPage() {
             gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(5, minmax(0, 1fr))' },
             gap: 1.4,
           }}>
-          <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.06 }}>
+          <Box>
             <StatCard title="ยอดขายรวม" value={`฿${formatMoney(stats.totalSales)}`} subtitle="ยอดขายรวมทั้งหมด" tone="#1E5EFF" icon={<AttachMoneyRoundedIcon />} />
-          </MotionDiv>
-          <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.11 }}>
+          </Box>
+          <Box>
             <StatCard title="ยอดรอชำระ" value={`฿${formatMoney(stats.pendingPayments)}`} subtitle="ยอดที่รอชำระเงิน" tone="#F08C00" icon={<PaymentsRoundedIcon />} />
-          </MotionDiv>
-          <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.16 }}>
+          </Box>
+          <Box>
             <StatCard title="งานที่ชำระแล้ว" value={`${stats.paidOrders}`} subtitle="จำนวนงานที่ชำระเรียบร้อย" tone="#1F9D63" icon={<FactCheckRoundedIcon />} />
-          </MotionDiv>
-          <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.21 }}>
+          </Box>
+          <Box>
             <StatCard title="งานวันนี้" value={`${stats.ordersToday}`} subtitle="จำนวนงานที่รับวันนี้" tone="#5C6AC4" icon={<TodayRoundedIcon />} />
-          </MotionDiv>
-          <MotionDiv initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}>
+          </Box>
+          <Box>
             <StatCard title="งานเดือนนี้" value={`${stats.ordersThisMonth}`} subtitle="จำนวนงานประจำเดือน" tone="#2563EB" icon={<CalendarMonthRoundedIcon />} />
-          </MotionDiv>
+          </Box>
         </Box>
 
         <Card

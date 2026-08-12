@@ -1,6 +1,24 @@
 import { extractArrayPayload, extractObjectPayload, fetchApi, fetchApiJson, isRecord } from './api';
 import type { Product, ProductVariant } from './contracts';
 
+const PRODUCT_CACHE_TTL_MS = 30_000;
+type ProductCacheEntry = { expiresAt: number; promise: Promise<Product[]> };
+let productCache: ProductCacheEntry | null = null;
+let quickProductCache: ProductCacheEntry | null = null;
+
+function cachedProducts(current: ProductCacheEntry | null, load: () => Promise<Product[]>, force: boolean, assign: (entry: ProductCacheEntry | null) => void): Promise<Product[]> {
+  if (!force && current && current.expiresAt > Date.now()) return current.promise;
+  const entry = { expiresAt: Date.now() + PRODUCT_CACHE_TTL_MS, promise: load() };
+  assign(entry);
+  void entry.promise.catch(() => assign(null));
+  return entry.promise;
+}
+
+export function invalidateProductCache(): void {
+  productCache = null;
+  quickProductCache = null;
+}
+
 function readString(value: unknown, fallback = ''): string {
   return typeof value === 'string' && value.trim() ? value.trim() : fallback;
 }
@@ -94,16 +112,26 @@ export function extractProductFromResponse(value: unknown): Product | null {
   return normalizeProduct(payload);
 }
 
-export async function fetchProducts(): Promise<Product[]> {
-  const responseBody = await fetchApiJson<unknown>('/products', { cache: 'no-store' });
-  return extractProductsFromResponse(responseBody);
+export function fetchProducts(options: { force?: boolean } = {}): Promise<Product[]> {
+  return cachedProducts(
+    productCache,
+    async () => extractProductsFromResponse(await fetchApiJson<unknown>('/products', { cache: 'no-store' })),
+    options.force === true,
+    entry => {
+      productCache = entry;
+    }
+  );
 }
 
-export async function fetchQuickProducts(): Promise<Product[]> {
-  const responseBody = await fetchApiJson<unknown>('/quick-products', {
-    cache: 'no-store',
-  });
-  return extractProductsFromResponse(responseBody);
+export function fetchQuickProducts(options: { force?: boolean } = {}): Promise<Product[]> {
+  return cachedProducts(
+    quickProductCache,
+    async () => extractProductsFromResponse(await fetchApiJson<unknown>('/quick-products', { cache: 'no-store' })),
+    options.force === true,
+    entry => {
+      quickProductCache = entry;
+    }
+  );
 }
 
 export type ProductPayload = Omit<Product, 'id' | '_id'> & {
@@ -141,6 +169,7 @@ export async function createProduct(payload: ProductPayload): Promise<Product> {
   });
   const product = extractProductFromResponse(responseBody);
   if (!product) throw new Error('Backend did not return a valid product');
+  invalidateProductCache();
   return product;
 }
 
@@ -152,9 +181,11 @@ export async function updateProduct(productId: string, payload: ProductPayload):
   });
   const product = extractProductFromResponse(responseBody);
   if (!product) throw new Error('Backend did not return a valid product');
+  invalidateProductCache();
   return product;
 }
 
 export async function deleteProduct(productId: string): Promise<void> {
   await fetchApi(`/products/${encodeURIComponent(productId)}`, { method: 'DELETE' });
+  invalidateProductCache();
 }

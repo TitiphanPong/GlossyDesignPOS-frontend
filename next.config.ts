@@ -12,27 +12,27 @@ const nextConfig: NextConfig = {
   async redirects() {
     return [
       {
-        source: '/home',
-        destination: '/dashboard',
+        source: '/dashboard',
+        destination: '/home',
         permanent: false,
       },
       {
-        source: '/home/saleListPage',
-        destination: '/orders',
+        source: '/orders',
+        destination: '/home/orders',
         permanent: false,
       },
       {
-        source: '/home/posseller',
-        destination: '/pos',
+        source: '/pos',
+        destination: '/home/posseller',
         permanent: false,
       },
       {
-        source: '/home/storage',
-        destination: '/storage',
+        source: '/storage',
+        destination: '/home/storage',
         permanent: false,
       },
       {
-        source: '/home/invoice/:orderId',
+        source: '/invoice/:orderId',
         destination: '/print/invoice/:orderId',
         permanent: false,
       },

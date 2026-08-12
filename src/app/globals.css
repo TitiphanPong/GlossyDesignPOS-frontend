@@ -15,7 +15,6 @@ body {
   min-height: 100vh;
 }
 
-
 .bg-circle {
   position: absolute;
   width: 250px;
@@ -25,12 +24,11 @@ body {
   z-index: 0;
 }
 
-
 .loader-wrapper {
   display: flex;
   align-items: center;
   justify-content: center;
-  height: 100vh; 
+  height: 100vh;
   background: transparent;
 }
 
@@ -40,12 +38,6 @@ body {
   zoom: 1.2;
   overflow: visible;
 }
-
-
-
-
-
-
 
 @keyframes fade-particles {
   0%,
@@ -176,3 +168,13 @@ body {
   animation: pulse-once 2s ease-out;
 }
 
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

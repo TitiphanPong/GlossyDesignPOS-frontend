@@ -151,10 +151,10 @@ export default function SellPage() {
     setCustomerModalOpen(true);
   };
 
-  const loadProducts = React.useCallback(async () => {
+  const loadProducts = React.useCallback(async (force = false) => {
     setLoading(true);
     try {
-      const data = await fetchProducts();
+      const data = await fetchProducts({ force });
       setProducts(data.filter(product => product.active));
       setErrorMsg(null);
       setMissingApiBase(false);
@@ -242,7 +242,7 @@ export default function SellPage() {
         thaiDate={formatThaiFullDate(lastSyncedAt)}
         actions={
           <>
-            <Button onClick={() => void loadProducts()} startIcon={<RefreshRoundedIcon />} variant="outlined" disabled={loading} sx={heroOutlineButtonSx}>
+            <Button onClick={() => void loadProducts(true)} startIcon={<RefreshRoundedIcon />} variant="outlined" disabled={loading} sx={heroOutlineButtonSx}>
               {loading ? 'Refreshing...' : 'Refresh'}
             </Button>
             <Button component={Link} href="/home/orders" startIcon={<ReceiptLongRoundedIcon />} variant="outlined" sx={heroOutlineButtonSx}>

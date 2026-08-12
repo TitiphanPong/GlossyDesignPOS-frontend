@@ -5,6 +5,7 @@ import { Box, IconButton, useMediaQuery, useTheme } from '@mui/material';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import { usePathname } from 'next/navigation';
 import SideMenu from './components/SideMenu';
+import PageTransition from '@/components/transitions/PageTransition';
 
 const DESKTOP_DRAWER_WIDTH = 286;
 const DESKTOP_COLLAPSED_WIDTH = 92;
@@ -46,13 +47,7 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
       {isMobile ? (
         <SideMenu variant="temporary" open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} currentPath={pathname ?? '/'} />
       ) : (
-        <SideMenu
-          width={DESKTOP_DRAWER_WIDTH}
-          collapsedWidth={DESKTOP_COLLAPSED_WIDTH}
-          currentPath={pathname ?? '/'}
-          collapsed={desktopCollapsed}
-          onToggleCollapsed={handleToggleDesktopMenu}
-        />
+        <SideMenu width={DESKTOP_DRAWER_WIDTH} collapsedWidth={DESKTOP_COLLAPSED_WIDTH} currentPath={pathname ?? '/'} collapsed={desktopCollapsed} onToggleCollapsed={handleToggleDesktopMenu} />
       )}
 
       <Box
@@ -86,7 +81,7 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
           </IconButton>
         )}
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>{children}</Box>
+        <PageTransition routeKey={pathname ?? '/'}>{children}</PageTransition>
       </Box>
     </Box>
   );

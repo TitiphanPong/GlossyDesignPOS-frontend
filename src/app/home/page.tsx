@@ -876,7 +876,7 @@ function QuickActions() {
                 border: '1px solid #E5E7EB',
                 textDecoration: 'none',
                 bgcolor: '#FFFFFF',
-                transition: 'all 0.2s ease',
+                transition: 'background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, transform 100ms ease',
                 '&:hover': { transform: 'translateY(-2px)', borderColor: alpha(action.color, 0.38), bgcolor: alpha(action.color, 0.06) },
               }}>
               <Stack direction="row" alignItems="center" spacing={1}>
