@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { ADMIN_AUTH_COOKIE_NAME, verifyAdminSession } from '@/lib/admin-auth';
 
-const PUBLIC_POST_PATHS = new Set(['uploads', 'upload']);
+const PUBLIC_POST_PATHS = new Set(['uploads', 'upload', 'tracking/lookup']);
 
 function getBackendUrl(path: string[], search: string): string {
   const base = process.env.BACKEND_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
@@ -11,10 +11,10 @@ function getBackendUrl(path: string[], search: string): string {
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
-  const isPublicUpload = request.method === 'POST' && PUBLIC_POST_PATHS.has(path.join('/'));
+  const isPublicPost = request.method === 'POST' && PUBLIC_POST_PATHS.has(path.join('/'));
   const cookie = request.cookies.get(ADMIN_AUTH_COOKIE_NAME)?.value;
   const session = await verifyAdminSession(cookie);
-  if (!session?.accessToken && !isPublicUpload) {
+  if (!session?.accessToken && !isPublicPost) {
     return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
   }
 
