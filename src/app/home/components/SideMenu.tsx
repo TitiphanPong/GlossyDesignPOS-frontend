@@ -15,6 +15,7 @@ import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import { useRouter } from 'next/navigation';
 import Face2Icon from '@mui/icons-material/Face2';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
+import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded';
 import { destroyAdminBrowserSession } from '@/lib/admin-auth';
 
 export type NavItem = {
@@ -41,6 +42,7 @@ const DEFAULT_ITEMS: NavItem[] = [
   { label: 'POS', href: '/pos', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
   { label: 'Quick Seller', href: '/home/quick-sale', icon: <PointOfSaleRoundedIcon fontSize="small" /> },
   { label: 'Storage', href: '/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
+  { label: 'Staff & Audit', href: '/home/staff', icon: <ManageAccountsRoundedIcon fontSize="small" /> },
 ];
 
 function isActivePath(currentPath: string, href: string) {
