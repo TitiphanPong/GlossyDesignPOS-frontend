@@ -24,9 +24,7 @@ export default function TermsPage() {
               </Typography>
 
               <Typography sx={{ fontWeight: 700 }}>2. ความรับผิดชอบของบัญชีผู้ใช้งาน</Typography>
-              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>
-                ผู้ใช้งานมีหน้าที่รับผิดชอบข้อมูลเข้าสู่ระบบ การกำหนดสิทธิ์พนักงาน และกิจกรรมทั้งหมดที่เกิดขึ้นภายใต้บัญชีขององค์กร
-              </Typography>
+              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>ผู้ใช้งานมีหน้าที่รับผิดชอบข้อมูลเข้าสู่ระบบ การกำหนดสิทธิ์พนักงาน และกิจกรรมทั้งหมดที่เกิดขึ้นภายใต้บัญชีขององค์กร</Typography>
 
               <Typography sx={{ fontWeight: 700 }}>3. แพ็กเกจและการเรียกเก็บเงิน</Typography>
               <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>
@@ -44,19 +42,21 @@ export default function TermsPage() {
               </Typography>
 
               <Typography sx={{ fontWeight: 700 }}>6. ติดต่อเรา</Typography>
-              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>
-                หากมีคำถามด้านกฎหมายหรือการเรียกเก็บเงิน กรุณาติดต่อ sales@glossypos.com
-              </Typography>
+              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>หากมีคำถามด้านกฎหมายหรือการเรียกเก็บเงิน กรุณาติดต่อ sales@glossypos.com</Typography>
             </Stack>
           </Box>
 
           <Stack direction="row" spacing={1.2}>
-            <Button component={Link} href="/landing" variant="contained" sx={{ borderRadius: 99 }}>
-              กลับสู่หน้า Landing
-            </Button>
-            <Button component={Link} href="/privacy-policy" variant="outlined" sx={{ borderRadius: 99, color: '#dce4ff', borderColor: 'rgba(220,228,255,0.4)' }}>
-              ดูนโยบายความเป็นส่วนตัว
-            </Button>
+            <Link href="/landing">
+              <Button variant="contained" sx={{ borderRadius: 99 }}>
+                กลับสู่หน้า Landing
+              </Button>
+            </Link>
+            <Link href="/privacy-policy">
+              <Button variant="outlined" sx={{ borderRadius: 99, color: '#dce4ff', borderColor: 'rgba(220,228,255,0.4)' }}>
+                ดูนโยบายความเป็นส่วนตัว
+              </Button>
+            </Link>
           </Stack>
         </Stack>
       </Container>

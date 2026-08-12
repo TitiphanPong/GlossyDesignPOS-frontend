@@ -24,9 +24,7 @@ export default function PrivacyPolicyPage() {
               </Typography>
 
               <Typography sx={{ fontWeight: 700 }}>2. วัตถุประสงค์การใช้ข้อมูล</Typography>
-              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>
-                ข้อมูลถูกใช้เพื่อให้บริการหลัก รักษาความปลอดภัยบัญชี ปรับปรุงคุณภาพผลิตภัณฑ์ และสนับสนุนงานด้านบิลและการบริการลูกค้า
-              </Typography>
+              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>ข้อมูลถูกใช้เพื่อให้บริการหลัก รักษาความปลอดภัยบัญชี ปรับปรุงคุณภาพผลิตภัณฑ์ และสนับสนุนงานด้านบิลและการบริการลูกค้า</Typography>
 
               <Typography sx={{ fontWeight: 700 }}>3. การจัดเก็บและความปลอดภัยของข้อมูล</Typography>
               <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>
@@ -34,29 +32,27 @@ export default function PrivacyPolicyPage() {
               </Typography>
 
               <Typography sx={{ fontWeight: 700 }}>4. การเปิดเผยข้อมูล</Typography>
-              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>
-                เราไม่ขายข้อมูลของคุณ ข้อมูลจะถูกเปิดเผยเฉพาะกับผู้ให้บริการที่จำเป็นต่อการทำงานของระบบ หรือเมื่อมีกฎหมายกำหนด
-              </Typography>
+              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>เราไม่ขายข้อมูลของคุณ ข้อมูลจะถูกเปิดเผยเฉพาะกับผู้ให้บริการที่จำเป็นต่อการทำงานของระบบ หรือเมื่อมีกฎหมายกำหนด</Typography>
 
               <Typography sx={{ fontWeight: 700 }}>5. สิทธิของผู้ใช้งาน</Typography>
-              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>
-                คุณสามารถขอแก้ไขข้อมูลบัญชี เปลี่ยนสิทธิ์การใช้งาน หรือขอปิดบัญชีได้โดยติดต่อทีมงานของเรา
-              </Typography>
+              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>คุณสามารถขอแก้ไขข้อมูลบัญชี เปลี่ยนสิทธิ์การใช้งาน หรือขอปิดบัญชีได้โดยติดต่อทีมงานของเรา</Typography>
 
               <Typography sx={{ fontWeight: 700 }}>6. ติดต่อเรา</Typography>
-              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>
-                หากต้องการสอบถามหรือยื่นคำขอด้านความเป็นส่วนตัว กรุณาติดต่อ privacy@glossypos.com
-              </Typography>
+              <Typography sx={{ color: 'rgba(234, 240, 255, 0.8)' }}>หากต้องการสอบถามหรือยื่นคำขอด้านความเป็นส่วนตัว กรุณาติดต่อ privacy@glossypos.com</Typography>
             </Stack>
           </Box>
 
           <Stack direction="row" spacing={1.2}>
-            <Button component={Link} href="/landing" variant="contained" sx={{ borderRadius: 99 }}>
-              กลับสู่หน้า Landing
-            </Button>
-            <Button component={Link} href="/terms" variant="outlined" sx={{ borderRadius: 99, color: '#dce4ff', borderColor: 'rgba(220,228,255,0.4)' }}>
-              ดูเงื่อนไขการใช้งาน
-            </Button>
+            <Link href="/landing">
+              <Button variant="contained" sx={{ borderRadius: 99 }}>
+                กลับสู่หน้า Landing
+              </Button>
+            </Link>
+            <Link href="/terms">
+              <Button variant="outlined" sx={{ borderRadius: 99, color: '#dce4ff', borderColor: 'rgba(220,228,255,0.4)' }}>
+                ดูเงื่อนไขการใช้งาน
+              </Button>
+            </Link>
           </Stack>
         </Stack>
       </Container>
