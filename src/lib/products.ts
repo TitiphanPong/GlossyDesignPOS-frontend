@@ -94,6 +94,8 @@ export function normalizeProduct(value: unknown): Product | null {
     quickSaleSortOrder: readNumber(value.quickSaleSortOrder, Number.MAX_SAFE_INTEGER),
     unitLabel: readString(value.unitLabel) || undefined,
     priceDisplayMode: value.priceDisplayMode === 'STARTING_AT' ? 'STARTING_AT' : 'FIXED',
+    createdAt: readString(value.createdAt) || undefined,
+    updatedAt: readString(value.updatedAt) || undefined,
     variants,
   };
 }
@@ -132,6 +134,29 @@ export function fetchQuickProducts(options: { force?: boolean } = {}): Promise<P
       quickProductCache = entry;
     }
   );
+}
+
+export type QuickProductPayload = { name: string; code: string; typeCode?: string; category: string; price: number; unitLabel?: string; emoji?: string; tint?: string; isHotMenu?: boolean; active?: boolean; quickSaleSortOrder?: number };
+
+export async function fetchQuickProductsForAdmin(): Promise<Product[]> {
+  return extractProductsFromResponse(await fetchApiJson<unknown>('/quick-products?includeInactive=true', { cache: 'no-store' }));
+}
+
+export async function createQuickProduct(payload: QuickProductPayload): Promise<Product> {
+  const product = extractProductFromResponse(await fetchApiJson<unknown>('/quick-products', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }));
+  if (!product) throw new Error('Backend did not return a valid quick menu');
+  invalidateProductCache(); return product;
+}
+
+export async function updateQuickProduct(id: string, payload: Partial<QuickProductPayload>): Promise<Product> {
+  const product = extractProductFromResponse(await fetchApiJson<unknown>(`/quick-products/${encodeURIComponent(id)}`, { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }));
+  if (!product) throw new Error('Backend did not return a valid quick menu');
+  invalidateProductCache(); return product;
+}
+
+export async function deleteQuickProduct(id: string): Promise<void> {
+  await fetchApi(`/quick-products/${encodeURIComponent(id)}`, { method: 'DELETE' });
+  invalidateProductCache();
 }
 
 export type ProductPayload = Omit<Product, 'id' | '_id'> & {

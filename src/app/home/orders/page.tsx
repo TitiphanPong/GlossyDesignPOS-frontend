@@ -50,7 +50,7 @@ import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder } from '../../../lib/contracts';
-import type { OrderRow, PaymentStatus, SortOrder } from './orderManagementTypes';
+import type { OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import {
   FILTER_STATUS_LABELS,
@@ -92,6 +92,7 @@ export default function OrderManagementPage() {
   const [missingApiBase, setMissingApiBase] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'all' | PaymentStatus>('all');
+  const [orderTypeFilter, setOrderTypeFilter] = React.useState<OrderTypeFilter>('all');
   const [monthFilter, setMonthFilter] = React.useState<string>('all');
   const [sort, setSort] = React.useState<SortOrder>('newest');
   const [page, setPage] = React.useState(0);
@@ -139,8 +140,8 @@ export default function OrderManagementPage() {
   const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
 
   const filteredRows = React.useMemo(() => {
-    return filterOrderRows(rows, search, statusFilter, monthFilter, sort);
-  }, [monthFilter, rows, search, sort, statusFilter]);
+    return filterOrderRows(rows, search, statusFilter, monthFilter, sort, orderTypeFilter);
+  }, [monthFilter, orderTypeFilter, rows, search, sort, statusFilter]);
 
   const pagedRows = React.useMemo(() => {
     const start = page * rowsPerPage;
@@ -149,7 +150,7 @@ export default function OrderManagementPage() {
 
   React.useEffect(() => {
     setPage(0);
-  }, [search, statusFilter, monthFilter, sort]);
+  }, [search, statusFilter, orderTypeFilter, monthFilter, sort]);
 
   const stats = React.useMemo(() => {
     return buildOrderStats(rows);
@@ -372,7 +373,7 @@ export default function OrderManagementPage() {
               <Box
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: '1.2fr 0.65fr 0.65fr 0.65fr auto' },
+                  gridTemplateColumns: { xs: '1fr', md: '1.2fr repeat(4, minmax(130px, 0.65fr))' },
                   gap: 1.2,
                 }}>
                 <TextField
@@ -398,6 +399,20 @@ export default function OrderManagementPage() {
                     },
                   }}
                 />
+
+                <FormControl size="small">
+                  <InputLabel id="order-type-filter">ประเภทงาน</InputLabel>
+                  <Select<OrderTypeFilter>
+                    labelId="order-type-filter"
+                    value={orderTypeFilter}
+                    label="ประเภทงาน"
+                    onChange={event => setOrderTypeFilter(event.target.value)}
+                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
+                    <MenuItem value="all">ทุกประเภท</MenuItem>
+                    <MenuItem value="NORMAL">งานปกติ</MenuItem>
+                    <MenuItem value="QUICK_SALE">งานด่วน</MenuItem>
+                  </Select>
+                </FormControl>
 
                 <FormControl size="small">
                   <InputLabel id="status-filter">สถานะ</InputLabel>
@@ -496,7 +511,15 @@ export default function OrderManagementPage() {
                     <Stack spacing={1.2}>
                       <Stack direction="row" justifyContent="space-between" alignItems="center">
                         <Stack>
-                          <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>{row.orderNumber}</Typography>
+                          <Stack direction="row" spacing={0.7} alignItems="center">
+                            <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>{row.orderNumber}</Typography>
+                            <Chip
+                              size="small"
+                              label={row.orderType === 'QUICK_SALE' ? 'งานด่วน' : 'งานปกติ'}
+                              color={row.orderType === 'QUICK_SALE' ? 'warning' : 'default'}
+                              sx={{ height: 22, fontSize: 10.5, fontWeight: 700 }}
+                            />
+                          </Stack>
                           <Typography sx={{ color: '#64748B', fontSize: 12.5 }}>{dayjs(row.date).format('DD/MM/YYYY HH:mm')}</Typography>
                         </Stack>
                         {statusChip(row.status)}
@@ -595,6 +618,12 @@ export default function OrderManagementPage() {
                         }}>
                         <TableCell>
                           <Typography sx={{ display: 'inline-block', fontWeight: 700, color: '#6C4DFF', fontVariantNumeric: 'tabular-nums' }}>{row.orderNumber}</Typography>
+                          <Chip
+                            size="small"
+                            label={row.orderType === 'QUICK_SALE' ? 'งานด่วน' : 'งานปกติ'}
+                            color={row.orderType === 'QUICK_SALE' ? 'warning' : 'default'}
+                            sx={{ ml: 0.7, height: 20, fontSize: 10, fontWeight: 700 }}
+                          />
                           <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.vat > 0 ? 'ใบกำกับภาษี' : 'ใบเสร็จทั่วไป'}</Typography>
                         </TableCell>
 

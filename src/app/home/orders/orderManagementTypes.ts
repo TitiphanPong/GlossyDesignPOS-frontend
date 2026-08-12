@@ -1,9 +1,10 @@
 import type { ReactNode } from 'react';
 
-import type { OrderStatus, PaymentMethod } from '../../../lib/contracts';
+import type { OrderStatus, OrderType, PaymentMethod } from '../../../lib/contracts';
 
 export type PaymentStatus = OrderStatus;
 export type SortOrder = 'newest' | 'oldest' | 'high' | 'low';
+export type OrderTypeFilter = 'all' | OrderType;
 export type ExportType = 'excel' | 'pdf' | 'sales';
 
 export type OrderProduct = {
@@ -23,6 +24,7 @@ export type OrderRow = {
   orderId: string;
   orderNumber: string;
   invoiceNumber?: string;
+  orderType: OrderType;
   taxInvoice: 'yes' | 'no';
   customerName: string;
   phoneNumber: string;

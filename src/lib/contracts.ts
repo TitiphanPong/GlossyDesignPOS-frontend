@@ -8,6 +8,8 @@ export type LegacyPaymentOrderStatus = 'paid' | 'partial';
 
 export type OrderStatus = WorkflowOrderStatus | LegacyPaymentOrderStatus;
 
+export type OrderType = 'NORMAL' | 'QUICK_SALE';
+
 export type ProductVariant = {
   id?: string;
   _id?: string;
@@ -38,6 +40,8 @@ export type Product = {
   quickSaleSortOrder?: number;
   unitLabel?: string;
   priceDisplayMode?: 'FIXED' | 'STARTING_AT';
+  createdAt?: string;
+  updatedAt?: string;
   variants: ProductVariant[];
 };
 
@@ -174,7 +178,7 @@ export type ApiOrder = {
   orderId: string;
   orderNumber?: string;
   invoiceNumber?: string;
-  orderType?: 'NORMAL' | 'QUICK_SALE';
+  orderType?: OrderType;
   receivedAmount?: number;
   changeAmount?: number;
   customerName?: string;
@@ -269,6 +273,7 @@ export type NormalizedOrder = {
   orderId: string;
   orderNumber: string;
   invoiceNumber?: string;
+  orderType: OrderType;
   customerName: string;
   phoneNumber: string;
   email: string;
@@ -444,6 +449,7 @@ export function normalizeApiOrder(
     orderId: readNonEmptyString(order.orderId) ?? readNonEmptyString(order._id) ?? readNonEmptyString(order.id) ?? '-',
     orderNumber: getDisplayOrderNumber(order),
     invoiceNumber: typeof order.invoiceNumber === 'string' ? order.invoiceNumber : undefined,
+    orderType: order.orderType === 'QUICK_SALE' ? 'QUICK_SALE' : 'NORMAL',
     customerName: customerInfo.customerName,
     phoneNumber: customerInfo.phoneNumber ?? '-',
     email: customerInfo.email ?? '-',

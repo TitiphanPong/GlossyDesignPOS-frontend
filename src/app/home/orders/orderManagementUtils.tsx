@@ -14,7 +14,7 @@ import { fetchApi } from '../../../lib/api';
 import { getDisplayOrderNumber, type NormalizedOrder, type PaymentMethod } from '../../../lib/contracts';
 import { fetchOrders, sortOrdersByNewest } from '../../../lib/orders';
 import { getOrderStatusConfig, ORDER_STATUS_CONFIG } from '../../../lib/order-status';
-import type { ExportType, OrderRow, PaymentStatus, SortOrder } from './orderManagementTypes';
+import type { ExportType, OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } from './orderManagementTypes';
 
 export const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 export const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
@@ -84,6 +84,7 @@ export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
     orderId: order.orderId,
     orderNumber: getDisplayOrderNumber(order),
     invoiceNumber: order.invoiceNumber,
+    orderType: order.orderType,
     taxInvoice: order.taxInvoice,
     customerName: order.customerName || 'ลูกค้าไม่ระบุชื่อ',
     phoneNumber: order.phoneNumber || '-',
@@ -330,11 +331,19 @@ function compareOrderRows(a: OrderRow, b: OrderRow, sort: SortOrder): number {
   return sort === 'newest' ? t2 - t1 : t1 - t2;
 }
 
-export function filterOrderRows(rows: OrderRow[], search: string, statusFilter: 'all' | PaymentStatus, monthFilter: string, sort: SortOrder): OrderRow[] {
+export function filterOrderRows(
+  rows: OrderRow[],
+  search: string,
+  statusFilter: 'all' | PaymentStatus,
+  monthFilter: string,
+  sort: SortOrder,
+  orderTypeFilter: OrderTypeFilter = 'all'
+): OrderRow[] {
   return rows
     .filter(row => matchesSearch(row, search))
     .filter(row => matchesStatusFilter(row, statusFilter))
     .filter(row => matchesMonthFilter(row, monthFilter))
+    .filter(row => orderTypeFilter === 'all' || row.orderType === orderTypeFilter)
     .sort((a, b) => compareOrderRows(a, b, sort));
 }
 

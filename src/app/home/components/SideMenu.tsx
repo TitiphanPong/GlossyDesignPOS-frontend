@@ -3,7 +3,7 @@
 import * as React from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Avatar, Box, Button, Drawer, IconButton, List, ListItemButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, Button, Drawer, IconButton, List, ListItemButton, ListSubheader, Stack, Tooltip, Typography } from '@mui/material';
 import { drawerClasses } from '@mui/material/Drawer';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
@@ -16,6 +16,7 @@ import { useRouter } from 'next/navigation';
 import Face2Icon from '@mui/icons-material/Face2';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded';
+import RestaurantMenuRoundedIcon from '@mui/icons-material/RestaurantMenuRounded';
 import { destroyAdminBrowserSession } from '@/lib/admin-auth';
 import { transitionDuration, transitionEasing } from '@/components/transitions/transition.config';
 
@@ -23,6 +24,7 @@ export type NavItem = {
   label: string;
   href: string;
   icon: React.ReactNode;
+  section?: string;
 };
 
 export interface SideMenuProps {
@@ -38,12 +40,13 @@ export interface SideMenuProps {
 }
 
 const DEFAULT_ITEMS: NavItem[] = [
-  { label: 'Dashboard', href: '/home', icon: <SpaceDashboardRoundedIcon fontSize="small" /> },
-  { label: 'Orders', href: '/home/orders', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
-  { label: 'POS', href: '/home/posseller', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
-  { label: 'Quick Seller', href: '/home/quick-sale', icon: <PointOfSaleRoundedIcon fontSize="small" /> },
-  { label: 'Storage', href: '/home/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
-  { label: 'Staff & Audit', href: '/home/staff', icon: <ManageAccountsRoundedIcon fontSize="small" /> },
+  { label: 'เมนูการขายด่วน', href: '/home/quick-sale', icon: <PointOfSaleRoundedIcon fontSize="small" />, section: 'Quick Menu' },
+  { label: 'แดชบอร์ด', href: '/home', icon: <SpaceDashboardRoundedIcon fontSize="small" />, section: 'Overview' },
+  { label: 'รายการขาย', href: '/home/orders', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
+  { label: 'เมนูการขาย', href: '/home/posseller', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
+  { label: 'คลังเก็บไฟล์', href: '/home/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
+  { label: 'แก้ไขเมนูการขายด่วน', href: '/home/settings/quick-menu', icon: <RestaurantMenuRoundedIcon fontSize="small" />, section: 'Settings' },
+  { label: 'การจัดการ', href: '/home/staff', icon: <ManageAccountsRoundedIcon fontSize="small" /> },
 ];
 
 function isActivePath(currentPath: string, href: string) {
@@ -167,50 +170,75 @@ export default function SideMenu({
         <Brand collapsed={showCollapsedState} onToggleCollapsed={variant === 'permanent' ? onToggleCollapsed : undefined} />
 
         <List sx={{ px: showCollapsedState ? 1 : 1.3, py: 0.8, flex: 1 }}>
-          {items.map(item => {
+          {items.map((item, index) => {
             const active = isActivePath(pendingPath ?? currentPath, item.href);
+            const startsSection = Boolean(item.section) && item.section !== items[index - 1]?.section;
 
             return (
-              <Tooltip key={item.label} title={item.href === '#' ? 'Coming soon' : item.label} placement="right" disableHoverListener={!showCollapsedState}>
-                <ListItemButton
-                  component={Link}
-                  href={item.href}
-                  onClick={() => {
-                    setPendingPath(item.href);
-                    onClose?.();
-                  }}
-                  sx={{
-                    mb: 0.8,
-                    minHeight: 46,
-                    px: showCollapsedState ? 1 : 1.35,
-                    borderRadius: 3,
-                    color: active ? '#FFFFFF' : 'rgba(229, 238, 255, 0.86)',
-                    bgcolor: active ? 'rgba(86, 141, 255, 0.26)' : 'transparent',
-                    border: active ? '1px solid rgba(139, 181, 255, 0.55)' : '1px solid transparent',
-                    boxShadow: active ? '0 16px 26px rgba(32, 97, 222, 0.32)' : 'none',
-                    justifyContent: showCollapsedState ? 'center' : 'flex-start',
-                    transition: `background-color ${transitionDuration.menu}ms ${transitionEasing.standard}, color ${transitionDuration.menu}ms ${transitionEasing.standard}, border-color ${transitionDuration.menu}ms ${transitionEasing.standard}, box-shadow ${transitionDuration.menu}ms ${transitionEasing.standard}, transform ${transitionDuration.hover}ms ${transitionEasing.standard}`,
-                    '&:hover': {
-                      bgcolor: active ? 'rgba(86, 141, 255, 0.3)' : 'rgba(255,255,255,0.09)',
-                      transform: 'translateY(-1px)',
-                    },
-                  }}>
-                  <Box
+              <React.Fragment key={item.label}>
+                {startsSection &&
+                  (showCollapsedState ? (
+                    <Box sx={{ my: 1.2, mx: 1, borderTop: '1px solid rgba(180, 202, 255, 0.18)' }} />
+                  ) : (
+                    <ListSubheader
+                      disableSticky
+                      component="div"
+                      sx={{
+                        mt: index === 0 ? 0 : 1.5,
+                        mb: 0.55,
+                        px: 1.35,
+                        color: 'rgba(184, 204, 244, 0.68)',
+                        bgcolor: 'transparent',
+                        fontSize: 10.5,
+                        fontWeight: 800,
+                        lineHeight: '24px',
+                        letterSpacing: '1.15px',
+                        textTransform: 'uppercase',
+                      }}>
+                      {item.section}
+                    </ListSubheader>
+                  ))}
+                <Tooltip title={item.href === '#' ? 'Coming soon' : item.label} placement="right" disableHoverListener={!showCollapsedState}>
+                  <ListItemButton
+                    component={Link}
+                    href={item.href}
+                    onClick={() => {
+                      setPendingPath(item.href);
+                      onClose?.();
+                    }}
                     sx={{
-                      width: 28,
-                      height: 28,
-                      borderRadius: 2,
-                      display: 'grid',
-                      placeItems: 'center',
-                      color: active ? '#FFFFFF' : 'rgba(229, 238, 255, 0.88)',
-                      bgcolor: active ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)',
-                      mr: showCollapsedState ? 0 : 1.2,
+                      mb: 0.8,
+                      minHeight: 46,
+                      px: showCollapsedState ? 1 : 1.35,
+                      borderRadius: 3,
+                      color: active ? '#FFFFFF' : 'rgba(229, 238, 255, 0.86)',
+                      bgcolor: active ? 'rgba(86, 141, 255, 0.26)' : 'transparent',
+                      border: active ? '1px solid rgba(139, 181, 255, 0.55)' : '1px solid transparent',
+                      boxShadow: active ? '0 16px 26px rgba(32, 97, 222, 0.32)' : 'none',
+                      justifyContent: showCollapsedState ? 'center' : 'flex-start',
+                      transition: `background-color ${transitionDuration.menu}ms ${transitionEasing.standard}, color ${transitionDuration.menu}ms ${transitionEasing.standard}, border-color ${transitionDuration.menu}ms ${transitionEasing.standard}, box-shadow ${transitionDuration.menu}ms ${transitionEasing.standard}, transform ${transitionDuration.hover}ms ${transitionEasing.standard}`,
+                      '&:hover': {
+                        bgcolor: active ? 'rgba(86, 141, 255, 0.3)' : 'rgba(255,255,255,0.09)',
+                        transform: 'translateY(-1px)',
+                      },
                     }}>
-                    {item.icon}
-                  </Box>
-                  {!showCollapsedState && <Typography sx={{ fontSize: 14, fontWeight: active ? 700 : 500 }}>{item.label}</Typography>}
-                </ListItemButton>
-              </Tooltip>
+                    <Box
+                      sx={{
+                        width: 28,
+                        height: 28,
+                        borderRadius: 2,
+                        display: 'grid',
+                        placeItems: 'center',
+                        color: active ? '#FFFFFF' : 'rgba(229, 238, 255, 0.88)',
+                        bgcolor: active ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.07)',
+                        mr: showCollapsedState ? 0 : 1.2,
+                      }}>
+                      {item.icon}
+                    </Box>
+                    {!showCollapsedState && <Typography sx={{ fontSize: 14, fontWeight: active ? 700 : 500 }}>{item.label}</Typography>}
+                  </ListItemButton>
+                </Tooltip>
+              </React.Fragment>
             );
           })}
         </List>

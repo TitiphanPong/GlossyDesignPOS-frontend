@@ -211,22 +211,56 @@ export default function StaffManagementPage() {
   const passwordValid = password.length >= 12 && password === confirmPassword;
 
   return (
-    <AdminPageContainer
-      title="Staff & Audit"
-      subtitle="จัดการบัญชี สิทธิ์การใช้งาน และตรวจสอบกิจกรรมสำคัญในระบบ"
-      headerActions={
-        <Stack direction="row" spacing={1}>
-          <Tooltip title="โหลดข้อมูลใหม่">
-            <IconButton onClick={() => void load()} sx={{ border: '1px solid #DDE3EC', bgcolor: '#fff' }}>
-              <RefreshRoundedIcon />
-            </IconButton>
-          </Tooltip>
-          <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} sx={{ borderRadius: 2.5, px: 2.25 }}>
-            เพิ่มพนักงาน
-          </Button>
-        </Stack>
-      }>
+    <AdminPageContainer>
       <Stack spacing={2.5}>
+        <Card
+          sx={{
+            borderRadius: 5.6,
+            border: '1px solid #E6EDF8',
+            boxShadow: '0 20px 45px rgba(18, 45, 82, 0.08)',
+            background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
+          }}>
+          <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2} alignItems={{ xs: 'stretch', md: 'center' }}>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Stack direction="row" spacing={1.25} alignItems="center">
+                  <Avatar sx={{ width: 46, height: 46, bgcolor: alpha('#2563EB', 0.12), color: '#2563EB' }}>
+                    <ManageAccountsRoundedIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>
+                      Staff & Audit
+                    </Typography>
+                    <Typography sx={{ mt: 0.7, color: '#475467', fontSize: { xs: 14, md: 16 } }}>
+                      จัดการบัญชี สิทธิ์การใช้งาน และตรวจสอบกิจกรรมสำคัญในระบบ
+                    </Typography>
+                  </Box>
+                </Stack>
+              </Box>
+
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems="stretch">
+                <Tooltip title="โหลดข้อมูลใหม่">
+                  <Button
+                    variant="outlined"
+                    startIcon={<RefreshRoundedIcon />}
+                    onClick={() => void load()}
+                    disabled={loading}
+                    sx={{ minHeight: 44, borderRadius: 3, borderColor: '#DFE8F5', bgcolor: '#FFFFFF', px: 2, fontWeight: 800 }}>
+                    รีเฟรช
+                  </Button>
+                </Tooltip>
+                <Button
+                  variant="contained"
+                  startIcon={<AddRoundedIcon />}
+                  onClick={() => setCreateOpen(true)}
+                  sx={{ minHeight: 44, borderRadius: 3, px: 2.25, fontWeight: 800, boxShadow: '0 10px 20px rgba(37, 99, 235, 0.18)' }}>
+                  เพิ่มพนักงาน
+                </Button>
+              </Stack>
+            </Stack>
+          </CardContent>
+        </Card>
+
         {error && (
           <Alert severity="error" onClose={() => setError(null)}>
             {error}
