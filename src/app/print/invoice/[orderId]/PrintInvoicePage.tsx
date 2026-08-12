@@ -297,11 +297,15 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
     return <ErrorState title="ไม่พบข้อมูลใบกำกับภาษี" subtitle={loadError ?? 'ไม่พบข้อมูลออเดอร์ที่ต้องการพิมพ์ กรุณากลับไปตรวจสอบรายการอีกครั้ง'} />;
   }
 
+  if (documentType === 'tax-invoice' && order.taxInvoice !== 'yes') {
+    return <ErrorState title="ไม่สามารถเปิดใบกำกับภาษีได้" subtitle="รายการนี้ไม่ได้เลือกออกใบกำกับภาษี กรุณาเปิดเป็นใบเสร็จรับเงินแทน" />;
+  }
+
   return (
     <>
       <PrintDocumentLayout
         title="ใบกำกับภาษี / Tax Invoice"
-        invoiceNumber={`#${order.orderNumber || order.orderId}`}
+        invoiceNumber={`#${documentType === 'tax-invoice' ? (order.invoiceNumber || order.orderNumber || order.orderId) : (order.orderNumber || order.orderId)}`}
         onEditCustomer={handleOpenDrawer}
         printableDocument={<InvoiceDocument documentType={documentType} order={order} />}
       />

@@ -125,6 +125,7 @@ export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClo
         </Stack>
       </MenuItem>
       <MenuItem
+        disabled={rowMenuTarget?.taxInvoice !== 'yes'}
         onClick={() => {
           if (rowMenuTarget) printDocument(rowMenuTarget, 'invoice');
           onClose();
@@ -417,6 +418,7 @@ export function OrderDetailDrawer({
               <Button
                 variant="outlined"
                 startIcon={<ReceiptRoundedIcon />}
+                disabled={selectedOrder.taxInvoice !== 'yes'}
                 onClick={() => {
                   printDocument(selectedOrder, 'invoice');
                 }}

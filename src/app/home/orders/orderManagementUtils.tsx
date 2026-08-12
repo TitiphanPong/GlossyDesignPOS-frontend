@@ -83,6 +83,8 @@ export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
     id: order._id || order.orderId,
     orderId: order.orderId,
     orderNumber: getDisplayOrderNumber(order),
+    invoiceNumber: order.invoiceNumber,
+    taxInvoice: order.taxInvoice,
     customerName: order.customerName || 'ลูกค้าไม่ระบุชื่อ',
     phoneNumber: order.phoneNumber || '-',
     taxId: order.taxId || '-',
@@ -377,6 +379,9 @@ export function downloadCsv(rows: OrderRow[], label: ExportType) {
 }
 
 export function printDocument(row: OrderRow, mode: 'receipt' | 'invoice') {
+  if (mode === 'invoice' && row.taxInvoice !== 'yes') {
+    return;
+  }
   const documentType = mode === 'invoice' ? 'tax-invoice' : 'receipt';
   const targetPath = `/print/invoice/${encodeURIComponent(row.id)}?documentType=${documentType}`;
   globalThis.location.assign(targetPath);

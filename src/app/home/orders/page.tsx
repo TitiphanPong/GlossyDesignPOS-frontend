@@ -512,6 +512,7 @@ export default function OrderManagementPage() {
                           variant="outlined"
                           size="small"
                           startIcon={<ReceiptRoundedIcon fontSize="small" />}
+                          disabled={row.taxInvoice !== 'yes'}
                           onClick={() => printDocument(row, 'invoice')}
                           sx={{ ...commonButtonSx, minHeight: 34 }}>
                           ใบกำกับภาษี
@@ -681,7 +682,7 @@ export default function OrderManagementPage() {
                               </IconButton>
                             </Tooltip>
                             <Tooltip title="ใบกำกับภาษี">
-                              <IconButton size="small" onClick={() => printDocument(row, 'invoice')}>
+                              <IconButton size="small" disabled={row.taxInvoice !== 'yes'} onClick={() => printDocument(row, 'invoice')}>
                                 <ReceiptRoundedIcon fontSize="small" />
                               </IconButton>
                             </Tooltip>

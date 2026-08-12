@@ -154,7 +154,9 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
 
   return {
     bookNo: '-',
-    invoiceNo: order.orderNumber || order.orderId,
+    invoiceNo: documentType === 'tax-invoice'
+      ? (order.invoiceNumber || order.orderNumber || order.orderId)
+      : (order.orderNumber || order.orderId),
     copyTitle: getCopyTitle(documentType, order.taxInvoice),
     issuedDate,
     customer: {

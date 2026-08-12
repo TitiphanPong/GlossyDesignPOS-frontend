@@ -173,6 +173,7 @@ export type ApiOrder = {
   _id: string;
   orderId: string;
   orderNumber?: string;
+  invoiceNumber?: string;
   orderType?: 'NORMAL' | 'QUICK_SALE';
   receivedAmount?: number;
   changeAmount?: number;
@@ -267,6 +268,7 @@ export type NormalizedOrder = {
   _id: string;
   orderId: string;
   orderNumber: string;
+  invoiceNumber?: string;
   customerName: string;
   phoneNumber: string;
   email: string;
@@ -298,6 +300,7 @@ export type NormalizedOrder = {
 export type NormalizedInvoiceOrder = {
   orderId: string;
   orderNumber: string;
+  invoiceNumber?: string;
   customerName: string;
   phoneNumber: string;
   email: string;
@@ -440,6 +443,7 @@ export function normalizeApiOrder(
     _id: readNonEmptyString(order._id) ?? readNonEmptyString(order.id) ?? readNonEmptyString(order.orderId) ?? '-',
     orderId: readNonEmptyString(order.orderId) ?? readNonEmptyString(order._id) ?? readNonEmptyString(order.id) ?? '-',
     orderNumber: getDisplayOrderNumber(order),
+    invoiceNumber: typeof order.invoiceNumber === 'string' ? order.invoiceNumber : undefined,
     customerName: customerInfo.customerName,
     phoneNumber: customerInfo.phoneNumber ?? '-',
     email: customerInfo.email ?? '-',
@@ -497,6 +501,7 @@ export function normalizeApiOrderForInvoice(
   return {
     orderId: readNonEmptyString(order.orderId) ?? readNonEmptyString(order._id) ?? '-',
     orderNumber: getDisplayOrderNumber(order),
+    invoiceNumber: typeof order.invoiceNumber === 'string' ? order.invoiceNumber : undefined,
     customerName: customerInfo.customerName,
     phoneNumber: customerInfo.phoneNumber ?? '-',
     email: customerInfo.email ?? '-',
@@ -524,6 +529,7 @@ export function createInvoiceOrderFromNormalizedOrder(order: NormalizedOrder): N
   return {
     orderId: order.orderId,
     orderNumber: order.orderNumber,
+    invoiceNumber: order.invoiceNumber,
     customerName: order.customerName,
     phoneNumber: order.phoneNumber,
     email: order.email,

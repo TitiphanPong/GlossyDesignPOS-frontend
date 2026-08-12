@@ -22,6 +22,8 @@ export type OrderRow = {
   id: string;
   orderId: string;
   orderNumber: string;
+  invoiceNumber?: string;
+  taxInvoice: 'yes' | 'no';
   customerName: string;
   phoneNumber: string;
   taxId: string;

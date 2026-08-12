@@ -21,6 +21,10 @@ import {
   useTheme,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
+import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import ReplayRoundedIcon from '@mui/icons-material/ReplayRounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import ArticleRoundedIcon from '@mui/icons-material/ArticleRounded';
@@ -267,7 +271,7 @@ export default function QuickSalePage() {
         clientDraftId,
         orderType: 'QUICK_SALE',
         salesChannel: 'quick_sale',
-        customerName: '',
+        customerName: 'ลูกค้าหน้าร้าน',
         phoneNumber: '',
         note: '',
         cart: items.map(item => ({
@@ -478,26 +482,122 @@ export default function QuickSalePage() {
         {cart}
       </Drawer>
 
-      <Dialog open={customOpen} onClose={() => setCustomOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle>เพิ่มรายการอื่น</DialogTitle>
-        <DialogContent>
-          <Stack gap={2} sx={{ pt: 1 }}>
-            <TextField autoFocus label="ชื่อรายการ" value={customName} onChange={event => setCustomName(event.target.value)} />
-            <Stack direction="row" alignItems="center" gap={1}>
-              <IconButton sx={touchButton} onClick={() => setCustomQuantity(value => Math.max(1, value - 1))}>
-                <RemoveRoundedIcon />
-              </IconButton>
-              <TextField label="จำนวน" type="number" value={customQuantity} onChange={event => setCustomQuantity(Math.max(1, Math.floor(Number(event.target.value) || 1)))} />
-              <IconButton sx={touchButton} onClick={() => setCustomQuantity(value => value + 1)}>
-                <AddRoundedIcon />
-              </IconButton>
+      <Dialog
+        open={customOpen}
+        onClose={() => setCustomOpen(false)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{
+          sx: {
+            width: { xs: 'calc(100% - 24px)', sm: 440 },
+            m: { xs: 1.5, sm: 4 },
+            borderRadius: 4,
+            overflow: 'hidden',
+            boxShadow: '0 24px 64px rgba(15, 23, 42, 0.22)',
+          },
+        }}
+      >
+        <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.75, pb: 1 }}>
+          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={2}>
+            <Box>
+              <Typography component="h2" fontSize={21} fontWeight={900} color="#172033">
+                เพิ่มรายการอื่น
+              </Typography>
+              <Typography fontSize={13.5} color="#64748B" sx={{ mt: 0.5 }}>
+                สำหรับสินค้าหรือบริการที่ไม่มีในรายการ
+              </Typography>
+            </Box>
+            <IconButton
+              aria-label="ปิดหน้าต่าง"
+              onClick={() => setCustomOpen(false)}
+              sx={{ mt: -0.5, mr: -1, bgcolor: '#F1F5F9', color: '#475569', '&:hover': { bgcolor: '#E2E8F0' } }}
+            >
+              <CloseRoundedIcon />
+            </IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent sx={{ px: { xs: 2.5, sm: 3 }, pt: '16px !important', pb: 2 }}>
+          <Stack gap={2.25}>
+            <TextField
+              autoFocus
+              fullWidth
+              label="ชื่อรายการ"
+              placeholder="เช่น ค่าออกแบบ, ค่าจัดส่ง"
+              value={customName}
+              onChange={event => setCustomName(event.target.value)}
+              slotProps={{ input: { sx: { borderRadius: 2.5 } } }}
+            />
+
+            <Box>
+              <Typography component="label" fontSize={13} fontWeight={800} color="#475569">
+                จำนวน
+              </Typography>
+              <Stack
+                direction="row"
+                alignItems="center"
+                justifyContent="space-between"
+                sx={{ mt: 0.75, p: 0.75, border: '1px solid #DCE4EF', borderRadius: 2.5, bgcolor: '#F8FAFC' }}
+              >
+                <IconButton
+                  aria-label="ลดจำนวน"
+                  disabled={customQuantity <= 1}
+                  onClick={() => setCustomQuantity(value => Math.max(1, value - 1))}
+                  sx={{ ...touchButton, border: '1px solid #DCE4EF', bgcolor: '#FFFFFF', '&:hover': { bgcolor: '#EFF6FF', borderColor: '#93C5FD' } }}
+                >
+                  <RemoveRoundedIcon />
+                </IconButton>
+                <TextField
+                  type="number"
+                  value={customQuantity}
+                  onChange={event => setCustomQuantity(Math.max(1, Math.floor(Number(event.target.value) || 1)))}
+                  inputProps={{ min: 1, inputMode: 'numeric', 'aria-label': 'จำนวนรายการ' }}
+                  sx={{ width: 104, '& .MuiOutlinedInput-notchedOutline': { border: 0 }, '& input': { p: 1, textAlign: 'center', fontSize: 20, fontWeight: 900 } }}
+                />
+                <IconButton
+                  aria-label="เพิ่มจำนวน"
+                  onClick={() => setCustomQuantity(value => value + 1)}
+                  sx={{ ...touchButton, border: '1px solid #BFDBFE', bgcolor: '#EFF6FF', color: '#1769E0', '&:hover': { bgcolor: '#DBEAFE' } }}
+                >
+                  <AddRoundedIcon />
+                </IconButton>
+              </Stack>
+            </Box>
+
+            <TextField
+              fullWidth
+              label="ราคาต่อหน่วย"
+              type="number"
+              value={customPrice}
+              inputProps={{ min: 0, step: 0.01, inputMode: 'decimal' }}
+              slotProps={{
+                input: {
+                  startAdornment: <InputAdornment position="start">฿</InputAdornment>,
+                  sx: { borderRadius: 2.5, fontWeight: 800 },
+                },
+              }}
+              onChange={event => setCustomPrice(event.target.value)}
+            />
+
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.5, borderRadius: 2.5, bgcolor: '#EFF6FF' }}>
+              <Typography fontSize={14} fontWeight={700} color="#52657C">ยอดรวม</Typography>
+              <Typography fontSize={20} fontWeight={900} color="#1769E0">
+                ฿{money.format(customQuantity * (Number(customPrice) || 0))}
+              </Typography>
             </Stack>
-            <TextField label="ราคา/หน่วย" type="number" value={customPrice} inputProps={{ min: 0, step: 0.01 }} onChange={event => setCustomPrice(event.target.value)} />
           </Stack>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={() => setCustomOpen(false)}>ยกเลิก</Button>
-          <Button variant="contained" disabled={!customName.trim() || customPrice === ''} onClick={addCustom}>
+        <DialogActions sx={{ gap: 1.25, px: { xs: 2.5, sm: 3 }, pt: 1.5, pb: 2.75, borderTop: '1px solid #EEF2F7' }}>
+          <Button fullWidth variant="outlined" onClick={() => setCustomOpen(false)} sx={{ minHeight: 48, borderRadius: 2.5, fontWeight: 800 }}>
+            ยกเลิก
+          </Button>
+          <Button
+            fullWidth
+            variant="contained"
+            startIcon={<AddRoundedIcon />}
+            disabled={!customName.trim() || customPrice === ''}
+            onClick={addCustom}
+            sx={{ minHeight: 48, borderRadius: 2.5, fontWeight: 900, boxShadow: '0 8px 18px rgba(23, 105, 224, 0.22)' }}
+          >
             เพิ่มรายการ
           </Button>
         </DialogActions>
@@ -516,31 +616,48 @@ export default function QuickSalePage() {
         onConfirm={() => void submitSale()}
       />
 
-      <Dialog open={Boolean(completed)} fullWidth maxWidth="xs">
-        <DialogContent>
-          <Stack alignItems="center" gap={2} sx={{ py: 3 }}>
-            <Box sx={{ width: 68, height: 68, borderRadius: '50%', bgcolor: 'success.light', color: 'success.dark', display: 'grid', placeItems: 'center', fontSize: 38 }}>✓</Box>
-            <Typography variant="h5" fontWeight={900}>
+      <Dialog
+        open={Boolean(completed)}
+        fullWidth
+        maxWidth="xs"
+        PaperProps={{ sx: { width: { xs: 'calc(100% - 24px)', sm: 440 }, m: 1.5, borderRadius: 4, overflow: 'hidden', boxShadow: '0 28px 72px rgba(15, 23, 42, 0.24)' } }}
+      >
+        <DialogContent sx={{ p: 0 }}>
+          <Box sx={{ px: { xs: 2.5, sm: 3.5 }, pt: 4, pb: 3, textAlign: 'center', background: 'linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 100%)' }}>
+            <Box sx={{ width: 72, height: 72, mx: 'auto', mb: 2, borderRadius: '50%', bgcolor: '#22A447', color: '#FFFFFF', display: 'grid', placeItems: 'center', boxShadow: '0 12px 28px rgba(34, 164, 71, 0.26)' }}>
+              <CheckRoundedIcon sx={{ fontSize: 44 }} />
+            </Box>
+            <Typography component="h2" fontSize={25} fontWeight={900} color="#172033">
               ขายสำเร็จ
             </Typography>
-            <Typography variant="h6" color="primary" fontWeight={800}>
-              {completed?.orderNumber}
+            <Typography fontSize={14} color="#64748B" sx={{ mt: 0.5 }}>
+              บันทึกรายการขายเรียบร้อยแล้ว
             </Typography>
-            <Stack direction="row" justifyContent="space-between" width="100%">
-              <Typography>ยอดชำระ</Typography>
-              <Typography fontWeight={800}>฿{money.format(completed?.grandTotal ?? 0)}</Typography>
+            <Chip label={completed?.orderNumber} sx={{ mt: 2, height: 34, borderRadius: 2, bgcolor: '#E8F1FF', color: '#1769E0', fontSize: 15, fontWeight: 900, '& .MuiChip-label': { px: 2 } }} />
+          </Box>
+
+          <Box sx={{ px: { xs: 2.5, sm: 3.5 }, pb: 3.5 }}>
+            <Stack gap={1.25} sx={{ p: 2, mb: 2.5, border: '1px solid #E6ECF4', borderRadius: 3, bgcolor: '#F8FAFC' }}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography fontSize={14} color="#64748B">ยอดชำระ</Typography>
+                <Typography fontSize={19} fontWeight={900} color="#172033">฿{money.format(completed?.grandTotal ?? 0)}</Typography>
+              </Stack>
+              <Box sx={{ borderTop: '1px dashed #D8E1EC' }} />
+              <Stack direction="row" alignItems="center" justifyContent="space-between">
+                <Typography fontSize={14} color="#64748B">เงินทอน</Typography>
+                <Typography fontSize={19} fontWeight={900} color="#22A447">฿{money.format(completed?.changeAmount ?? 0)}</Typography>
+              </Stack>
             </Stack>
-            <Stack direction="row" justifyContent="space-between" width="100%">
-              <Typography>เงินทอน</Typography>
-              <Typography fontWeight={800}>฿{money.format(completed?.changeAmount ?? 0)}</Typography>
+
+            <Stack gap={1.25}>
+              <Button fullWidth variant="contained" size="large" startIcon={<ReplayRoundedIcon />} onClick={startNew} sx={{ minHeight: 50, borderRadius: 2.5, fontWeight: 900, boxShadow: '0 8px 18px rgba(23, 105, 224, 0.22)' }}>
+                ขายรายการใหม่
+              </Button>
+              <Button fullWidth variant="outlined" size="large" startIcon={<ReceiptLongRoundedIcon />} onClick={() => completed && globalThis.open(`/print/invoice/${encodeURIComponent(completed.orderId)}?documentType=receipt`, '_blank')} sx={{ minHeight: 50, borderRadius: 2.5, fontWeight: 800 }}>
+                พิมพ์ใบเสร็จ
+              </Button>
             </Stack>
-            <Button fullWidth variant="contained" size="large" onClick={startNew}>
-              ขายรายการใหม่
-            </Button>
-            <Button fullWidth variant="outlined" onClick={() => completed && globalThis.open(`/print/invoice/${encodeURIComponent(completed.orderId)}`, '_blank')}>
-              พิมพ์ใบเสร็จ
-            </Button>
-          </Stack>
+          </Box>
         </DialogContent>
       </Dialog>
     </AdminPageContainer>
