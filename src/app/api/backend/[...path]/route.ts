@@ -31,7 +31,15 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
       cache: 'no-store',
       redirect: 'manual',
     });
-    return new NextResponse(response.body, { status: response.status, headers: response.headers });
+    const responseHeaders = new Headers(response.headers);
+
+    // fetch() transparently decompresses the upstream body. Forwarding the
+    // original encoding/length headers makes browsers try to decode it again.
+    responseHeaders.delete('content-encoding');
+    responseHeaders.delete('content-length');
+    responseHeaders.delete('transfer-encoding');
+
+    return new NextResponse(response.body, { status: response.status, headers: responseHeaders });
   } catch {
     return NextResponse.json({ message: 'Backend service is unavailable' }, { status: 502 });
   }
