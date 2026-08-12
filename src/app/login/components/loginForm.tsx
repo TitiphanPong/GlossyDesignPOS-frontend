@@ -1,46 +1,111 @@
 'use client';
 
-import React from 'react';
+import { useState } from 'react';
+import type { ChangeEvent, FormEvent } from 'react';
+import { Alert, CircularProgress, IconButton } from '@mui/material';
+import { LockOutlined, PersonOutline, VisibilityOffOutlined, VisibilityOutlined } from '@mui/icons-material';
 import styles from './loginForm.module.css';
-import styled from 'styled-components';
-
-const StyledWrapper = styled.div``;
 
 interface LoginFormProps {
   username: string;
   password: string;
+  errorMessage?: string | null;
   submitDisabled?: boolean;
-  onUsernameChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onPasswordChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  onSubmit: (e: React.FormEvent) => void;
+  onUsernameChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onPasswordChange: (event: ChangeEvent<HTMLInputElement>) => void;
+  onSubmit: (event: FormEvent) => void;
 }
 
-const LoginForm: React.FC<LoginFormProps> = ({ username, password, submitDisabled = false, onUsernameChange, onPasswordChange, onSubmit }) => {
+export default function LoginForm({
+  username,
+  password,
+  errorMessage,
+  submitDisabled = false,
+  onUsernameChange,
+  onPasswordChange,
+  onSubmit,
+}: LoginFormProps) {
+  const [showPassword, setShowPassword] = useState(false);
+
   return (
-    <StyledWrapper>
-      <div className={styles.wrapper}>
-        <form className={styles.form} onSubmit={onSubmit}>
-          <div className={styles['flex-column']}>
-            <label htmlFor="login-username">Username</label>
-          </div>
-          <div className={styles.inputForm}>
-            <input id="login-username" type="text" className={styles.input} placeholder="Enter your Username" value={username} onChange={onUsernameChange} disabled={submitDisabled} />
-          </div>
-
-          <div className={styles['flex-column']}>
-            <label htmlFor="login-password">Password</label>
-          </div>
-          <div className={styles.inputForm}>
-            <input id="login-password" type="password" className={styles.input} placeholder="Enter your Password" value={password} onChange={onPasswordChange} disabled={submitDisabled} />
-          </div>
-
-          <button className={styles['button-submit']} type="submit" disabled={submitDisabled}>
-            {submitDisabled ? 'Signing In...' : 'Sign In'}
-          </button>
-        </form>
+    <form className={styles.form} onSubmit={onSubmit} aria-busy={submitDisabled}>
+      <div className={styles.heading}>
+        <span className={styles.eyebrow}>สำหรับพนักงาน</span>
+        <h1>ยินดีต้อนรับกลับมา</h1>
+        <p>เข้าสู่ระบบ Glossy Design เพื่อเริ่มจัดการงานหน้าร้าน</p>
       </div>
-    </StyledWrapper>
-  );
-};
 
-export default LoginForm;
+      <div className={styles.alertSlot} aria-live="polite">
+        {errorMessage ? (
+          <Alert severity="error" variant="outlined" className={styles.alert}>
+            <strong>ไม่สามารถเข้าสู่ระบบได้</strong>
+            <span>{errorMessage}</span>
+          </Alert>
+        ) : null}
+      </div>
+
+      <div className={styles.fieldGroup}>
+        <label htmlFor="login-username">ชื่อผู้ใช้</label>
+        <div className={styles.inputShell}>
+          <PersonOutline aria-hidden="true" className={styles.fieldIcon} />
+          <input
+            id="login-username"
+            name="username"
+            type="text"
+            placeholder="กรอกชื่อผู้ใช้ของคุณ"
+            value={username}
+            onChange={onUsernameChange}
+            disabled={submitDisabled}
+            autoComplete="username"
+            autoCapitalize="none"
+            spellCheck={false}
+            required
+            autoFocus
+          />
+        </div>
+      </div>
+
+      <div className={styles.fieldGroup}>
+        <label htmlFor="login-password">รหัสผ่าน</label>
+        <div className={styles.inputShell}>
+          <LockOutlined aria-hidden="true" className={styles.fieldIcon} />
+          <input
+            id="login-password"
+            name="password"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="กรอกรหัสผ่านของคุณ"
+            value={password}
+            onChange={onPasswordChange}
+            disabled={submitDisabled}
+            autoComplete="current-password"
+            required
+          />
+          <IconButton
+            type="button"
+            className={styles.visibilityButton}
+            onClick={() => setShowPassword(current => !current)}
+            disabled={submitDisabled}
+            aria-label={showPassword ? 'ซ่อนรหัสผ่าน' : 'แสดงรหัสผ่าน'}
+            aria-pressed={showPassword}
+            edge="end"
+          >
+            {showPassword ? <VisibilityOffOutlined /> : <VisibilityOutlined />}
+          </IconButton>
+        </div>
+      </div>
+
+      <button className={styles.submitButton} type="submit" disabled={submitDisabled}>
+        {submitDisabled ? (
+          <>
+            <CircularProgress size={18} thickness={5} color="inherit" />
+            กำลังเข้าสู่ระบบ...
+          </>
+        ) : (
+          'เข้าสู่ระบบ'
+        )}
+      </button>
+
+      <p className={styles.supportText}>ระบบสำหรับการใช้งานภายในร้าน Glossy Design</p>
+    </form>
+  );
+}

@@ -126,7 +126,8 @@ test('buildPendingOrderPayload removes frontend-only variant fields rejected by 
     'paid'
   );
 
-  const firstItem = payload.cart?.[0] as { variant?: Record<string, unknown> };
+  const firstItem = (payload.cart as Array<{ variant?: Record<string, unknown> }> | undefined)?.[0];
+  assert.ok(firstItem);
   assert.equal(firstItem.variant?.name, '90 x 55 mm / MATTE');
   assert.equal(firstItem.variant?.width, 90);
   assert.equal(firstItem.variant?.height, 55);
@@ -138,10 +139,7 @@ test('isPendingOrderSubmissionLocked only blocks fresh in-flight submissions', (
 
   assert.equal(isPendingOrderSubmissionLocked({ orderSyncStatus: 'pending', orderSyncStartedAt: now }, now), false);
   assert.equal(isPendingOrderSubmissionLocked({ orderSyncStatus: 'submitting', orderSyncStartedAt: now }, now), true);
-  assert.equal(
-    isPendingOrderSubmissionLocked({ orderSyncStatus: 'submitting', orderSyncStartedAt: now - PENDING_ORDER_SUBMIT_LOCK_TTL_MS - 1 }, now),
-    false,
-  );
+  assert.equal(isPendingOrderSubmissionLocked({ orderSyncStatus: 'submitting', orderSyncStartedAt: now - PENDING_ORDER_SUBMIT_LOCK_TTL_MS - 1 }, now), false);
 });
 
 test('isPendingOrderSettled matches the customer display clear-after-paid behavior', () => {

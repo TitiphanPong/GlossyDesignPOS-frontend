@@ -3,58 +3,34 @@
 import * as React from 'react';
 import { createExcelCompatibleCsv, downloadCsvFile } from '@/lib/csv';
 import {
-  Alert,
   alpha,
   Avatar,
-  Badge,
   Box,
   Button,
   Card,
   CardContent,
-  Checkbox,
-  Chip,
   Divider,
   Drawer,
   FormControl,
   IconButton,
   InputAdornment,
-  InputLabel,
   Menu,
   MenuItem,
   OutlinedInput,
   Select,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TablePagination,
-  TableRow,
   TextField,
-  Tooltip,
   Typography,
   useMediaQuery,
   useTheme,
 } from '@mui/material';
-import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
-import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
-import FileDownloadDoneRoundedIcon from '@mui/icons-material/FileDownloadDoneRounded';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
-import PendingActionsRoundedIcon from '@mui/icons-material/PendingActionsRounded';
-import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
-import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
-import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
 import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
@@ -62,21 +38,27 @@ import SyncRoundedIcon from '@mui/icons-material/SyncRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import axios from 'axios';
 import JobTimelineCard, { type JobTimelineCardItem } from '../components/JobTimelineCard';
-import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
 import { groupStorageRows, normalizeRecord, type StorageRow, type StorageStatus, type UploadApiRecord } from './normalizers';
-
-type SortType = 'newest' | 'oldest' | 'customer' | 'status';
-
-type StorageRowPatch = {
-  status?: StorageStatus;
-  notes?: string;
-};
+import {
+  applyStorageRowPatch,
+  buildPersistedNote,
+  compareStorageRows,
+  getBulkMutationTargetIds,
+  matchesStorageDateFilter,
+  matchesStorageSearch,
+  rowContainsAnySourceId,
+  toEditableStorageStatus,
+  toPersistedUploadStatus,
+  toStructuredStage,
+  type SortType,
+  type StorageRowPatch,
+} from './storageData';
+import StorageOverview from './StorageOverview';
+import StorageToolbar from './StorageToolbar';
+import StorageTable from './StorageTable';
 
 const endpointCandidates = ['/uploads', '/upload'];
-
-const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
 function readErrorMessage(value: unknown): string | null {
   if (typeof value === 'string' && value.trim()) return value.trim();
@@ -125,21 +107,6 @@ function formatDate(value: string) {
   });
 }
 
-function formatLastSynced(date: Date | null) {
-  if (!date) return '-';
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear() + 543;
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
-}
-
-function formatThaiFullDate(date: Date | null) {
-  if (!date) return 'ไม่มีวันที่';
-  return `วัน${DAYS_TH[date.getDay()]}ที่ ${date.getDate()} ${MONTHS_TH[date.getMonth()]} พ.ศ. ${date.getFullYear() + 543}`;
-}
-
 function storageStatusLabel(status: StorageStatus) {
   if (status === 'pending') return 'รอดำเนินการ';
   if (status === 'completed') return 'เสร็จสิ้น';
@@ -182,39 +149,6 @@ function getStorageStatusPresentation(status: StorageStatus) {
   };
 }
 
-function statusChip(status: StorageStatus) {
-  if (status === 'pending') {
-    return {
-      label: storageStatusLabel(status),
-      sx: {
-        color: '#9A5B00',
-        bgcolor: '#FFF1DB',
-        border: '1px solid #F6C97A',
-      },
-    };
-  }
-
-  if (status === 'completed') {
-    return {
-      label: storageStatusLabel(status),
-      sx: {
-        color: '#0F6B46',
-        bgcolor: '#E8F8EF',
-        border: '1px solid #9EDCBD',
-      },
-    };
-  }
-
-  return {
-    label: storageStatusLabel(status),
-    sx: {
-      color: '#475467',
-      bgcolor: '#F5F7FA',
-      border: '1px solid #D8E0EA',
-    },
-  };
-}
-
 function buildStorageTimelineItems(record: StorageRow): JobTimelineCardItem[] {
   let activeIndex = 0;
 
@@ -245,72 +179,6 @@ function buildStorageTimelineItems(record: StorageRow): JobTimelineCardItem[] {
   }));
 }
 
-function toPersistedUploadStatus(status: StorageStatus): 'pending' | 'completed' {
-  return status === 'completed' ? 'completed' : 'pending';
-}
-
-function toEditableStorageStatus(status: StorageStatus): StorageStatus {
-  return status;
-}
-
-function jobTypeChipSx(jobType: string) {
-  const normalized = jobType.toLowerCase();
-
-  if (normalized.includes('document')) {
-    return {
-      color: '#1D4ED8',
-      bgcolor: '#DBEAFE',
-      border: '1px solid #93C5FD',
-    };
-  }
-
-  if (normalized.includes('sticker')) {
-    return {
-      color: '#8A3FFC',
-      bgcolor: '#F3E8FF',
-      border: '1px solid #D9B8FF',
-    };
-  }
-
-  if (normalized.includes('banner') || normalized.includes('vinyl')) {
-    return {
-      color: '#9A3412',
-      bgcolor: '#FFF1E8',
-      border: '1px solid #F8C9B0',
-    };
-  }
-
-  if (normalized.includes('business') || normalized.includes('namecard')) {
-    return {
-      color: '#0F5B7A',
-      bgcolor: '#E7F6FD',
-      border: '1px solid #B8E4F7',
-    };
-  }
-
-  if (normalized.includes('packaging') || normalized.includes('binding')) {
-    return {
-      color: '#166534',
-      bgcolor: '#ECFDF3',
-      border: '1px solid #BBE7D0',
-    };
-  }
-
-  if (normalized.includes('other')) {
-    return {
-      color: '#B45309',
-      bgcolor: '#FEF3C7',
-      border: '1px solid #FCD34D',
-    };
-  }
-
-  return {
-    color: '#334155',
-    bgcolor: '#EEF2FF',
-    border: '1px solid #CFD8F6',
-  };
-}
-
 function pickFileIcon(fileName: string) {
   const ext = fileName.split('.').pop()?.toLowerCase() ?? '';
   if (['png', 'jpg', 'jpeg', 'gif', 'webp'].includes(ext)) return <ImageRoundedIcon sx={{ color: '#2A6BF6', fontSize: 18 }} />;
@@ -318,121 +186,10 @@ function pickFileIcon(fileName: string) {
   return <InsertDriveFileRoundedIcon sx={{ color: '#6D7B8A', fontSize: 18 }} />;
 }
 
-function buildPersistedNote(note: string, batchId?: string, status?: StorageStatus) {
-  const trimmed = note.trim();
-  let stageMarker = '';
-
-  if (status === 'pending') {
-    stageMarker = '[[stage:pending]]';
-  } else if (status === 'waiting') {
-    stageMarker = '[[stage:waiting-download]]';
-  }
-
-  const markers = [batchId ? `[[batch:${batchId}]]` : '', stageMarker].filter(Boolean).join('\n');
-  if (!markers) return trimmed;
-  return trimmed ? `${trimmed}\n\n${markers}` : markers;
-}
-
-function rowContainsAnySourceId(row: Pick<StorageRow, 'sourceIds'>, targetIds: string[]): boolean {
-  return row.sourceIds.some(sourceId => targetIds.includes(sourceId));
-}
-
-function applyStorageRowPatch(row: StorageRow, patch: StorageRowPatch): StorageRow {
-  return {
-    ...row,
-    ...(patch.status ? { status: patch.status } : {}),
-    ...(patch.notes === undefined ? {} : { notes: patch.notes }),
-  };
-}
-
-function getBulkMutationTargetIds(selectedIds: string[], rowsById: Map<string, StorageRow>): string[] {
-  return Array.from(new Set(selectedIds.flatMap(rowId => rowsById.get(rowId)?.sourceIds ?? [rowId])));
-}
-
-function matchesStorageSearch(row: StorageRow, query: string): boolean {
-  if (!query) {
-    return true;
-  }
-
-  return row.customerName.toLowerCase().includes(query) || row.phone.toLowerCase().includes(query) || row.jobType.toLowerCase().includes(query) || row.notes.toLowerCase().includes(query);
-}
-
-function matchesStorageDateFilter(uploadDate: string, dateFilter: string): boolean {
-  if (!dateFilter) {
-    return true;
-  }
-
-  const day = new Date(uploadDate);
-  if (Number.isNaN(day.getTime())) {
-    return false;
-  }
-
-  return day.toISOString().slice(0, 10) === dateFilter;
-}
-
-function compareStorageRows(a: StorageRow, b: StorageRow, sortBy: SortType): number {
-  if (sortBy === 'customer') return a.customerName.localeCompare(b.customerName);
-  if (sortBy === 'status') return a.status.localeCompare(b.status);
-
-  const t1 = new Date(a.uploadDate).getTime();
-  const t2 = new Date(b.uploadDate).getTime();
-  return sortBy === 'newest' ? t2 - t1 : t1 - t2;
-}
-
-function toStructuredStage(status?: StorageStatus): 'waiting-download' | 'pending' | 'completed' | undefined {
-  if (status === 'waiting') return 'waiting-download';
-  if (status === 'pending') return 'pending';
-  if (status === 'completed') return 'completed';
-  return undefined;
-}
-
 function toCsv(rows: StorageRow[]) {
   const headers = ['วันที่อัปโหลด', 'ชื่อลูกค้า', 'เบอร์โทร', 'LINE ID', 'ประเภทงาน', 'สถานะ', 'หมายเหตุ'];
   const body = rows.map(row => [formatDate(row.uploadDate), row.customerName, row.phone, row.lineId, row.jobType, storageStatusLabel(row.status), row.notes]);
   return createExcelCompatibleCsv([headers, ...body]);
-}
-
-type StatCardProps = {
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: React.ReactNode;
-  tone: string;
-};
-
-function StatCard({ title, value, subtitle, icon, tone }: Readonly<StatCardProps>) {
-  return (
-    <Card
-      sx={{
-        borderRadius: 4.5,
-        border: '1px solid #E8EDF5',
-        boxShadow: '0 12px 30px rgba(13, 30, 64, 0.07)',
-        background: `linear-gradient(140deg, ${alpha(tone, 0.1)} 0%, #FFFFFF 46%, #FFFFFF 100%)`,
-      }}>
-      <CardContent sx={{ p: 2.35 }}>
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
-          <Box>
-            <Typography sx={{ color: '#64748B', fontSize: 13, fontWeight: 600 }}>{title}</Typography>
-            <Typography sx={{ mt: 0.8, fontSize: 31, lineHeight: 1.1, fontWeight: 800, color: '#0B1325' }}>{value}</Typography>
-            <Typography sx={{ mt: 0.6, color: '#8A95A7', fontSize: 11.8 }}>{subtitle}</Typography>
-          </Box>
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: 2.6,
-              display: 'grid',
-              placeItems: 'center',
-              color: tone,
-              bgcolor: alpha(tone, 0.14),
-              boxShadow: `0 10px 20px ${alpha(tone, 0.2)}`,
-            }}>
-            {icon}
-          </Box>
-        </Stack>
-      </CardContent>
-    </Card>
-  );
 }
 
 export default function StoragePage() {
@@ -822,7 +579,7 @@ export default function StoragePage() {
         targetIds.map(rowId =>
           persistUploadMutation(rowId, 'patch', {
             status: nextStatus,
-            note: buildPersistedNote(drawerNotes, activeRecord.batchId, nextStatus),
+            note: buildPersistedNote(drawerNotes),
             statusNote: drawerNotes.trim() || undefined,
             batchId: activeRecord.batchId,
             stage: toStructuredStage(nextStatus),
@@ -869,431 +626,59 @@ export default function StoragePage() {
         fontFamily: 'var(--font-sans), "Prompt", "Noto Sans Thai", sans-serif',
       }}>
       <Stack spacing={2.5}>
-        <Card
-          sx={{
-            borderRadius: 5.2,
-            border: '1px solid #E6EDF8',
-            boxShadow: '0 16px 36px rgba(18, 45, 82, 0.08)',
-            background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
-          }}>
-          <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
-              <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
-                <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Storage</Typography>
-                <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร</Typography>
-                <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>อัปเดตล่าสุด {formatLastSynced(lastSyncedAt)}</Typography>
-                <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{formatThaiFullDate(lastSyncedAt)}</Typography>
-              </Box>
+        <StorageOverview
+          stats={stats}
+          lastSyncedAt={lastSyncedAt}
+          missingApiBase={missingApiBase}
+          errorMessage={errorMessage}
+          actionMessage={actionMessage}
+          selectedCount={selectedRows.length}
+          onRefresh={() => void fetchUploads()}
+          onExport={exportFiltered}
+          onDownloadSelected={downloadSelected}
+        />
 
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ minHeight: { md: 110 } }}>
-                <IconButton
-                  sx={{
-                    borderRadius: 3,
-                    border: '1px solid #DFE8F5',
-                    bgcolor: '#FFFFFF',
-                    width: 44,
-                    height: 44,
-                    boxShadow: '0 10px 20px rgba(12, 56, 110, 0.08)',
-                  }}>
-                  <Badge
-                    variant="dot"
-                    sx={{
-                      '& .MuiBadge-badge': {
-                        bgcolor: '#E5484D',
-                        boxShadow: '0 0 0 2px #FFFFFF',
-                      },
-                    }}>
-                    <NotificationsRoundedIcon sx={{ color: '#2A4365' }} />
-                  </Badge>
-                </IconButton>
+        <StorageToolbar
+          search={search}
+          statusFilter={statusFilter}
+          dateFilter={dateFilter}
+          sortBy={sortBy}
+          selectedCount={selectedRows.length}
+          bulkUpdating={bulkUpdating}
+          bulkDeleting={bulkDeleting}
+          onSearchChange={setSearch}
+          onStatusChange={setStatusFilter}
+          onDateChange={setDateFilter}
+          onSortChange={setSortBy}
+          onDownloadSelected={downloadSelected}
+          onBulkStatus={() => void handleBulkStatus()}
+          onBulkDelete={() => void handleBulkDelete()}
+        />
 
-                <Button
-                  onClick={fetchUploads}
-                  startIcon={<RefreshRoundedIcon />}
-                  variant="outlined"
-                  sx={{
-                    minHeight: 40,
-                    borderRadius: 3,
-                    borderColor: '#D7E3F4',
-                    bgcolor: '#FFFFFF',
-                    color: '#2A4365',
-                    px: 1.8,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                  }}>
-                  Refresh
-                </Button>
-
-                <Button
-                  onClick={exportFiltered}
-                  startIcon={<FileDownloadDoneRoundedIcon />}
-                  variant="outlined"
-                  sx={{
-                    minHeight: 40,
-                    borderRadius: 3,
-                    borderColor: '#D7E3F4',
-                    bgcolor: '#FFFFFF',
-                    color: '#2A4365',
-                    px: 1.8,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                  }}>
-                  Export
-                </Button>
-
-                <Button
-                  onClick={downloadSelected}
-                  disabled={selectedRows.length === 0}
-                  variant="contained"
-                  startIcon={<DownloadRoundedIcon />}
-                  sx={{
-                    borderRadius: 3,
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    bgcolor: '#215AE8',
-                    boxShadow: '0 14px 24px rgba(26, 89, 247, 0.28)',
-                  }}>
-                  ดาวน์โหลดที่เลือก
-                </Button>
-              </Stack>
-            </Stack>
-
-            {missingApiBase ? (
-              <Box sx={{ mt: 2.2 }}>
-                <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้าคลังไฟล์เชื่อมต่อรายการอัปโหลดได้" />
-              </Box>
-            ) : null}
-
-            {errorMessage ? (
-              <Alert severity="warning" sx={{ mt: 2.2, borderRadius: 3 }}>
-                {errorMessage}
-              </Alert>
-            ) : null}
-
-            {actionMessage ? (
-              <Alert severity={actionMessage.severity} sx={{ mt: 2.2, borderRadius: 3 }}>
-                {actionMessage.text}
-              </Alert>
-            ) : null}
-          </CardContent>
-        </Card>
-
-        <Box
-          sx={{
-            display: 'grid',
-            gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(5, minmax(0, 1fr))' },
-            gap: 1.5,
-          }}>
-          {' '}
-          <StatCard title="ไฟล์ทั้งหมด" value={String(stats.totalFiles)} subtitle="จำนวนไฟล์ทั้งหมด" icon={<Inventory2RoundedIcon />} tone="#1E5EFF" />
-          <StatCard title="รอดาวน์โหลด" value={String(stats.waiting)} subtitle="ไฟล์ที่รอดาวน์โหลด" icon={<PendingActionsRoundedIcon />} tone="#8993A4" />
-          <StatCard title="รอดำเนินการ" value={String(stats.pending)} subtitle="รายการที่รับงานแล้ว" icon={<AutorenewRoundedIcon />} tone="#F08C00" />
-          <StatCard title="เสร็จสิ้น" value={String(stats.completed)} subtitle="รายการที่จัดการเรียบร้อย" icon={<TaskAltRoundedIcon />} tone="#1F9D63" />
-          <StatCard title="อัปโหลดวันนี้" value={String(stats.uploadedToday)} subtitle="รายการใหม่วันนี้" icon={<CloudUploadRoundedIcon />} tone="#5B4AE6" />
-        </Box>
-
-        <Card
-          sx={{
-            borderRadius: 4.6,
-            border: '1px solid #E7EDF7',
-            boxShadow: '0 12px 30px rgba(15, 37, 74, 0.08)',
-            background: '#FFFFFF',
-          }}>
-          <CardContent sx={{ p: { xs: 1.9, md: 2.3 } }}>
-            <Stack spacing={1.8}>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                {/* <FilterAltRoundedIcon sx={{ color: '#3866E8', fontSize: 20 }} /> */}
-                {/* <Typography sx={{ color: '#102A43', fontWeight: 800, fontSize: 15 }}>Filter Toolbar</Typography> */}
-              </Stack>
-
-              <Box
-                sx={{
-                  display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: 'minmax(0, 1.7fr) repeat(3, minmax(180px, 0.8fr))' },
-                  alignItems: 'end',
-                  gap: 1.25,
-                }}>
-                <OutlinedInput
-                  value={search}
-                  onChange={event => setSearch(event.target.value)}
-                  placeholder="ค้นหาจากชื่อลูกค้า เบอร์โทร ประเภทงาน หมายเหตุ"
-                  startAdornment={
-                    <InputAdornment position="start">
-                      <SearchRoundedIcon sx={{ color: '#6B7A90' }} />
-                    </InputAdornment>
-                  }
-                  sx={{
-                    height: 46,
-                    borderRadius: 3,
-                    bgcolor: '#FFFFFF',
-                    boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)',
-                    minWidth: 0,
-                  }}
-                />
-
-                <FormControl size="small">
-                  <InputLabel id="status-filter">สถานะ</InputLabel>
-                  <Select<'all' | StorageStatus>
-                    labelId="status-filter"
-                    value={statusFilter}
-                    label="สถานะ"
-                    onChange={event => setStatusFilter(event.target.value)}
-                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
-                    <MenuItem value="all">ทั้งหมด</MenuItem>
-                    <MenuItem value="waiting">รอดาวน์โหลด</MenuItem>
-                    <MenuItem value="pending">รอดำเนินการ</MenuItem>
-                    <MenuItem value="completed">เสร็จสิ้น</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <TextField
-                  label="วันที่"
-                  size="small"
-                  type="date"
-                  value={dateFilter}
-                  onChange={event => setDateFilter(event.target.value)}
-                  slotProps={{ inputLabel: { shrink: true } }}
-                  sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' } }}
-                />
-
-                <FormControl size="small">
-                  <InputLabel id="sort-filter">เรียงลำดับ</InputLabel>
-                  <Select<SortType>
-                    labelId="sort-filter"
-                    value={sortBy}
-                    label="เรียงลำดับ"
-                    onChange={event => setSortBy(event.target.value)}
-                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
-                    <MenuItem value="newest">ล่าสุดก่อน</MenuItem>
-                    <MenuItem value="oldest">เก่าสุดก่อน</MenuItem>
-                    <MenuItem value="customer">ชื่อลูกค้า A-Z</MenuItem>
-                    <MenuItem value="status">สถานะ</MenuItem>
-                  </Select>
-                </FormControl>
-              </Box>
-
-              <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.2} useFlexGap alignItems={{ xs: 'stretch', lg: 'center' }} justifyContent="space-between">
-                <Typography sx={{ ml: 1, fontSize: 12.5, color: '#7B8797', fontWeight: 500 }}>เลือกหลายรายการเพื่อดาวน์โหลด อัปเดตสถานะ หรือลบออกจากรายการ</Typography>
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} useFlexGap flexWrap="wrap">
-                  <Button
-                    onClick={downloadSelected}
-                    disabled={selectedRows.length === 0}
-                    variant="contained"
-                    startIcon={<DownloadRoundedIcon />}
-                    sx={{
-                      borderRadius: 3,
-                      textTransform: 'none',
-                      fontWeight: 700,
-                      minWidth: { sm: 156 },
-                      bgcolor: '#215AE8',
-                      boxShadow: '0 14px 24px rgba(26, 89, 247, 0.28)',
-                    }}>
-                    ดาวน์โหลดที่เลือก
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      void handleBulkStatus();
-                    }}
-                    disabled={selectedRows.length === 0 || bulkUpdating || bulkDeleting}
-                    variant="outlined"
-                    startIcon={<EditNoteRoundedIcon />}
-                    sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, minWidth: { sm: 180 } }}>
-                    {bulkUpdating ? 'กำลังอัปเดต...' : 'ตั้งเป็นรอดำเนินการ'}
-                  </Button>
-                  <Button
-                    onClick={() => {
-                      void handleBulkDelete();
-                    }}
-                    disabled={selectedRows.length === 0 || bulkDeleting || bulkUpdating}
-                    variant="outlined"
-                    color="error"
-                    startIcon={<DeleteOutlineRoundedIcon />}
-                    sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, minWidth: { sm: 132 } }}>
-                    {bulkDeleting ? 'กำลังลบ...' : 'ลบที่เลือก'}
-                  </Button>
-                </Stack>
-              </Stack>
-            </Stack>
-          </CardContent>
-        </Card>
-
-        <Card
-          sx={{
-            borderRadius: 4.8,
-            border: '1px solid #E7EDF8',
-            boxShadow: '0 16px 36px rgba(17, 41, 77, 0.08)',
-            overflow: 'hidden',
-            background: '#FFFFFF',
-          }}>
-          <Box sx={{ px: 2.3, py: 1.7, borderBottom: '1px solid #ECF1F8', bgcolor: '#FCFDFF' }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center">
-              <Typography sx={{ fontWeight: 800, color: '#102A43' }}>รายการไฟล์</Typography>
-              <Chip
-                label={`${totalRows} รายการ`}
-                sx={{
-                  borderRadius: 2.5,
-                  bgcolor: '#EEF4FF',
-                  color: '#1D4ED8',
-                  border: '1px solid #C7D8FE',
-                  fontWeight: 800,
-                }}
-              />
-            </Stack>
-          </Box>
-
-          <TableContainer sx={{ maxHeight: '68vh' }}>
-            <Table stickyHeader>
-              <TableHead>
-                <TableRow>
-                  <TableCell sx={{ minWidth: 52, bgcolor: '#F8FAFE' }}>
-                    <Checkbox checked={allCurrentSelected} onChange={toggleSelectAll} />
-                  </TableCell>
-                  <TableCell sx={{ minWidth: 164, bgcolor: '#F7FAFF' }}>วันที่อัปโหลด</TableCell>
-                  {/* Legacy customer contact columns kept out of the table for now:
-                  <TableCell sx={{ minWidth: 180, bgcolor: '#F7FAFF' }}>Customer Name</TableCell>
-                  <TableCell sx={{ minWidth: 140, bgcolor: '#F7FAFF' }}>Phone Number</TableCell>
-                  */}
-                  <TableCell sx={{ minWidth: 160, bgcolor: '#F7FAFF' }}>ประเภทงาน</TableCell>
-                  <TableCell sx={{ minWidth: 260, bgcolor: '#F7FAFF' }}>ตัวอย่างไฟล์</TableCell>
-                  <TableCell sx={{ minWidth: 130, bgcolor: '#F7FAFF' }}>สถานะ</TableCell>
-                  <TableCell sx={{ minWidth: 220, bgcolor: '#F7FAFF' }}>หมายเหตุ</TableCell>
-                  <TableCell sx={{ minWidth: 172, bgcolor: '#F7FAFF' }}>จัดการ</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {loading ? (
-                  <TableRow>
-                    <TableCell colSpan={7}>
-                      <Typography sx={{ py: 5, textAlign: 'center', color: '#64748B' }}>กำลังโหลดข้อมูล...</Typography>
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-
-                {!loading && filteredRows.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7}>
-                      <EmptyState compact icon={<SearchRoundedIcon fontSize="small" />} eyebrow="Storage" title="ไม่พบไฟล์งานที่อัปโหลด" subtitle="กรุณาคลิกปุ่ม Refresh อีกครั้งเพื่อโหลดข้อมูลใหม่" />
-                    </TableCell>
-                  </TableRow>
-                ) : null}
-
-                {!loading &&
-                  filteredRows.map(row => {
-                    const selected = selectedIds.includes(row.id);
-                    const statusView = statusChip(row.status);
-
-                    return (
-                      <TableRow
-                        key={row.id}
-                        hover
-                        onClick={() => openDrawer(row)}
-                        sx={{
-                          cursor: 'pointer',
-                          transition: 'background-color 120ms ease, box-shadow 120ms ease, transform 100ms ease',
-                          '& td': { borderBottomColor: '#EEF2F7' },
-                          '&:hover': { bgcolor: '#F7FAFF' },
-                        }}>
-                        <TableCell onClick={event => event.stopPropagation()}>
-                          <Checkbox checked={selected} onChange={event => handleRowSelectionChange(row.id, event.target.checked)} />
-                        </TableCell>
-                        <TableCell>
-                          <Typography sx={{ color: '#334155', fontWeight: 600, fontSize: 13.5 }}>{formatDate(row.uploadDate)}</Typography>
-                        </TableCell>
-                        {/* Legacy customer contact cells kept out of the table for now:
-                        <TableCell>
-                          <Stack spacing={0.35}>
-                            <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>{row.customerName}</Typography>
-                            <Typography sx={{ color: '#6B7280', fontSize: 12.5 }}>LINE : {row.lineId}</Typography>
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Typography sx={{ color: '#1E293B', fontWeight: 600 }}>{row.phone}</Typography>
-                        </TableCell>
-                        */}
-                        <TableCell>
-                          <Chip label={row.jobType} sx={{ borderRadius: 2.5, fontWeight: 700, ...jobTypeChipSx(row.jobType) }} />
-                        </TableCell>
-                        <TableCell>
-                          <Stack spacing={0.85}>
-                            {row.files.slice(0, 2).map(file => (
-                              <Stack key={file.id} direction="row" alignItems="center" spacing={0.9}>
-                                {file.thumbnail ? (
-                                  <Box component="img" src={file.thumbnail} alt={file.name} sx={{ width: 34, height: 34, borderRadius: 1.8, objectFit: 'cover', border: '1px solid #E5EAF2' }} />
-                                ) : (
-                                  <Box sx={{ width: 34, height: 34, borderRadius: 1.8, display: 'grid', placeItems: 'center', bgcolor: '#F3F6FC' }}>{pickFileIcon(file.name)}</Box>
-                                )}
-                                <Box sx={{ minWidth: 0 }}>
-                                  <Typography noWrap sx={{ maxWidth: 160, fontWeight: 600, color: '#1F2937', fontSize: 13 }}>
-                                    {file.name}
-                                  </Typography>
-                                  <Typography sx={{ color: '#94A3B8', fontSize: 11.5 }}>{file.size}</Typography>
-                                </Box>
-                              </Stack>
-                            ))}
-                            {row.files.length > 2 ? <Typography sx={{ color: '#64748B', fontSize: 12 }}>+{row.files.length - 2} ไฟล์เพิ่มเติม</Typography> : null}
-                          </Stack>
-                        </TableCell>
-                        <TableCell>
-                          <Chip label={statusView.label} sx={{ borderRadius: 2.5, fontWeight: 800, ...statusView.sx }} />
-                        </TableCell>
-                        <TableCell>
-                          <Typography noWrap sx={{ maxWidth: 200, color: '#475569' }}>
-                            {row.notes || '-'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell onClick={event => event.stopPropagation()}>
-                          <Stack direction="row" spacing={0.6}>
-                            <Tooltip title="ดูรายละเอียด">
-                              <IconButton size="small" onClick={() => openDrawer(row)}>
-                                <VisibilityRoundedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="ดาวน์โหลด">
-                              <IconButton size="small" onClick={() => handleDownloadRowFiles(row)}>
-                                <DownloadRoundedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="คัดลอกลิงก์">
-                              <IconButton
-                                size="small"
-                                onClick={() => {
-                                  void handleCopyFirstFileLink(row);
-                                }}>
-                                <ContentCopyRoundedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="ตัวเลือกเพิ่มเติม">
-                              <IconButton size="small" onClick={event => openRowMenu(event, row.id)}>
-                                <MoreHorizRoundedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          <TablePagination
-            component="div"
-            count={totalRows}
-            page={page}
-            onPageChange={(_, nextPage) => {
-              setSelectedIds([]);
-              setPage(nextPage);
-            }}
-            rowsPerPage={rowsPerPage}
-            onRowsPerPageChange={event => {
-              setSelectedIds([]);
-              setRowsPerPage(Number(event.target.value));
-              setPage(0);
-            }}
-            rowsPerPageOptions={[20, 50, 100]}
-            labelRowsPerPage="รายการต่อหน้า"
-            labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
-          />
-        </Card>
+        <StorageTable
+          rows={filteredRows}
+          loading={loading}
+          totalRows={totalRows}
+          selectedIds={selectedIds}
+          allCurrentSelected={allCurrentSelected}
+          page={page}
+          rowsPerPage={rowsPerPage}
+          onToggleSelectAll={toggleSelectAll}
+          onRowSelectionChange={handleRowSelectionChange}
+          onOpenRow={openDrawer}
+          onDownloadRow={handleDownloadRowFiles}
+          onCopyFirstFileLink={row => void handleCopyFirstFileLink(row)}
+          onOpenRowMenu={openRowMenu}
+          onPageChange={nextPage => {
+            setSelectedIds([]);
+            setPage(nextPage);
+          }}
+          onRowsPerPageChange={nextRowsPerPage => {
+            setSelectedIds([]);
+            setRowsPerPage(nextRowsPerPage);
+            setPage(0);
+          }}
+        />
       </Stack>
 
       <Menu open={Boolean(rowMenuAnchor)} anchorEl={rowMenuAnchor} onClose={closeRowMenu}>
