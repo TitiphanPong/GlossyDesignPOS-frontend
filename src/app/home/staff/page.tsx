@@ -44,9 +44,8 @@ import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { fetchApiJson } from '@/lib/api';
+import { normalizeStaffUsers, type StaffRole as Role, type StaffUser } from './staffUsers';
 
-type Role = 'staff' | 'manager' | 'admin';
-type StaffUser = { id: string; username: string; role: Role; active: boolean; lastLoginAt: string | null };
 type AuditEvent = {
   _id: string;
   actorUsername: string;
@@ -124,8 +123,8 @@ export default function StaffManagementPage() {
     setLoading(true);
     setError(null);
     try {
-      const [userRows, auditRows] = await Promise.all([fetchApiJson<StaffUser[]>('/auth/users', { cache: 'no-store' }), fetchApiJson<AuditEvent[]>('/auth/audit?limit=100', { cache: 'no-store' })]);
-      setUsers(userRows);
+      const [userRows, auditRows] = await Promise.all([fetchApiJson<unknown>('/auth/users', { cache: 'no-store' }), fetchApiJson<AuditEvent[]>('/auth/audit?limit=100', { cache: 'no-store' })]);
+      setUsers(normalizeStaffUsers(userRows));
       setEvents(auditRows);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'ไม่สามารถโหลดข้อมูลพนักงานได้');
@@ -208,7 +207,7 @@ export default function StaffManagementPage() {
 
   const activeUsers = users.filter(user => user.active).length;
   const adminUsers = users.filter(user => user.active && user.role === 'admin').length;
-  const passwordValid = password.length >= 12 && password === confirmPassword;
+  const passwordValid = password.length >= 6 && password === confirmPassword;
 
   return (
     <AdminPageContainer>
@@ -518,7 +517,7 @@ function PasswordFields({
         type={showPassword ? 'text' : 'password'}
         value={password}
         onChange={event => onPasswordChange(event.target.value)}
-        helperText="อย่างน้อย 12 ตัวอักษร"
+        helperText="อย่างน้อย 6 ตัวอักษร"
         slotProps={{
           input: {
             endAdornment: (
