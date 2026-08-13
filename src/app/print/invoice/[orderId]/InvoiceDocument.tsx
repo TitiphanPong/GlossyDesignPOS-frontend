@@ -72,8 +72,20 @@ const BASE_FONT_MM = 2.55;
 const SECTION_GAP_MM = 1;
 const MIN_ITEM_ROWS = 8;
 
-function readEnv(value: string | undefined, fallback: string) {
+function readEnv(value: string | undefined, fallback = '-') {
   return value && value.trim().length > 0 ? value.trim() : fallback;
+}
+
+const REQUIRED_COMPANY_CONFIG = [
+  ['NEXT_PUBLIC_COMPANY_THAI_NAME', process.env.NEXT_PUBLIC_COMPANY_THAI_NAME],
+  ['NEXT_PUBLIC_COMPANY_BRANCH_NO', process.env.NEXT_PUBLIC_COMPANY_BRANCH_NO],
+  ['NEXT_PUBLIC_COMPANY_ADDRESS', process.env.NEXT_PUBLIC_COMPANY_ADDRESS],
+  ['NEXT_PUBLIC_COMPANY_PHONE', process.env.NEXT_PUBLIC_COMPANY_PHONE],
+  ['NEXT_PUBLIC_COMPANY_TAX_ID', process.env.NEXT_PUBLIC_COMPANY_TAX_ID],
+] as const;
+
+export function getMissingCompanyConfigFields(): string[] {
+  return REQUIRED_COMPANY_CONFIG.filter(([, value]) => !value?.trim()).map(([name]) => name);
 }
 
 function getCopyTitle(documentType: InvoiceDocumentType, taxInvoice: 'yes' | 'no'): string {
@@ -129,14 +141,14 @@ function formatThaiTaxDate(value: string): string {
 
 function getCompanyInfo(): CompanyInfo {
   return {
-    thaiName: readEnv(process.env.NEXT_PUBLIC_COMPANY_THAI_NAME, 'กลอสซี่ ปริ้น แอนด์ พรีเมี่ยม'),
-    englishName: readEnv(process.env.NEXT_PUBLIC_COMPANY_ENGLISH_NAME, 'GLOSSY PRINT AND PREMIUM'),
-    branchNumber: readEnv(process.env.NEXT_PUBLIC_COMPANY_BRANCH_NO, 'สำนักงานใหญ่'),
-    address: readEnv(process.env.NEXT_PUBLIC_COMPANY_ADDRESS, '55 ถนนศรีนครินทร์ แขวงหนองบอน เขตประเวศ จังหวัดกรุงเทพฯ 10250'),
-    phone: readEnv(process.env.NEXT_PUBLIC_COMPANY_PHONE, '081-555-2929'),
-    taxId: readEnv(process.env.NEXT_PUBLIC_COMPANY_TAX_ID, '3160100252587'),
-    email: readEnv(process.env.NEXT_PUBLIC_COMPANY_EMAIL, 'glossy2929@gmail.com'),
-    website: readEnv(process.env.NEXT_PUBLIC_COMPANY_WEBSITE, 'glossysiam.com'),
+    thaiName: readEnv(process.env.NEXT_PUBLIC_COMPANY_THAI_NAME),
+    englishName: readEnv(process.env.NEXT_PUBLIC_COMPANY_ENGLISH_NAME),
+    branchNumber: readEnv(process.env.NEXT_PUBLIC_COMPANY_BRANCH_NO),
+    address: readEnv(process.env.NEXT_PUBLIC_COMPANY_ADDRESS),
+    phone: readEnv(process.env.NEXT_PUBLIC_COMPANY_PHONE),
+    taxId: readEnv(process.env.NEXT_PUBLIC_COMPANY_TAX_ID),
+    email: readEnv(process.env.NEXT_PUBLIC_COMPANY_EMAIL),
+    website: readEnv(process.env.NEXT_PUBLIC_COMPANY_WEBSITE),
   };
 }
 

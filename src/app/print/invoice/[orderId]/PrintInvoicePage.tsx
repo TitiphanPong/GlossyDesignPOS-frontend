@@ -6,7 +6,7 @@ import { Alert, Box, Button, CircularProgress, Drawer, Snackbar, Stack, TextFiel
 import { isMissingApiBaseError } from '../../../../lib/api';
 import { createInvoiceOrderFromNormalizedOrder, type CustomerInfo, type NormalizedInvoiceOrder } from '../../../../lib/contracts';
 import { fetchOrderById, updateOrderCustomerInfo } from '../../../../lib/orders';
-import { InvoiceDocument } from './InvoiceDocument';
+import { getMissingCompanyConfigFields, InvoiceDocument } from './InvoiceDocument';
 import { PrintDocumentLayout } from './PrintDocumentLayout';
 import { resolveInvoiceDocumentType } from '../../../home/invoice/[orderId]/invoice-utils';
 
@@ -238,6 +238,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
   }, [orderId]);
 
   const documentType = useMemo(() => resolveInvoiceDocumentType(searchParams.get('documentType'), order, order?.taxInvoice), [order, searchParams]);
+  const missingCompanyConfig = useMemo(() => getMissingCompanyConfigFields(), []);
 
   const handleOpenDrawer = () => {
     if (!order) {
@@ -295,6 +296,15 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
 
   if (!order) {
     return <ErrorState title="ไม่พบข้อมูลใบกำกับภาษี" subtitle={loadError ?? 'ไม่พบข้อมูลออเดอร์ที่ต้องการพิมพ์ กรุณากลับไปตรวจสอบรายการอีกครั้ง'} />;
+  }
+
+  if (missingCompanyConfig.length > 0) {
+    return (
+      <ErrorState
+        title="ยังไม่สามารถพิมพ์เอกสารได้"
+        subtitle={`กรุณาตั้งค่าข้อมูลบริษัทให้ครบก่อนออกเอกสาร: ${missingCompanyConfig.join(', ')}`}
+      />
+    );
   }
 
   if (documentType === 'tax-invoice' && order.taxInvoice !== 'yes') {

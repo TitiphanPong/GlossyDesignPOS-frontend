@@ -122,7 +122,7 @@ function readStoredOrder(): Order | null {
 export default function CustomerScreen() {
   const [order, setOrder] = useState<Order | null>(null);
   const [dismissedOrderKey, setDismissedOrderKey] = useState<string | null>(null);
-  const promptpayId = process.env.NEXT_PUBLIC_PROMPTPAY_ID || '0625624598';
+  const promptpayId = process.env.NEXT_PUBLIC_PROMPTPAY_ID?.trim() ?? '';
 
   useEffect(() => {
     const handleStorage = () => {
@@ -172,6 +172,16 @@ export default function CustomerScreen() {
   if (isPaid) return <PaidScreen />;
   if (isDismissed) return <IdleScreen />;
   if (!summary) return <IdleScreen />;
+  if (!promptpayId) {
+    return (
+      <main className="grid min-h-screen place-items-center bg-slate-950 px-6 text-center text-white">
+        <div className="max-w-xl rounded-3xl border border-amber-400/30 bg-slate-900 p-8 shadow-2xl">
+          <h1 className="text-2xl font-semibold">ยังไม่สามารถแสดง QR รับชำระเงินได้</h1>
+          <p className="mt-3 text-slate-300">กรุณาแจ้งพนักงานตรวจสอบการตั้งค่า PromptPay ก่อนชำระเงิน ระบบจะไม่สร้าง QR จากหมายเลขสำรอง</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
     <ActiveOrderScreen

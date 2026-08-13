@@ -7,18 +7,16 @@ import {
   ADMIN_AUTH_SESSION_VERSION,
   ADMIN_GUARD_REDIRECT_PATH,
   ADMIN_LOGIN_REDIRECT_PATH,
-  canAdminLogin,
   clearAdminAuthSession,
   createAdminSession,
   getAdminAuthConfig,
   hasAdminAuthConfig,
   resolveAdminGuardRedirect,
+  sanitizeAdminRedirectPath,
   verifyAdminSession,
 } from './admin-auth';
 
 const TEST_ENV: NodeJS.ProcessEnv = {
-  ADMIN_LOGIN_USERNAME: 'glossydesign',
-  ADMIN_LOGIN_PASSWORD: 'glossygmail',
   ADMIN_SESSION_SECRET: 'test-secret-value',
   NODE_ENV: 'test',
 };
@@ -31,14 +29,12 @@ test('admin auth constants expose the cookie-based contract', () => {
   assert.equal(ADMIN_GUARD_REDIRECT_PATH, '/login');
 });
 
-test('getAdminAuthConfig requires all server-side auth values', () => {
+test('getAdminAuthConfig only requires the cookie signing secret', () => {
   assert.deepEqual(getAdminAuthConfig(TEST_ENV), {
-    username: 'glossydesign',
-    password: 'glossygmail',
     secret: 'test-secret-value',
   });
   assert.equal(hasAdminAuthConfig(TEST_ENV), true);
-  assert.equal(hasAdminAuthConfig({ ADMIN_LOGIN_USERNAME: 'only-user', NODE_ENV: 'test' }), false);
+  assert.equal(hasAdminAuthConfig({ ADMIN_LOGIN_USERNAME: 'legacy-user', NODE_ENV: 'test' }), false);
 });
 
 test('createAdminSession and verifyAdminSession round-trip a valid signed cookie', async () => {
@@ -67,6 +63,20 @@ test('backend access token and role remain server-only session claims', async ()
 
   assert.equal(session?.accessToken, 'opaque-backend-token');
   assert.equal(session?.role, 'admin');
+});
+
+test('frontend session never outlives the backend session', async () => {
+  const now = Date.now();
+  const backendExpiry = now + 60_000;
+  const token = await createAdminSession('cashier', now, TEST_ENV, {
+    accessToken: 'short-lived-token',
+    role: 'staff',
+    expiresAt: new Date(backendExpiry).toISOString(),
+  });
+  const session = await verifyAdminSession(token, now + 1000, TEST_ENV);
+
+  assert.equal(session?.expiresAt, backendExpiry);
+  assert.equal(await verifyAdminSession(token, backendExpiry, TEST_ENV), null);
 });
 
 test('verifyAdminSession rejects frontend-only legacy cookies without backend identity', async () => {
@@ -104,10 +114,13 @@ test('verifyAdminSession rejects tampered, expired, and malformed cookies', asyn
   assert.equal(await verifyAdminSession('not-a-session', now, TEST_ENV), null);
 });
 
-test('canAdminLogin validates credentials against server env config', async () => {
-  assert.equal(await canAdminLogin('glossydesign', 'glossygmail', TEST_ENV), true);
-  assert.equal(await canAdminLogin('glossydesign', 'wrong', TEST_ENV), false);
-  assert.equal(await canAdminLogin('wrong', 'glossygmail', TEST_ENV), false);
+test('sanitizeAdminRedirectPath only permits same-origin paths', () => {
+  assert.equal(sanitizeAdminRedirectPath('/home/orders?status=pending#latest'), '/home/orders?status=pending#latest');
+  assert.equal(sanitizeAdminRedirectPath('https://example.com'), '/home');
+  assert.equal(sanitizeAdminRedirectPath('//example.com/path'), '/home');
+  assert.equal(sanitizeAdminRedirectPath('/\\example.com'), '/home');
+  assert.equal(sanitizeAdminRedirectPath('javascript:alert(1)'), '/home');
+  assert.equal(sanitizeAdminRedirectPath(null), '/home');
 });
 
 test('resolveAdminGuardRedirect reflects authenticated state', () => {

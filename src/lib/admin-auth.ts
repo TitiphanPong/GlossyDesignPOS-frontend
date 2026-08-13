@@ -15,8 +15,6 @@ export type AdminAuthSession = {
 };
 
 type AdminAuthConfig = {
-  username: string;
-  password: string;
   secret: string;
 };
 
@@ -83,15 +81,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 export function getAdminAuthConfig(env: NodeJS.ProcessEnv = process.env): AdminAuthConfig | null {
-  const username = readRequiredServerValue(env.ADMIN_LOGIN_USERNAME);
-  const password = readRequiredServerValue(env.ADMIN_LOGIN_PASSWORD);
   const secret = readRequiredServerValue(env.ADMIN_SESSION_SECRET);
 
-  if (!username || !password || !secret) {
+  if (!secret) {
     return null;
   }
 
-  return { username, password, secret };
+  return { secret };
 }
 
 export function hasAdminAuthConfig(env: NodeJS.ProcessEnv = process.env): boolean {
@@ -109,13 +105,15 @@ export async function createAdminSession(
     throw new Error('Admin authentication is not configured');
   }
 
+  const backendExpiresAt = backend ? Date.parse(backend.expiresAt) : Number.NaN;
+  const expiresAt = Number.isFinite(backendExpiresAt) ? Math.min(now + ADMIN_AUTH_SESSION_TTL_MS, backendExpiresAt) : now + ADMIN_AUTH_SESSION_TTL_MS;
   const payload = JSON.stringify({
     username,
     role: backend?.role,
     accessToken: backend?.accessToken,
     version: ADMIN_AUTH_SESSION_VERSION,
     issuedAt: now,
-    expiresAt: now + ADMIN_AUTH_SESSION_TTL_MS,
+    expiresAt,
   } satisfies AdminAuthSession);
   const encodedPayload = toBase64Url(payload);
   const signature = await signValue(encodedPayload, config.secret);
@@ -204,17 +202,21 @@ export async function verifyAdminSession(token: string | null | undefined, now =
   }
 }
 
-export async function canAdminLogin(username: string, password: string, env: NodeJS.ProcessEnv = process.env): Promise<boolean> {
-  const config = getAdminAuthConfig(env);
-  if (!config) {
-    return false;
-  }
-
-  return username === config.username && password === config.password;
-}
-
 export function resolveAdminGuardRedirect(isAuthenticated: boolean): string | null {
   return isAuthenticated ? null : ADMIN_GUARD_REDIRECT_PATH;
+}
+
+export function sanitizeAdminRedirectPath(value: string | null | undefined): string {
+  if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
+    return ADMIN_LOGIN_REDIRECT_PATH;
+  }
+
+  try {
+    const url = new URL(value, 'https://admin.local');
+    return url.origin === 'https://admin.local' ? `${url.pathname}${url.search}${url.hash}` : ADMIN_LOGIN_REDIRECT_PATH;
+  } catch {
+    return ADMIN_LOGIN_REDIRECT_PATH;
+  }
 }
 
 export function clearAdminAuthSession(storage?: Pick<Storage, 'removeItem'>): void {

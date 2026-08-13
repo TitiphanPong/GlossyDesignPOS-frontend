@@ -25,6 +25,7 @@ export type NavItem = {
   href: string;
   icon: React.ReactNode;
   section?: string;
+  roles?: Array<'staff' | 'manager' | 'admin'>;
 };
 
 export interface SideMenuProps {
@@ -37,6 +38,7 @@ export interface SideMenuProps {
   onClose?: () => void;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  role?: 'staff' | 'manager' | 'admin';
 }
 
 const DEFAULT_ITEMS: NavItem[] = [
@@ -45,8 +47,8 @@ const DEFAULT_ITEMS: NavItem[] = [
   { label: 'รายการขาย', href: '/home/orders', icon: <ReceiptLongRoundedIcon fontSize="small" /> },
   { label: 'เมนูการขาย', href: '/home/posseller', icon: <LocalPrintshopRoundedIcon fontSize="small" /> },
   { label: 'คลังเก็บไฟล์', href: '/home/storage', icon: <FolderCopyRoundedIcon fontSize="small" /> },
-  { label: 'แก้ไขเมนูการขายด่วน', href: '/home/settings/quick-menu', icon: <RestaurantMenuRoundedIcon fontSize="small" />, section: 'Settings' },
-  { label: 'การจัดการ', href: '/home/staff', icon: <ManageAccountsRoundedIcon fontSize="small" /> },
+  { label: 'แก้ไขเมนูการขายด่วน', href: '/home/settings/quick-menu', icon: <RestaurantMenuRoundedIcon fontSize="small" />, section: 'Settings', roles: ['manager', 'admin'] },
+  { label: 'การจัดการ', href: '/home/staff', icon: <ManageAccountsRoundedIcon fontSize="small" />, roles: ['admin'] },
 ];
 
 function isActivePath(currentPath: string, href: string) {
@@ -127,11 +129,13 @@ export default function SideMenu({
   onClose,
   collapsed = false,
   onToggleCollapsed,
+  role,
 }: Readonly<SideMenuProps>) {
   const router = useRouter();
   const [pendingPath, setPendingPath] = React.useState<string | null>(null);
   const drawerWidth = variant === 'permanent' && collapsed ? collapsedWidth : width;
   const showCollapsedState = variant === 'permanent' && collapsed;
+  const visibleItems = items.filter(item => !item.roles || (role ? item.roles.includes(role) : false));
 
   React.useEffect(() => setPendingPath(null), [currentPath]);
 
@@ -170,9 +174,9 @@ export default function SideMenu({
         <Brand collapsed={showCollapsedState} onToggleCollapsed={variant === 'permanent' ? onToggleCollapsed : undefined} />
 
         <List sx={{ px: showCollapsedState ? 1 : 1.3, py: 0.8, flex: 1 }}>
-          {items.map((item, index) => {
+          {visibleItems.map((item, index) => {
             const active = isActivePath(pendingPath ?? currentPath, item.href);
-            const startsSection = Boolean(item.section) && item.section !== items[index - 1]?.section;
+            const startsSection = Boolean(item.section) && item.section !== visibleItems[index - 1]?.section;
 
             return (
               <React.Fragment key={item.label}>

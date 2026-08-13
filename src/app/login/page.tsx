@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation';
 import LoginBrandPanel from './components/LoginBrandPanel';
 import LoginForm from './components/loginForm';
 import styles from './components/loginForm.module.css';
-import { ADMIN_LOGIN_REDIRECT_PATH, clearAdminAuthSession } from '@/lib/admin-auth';
+import { ADMIN_LOGIN_REDIRECT_PATH, clearAdminAuthSession, sanitizeAdminRedirectPath } from '@/lib/admin-auth';
 
 type AdminSessionStatus = { authenticated?: boolean };
 type AdminLoginError = { message?: string };
@@ -21,15 +21,15 @@ export default function LoginPage() {
 
   useEffect(() => {
     clearAdminAuthSession(globalThis.localStorage);
-    const redirectParam = new URLSearchParams(globalThis.location.search).get('redirectTo');
-    setRedirectTo(redirectParam || ADMIN_LOGIN_REDIRECT_PATH);
+    const redirectParam = sanitizeAdminRedirectPath(new URLSearchParams(globalThis.location.search).get('redirectTo'));
+    setRedirectTo(redirectParam);
 
     const checkSession = async () => {
       try {
         const response = await fetch('/api/admin/session', { credentials: 'same-origin' });
         if (!response.ok) return;
         const payload = (await response.json()) as AdminSessionStatus;
-        if (payload.authenticated) router.replace(redirectParam || ADMIN_LOGIN_REDIRECT_PATH);
+        if (payload.authenticated) router.replace(redirectParam);
       } catch {
         // Keep the login form available if the status check fails.
       }

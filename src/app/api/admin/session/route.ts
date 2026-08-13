@@ -31,7 +31,7 @@ function clearSessionCookie(response: NextResponse) {
 }
 
 export async function GET(request: Request) {
-  const config = getAdminAuthConfig();
+const config = getAdminAuthConfig();
   const token = request.headers.get('cookie')?.match(new RegExp(`${ADMIN_AUTH_COOKIE_NAME}=([^;]+)`))?.[1] ?? null;
   const session = await verifyAdminSession(token);
 
@@ -40,6 +40,7 @@ export async function GET(request: Request) {
       const backendResponse = await fetch(backendUrl('/auth/me'), {
         headers: { Authorization: `Bearer ${session.accessToken}` },
         cache: 'no-store',
+        signal: AbortSignal.timeout(5000),
       });
 
       if (backendResponse.ok) {
@@ -48,6 +49,7 @@ export async function GET(request: Request) {
           configured: Boolean(config),
           expiresAt: session.expiresAt,
           username: session.username,
+          role: session.role,
         });
       }
 
@@ -74,7 +76,7 @@ export async function POST(request: Request) {
   if (!config) {
     return NextResponse.json(
       {
-        message: 'Admin authentication is not configured. Set ADMIN_LOGIN_USERNAME, ADMIN_LOGIN_PASSWORD, and ADMIN_SESSION_SECRET.',
+        message: 'Admin authentication is not configured. Set ADMIN_SESSION_SECRET.',
       },
       { status: 503 }
     );
@@ -101,6 +103,7 @@ export async function POST(request: Request) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ username, password }),
       cache: 'no-store',
+      signal: AbortSignal.timeout(5000),
     });
     if (!backendResponse.ok) {
       return NextResponse.json({ message: 'Invalid username or password.' }, { status: backendResponse.status === 429 ? 429 : 401 });
@@ -115,6 +118,10 @@ export async function POST(request: Request) {
     expiresAt: backendSession.expiresAt,
     role: backendSession.user.role,
   });
+  const backendExpiryMs = Date.parse(backendSession.expiresAt);
+  const cookieTtlMs = Number.isFinite(backendExpiryMs)
+    ? Math.min(ADMIN_AUTH_SESSION_TTL_MS, Math.max(0, backendExpiryMs - Date.now()))
+    : ADMIN_AUTH_SESSION_TTL_MS;
   const response = NextResponse.json({ authenticated: true, username: backendSession.user.username, role: backendSession.user.role });
   response.cookies.set({
     name: ADMIN_AUTH_COOKIE_NAME,
@@ -123,7 +130,7 @@ export async function POST(request: Request) {
     sameSite: 'lax',
     secure: process.env.NODE_ENV === 'production',
     path: '/',
-    maxAge: Math.floor(ADMIN_AUTH_SESSION_TTL_MS / 1000),
+    maxAge: Math.floor(cookieTtlMs / 1000),
   });
 
   return response;
@@ -137,6 +144,7 @@ export async function DELETE(request: Request) {
     await fetch(backendUrl('/auth/logout'), {
       method: 'POST',
       headers: { Authorization: `Bearer ${session.accessToken}` },
+      signal: AbortSignal.timeout(5000),
     }).catch(() => undefined);
   }
   clearSessionCookie(response);
