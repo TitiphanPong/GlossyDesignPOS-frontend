@@ -39,7 +39,19 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     responseHeaders.delete('content-length');
     responseHeaders.delete('transfer-encoding');
 
-    return new NextResponse(response.body, { status: response.status, headers: responseHeaders });
+    const proxiedResponse = new NextResponse(response.body, { status: response.status, headers: responseHeaders });
+    if (response.status === 401) {
+      proxiedResponse.cookies.set({
+        name: ADMIN_AUTH_COOKIE_NAME,
+        value: '',
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 0,
+      });
+    }
+    return proxiedResponse;
   } catch {
     return NextResponse.json({ message: 'Backend service is unavailable' }, { status: 502 });
   }

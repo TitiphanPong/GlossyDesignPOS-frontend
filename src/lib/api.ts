@@ -81,6 +81,10 @@ export async function parseApiErrorResponse(res: Response): Promise<string> {
 
 export async function fetchApi(path: string, init?: RequestInit): Promise<Response> {
   const res = await fetch(buildApiUrl(path), init);
+  if (res.status === 401 && typeof window !== 'undefined') {
+    const target = `${window.location.pathname}${window.location.search}`;
+    window.location.replace(`/login?redirectTo=${encodeURIComponent(target)}`);
+  }
   if (!res.ok) {
     throw new Error(await parseApiErrorResponse(res));
   }

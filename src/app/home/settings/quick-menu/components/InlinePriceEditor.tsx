@@ -4,6 +4,7 @@ import * as React from 'react';
 import { Box, CircularProgress, IconButton, InputAdornment, TextField, Tooltip } from '@mui/material';
 import CheckRoundedIcon from '@mui/icons-material/CheckRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 
 type Props = {
   value: number;
@@ -29,8 +30,8 @@ export default function InlinePriceEditor({ value, disabled, onSave }: Readonly<
   if (!editing) return (
     <Tooltip title="คลิกเพื่อแก้ราคา">
       <Box component="button" type="button" disabled={disabled} onClick={() => setEditing(true)}
-        sx={{ border: '1px solid transparent', bgcolor: 'transparent', borderRadius: 1.5, px: 1, py: .65, font: 'inherit', fontWeight: 800, cursor: 'pointer', color: 'text.primary', '&:hover, &:focus-visible': { borderColor: 'primary.main', bgcolor: 'primary.50', outline: 'none' } }}>
-        ฿{value.toFixed(2)}
+        sx={{ width: 142, minHeight: 42, display: 'flex', alignItems: 'center', justifyContent: 'space-between', border: '1px solid #D9E2EF', bgcolor: '#FFF', borderRadius: 1.5, px: 1.5, font: 'inherit', fontWeight: 650, cursor: 'pointer', color: '#15213B', transition: 'border-color 140ms ease, box-shadow 140ms ease', '&:hover, &:focus-visible': { borderColor: '#2463EB', boxShadow: '0 0 0 3px rgba(36,99,235,.09)', outline: 'none' } }}>
+        <span>{value.toFixed(2)}</span><EditRoundedIcon sx={{ fontSize: 17, color: '#53647E' }} />
       </Box>
     </Tooltip>
   );
@@ -41,7 +42,7 @@ export default function InlinePriceEditor({ value, disabled, onSave }: Readonly<
       InputProps={{ startAdornment: <InputAdornment position="start">฿</InputAdornment> }}
       onFocus={event => event.target.select()} onChange={event => setDraft(event.target.value)}
       onKeyDown={event => { if (event.key === 'Enter') { event.preventDefault(); void save(); } if (event.key === 'Escape') cancel(); }}
-      sx={{ width: 112, '& input': { py: .75, px: .25 } }} />
+      sx={{ width: 118, '& input': { py: .9, px: .25 } }} />
     <IconButton size="small" color="success" disabled={invalid || saving} onClick={() => void save()} aria-label="บันทึกราคา">{saving ? <CircularProgress size={18} /> : <CheckRoundedIcon fontSize="small" />}</IconButton>
     <IconButton size="small" disabled={saving} onClick={cancel} aria-label="ยกเลิก"><CloseRoundedIcon fontSize="small" /></IconButton>
   </Box>;

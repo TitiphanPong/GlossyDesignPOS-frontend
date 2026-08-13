@@ -35,12 +35,38 @@ export async function GET(request: Request) {
   const token = request.headers.get('cookie')?.match(new RegExp(`${ADMIN_AUTH_COOKIE_NAME}=([^;]+)`))?.[1] ?? null;
   const session = await verifyAdminSession(token);
 
-  return NextResponse.json({
-    authenticated: Boolean(session),
+  if (session?.accessToken) {
+    try {
+      const backendResponse = await fetch(backendUrl('/auth/me'), {
+        headers: { Authorization: `Bearer ${session.accessToken}` },
+        cache: 'no-store',
+      });
+
+      if (backendResponse.ok) {
+        return NextResponse.json({
+          authenticated: true,
+          configured: Boolean(config),
+          expiresAt: session.expiresAt,
+          username: session.username,
+        });
+      }
+
+      if (backendResponse.status !== 401) {
+        return NextResponse.json({ message: 'Authentication service is unavailable.' }, { status: 503 });
+      }
+    } catch {
+      return NextResponse.json({ message: 'Authentication service is unavailable.' }, { status: 503 });
+    }
+  }
+
+  const response = NextResponse.json({
+    authenticated: false,
     configured: Boolean(config),
-    expiresAt: session?.expiresAt ?? null,
-    username: session?.username ?? null,
+    expiresAt: null,
+    username: null,
   });
+  if (token) clearSessionCookie(response);
+  return response;
 }
 
 export async function POST(request: Request) {
