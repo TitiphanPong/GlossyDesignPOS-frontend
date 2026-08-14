@@ -1,20 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
-  Box,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  InputAdornment,
-  Stack,
-  TextField,
-  Typography,
-  alpha,
-} from '@mui/material';
+import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography, alpha } from '@mui/material';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -23,6 +10,8 @@ import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
 import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
 import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
+import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
+import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { QRCodeCanvas } from 'qrcode.react';
 import generatePayload from 'promptpay-qr';
@@ -34,10 +23,12 @@ type QuickSalePaymentDialogProps = Readonly<{
   itemCount: number;
   grandTotal: number;
   paymentMethod: PaymentMethod;
+  taxInvoice: 'yes' | 'no';
   receivedAmount: number;
   submitting: boolean;
   onClose: () => void;
   onPaymentMethodChange: (method: PaymentMethod) => void;
+  onTaxInvoiceChange: (value: 'yes' | 'no') => void;
   onReceivedAmountChange: (amount: number) => void;
   onConfirm: () => void;
 }>;
@@ -96,7 +87,9 @@ function PaymentMethodCard({
           <Typography fontWeight={800}>{title}</Typography>
           {selected && <CheckCircleOutlineRoundedIcon color="primary" sx={{ fontSize: 18 }} />}
         </Stack>
-        <Typography variant="body2" color="text.secondary">{description}</Typography>
+        <Typography variant="body2" color="text.secondary">
+          {description}
+        </Typography>
       </Box>
     </Button>
   );
@@ -107,10 +100,12 @@ export default function QuickSalePaymentDialog({
   itemCount,
   grandTotal,
   paymentMethod,
+  taxInvoice,
   receivedAmount,
   submitting,
   onClose,
   onPaymentMethodChange,
+  onTaxInvoiceChange,
   onReceivedAmountChange,
   onConfirm,
 }: QuickSalePaymentDialogProps) {
@@ -145,8 +140,12 @@ export default function QuickSalePaymentDialog({
             <PaymentsOutlinedIcon />
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="h6" fontWeight={900}>ชำระเงิน</Typography>
-            <Typography variant="body2" color="text.secondary">ดำเนินการรับชำระรายการขายหน้าร้าน</Typography>
+            <Typography variant="h6" fontWeight={900}>
+              ชำระเงิน
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              ดำเนินการรับชำระรายการขายหน้าร้าน
+            </Typography>
           </Box>
           <IconButton onClick={onClose} disabled={submitting} aria-label="ปิดหน้าต่างชำระเงิน" sx={{ color: 'text.secondary' }}>
             <CloseRoundedIcon />
@@ -179,14 +178,15 @@ export default function QuickSalePaymentDialog({
                 opacity: 0.5,
               },
             }}>
-            <Typography color="text.secondary" fontWeight={700}>ยอดที่ต้องชำระ</Typography>
-            <Typography
-              color="primary.main"
-              fontWeight={900}
-              sx={{ ...amountSx, position: 'relative', zIndex: 1, my: 0.35, fontSize: { xs: 36, sm: 44 }, lineHeight: 1.2, overflowWrap: 'anywhere' }}>
+            <Typography color="text.secondary" fontWeight={700}>
+              ยอดที่ต้องชำระ
+            </Typography>
+            <Typography color="primary.main" fontWeight={900} sx={{ ...amountSx, position: 'relative', zIndex: 1, my: 0.35, fontSize: { xs: 36, sm: 44 }, lineHeight: 1.2, overflowWrap: 'anywhere' }}>
               ฿{money.format(grandTotal)}
             </Typography>
-            <Typography variant="body2" color="text.secondary">{itemCount} รายการ · Quick Sale</Typography>
+            <Typography variant="body2" color="text.secondary">
+              {itemCount} รายการ · Quick Sale
+            </Typography>
             <Button
               component="a"
               href="/customer"
@@ -202,15 +202,11 @@ export default function QuickSalePaymentDialog({
           </Box>
 
           <Box>
-            <Typography fontWeight={800} sx={{ mb: 1 }}>วิธีชำระเงิน</Typography>
+            <Typography fontWeight={800} sx={{ mb: 1 }}>
+              วิธีชำระเงิน
+            </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.25 }}>
-              <PaymentMethodCard
-                selected={paymentMethod === 'cash'}
-                icon={<LocalAtmOutlinedIcon />}
-                title="เงินสด"
-                description="รับเงินสดหน้าร้าน"
-                onClick={() => onPaymentMethodChange('cash')}
-              />
+              <PaymentMethodCard selected={paymentMethod === 'cash'} icon={<LocalAtmOutlinedIcon />} title="เงินสด" description="รับเงินสดหน้าร้าน" onClick={() => onPaymentMethodChange('cash')} />
               <PaymentMethodCard
                 selected={paymentMethod === 'promptpay'}
                 icon={<QrCode2RoundedIcon />}
@@ -221,26 +217,99 @@ export default function QuickSalePaymentDialog({
             </Box>
           </Box>
 
-          {paymentMethod === 'cash' ? (
-            <Stack gap={1.5}>
+          <Box
+            sx={{
+              p: { xs: 1.5, sm: 1.75 },
+              border: '1px solid #DFE7F2',
+              borderRadius: 4,
+              background: 'linear-gradient(135deg, #FAFCFF 0%, #F3F7FD 100%)',
+              boxShadow: '0 8px 24px rgba(36, 75, 125, 0.06)',
+            }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" gap={1.25}>
               <Box>
-                <Typography fontWeight={800} sx={{ mb: 1 }}>จำนวนเงินที่รับ</Typography>
+                <Typography fontWeight={900} color="#172033">
+                  ประเภทเอกสาร
+                </Typography>
+                <Typography variant="body2" color="#718096">
+                  เลือกเอกสารสำหรับรายการขายนี้
+                </Typography>
+              </Box>
+              <ToggleButtonGroup
+                exclusive
+                fullWidth
+                size="small"
+                value={taxInvoice}
+                onChange={(_, value: 'yes' | 'no' | null) => value && onTaxInvoiceChange(value)}
+                sx={{
+                  width: { sm: 'auto' },
+                  gap: 0.75,
+                  p: 0.5,
+                  borderRadius: 3,
+                  bgcolor: 'rgba(255,255,255,0.72)',
+                  border: '1px solid #E1E8F2',
+                  '& .MuiToggleButtonGroup-grouped': { border: 0, borderRadius: '10px !important' },
+                  '& .MuiToggleButton-root': {
+                    minHeight: 48,
+                    px: { xs: 1.25, sm: 1.75 },
+                    gap: 0.75,
+                    color: '#64748B',
+                    whiteSpace: 'nowrap',
+                    textTransform: 'none',
+                    fontWeight: 800,
+                    transition: 'all 160ms ease',
+                  },
+                  '& .MuiToggleButton-root:hover': { bgcolor: '#F3F7FC', color: '#245FB5' },
+                  '& .Mui-selected': {
+                    color: '#FFFFFF !important',
+                    bgcolor: '#216FDC !important',
+                    boxShadow: '0 7px 16px rgba(33, 111, 220, 0.25)',
+                  },
+                  '& .Mui-selected:hover': { bgcolor: '#1B62C5 !important' },
+                }}>
+                <ToggleButton value="no">
+                  <ReceiptLongOutlinedIcon sx={{ fontSize: 20 }} />
+                  ใบเสร็จรับเงิน
+                </ToggleButton>
+                <ToggleButton value="yes">
+                  <RequestQuoteOutlinedIcon sx={{ fontSize: 20 }} />
+                  ใบกำกับภาษี
+                </ToggleButton>
+              </ToggleButtonGroup>
+            </Stack>
+          </Box>
+
+          {paymentMethod === 'cash' ? (
+            <Stack gap={1.5} sx={{ p: { xs: 1.5, sm: 1.75 }, borderRadius: 3.5, border: '1px solid', borderColor: 'divider', bgcolor: '#FAFBFC' }}>
+              <Box>
+                <Typography fontWeight={800} sx={{ mb: 1 }}>
+                  จำนวนเงินที่รับ
+                </Typography>
                 <TextField
                   autoFocus
                   fullWidth
                   type="number"
                   value={receivedAmount || ''}
                   inputProps={{ min: 0, step: 0.01, inputMode: 'decimal', 'aria-label': 'จำนวนเงินที่รับ' }}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><Typography fontSize={24} fontWeight={800}>฿</Typography></InputAdornment> }}
+                  InputProps={{
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <Typography fontSize={24} fontWeight={800}>
+                          ฿
+                        </Typography>
+                      </InputAdornment>
+                    ),
+                  }}
                   onChange={event => onReceivedAmountChange(Math.max(0, Number(event.target.value) || 0))}
                   helperText="จำนวนเงินสดที่รับจากลูกค้า"
                   sx={{ '& .MuiOutlinedInput-root': { minHeight: 62, borderRadius: 3 }, '& input': { py: 1.5, fontSize: 24, fontWeight: 800, ...amountSx } }}
                 />
               </Box>
 
-              <Stack direction="row" gap={1} flexWrap="wrap">
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', sm: 'repeat(6, minmax(0, 1fr))' }, gap: 1, width: '100%' }}>
                 {[
                   { label: 'พอดี', value: grandTotal, emphasized: true },
+                  { label: '฿20', value: 20 },
+                  { label: '฿50', value: 50 },
                   { label: '฿100', value: 100 },
                   { label: '฿500', value: 500 },
                   { label: '฿1,000', value: 1000 },
@@ -248,37 +317,58 @@ export default function QuickSalePaymentDialog({
                   <Button
                     key={option.label}
                     variant={option.emphasized ? 'contained' : 'outlined'}
-                    onClick={() => onReceivedAmountChange(option.value)}
-                    sx={{ minHeight: 42, minWidth: 78, borderRadius: 2.5, fontWeight: 800 }}>
+                    onClick={() => onReceivedAmountChange(option.emphasized ? option.value : receivedAmount + option.value)}
+                    sx={{ minHeight: 44, minWidth: 0, width: '100%', px: 1, borderRadius: 2.5, fontWeight: 800 }}>
                     {option.label}
                   </Button>
                 ))}
-              </Stack>
+              </Box>
 
               {hasEnoughCash ? (
-                <Box sx={{ p: 2, borderRadius: 3.5, bgcolor: theme => alpha(theme.palette.success.main, 0.07), border: '1px solid', borderColor: theme => alpha(theme.palette.success.main, 0.2) }}>
+                <Box sx={{ p: 1.75, borderRadius: 3, bgcolor: theme => alpha(theme.palette.success.main, 0.07), border: '1px solid', borderColor: theme => alpha(theme.palette.success.main, 0.2) }}>
                   <Stack direction="row" alignItems="center" gap={1} color="success.dark">
                     <CheckCircleOutlineRoundedIcon />
                     <Typography fontWeight={800}>เงินทอน</Typography>
                   </Stack>
-                  <Typography color="success.dark" fontWeight={900} sx={{ ...amountSx, mt: 0.5, fontSize: 32 }}>฿{money.format(changeAmount)}</Typography>
-                  <Typography variant="body2" color="text.secondary">รับ ฿{money.format(receivedAmount)} · ยอด ฿{money.format(grandTotal)}</Typography>
+                  <Typography color="success.dark" fontWeight={900} sx={{ ...amountSx, mt: 0.35, fontSize: 28 }}>
+                    ฿{money.format(changeAmount)}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    รับ ฿{money.format(receivedAmount)} · ยอด ฿{money.format(grandTotal)}
+                  </Typography>
                 </Box>
               ) : (
-                <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} sx={{ p: 1.75, borderRadius: 3, bgcolor: theme => alpha(theme.palette.warning.main, 0.09), border: '1px solid', borderColor: theme => alpha(theme.palette.warning.main, 0.22) }}>
+                <Stack
+                  direction="row"
+                  alignItems="center"
+                  justifyContent="space-between"
+                  gap={2}
+                  sx={{ p: 1.75, borderRadius: 3, bgcolor: theme => alpha(theme.palette.warning.main, 0.09), border: '1px solid', borderColor: theme => alpha(theme.palette.warning.main, 0.22) }}>
                   <Stack direction="row" alignItems="center" gap={1} color="warning.dark">
                     <WarningAmberRoundedIcon />
                     <Typography fontWeight={800}>จำนวนเงินยังไม่ครบ</Typography>
                   </Stack>
-                  <Typography color="warning.dark" fontWeight={900} sx={amountSx}>ขาดอีก ฿{money.format(missingAmount)}</Typography>
+                  <Typography color="warning.dark" fontWeight={900} sx={amountSx}>
+                    ขาดอีก ฿{money.format(missingAmount)}
+                  </Typography>
                 </Stack>
               )}
             </Stack>
           ) : (
             <Stack gap={1.25}>
-              <Box sx={{ p: { xs: 2, sm: 2.5 }, borderRadius: 3.5, border: '1px solid', borderColor: theme => alpha(theme.palette.primary.main, 0.18), bgcolor: theme => alpha(theme.palette.primary.main, 0.055), textAlign: 'center' }}>
+              <Box
+                sx={{
+                  p: { xs: 2, sm: 2.5 },
+                  borderRadius: 3.5,
+                  border: '1px solid',
+                  borderColor: theme => alpha(theme.palette.primary.main, 0.18),
+                  bgcolor: theme => alpha(theme.palette.primary.main, 0.055),
+                  textAlign: 'center',
+                }}>
                 <Typography fontWeight={900}>สแกนเพื่อชำระเงิน</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.75 }}>ให้ลูกค้าสแกน QR Code เพื่อชำระเงิน</Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1.75 }}>
+                  ให้ลูกค้าสแกน QR Code เพื่อชำระเงิน
+                </Typography>
                 {promptpayId ? (
                   <Box sx={{ width: 'fit-content', maxWidth: '100%', mx: 'auto', p: 1.5, borderRadius: 3, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
                     <QRCodeCanvas value={generatePayload(promptpayId, { amount: grandTotal })} size={190} style={{ display: 'block', width: 'min(190px, 56vw)', height: 'auto' }} />
@@ -289,22 +379,42 @@ export default function QuickSalePaymentDialog({
                     <Typography variant="body2">ยังไม่ได้ตั้งค่า PromptPay สำหรับแสดง QR ในหน้าต่างนี้</Typography>
                   </Stack>
                 )}
-                <Typography color="primary.main" fontWeight={900} sx={{ ...amountSx, mt: 1.5, fontSize: 28 }}>฿{money.format(grandTotal)}</Typography>
+                <Typography color="primary.main" fontWeight={900} sx={{ ...amountSx, mt: 1.5, fontSize: 28 }}>
+                  ฿{money.format(grandTotal)}
+                </Typography>
               </Box>
               <Stack direction="row" alignItems="center" gap={1} sx={{ px: 1.5, py: 1.25, borderRadius: 2.5, bgcolor: theme => alpha(theme.palette.warning.main, 0.09), color: 'warning.dark' }}>
                 <WarningAmberRoundedIcon fontSize="small" />
-                <Typography variant="body2" fontWeight={700}>กรุณาตรวจสอบยอดเงินเข้าก่อนยืนยันการขาย</Typography>
+                <Typography variant="body2" fontWeight={700}>
+                  กรุณาตรวจสอบยอดเงินเข้าก่อนยืนยันการขาย
+                </Typography>
               </Stack>
             </Stack>
           )}
         </Stack>
       </DialogContent>
 
-      <DialogActions sx={{ display: 'block', position: 'sticky', bottom: 0, zIndex: 2, px: { xs: 2, sm: 3 }, pt: 1.75, pb: { xs: 2, sm: 2.5 }, bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider' }}>
+      <DialogActions
+        sx={{
+          display: 'block',
+          position: 'sticky',
+          bottom: 0,
+          zIndex: 2,
+          px: { xs: 2, sm: 3 },
+          pt: 1.75,
+          pb: { xs: 2, sm: 2.5 },
+          bgcolor: 'background.paper',
+          borderTop: '1px solid',
+          borderColor: 'divider',
+        }}>
         {paymentMethod === 'cash' && hasEnoughCash && (
           <Stack direction="row" justifyContent="space-between" sx={{ mb: 1, px: 0.5 }}>
-            <Typography variant="body2" color="text.secondary">รับเงิน ฿{money.format(receivedAmount)}</Typography>
-            <Typography variant="body2" fontWeight={800} color="success.dark">เงินทอน ฿{money.format(changeAmount)}</Typography>
+            <Typography variant="body2" color="text.secondary">
+              รับเงิน ฿{money.format(receivedAmount)}
+            </Typography>
+            <Typography variant="body2" fontWeight={800} color="success.dark">
+              เงินทอน ฿{money.format(changeAmount)}
+            </Typography>
           </Stack>
         )}
         <Button

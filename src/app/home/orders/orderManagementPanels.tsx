@@ -1,13 +1,13 @@
 import * as React from 'react';
-import { alpha, Avatar, Box, Button, Card, CardContent, Chip, Divider, Drawer, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { alpha, Avatar, Box, Button, Card, CardContent, Chip, Divider, Drawer, InputAdornment, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
+import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
@@ -86,10 +86,8 @@ export function ExportMenu({ anchorEl, rows, onClose }: Readonly<ExportMenuProps
   );
 }
 
-export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onOpenDrawer, onOpenPayRemaining, onMarkAsPaid, onCancelOrder }: Readonly<RowActionsMenuProps>) {
+export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onOpenDrawer, onCancelOrder, onDeleteOrder }: Readonly<RowActionsMenuProps>) {
   const rowMenuTargetId = rowMenuTarget?.id ?? '';
-  const confirmPaymentDisabled = rowMenuTarget?.status !== 'pending' || updatingOrderId === rowMenuTargetId;
-  const payRemainingDisabled = rowMenuTarget?.status !== 'partial' || updatingOrderId === rowMenuTargetId;
   const cancelOrderDisabled = !rowMenuTarget || updatingOrderId === rowMenuTargetId;
 
   return (
@@ -118,6 +116,18 @@ export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClo
         </Stack>
       </MenuItem>
       <MenuItem
+        sx={{ color: '#B42318' }}
+        disabled={cancelOrderDisabled}
+        onClick={() => {
+          if (rowMenuTarget) onDeleteOrder(rowMenuTarget);
+          onClose();
+        }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <DeleteForeverRoundedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>ลบรายการ</Typography>
+        </Stack>
+      </MenuItem>
+      <MenuItem
         onClick={() => {
           if (rowMenuTarget) printDocument(rowMenuTarget, 'receipt');
           onClose();
@@ -136,32 +146,6 @@ export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClo
         <Stack direction="row" spacing={1} alignItems="center">
           <ReceiptRoundedIcon fontSize="small" />
           <Typography sx={{ fontSize: 14 }}>พิมพ์ใบกำกับภาษี</Typography>
-        </Stack>
-      </MenuItem>
-      <MenuItem
-        disabled={payRemainingDisabled}
-        onClick={() => {
-          if (rowMenuTarget) {
-            onOpenPayRemaining(rowMenuTarget);
-          }
-          onClose();
-        }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <PaymentsRoundedIcon fontSize="small" />
-          <Typography sx={{ fontSize: 14 }}>รับชำระยอดคงเหลือ</Typography>
-        </Stack>
-      </MenuItem>
-      <MenuItem
-        disabled={confirmPaymentDisabled}
-        onClick={() => {
-          if (rowMenuTarget) {
-            onMarkAsPaid(rowMenuTarget.id);
-          }
-          onClose();
-        }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <CheckCircleRoundedIcon fontSize="small" />
-          <Typography sx={{ fontSize: 14 }}>ยืนยันการชำระเงิน</Typography>
         </Stack>
       </MenuItem>
       <MenuItem
@@ -212,6 +196,17 @@ export function OrderDetailDrawer({
   const [isEditing, setIsEditing] = React.useState(false);
   const [editError, setEditError] = React.useState<string | null>(null);
   const [customerDraft, setCustomerDraft] = React.useState({ customerName: '', phoneNumber: '', taxId: '', address: '' });
+  const customerFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: 2.75,
+      bgcolor: '#FFFFFF',
+      transition: 'box-shadow 160ms ease, background-color 160ms ease',
+      '& fieldset': { borderColor: '#DCE5F1' },
+      '&:hover fieldset': { borderColor: '#AFC3DE' },
+      '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(43, 98, 238, 0.10)' },
+    },
+    '& .MuiInputLabel-root': { color: '#64748B' },
+  } as const;
 
   React.useEffect(() => {
     if (!selectedOrder) return;
@@ -292,11 +287,12 @@ export function OrderDetailDrawer({
               <Card
                 sx={{
                   borderRadius: 3.8,
-                  border: '1px solid #E6EDF7',
+                  border: isEditing ? '1px solid #CFE0FA' : '1px solid #E6EDF7',
                   boxShadow: 'none',
+                  background: isEditing ? 'linear-gradient(145deg, #F8FBFF 0%, #F3F7FD 100%)' : '#FFFFFF',
                 }}>
-                <CardContent>
-                  <Stack spacing={1.1}>
+                <CardContent sx={{ p: isEditing ? 2.2 : 2 }}>
+                  <Stack spacing={isEditing ? 1.6 : 1.1}>
                     <Stack direction="row" alignItems="center" spacing={1}>
                       <Avatar
                         sx={{
@@ -345,19 +341,103 @@ export function OrderDetailDrawer({
                     </Stack>
 
                     {isEditing ? (
-                      <Stack spacing={1.4}>
-                        <TextField required label="ชื่อลูกค้า" value={customerDraft.customerName} onChange={event => setCustomerDraft(draft => ({ ...draft, customerName: event.target.value }))} size="small" error={Boolean(editError && !customerDraft.customerName.trim())} />
-                        <TextField label="เบอร์โทรศัพท์" value={customerDraft.phoneNumber} onChange={event => setCustomerDraft(draft => ({ ...draft, phoneNumber: event.target.value }))} size="small" />
-                        <TextField label="เลขประจำตัวผู้เสียภาษี" value={customerDraft.taxId} onChange={event => setCustomerDraft(draft => ({ ...draft, taxId: event.target.value }))} size="small" />
-                        <TextField label="ที่อยู่" value={customerDraft.address} onChange={event => setCustomerDraft(draft => ({ ...draft, address: event.target.value }))} size="small" multiline minRows={2} />
-                        {editError ? <Typography color="error" sx={{ fontSize: 12 }}>{editError}</Typography> : null}
+                      <Stack spacing={1.5}>
+                        <Box sx={{ px: 1.35, py: 1.1, borderRadius: 2.5, bgcolor: 'rgba(43, 98, 238, 0.07)', border: '1px solid rgba(43, 98, 238, 0.10)' }}>
+                          <Typography sx={{ color: '#254D8C', fontSize: 12.5, fontWeight: 700 }}>แก้ไขข้อมูลสำหรับติดต่อและออกเอกสาร</Typography>
+                          <Typography sx={{ mt: 0.2, color: '#718096', fontSize: 11.5 }}>เมื่อตรวจสอบข้อมูลเรียบร้อยแล้ว กด “บันทึกข้อมูล” ด้านล่าง</Typography>
+                        </Box>
+                        <TextField
+                          required
+                          fullWidth
+                          label="ชื่อลูกค้า"
+                          value={customerDraft.customerName}
+                          onChange={event => setCustomerDraft(draft => ({ ...draft, customerName: event.target.value }))}
+                          error={Boolean(editError && !customerDraft.customerName.trim())}
+                          slotProps={{
+                            input: {
+                              startAdornment: (
+                                <InputAdornment position="start">
+                                  <PersonRoundedIcon sx={{ color: '#6B7EA1', fontSize: 20 }} />
+                                </InputAdornment>
+                              ),
+                            },
+                          }}
+                          sx={customerFieldSx}
+                        />
+                        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.25 }}>
+                          <TextField
+                            label="เบอร์โทรศัพท์"
+                            value={customerDraft.phoneNumber}
+                            onChange={event => setCustomerDraft(draft => ({ ...draft, phoneNumber: event.target.value }))}
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <PhoneRoundedIcon sx={{ color: '#6B7EA1', fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                              },
+                            }}
+                            sx={customerFieldSx}
+                          />
+                          <TextField
+                            label="เลขประจำตัวผู้เสียภาษี"
+                            value={customerDraft.taxId}
+                            onChange={event => setCustomerDraft(draft => ({ ...draft, taxId: event.target.value }))}
+                            slotProps={{
+                              input: {
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <BadgeRoundedIcon sx={{ color: '#6B7EA1', fontSize: 20 }} />
+                                  </InputAdornment>
+                                ),
+                              },
+                            }}
+                            sx={customerFieldSx}
+                          />
+                        </Box>
+                        <TextField
+                          fullWidth
+                          label="ที่อยู่สำหรับออกเอกสาร"
+                          value={customerDraft.address}
+                          onChange={event => setCustomerDraft(draft => ({ ...draft, address: event.target.value }))}
+                          minRows={2}
+                          multiline
+                          slotProps={{
+                            input: {
+                              startAdornment: (
+                                <InputAdornment position="start" sx={{ alignSelf: 'flex-start', mt: 0 }}>
+                                  <LocationOnRoundedIcon sx={{ color: '#6B7EA1', fontSize: 20 }} />
+                                </InputAdornment>
+                              ),
+                            },
+                          }}
+                          sx={customerFieldSx}
+                        />
+                        {editError ? (
+                          <Typography color="error" sx={{ fontSize: 12 }}>
+                            {editError}
+                          </Typography>
+                        ) : null}
                       </Stack>
                     ) : (
                       <>
-                        <Stack direction="row" spacing={1} alignItems="center"><PersonRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} /><Typography>ชื่อลูกค้า : {selectedOrder.customerName}</Typography></Stack>
-                        <Stack direction="row" spacing={1} alignItems="center"><PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} /><Typography>เบอร์โทรศัพท์ : {selectedOrder.phoneNumber}</Typography></Stack>
-                        <Stack direction="row" spacing={1} alignItems="center"><BadgeRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} /><Typography>เลขประจำตัวผู้เสียภาษี : {selectedOrder.taxId}</Typography></Stack>
-                        <Stack direction="row" spacing={1} alignItems="center"><LocationOnRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} /><Typography>ที่อยู่ : {selectedOrder.address}</Typography></Stack>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <PersonRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                          <Typography>ชื่อลูกค้า : {selectedOrder.customerName}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                          <Typography>เบอร์โทรศัพท์ : {selectedOrder.phoneNumber}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <BadgeRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                          <Typography>เลขประจำตัวผู้เสียภาษี : {selectedOrder.taxId}</Typography>
+                        </Stack>
+                        <Stack direction="row" spacing={1} alignItems="center">
+                          <LocationOnRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
+                          <Typography>ที่อยู่ : {selectedOrder.address}</Typography>
+                        </Stack>
                       </>
                     )}
                   </Stack>

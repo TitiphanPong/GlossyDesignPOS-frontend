@@ -8,6 +8,10 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   IconButton,
   InputAdornment,
@@ -50,11 +54,10 @@ import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder } from '../../../lib/contracts';
-import { updateOrderCustomerInfo } from '../../../lib/orders';
-import type { OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } from './orderManagementTypes';
+import { deleteOrder, updateOrderCustomerInfo } from '../../../lib/orders';
+import type { OrderRow, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import {
-  FILTER_STATUS_LABELS,
   ORDER_TABLE_PAYMENT_LABEL,
   ORDER_TABLE_STATUS_UI,
   SORT_ORDER_LABELS,
@@ -75,13 +78,6 @@ import {
   updateOrderStatus,
 } from './orderManagementUtils';
 
-const ORDER_STATUS_FILTER_VALUES = ['cancelled', 'paid', 'partial'] as const satisfies readonly PaymentStatus[];
-const ORDER_STATUS_FILTER_LABELS: Record<(typeof ORDER_STATUS_FILTER_VALUES)[number], string> = {
-  cancelled: FILTER_STATUS_LABELS.cancelled,
-  paid: FILTER_STATUS_LABELS.paid,
-  partial: 'ค้างชำระ',
-};
-
 export default function OrderManagementPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -92,8 +88,6 @@ export default function OrderManagementPage() {
   const [loadError, setLoadError] = React.useState<string | null>(null);
   const [missingApiBase, setMissingApiBase] = React.useState(false);
   const [search, setSearch] = React.useState('');
-  const [statusFilter, setStatusFilter] = React.useState<'all' | PaymentStatus>('all');
-  const [orderTypeFilter, setOrderTypeFilter] = React.useState<OrderTypeFilter>('all');
   const [monthFilter, setMonthFilter] = React.useState<string>('all');
   const [sort, setSort] = React.useState<SortOrder>('newest');
   const [page, setPage] = React.useState(0);
@@ -107,6 +101,9 @@ export default function OrderManagementPage() {
   const [lastUpdated, setLastUpdated] = React.useState<dayjs.Dayjs | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = React.useState<string | null>(null);
   const [payRemainingTarget, setPayRemainingTarget] = React.useState<OrderRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = React.useState<OrderRow | null>(null);
+  const [deletePassword, setDeletePassword] = React.useState('');
+  const [deleteError, setDeleteError] = React.useState<string | null>(null);
 
   const loadOrders = React.useCallback(async () => {
     setIsLoading(true);
@@ -141,8 +138,8 @@ export default function OrderManagementPage() {
   const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
 
   const filteredRows = React.useMemo(() => {
-    return filterOrderRows(rows, search, statusFilter, monthFilter, sort, orderTypeFilter);
-  }, [monthFilter, orderTypeFilter, rows, search, sort, statusFilter]);
+    return filterOrderRows(rows, search, 'all', monthFilter, sort);
+  }, [monthFilter, rows, search, sort]);
 
   const pagedRows = React.useMemo(() => {
     const start = page * rowsPerPage;
@@ -151,7 +148,7 @@ export default function OrderManagementPage() {
 
   React.useEffect(() => {
     setPage(0);
-  }, [search, statusFilter, orderTypeFilter, monthFilter, sort]);
+  }, [search, monthFilter, sort]);
 
   const stats = React.useMemo(() => {
     return buildOrderStats(rows);
@@ -178,24 +175,6 @@ export default function OrderManagementPage() {
   const closeDrawer = () => {
     setDrawerOpen(false);
   };
-
-  const markAsPaid = React.useCallback(
-    async (targetId: string) => {
-      const target = rowsById.get(targetId);
-      if (target?.status !== 'pending') return;
-
-      setUpdatingOrderId(targetId);
-      try {
-        await updateOrderStatus(targetId, 'paid');
-        await loadOrders();
-      } catch (error) {
-        setLoadError(error instanceof Error && error.message ? error.message : 'อัปเดตสถานะชำระเงินไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
-      } finally {
-        setUpdatingOrderId(null);
-      }
-    },
-    [loadOrders, rowsById]
-  );
 
   const cancelOrder = React.useCallback(
     async (targetId: string) => {
@@ -234,6 +213,23 @@ export default function OrderManagementPage() {
     },
     [loadOrders]
   );
+
+  const confirmDelete = async () => {
+    if (!deleteTarget || !deletePassword) return;
+    setUpdatingOrderId(deleteTarget.id);
+    setDeleteError(null);
+    try {
+      await deleteOrder(deleteTarget.id, deletePassword);
+      setDeleteTarget(null);
+      setDeletePassword('');
+      setDrawerOpen(false);
+      await loadOrders();
+    } catch {
+      setDeleteError('รหัสผ่านไม่ถูกต้อง หรือไม่สามารถลบรายการได้');
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
 
   const handlePayRemainingSuccess = React.useCallback(
     async (updatedOrder: NormalizedOrder) => {
@@ -394,14 +390,14 @@ export default function OrderManagementPage() {
               <Box
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: '1.2fr repeat(4, minmax(130px, 0.65fr))' },
+                  gridTemplateColumns: { xs: '1fr', md: 'minmax(280px, 1.6fr) repeat(2, minmax(150px, 0.7fr))' },
                   gap: 1.2,
                 }}>
                 <TextField
                   size="small"
                   value={search}
                   onChange={event => setSearch(event.target.value)}
-                  placeholder="ค้นหาชื่อลูกค้า / เลขที่งาน / เบอร์โทรศัพท์"
+                  placeholder="ค้นหาชื่อลูกค้า / เลขที่งาน / เบอร์โทรศัพท์ / รายการ"
                   slotProps={{
                     input: {
                       startAdornment: (
@@ -420,37 +416,6 @@ export default function OrderManagementPage() {
                     },
                   }}
                 />
-
-                <FormControl size="small">
-                  <InputLabel id="order-type-filter">ประเภทงาน</InputLabel>
-                  <Select<OrderTypeFilter>
-                    labelId="order-type-filter"
-                    value={orderTypeFilter}
-                    label="ประเภทงาน"
-                    onChange={event => setOrderTypeFilter(event.target.value)}
-                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
-                    <MenuItem value="all">ทุกประเภท</MenuItem>
-                    <MenuItem value="NORMAL">งานปกติ</MenuItem>
-                    <MenuItem value="QUICK_SALE">งานด่วน</MenuItem>
-                  </Select>
-                </FormControl>
-
-                <FormControl size="small">
-                  <InputLabel id="status-filter">สถานะ</InputLabel>
-                  <Select<'all' | PaymentStatus>
-                    labelId="status-filter"
-                    value={statusFilter}
-                    label="สถานะ"
-                    onChange={event => setStatusFilter(event.target.value)}
-                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
-                    <MenuItem value="all">{FILTER_STATUS_LABELS.all}</MenuItem>
-                    {ORDER_STATUS_FILTER_VALUES.map(status => (
-                      <MenuItem key={status} value={status}>
-                        {ORDER_STATUS_FILTER_LABELS[status]}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
 
                 <FormControl size="small">
                   <InputLabel id="month-filter">เดือน</InputLabel>
@@ -776,14 +741,13 @@ export default function OrderManagementPage() {
         updatingOrderId={updatingOrderId}
         onClose={closeRowMenu}
         onOpenDrawer={openDrawer}
-        onOpenPayRemaining={order => {
-          setPayRemainingTarget(order);
-        }}
-        onMarkAsPaid={targetId => {
-          void markAsPaid(targetId);
-        }}
         onCancelOrder={targetId => {
           void cancelOrder(targetId);
+        }}
+        onDeleteOrder={order => {
+          setDeleteTarget(order);
+          setDeletePassword('');
+          setDeleteError(null);
         }}
       />
 
@@ -811,6 +775,33 @@ export default function OrderManagementPage() {
           void handlePayRemainingSuccess(updatedOrder);
         }}
       />
+      <Dialog open={Boolean(deleteTarget)} onClose={() => updatingOrderId ? undefined : setDeleteTarget(null)} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 800, color: '#B42318' }}>ยืนยันการลบรายการ</DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2 }}>
+            ต้องการลบงาน <strong>{deleteTarget?.orderNumber}</strong> ใช่หรือไม่? การลบนี้ไม่สามารถกู้คืนได้
+          </Typography>
+          <TextField
+            autoFocus
+            fullWidth
+            type="password"
+            label="รหัสผ่านผู้ใช้งานปัจจุบัน"
+            value={deletePassword}
+            onChange={event => setDeletePassword(event.target.value)}
+            error={Boolean(deleteError)}
+            helperText={deleteError}
+            onKeyDown={event => {
+              if (event.key === 'Enter' && deletePassword) void confirmDelete();
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setDeleteTarget(null)} disabled={Boolean(updatingOrderId)}>ยกเลิก</Button>
+          <Button color="error" variant="contained" disabled={!deletePassword || Boolean(updatingOrderId)} onClick={() => void confirmDelete()}>
+            {updatingOrderId ? 'กำลังลบ...' : 'ลบรายการถาวร'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </AdminPageContainer>
   );
 }

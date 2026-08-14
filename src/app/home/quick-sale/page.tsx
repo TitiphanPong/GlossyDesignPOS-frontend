@@ -47,7 +47,7 @@ import { buildPendingOrderDraft, PENDING_ORDER_KEY, persistPendingOrderDraft, ty
 import AdminPageContainer from '../components/AdminPageContainer';
 import QuickSellerCart, { type QuickSaleCartItem } from './components/QuickSellerCart';
 import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
-import { calculateChange, calculateQuickSale, isDefaultVariantName, roundMoney, type DiscountMode } from './quickSale';
+import { calculateChange, calculateInclusiveVat, calculateQuickSale, isDefaultVariantName, roundMoney, type DiscountMode } from './quickSale';
 
 type QuickItem = QuickSaleCartItem;
 type CompletedSale = { orderId: string; orderNumber: string; grandTotal: number; changeAmount: number };
@@ -95,6 +95,7 @@ export default function QuickSalePage() {
   const [checkoutOpen, setCheckoutOpen] = React.useState(false);
   const [cartOpen, setCartOpen] = React.useState(false);
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('cash');
+  const [taxInvoice, setTaxInvoice] = React.useState<'yes' | 'no'>('no');
   const [receivedAmount, setReceivedAmount] = React.useState(0);
   const [submitting, setSubmitting] = React.useState(false);
   const [completed, setCompleted] = React.useState<CompletedSale | null>(null);
@@ -149,7 +150,7 @@ export default function QuickSalePage() {
       },
       payment: paymentMethod,
       discount: totals.discount,
-      taxInvoice: 'no',
+      taxInvoice,
       totals: {
         total: totals.subtotal,
         depositTotal: totals.grandTotal,
@@ -165,11 +166,11 @@ export default function QuickSalePage() {
           lineTotal: roundMoney(item.quantity * item.unitPrice),
           fullPayment: true,
         })),
-        vatAmount: 0,
+        vatAmount: taxInvoice === 'yes' ? calculateInclusiveVat(totals.grandTotal) : 0,
         grandTotal: totals.grandTotal,
       },
     });
-  }, [checkoutDraftId, items, paymentMethod, totals]);
+  }, [checkoutDraftId, items, paymentMethod, taxInvoice, totals]);
 
   React.useEffect(() => {
     if (!checkoutOpen) return;
@@ -260,6 +261,7 @@ export default function QuickSalePage() {
     setCompleted(null);
     setReceivedAmount(0);
     setPaymentMethod('cash');
+    setTaxInvoice('no');
   };
   const submitSale = async () => {
     if (!items.length || (paymentMethod === 'cash' && receivedAmount < totals.grandTotal)) return;
@@ -297,8 +299,8 @@ export default function QuickSalePage() {
         receivedAmount: paymentMethod === 'cash' ? receivedAmount : totals.grandTotal,
         changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, totals.grandTotal) : 0,
         status: 'paid',
-        taxInvoice: 'no',
-        vatAmount: 0,
+        taxInvoice,
+        vatAmount: taxInvoice === 'yes' ? calculateInclusiveVat(totals.grandTotal) : 0,
       });
       setCompleted({
         orderId: result.orderId,
@@ -608,10 +610,12 @@ export default function QuickSalePage() {
         itemCount={items.length}
         grandTotal={totals.grandTotal}
         paymentMethod={paymentMethod}
+        taxInvoice={taxInvoice}
         receivedAmount={receivedAmount}
         submitting={submitting}
         onClose={closeCheckout}
         onPaymentMethodChange={setPaymentMethod}
+        onTaxInvoiceChange={setTaxInvoice}
         onReceivedAmountChange={setReceivedAmount}
         onConfirm={() => void submitSale()}
       />

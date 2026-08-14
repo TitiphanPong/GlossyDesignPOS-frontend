@@ -20,3 +20,7 @@ export function calculateQuickSale(subtotal: number, discountValue: number, mode
 export function calculateChange(received: number, grandTotal: number): number {
   return roundMoney(Math.max(0, received - grandTotal));
 }
+
+export function calculateInclusiveVat(grandTotal: number): number {
+  return roundMoney((Math.max(0, grandTotal) * 7) / 107);
+}

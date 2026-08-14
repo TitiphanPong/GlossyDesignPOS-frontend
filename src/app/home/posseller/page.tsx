@@ -275,7 +275,7 @@ export default function SellPage() {
         <PosStatCard
           title="Amount Due"
           value={summaryStats.amountDue.toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 })}
-          subtitle={taxInvoice === 'yes' ? 'รวมภาษีมูลค่าเพิ่ม 7%' : 'ยังไม่รวมภาษีมูลค่าเพิ่ม'}
+          subtitle={taxInvoice === 'yes' ? 'แยก VAT 7% จากราคาที่รวมภาษีแล้ว' : 'ไม่ออกใบกำกับภาษี'}
           tone="#0EA5A3"
           icon={<PaymentsRoundedIcon />}
         />

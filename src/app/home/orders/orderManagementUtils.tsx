@@ -311,7 +311,12 @@ function matchesSearch(row: OrderRow, search: string): boolean {
   if (!normalizedQuery) {
     return true;
   }
-  return row.customerName.toLowerCase().includes(normalizedQuery) || row.orderNumber.toLowerCase().includes(normalizedQuery) || row.phoneNumber.toLowerCase().includes(normalizedQuery);
+  return (
+    row.customerName.toLowerCase().includes(normalizedQuery) ||
+    row.orderNumber.toLowerCase().includes(normalizedQuery) ||
+    row.phoneNumber.toLowerCase().includes(normalizedQuery) ||
+    row.products.some(product => product.name.toLowerCase().includes(normalizedQuery))
+  );
 }
 
 function matchesStatusFilter(row: OrderRow, statusFilter: 'all' | PaymentStatus): boolean {

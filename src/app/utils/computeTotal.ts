@@ -62,15 +62,15 @@ export function computeTotals<TCartItem extends CartPricingItem>(cart: TCartItem
   const total = getCartSubtotal(cart);
   const discountAmount = roundCurrency(Math.min(Math.max(discount, 0), total));
   const finalTotal = getDiscountedTotal(total, discountAmount);
-  const vatAmount = taxInvoice === 'yes' ? roundCurrency(finalTotal * 0.07) : 0;
-  const grandTotal = roundCurrency(finalTotal + vatAmount);
+  const vatAmount = taxInvoice === 'yes' ? roundCurrency((finalTotal * 7) / 107) : 0;
+  const grandTotal = finalTotal;
 
   const adjustedCart = cart.map(item => {
     const itemSubtotal = roundCurrency(Number(item.unitPrice || 0) * Number(item.qty || 0));
     const ratio = total > 0 ? itemSubtotal / total : 0;
-    const itemNetAfterDiscount = roundCurrency(finalTotal * ratio);
-    const itemVat = taxInvoice === 'yes' ? roundCurrency(itemNetAfterDiscount * 0.07) : 0;
-    const itemGross = roundCurrency(itemNetAfterDiscount + itemVat);
+    const itemGross = roundCurrency(finalTotal * ratio);
+    const itemVat = taxInvoice === 'yes' ? roundCurrency((itemGross * 7) / 107) : 0;
+    const itemNetAfterDiscount = roundCurrency(itemGross - itemVat);
 
     if (item.fullPayment) {
       return {
@@ -111,8 +111,8 @@ export function computeOrderPaymentSummary<TCartItem extends CartPricingItem>(or
   const subtotal = roundCurrency(order.total ?? 0);
   const discount = roundCurrency(order.discount ?? 0);
   const netTotal = getDiscountedTotal(subtotal, discount);
-  const vat = order.taxInvoice === 'yes' ? roundCurrency(order.vatAmount ?? netTotal * 0.07) : 0;
-  const grandTotal = roundCurrency(order.grandTotal ?? netTotal + vat);
+  const vat = order.taxInvoice === 'yes' ? roundCurrency(order.vatAmount ?? (netTotal * 7) / 107) : 0;
+  const grandTotal = roundCurrency(order.grandTotal ?? netTotal);
   const cart = order.cart ?? [];
   const deposit = roundCurrency(cart.reduce((sum, item) => sum + Number(item.deposit || 0), 0));
   const remaining = roundCurrency(cart.reduce((sum, item) => sum + Number(item.remaining || 0), 0));

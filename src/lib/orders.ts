@@ -220,3 +220,11 @@ export async function updateOrderCustomerInfo(
 
   return updatedOrder;
 }
+
+export async function deleteOrder(orderId: string, password: string): Promise<void> {
+  await fetchApiJson<unknown>(`/orders/${orderId}`, {
+    method: 'DELETE',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ password }),
+  });
+}

@@ -24,7 +24,7 @@ test('getDiscountedTotal clamps discounts to a valid non-negative range', () => 
   assert.equal(getDiscountedTotal(100, 250), 0);
 });
 
-test('computeTotals preserves full-payment items and scales partial-payment items with VAT', () => {
+test('computeTotals extracts VAT from VAT-inclusive prices without changing the amount due', () => {
   const result = computeTotals(
     [
       {
@@ -49,29 +49,29 @@ test('computeTotals preserves full-payment items and scales partial-payment item
   assert.equal(result.total, 250);
   assert.equal(result.discountAmount, 25);
   assert.equal(result.finalTotal, 225);
-  assert.equal(result.vatAmount, 15.75);
-  assert.equal(result.grandTotal, 240.75);
+  assert.equal(result.vatAmount, 14.72);
+  assert.equal(result.grandTotal, 225);
 
   assert.deepEqual(result.adjustedCart, [
     {
       qty: 2,
       unitPrice: 100,
-      totalPrice: 180,
-      deposit: 48.15,
-      remaining: 144.45,
+      totalPrice: 168.22,
+      deposit: 45,
+      remaining: 135,
       fullPayment: false,
     },
     {
       qty: 1,
       unitPrice: 50,
-      totalPrice: 45,
-      deposit: 48.15,
+      totalPrice: 42.06,
+      deposit: 45,
       remaining: 0,
       fullPayment: true,
     },
   ]);
-  assert.equal(result.depositTotal, 96.3);
-  assert.equal(result.remainingTotal, 144.45);
+  assert.equal(result.depositTotal, 90);
+  assert.equal(result.remainingTotal, 135);
 });
 
 test('computeTotals handles zero-value carts without producing NaN values', () => {
@@ -114,8 +114,8 @@ test('computeOrderPaymentSummary uses deposit for partial orders and grand total
     discount: 25,
     taxInvoice: 'yes',
     cart: [
-      { deposit: 48.15, remaining: 144.45, fullPayment: false },
-      { deposit: 48.15, remaining: 0, fullPayment: true },
+      { deposit: 45, remaining: 135, fullPayment: false },
+      { deposit: 45, remaining: 0, fullPayment: true },
     ],
   });
 
@@ -123,12 +123,12 @@ test('computeOrderPaymentSummary uses deposit for partial orders and grand total
     subtotal: 250,
     discount: 25,
     netTotal: 225,
-    vat: 15.75,
-    grandTotal: 240.75,
-    deposit: 96.3,
-    remaining: 144.45,
+    vat: 14.72,
+    grandTotal: 225,
+    deposit: 90,
+    remaining: 135,
     hasDeposit: true,
-    amountToPay: 96.3,
+    amountToPay: 90,
   });
 
   const paidSummary = computeOrderPaymentSummary({

@@ -63,9 +63,8 @@ export type RowActionsMenuProps = {
   updatingOrderId: string | null;
   onClose: () => void;
   onOpenDrawer: (row: OrderRow) => void;
-  onOpenPayRemaining: (row: OrderRow) => void;
-  onMarkAsPaid: (id: string) => void;
   onCancelOrder: (id: string) => void;
+  onDeleteOrder: (order: OrderRow) => void;
 };
 
 export type OrderDetailDrawerProps = {
