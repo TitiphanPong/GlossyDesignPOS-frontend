@@ -16,6 +16,20 @@ type AdminHeroHeaderProps = {
   mb?: number;
 };
 
+export function formatAdminLastSynced(date: Date | null) {
+  if (!date) return '-';
+  return new Intl.DateTimeFormat('th-TH', {
+    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+  }).format(date);
+}
+
+export function formatAdminThaiDate(date: Date | null) {
+  if (!date) return 'ยังไม่มีข้อมูลวันที่';
+  return new Intl.DateTimeFormat('th-TH', {
+    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+  }).format(date);
+}
+
 export const heroOutlineButtonSx = {
   ...commonButtonSx,
   borderRadius: 3,

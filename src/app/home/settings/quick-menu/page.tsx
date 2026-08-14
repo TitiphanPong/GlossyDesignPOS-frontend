@@ -10,12 +10,12 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import NotificationsNoneRoundedIcon from '@mui/icons-material/NotificationsNoneRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
 import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded';
 import AdminPageContainer from '../../components/AdminPageContainer';
-import { commonButtonSx, tableShellSx, uiCardSx } from '../../components/adminUi';
+import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx, heroPrimaryButtonSx } from '../../components/AdminHeroHeader';
+import { tableShellSx, uiCardSx } from '../../components/adminUi';
 import type { Product } from '@/lib/contracts';
 import { createQuickProduct, deleteQuickProduct, fetchQuickProductsForAdmin, updateQuickProduct, type QuickProductPayload } from '@/lib/products';
 import InlinePriceEditor from './components/InlinePriceEditor';
@@ -33,9 +33,10 @@ export default function QuickMenuSettingsPage() {
   const [query, setQuery] = React.useState(''); const [category, setCategory] = React.useState(ALL); const [status, setStatus] = React.useState(ALL); const [sort, setSort] = React.useState<Sort>('order');
   const [page, setPage] = React.useState(1); const [rowsPerPage, setRowsPerPage] = React.useState(10); const [selected, setSelected] = React.useState<string[]>([]);
   const [loading, setLoading] = React.useState(true); const [error, setError] = React.useState<string | null>(null); const [notice, setNotice] = React.useState<string | null>(null); const [pending, setPending] = React.useState<string[]>([]);
+  const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [editing, setEditing] = React.useState<Product | null>(null); const [draft, setDraft] = React.useState<QuickProductPayload>(EMPTY); const [editorOpen, setEditorOpen] = React.useState(false); const [deleteTarget, setDeleteTarget] = React.useState<Product | null>(null);
   const busy = pending.length > 0;
-  const load = React.useCallback(async () => { setLoading(true); setError(null); try { setProducts(await fetchQuickProductsForAdmin()); } catch (e) { setError(e instanceof Error ? e.message : 'โหลดรายการขายด่วนไม่สำเร็จ'); } finally { setLoading(false); } }, []);
+  const load = React.useCallback(async () => { setLoading(true); setError(null); try { setProducts(await fetchQuickProductsForAdmin()); setLastSyncedAt(new Date()); } catch (e) { setError(e instanceof Error ? e.message : 'โหลดรายการขายด่วนไม่สำเร็จ'); } finally { setLoading(false); } }, []);
   React.useEffect(() => { void load(); }, [load]);
   React.useEffect(() => setPage(1), [query, category, status, sort, rowsPerPage]);
   const categories = React.useMemo(() => [ALL, ...Array.from(new Set(products.map(p => p.category))).sort((a, b) => a.localeCompare(b, 'th'))], [products]);
@@ -52,10 +53,7 @@ export default function QuickMenuSettingsPage() {
   const activePercent = products.length ? Math.round((activeCount / products.length) * 100) : 0;
 
   return <AdminPageContainer><Stack spacing={2.25} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 }, '& .MuiButton-root': { textTransform: 'none' } }}>
-    <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', md: 'flex-start' }} gap={2}>
-      <Box><Typography sx={{ fontSize: { xs: 28, md: 34 }, lineHeight: 1.15, fontWeight: 850, color: '#0F1F43', letterSpacing: '-.5px' }}>จัดการการขายด่วน</Typography><Typography color="#63708A" sx={{ mt: .75, fontSize: 14 }}>จัดการรายการสินค้า ราคาหน้าร้าน และลำดับการแสดงผลในหน้าขายด่วน</Typography></Box>
-      <Stack direction="row" gap={1.25}><IconButton sx={{ width: 44, height: 44, border: '1px solid #DCE5F0', borderRadius: 2, bgcolor: '#FFF' }}><NotificationsNoneRoundedIcon fontSize="small" /></IconButton><Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={{ ...commonButtonSx, minHeight: 44, borderColor: '#DCE5F0', color: '#20304D', bgcolor: '#FFF' }}>รีเฟรช</Button><Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => openEditor(null)} sx={{ ...commonButtonSx, minHeight: 44, px: 2.25, bgcolor: '#0B5BEA', boxShadow: '0 7px 16px rgba(11,91,234,.22)' }}>เพิ่มรายการใหม่</Button></Stack>
-    </Stack>
+    <AdminHeroHeader title="Quick Menu Settings" description="จัดการรายการสินค้า ราคาหน้าร้าน และลำดับการแสดงผลในหน้าขายด่วน" lastSynced={formatAdminLastSynced(lastSyncedAt)} thaiDate={formatAdminThaiDate(lastSyncedAt)} mb={0} actions={<><Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroOutlineButtonSx}>{loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}</Button><Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => openEditor(null)} sx={heroPrimaryButtonSx}>เพิ่มรายการใหม่</Button></>} />
     {error && <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void load()}>ลองใหม่</Button>} onClose={() => setError(null)}>{error}</Alert>}
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2 }}>
       {[{ label: 'รายการทั้งหมด', value: products.length, unit: 'รายการ', icon: <Inventory2OutlinedIcon />, color: '#075BEE', bg: '#075BEE' }, { label: 'กำลังใช้งาน', value: activeCount, unit: 'รายการ', detail: `${activePercent}%`, icon: <CheckCircleRoundedIcon />, color: '#20AA4A', bg: '#22B651' }, { label: 'ปิดใช้งาน', value: inactiveCount, unit: 'รายการ', detail: `${100 - activePercent}%`, icon: <PauseRoundedIcon />, color: '#FF9800', bg: '#FFA000' }, { label: 'หมวดหมู่ทั้งหมด', value: Math.max(0, categories.length - 1), unit: 'หมวดหมู่', icon: <CategoryRoundedIcon />, color: '#7139EA', bg: '#7139EA' }].map(item => <Card key={item.label} sx={{ ...uiCardSx, boxShadow: '0 7px 22px rgba(29,52,84,.06)', borderColor: '#DFE6EF' }}><CardContent sx={{ p: '22px !important', minHeight: 104, display: 'flex', alignItems: 'center', gap: 2 }}><Box sx={{ width: 50, height: 50, flexShrink: 0, borderRadius: 2.25, display: 'grid', placeItems: 'center', color: '#FFF', background: `linear-gradient(145deg, ${item.bg}, ${item.color})`, boxShadow: `0 7px 15px ${item.color}30` }}>{item.icon}</Box><Box flex={1}><Typography sx={{ fontSize: 13.5, color: '#34425C', fontWeight: 600 }}>{item.label}</Typography><Stack direction="row" alignItems="baseline" gap={1} sx={{ mt: .5 }}><Typography sx={{ fontSize: 27, fontWeight: 850, lineHeight: 1, color: '#111B33' }}>{item.value}</Typography><Typography sx={{ fontSize: 12.5, color: '#8490A5' }}>{item.unit}</Typography>{item.detail && <Typography sx={{ ml: 'auto', fontSize: 13, fontWeight: 700, color: item.color }}>{item.detail}</Typography>}</Stack></Box></CardContent></Card>)}
