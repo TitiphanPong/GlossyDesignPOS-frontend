@@ -21,6 +21,13 @@ export function calculateChange(received: number, grandTotal: number): number {
   return roundMoney(Math.max(0, received - grandTotal));
 }
 
-export function calculateInclusiveVat(grandTotal: number): number {
-  return roundMoney((Math.max(0, grandTotal) * 7) / 107);
+export function calculateAddedVat(taxableAmount: number): number {
+  return roundMoney(Math.max(0, taxableAmount) * 0.07);
+}
+
+export function calculatePayableTotal(taxableAmount: number, taxInvoice: 'yes' | 'no'): number {
+  const safeTaxableAmount = Math.max(0, roundMoney(taxableAmount));
+  return taxInvoice === 'yes'
+    ? roundMoney(safeTaxableAmount + calculateAddedVat(safeTaxableAmount))
+    : safeTaxableAmount;
 }

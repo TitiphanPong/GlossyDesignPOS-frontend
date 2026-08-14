@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { calculateChange, calculateInclusiveVat, calculateQuickSale, isDefaultVariantName } from './quickSale';
+import { calculateAddedVat, calculateChange, calculatePayableTotal, calculateQuickSale, isDefaultVariantName } from './quickSale';
 
 test('quick sale calculates amount and percentage discounts safely', () => {
   assert.deepEqual(calculateQuickSale(350, 50, 'amount'), { subtotal: 350, discount: 50, grandTotal: 300 });
@@ -13,9 +13,10 @@ test('cash change never becomes negative', () => {
   assert.equal(calculateChange(100, 350), 0);
 });
 
-test('quick sale extracts VAT from the existing total without increasing it', () => {
-  assert.equal(calculateInclusiveVat(107), 7);
-  assert.equal(calculateInclusiveVat(100), 6.54);
+test('quick sale adds 7% VAT when a tax invoice is selected', () => {
+  assert.equal(calculateAddedVat(120), 8.4);
+  assert.equal(calculatePayableTotal(120, 'yes'), 128.4);
+  assert.equal(calculatePayableTotal(120, 'no'), 120);
 });
 
 test('default variants are recognized case-insensitively', () => {

@@ -22,6 +22,7 @@ type QuickSalePaymentDialogProps = Readonly<{
   open: boolean;
   itemCount: number;
   grandTotal: number;
+  vatAmount: number;
   paymentMethod: PaymentMethod;
   taxInvoice: 'yes' | 'no';
   receivedAmount: number;
@@ -99,6 +100,7 @@ export default function QuickSalePaymentDialog({
   open,
   itemCount,
   grandTotal,
+  vatAmount,
   paymentMethod,
   taxInvoice,
   receivedAmount,
@@ -187,6 +189,11 @@ export default function QuickSalePaymentDialog({
             <Typography variant="body2" color="text.secondary">
               {itemCount} รายการ · Quick Sale
             </Typography>
+            {taxInvoice === 'yes' && (
+              <Typography variant="body2" color="primary.main" fontWeight={800} sx={{ mt: 0.5 }}>
+                รวมภาษีมูลค่าเพิ่ม 7% ฿{money.format(vatAmount)}
+              </Typography>
+            )}
             <Button
               component="a"
               href="/customer"

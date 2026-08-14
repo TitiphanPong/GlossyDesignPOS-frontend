@@ -45,9 +45,11 @@ import { fetchQuickProducts } from '@/lib/products';
 import type { PaymentMethod, Product } from '@/lib/contracts';
 import { buildPendingOrderDraft, PENDING_ORDER_KEY, persistPendingOrderDraft, type StoredPendingOrderDraft } from '@/lib/pending-order';
 import AdminPageContainer from '../components/AdminPageContainer';
+import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx } from '../components/AdminHeroHeader';
+import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import QuickSellerCart, { type QuickSaleCartItem } from './components/QuickSellerCart';
 import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
-import { calculateChange, calculateInclusiveVat, calculateQuickSale, isDefaultVariantName, roundMoney, type DiscountMode } from './quickSale';
+import { calculateAddedVat, calculateChange, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, type DiscountMode } from './quickSale';
 
 type QuickItem = QuickSaleCartItem;
 type CompletedSale = { orderId: string; orderNumber: string; grandTotal: number; changeAmount: number };
@@ -82,6 +84,7 @@ export default function QuickSalePage() {
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [products, setProducts] = React.useState<Product[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [query, setQuery] = React.useState('');
   const [category, setCategory] = React.useState('ทั้งหมด');
@@ -127,16 +130,25 @@ export default function QuickSalePage() {
     setCheckoutOpen(false);
   }, [clearQuickSaleCustomerDisplay]);
 
-  React.useEffect(() => {
-    void fetchQuickProducts()
+  const loadProducts = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    await fetchQuickProducts()
       .then(data => {
         setProducts(data);
+        setLastSyncedAt(new Date());
       })
       .catch(() => setError('โหลดสินค้าไม่สำเร็จ กรุณาลองใหม่'))
       .finally(() => setLoading(false));
   }, []);
+
+  React.useEffect(() => {
+    void loadProducts();
+  }, [loadProducts]);
   const subtotal = React.useMemo(() => roundMoney(items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)), [items]);
   const totals = React.useMemo(() => calculateQuickSale(subtotal, discountValue, discountMode), [subtotal, discountValue, discountMode]);
+  const vatAmount = React.useMemo(() => taxInvoice === 'yes' ? calculateAddedVat(totals.grandTotal) : 0, [taxInvoice, totals.grandTotal]);
+  const payableTotal = React.useMemo(() => calculatePayableTotal(totals.grandTotal, taxInvoice), [taxInvoice, totals.grandTotal]);
   const customerDisplayDraft = React.useMemo(() => {
     const draftId = checkoutDraftId;
     if (!draftId || !items.length) return null;
@@ -153,7 +165,7 @@ export default function QuickSalePage() {
       taxInvoice,
       totals: {
         total: totals.subtotal,
-        depositTotal: totals.grandTotal,
+        depositTotal: payableTotal,
         remainingTotal: 0,
         adjustedCart: items.map(item => ({
           productId: item.productId,
@@ -166,11 +178,11 @@ export default function QuickSalePage() {
           lineTotal: roundMoney(item.quantity * item.unitPrice),
           fullPayment: true,
         })),
-        vatAmount: taxInvoice === 'yes' ? calculateInclusiveVat(totals.grandTotal) : 0,
-        grandTotal: totals.grandTotal,
+        vatAmount,
+        grandTotal: payableTotal,
       },
     });
-  }, [checkoutDraftId, items, paymentMethod, taxInvoice, totals]);
+  }, [checkoutDraftId, items, paymentMethod, payableTotal, taxInvoice, totals, vatAmount]);
 
   React.useEffect(() => {
     if (!checkoutOpen) return;
@@ -264,7 +276,7 @@ export default function QuickSalePage() {
     setTaxInvoice('no');
   };
   const submitSale = async () => {
-    if (!items.length || (paymentMethod === 'cash' && receivedAmount < totals.grandTotal)) return;
+    if (!items.length || (paymentMethod === 'cash' && receivedAmount < payableTotal)) return;
     setSubmitting(true);
     setError(null);
     try {
@@ -290,23 +302,23 @@ export default function QuickSalePage() {
         subtotal: totals.subtotal,
         total: totals.subtotal,
         discount: totals.discount,
-        grandTotal: totals.grandTotal,
+        grandTotal: payableTotal,
         payment: paymentMethod,
         paymentMethod,
-        paidAmount: totals.grandTotal,
-        depositTotal: totals.grandTotal,
+        paidAmount: payableTotal,
+        depositTotal: payableTotal,
         remainingTotal: 0,
-        receivedAmount: paymentMethod === 'cash' ? receivedAmount : totals.grandTotal,
-        changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, totals.grandTotal) : 0,
+        receivedAmount: paymentMethod === 'cash' ? receivedAmount : payableTotal,
+        changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, payableTotal) : 0,
         status: 'paid',
         taxInvoice,
-        vatAmount: taxInvoice === 'yes' ? calculateInclusiveVat(totals.grandTotal) : 0,
+        vatAmount,
       });
       setCompleted({
         orderId: result.orderId,
         orderNumber: result.orderNumber,
-        grandTotal: totals.grandTotal,
-        changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, totals.grandTotal) : 0,
+        grandTotal: payableTotal,
+        changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, payableTotal) : 0,
       });
       if (customerDisplayDraft) {
         persistPendingOrderDraft({
@@ -343,6 +355,7 @@ export default function QuickSalePage() {
   );
   return (
     <AdminPageContainer>
+      <AdminHeroHeader title="Quick Sale" description="ขายสินค้าหน้าร้านอย่างรวดเร็ว เลือกรายการ รับชำระ และออกเอกสารในขั้นตอนเดียว" lastSynced={formatAdminLastSynced(lastSyncedAt)} thaiDate={formatAdminThaiDate(lastSyncedAt)} actions={<Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void loadProducts()} sx={heroOutlineButtonSx}>{loading ? 'กำลังโหลด...' : 'รีเฟรช'}</Button>} />
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
           {error}
@@ -608,7 +621,8 @@ export default function QuickSalePage() {
       <QuickSalePaymentDialog
         open={checkoutOpen}
         itemCount={items.length}
-        grandTotal={totals.grandTotal}
+        grandTotal={payableTotal}
+        vatAmount={vatAmount}
         paymentMethod={paymentMethod}
         taxInvoice={taxInvoice}
         receivedAmount={receivedAmount}

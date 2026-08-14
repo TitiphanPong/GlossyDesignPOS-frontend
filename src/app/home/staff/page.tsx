@@ -27,7 +27,6 @@ import {
   Tab,
   Tabs,
   TextField,
-  Tooltip,
   Typography,
 } from '@mui/material';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
@@ -43,6 +42,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import AdminPageContainer from '../components/AdminPageContainer';
+import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
 import { fetchApiJson } from '@/lib/api';
 import { normalizeStaffUsers, type StaffRole as Role, type StaffUser } from './staffUsers';
 
@@ -106,6 +106,7 @@ export default function StaffManagementPage() {
   const [users, setUsers] = React.useState<StaffUser[]>([]);
   const [events, setEvents] = React.useState<AuditEvent[]>([]);
   const [loading, setLoading] = React.useState(true);
+  const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [success, setSuccess] = React.useState<string | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
@@ -126,6 +127,7 @@ export default function StaffManagementPage() {
       const [userRows, auditRows] = await Promise.all([fetchApiJson<unknown>('/auth/users', { cache: 'no-store' }), fetchApiJson<AuditEvent[]>('/auth/audit?limit=100', { cache: 'no-store' })]);
       setUsers(normalizeStaffUsers(userRows));
       setEvents(auditRows);
+      setLastSyncedAt(new Date());
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'ไม่สามารถโหลดข้อมูลพนักงานได้');
     } finally {
@@ -212,53 +214,22 @@ export default function StaffManagementPage() {
   return (
     <AdminPageContainer>
       <Stack spacing={2.5}>
-        <Card
-          sx={{
-            borderRadius: 5.6,
-            border: '1px solid #E6EDF8',
-            boxShadow: '0 20px 45px rgba(18, 45, 82, 0.08)',
-            background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
-          }}>
-          <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
-            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2} alignItems={{ xs: 'stretch', md: 'center' }}>
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Stack direction="row" spacing={1.25} alignItems="center">
-                  <Avatar sx={{ width: 46, height: 46, bgcolor: alpha('#2563EB', 0.12), color: '#2563EB' }}>
-                    <ManageAccountsRoundedIcon />
-                  </Avatar>
-                  <Box>
-                    <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>
-                      Staff & Audit
-                    </Typography>
-                    <Typography sx={{ mt: 0.7, color: '#475467', fontSize: { xs: 14, md: 16 } }}>
-                      จัดการบัญชี สิทธิ์การใช้งาน และตรวจสอบกิจกรรมสำคัญในระบบ
-                    </Typography>
-                  </Box>
-                </Stack>
-              </Box>
-
-              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems="stretch">
-                <Tooltip title="โหลดข้อมูลใหม่">
-                  <Button
-                    variant="outlined"
-                    startIcon={<RefreshRoundedIcon />}
-                    onClick={() => void load()}
-                    disabled={loading}
-                    sx={{ minHeight: 44, borderRadius: 3, borderColor: '#DFE8F5', bgcolor: '#FFFFFF', px: 2, fontWeight: 800 }}>
-                    รีเฟรช
-                  </Button>
-                </Tooltip>
-                <Button
-                  variant="contained"
-                  startIcon={<AddRoundedIcon />}
-                  onClick={() => setCreateOpen(true)}
-                  sx={{ minHeight: 44, borderRadius: 3, px: 2.25, fontWeight: 800, boxShadow: '0 10px 20px rgba(37, 99, 235, 0.18)' }}>
-                  เพิ่มพนักงาน
-                </Button>
-              </Stack>
-            </Stack>
-          </CardContent>
-        </Card>
+        <AdminHeroHeader
+          title="Management Accounts"
+          description="จัดการบัญชี สิทธิ์การใช้งาน และตรวจสอบกิจกรรมสำคัญในระบบ"
+          lastSynced={formatAdminLastSynced(lastSyncedAt)}
+          thaiDate={formatAdminThaiDate(lastSyncedAt)}
+          actions={
+            <>
+              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroOutlineButtonSx}>
+                {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
+              </Button>
+              <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} sx={heroPrimaryButtonSx}>
+                เพิ่มพนักงาน
+              </Button>
+            </>
+          }
+        />
 
         {error && (
           <Alert severity="error" onClose={() => setError(null)}>
@@ -312,46 +283,93 @@ export default function StaffManagementPage() {
               {users.map(user => {
                 const isUpdating = updatingUserId === user.id;
                 return (
-                  <Paper key={user.id} variant="outlined" sx={{ p: 2, borderRadius: 3, borderColor: '#E2E8F0' }}>
-                    <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'center' }}>
-                      <Avatar sx={{ bgcolor: user.active ? alpha('#2563EB', 0.12) : '#F1F5F9', color: user.active ? '#2563EB' : '#94A3B8', fontWeight: 900 }}>
-                        {user.username.charAt(0).toUpperCase()}
-                      </Avatar>
-                      <Box sx={{ flex: 1, minWidth: 0 }}>
-                        <Stack direction="row" spacing={1} alignItems="center" flexWrap="wrap">
-                          <Typography fontWeight={900} noWrap>
-                            {user.username}
-                          </Typography>
-                          <Chip size="small" label={roleLabels[user.role]} color={roleColors[user.role]} variant="outlined" />
-                        </Stack>
-                        <Typography variant="body2" color="text.secondary" sx={{ mt: 0.4 }}>
-                          เข้าสู่ระบบล่าสุด: {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'ยังไม่เคยเข้าสู่ระบบ'}
-                        </Typography>
-                      </Box>
-                      <FormControl size="small" sx={{ minWidth: 150 }} disabled={isUpdating}>
-                        <InputLabel>สิทธิ์การใช้งาน</InputLabel>
-                        <Select label="สิทธิ์การใช้งาน" value={user.role} onChange={event => void updateUser(user, { role: event.target.value as Role }, `เปลี่ยนสิทธิ์ของ ${user.username} แล้ว`)}>
-                          {Object.entries(roleLabels).map(([value, label]) => (
-                            <MenuItem key={value} value={value}>
-                              {label}
-                            </MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                      <Button variant="outlined" startIcon={<LockResetRoundedIcon />} onClick={() => setPasswordUser(user)} disabled={isUpdating} sx={{ whiteSpace: 'nowrap' }}>
-                        เปลี่ยนรหัสผ่าน
-                      </Button>
-                      <Stack direction="row" alignItems="center" spacing={0.5} sx={{ minWidth: 132 }}>
-                        <Switch
-                          checked={user.active}
-                          disabled={isUpdating}
-                          onChange={event => void updateUser(user, { active: event.target.checked }, `${event.target.checked ? 'เปิด' : 'ปิด'}ใช้งาน ${user.username} แล้ว`)}
-                        />
-                        <Typography variant="body2" fontWeight={700} color={user.active ? 'success.main' : 'text.secondary'}>
-                          {user.active ? 'ใช้งาน' : 'ปิดใช้งาน'}
-                        </Typography>
+                  <Paper
+                    key={user.id}
+                    variant="outlined"
+                    sx={{
+                      position: 'relative',
+                      overflow: 'hidden',
+                      borderRadius: 3.5,
+                      borderColor: user.active ? '#D9E4F5' : '#E2E8F0',
+                      bgcolor: '#FFFFFF',
+                      boxShadow: '0 7px 20px rgba(15, 23, 42, 0.035)',
+                      opacity: user.active ? 1 : 0.76,
+                      '&::before': { content: '""', position: 'absolute', inset: '0 auto 0 0', width: 4, bgcolor: user.active ? '#2563EB' : '#CBD5E1' },
+                    }}>
+                    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(260px, 1fr) auto' }, alignItems: 'stretch' }}>
+                      <Stack direction="row" spacing={1.6} alignItems="center" sx={{ px: { xs: 2, md: 2.5 }, py: 2 }}>
+                        <Avatar
+                          sx={{
+                            width: 48,
+                            height: 48,
+                            bgcolor: user.active ? alpha('#2563EB', 0.11) : '#F1F5F9',
+                            color: user.active ? '#2563EB' : '#94A3B8',
+                            fontSize: 18,
+                            fontWeight: 900,
+                            border: '1px solid',
+                            borderColor: user.active ? '#DBEAFE' : '#E2E8F0',
+                          }}>
+                          {user.username.charAt(0).toUpperCase()}
+                        </Avatar>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
+                            <Typography sx={{ color: '#0F172A', fontSize: 15.5, fontWeight: 900 }} noWrap>
+                              {user.username}
+                            </Typography>
+                            <Chip size="small" label={roleLabels[user.role]} color={roleColors[user.role]} variant="outlined" sx={{ height: 23, fontSize: 11.5, fontWeight: 750 }} />
+                            <Chip size="small" label={user.active ? 'ใช้งานอยู่' : 'ปิดใช้งาน'} color={user.active ? 'success' : 'default'} sx={{ height: 23, fontSize: 11.5, fontWeight: 750 }} />
+                          </Stack>
+                          <Stack direction="row" spacing={0.7} alignItems="center" sx={{ mt: 0.65 }}>
+                            <HistoryRoundedIcon sx={{ color: '#94A3B8', fontSize: 15 }} />
+                            <Typography sx={{ color: '#64748B', fontSize: 12.5 }}>เข้าสู่ระบบล่าสุด {user.lastLoginAt ? formatDateTime(user.lastLoginAt) : 'ยังไม่เคยเข้าสู่ระบบ'}</Typography>
+                          </Stack>
+                        </Box>
                       </Stack>
-                    </Stack>
+
+                      <Box
+                        sx={{
+                          display: 'grid',
+                          gridTemplateColumns: { xs: '1fr', sm: 'minmax(160px, 1fr) auto minmax(130px, auto)' },
+                          gap: 1.25,
+                          alignItems: 'center',
+                          px: { xs: 2, md: 2.25 },
+                          py: 1.5,
+                          bgcolor: '#FAFCFF',
+                          borderTop: { xs: '1px solid #E8EEF7', lg: 0 },
+                          borderLeft: { lg: '1px solid #E8EEF7' },
+                        }}>
+                        <FormControl size="small" fullWidth disabled={isUpdating}>
+                          <InputLabel>สิทธิ์การใช้งาน</InputLabel>
+                          <Select
+                            label="สิทธิ์การใช้งาน"
+                            value={user.role}
+                            onChange={event => void updateUser(user, { role: event.target.value as Role }, `เปลี่ยนสิทธิ์ของ ${user.username} แล้ว`)}
+                            sx={{ borderRadius: 2.25, bgcolor: '#FFF' }}>
+                            {Object.entries(roleLabels).map(([value, label]) => (
+                              <MenuItem key={value} value={value}>
+                                {label}
+                              </MenuItem>
+                            ))}
+                          </Select>
+                        </FormControl>
+                        <Button
+                          variant="outlined"
+                          startIcon={<LockResetRoundedIcon />}
+                          onClick={() => setPasswordUser(user)}
+                          disabled={isUpdating}
+                          sx={{ minHeight: 40, borderRadius: 2.25, whiteSpace: 'nowrap', bgcolor: '#FFF', fontWeight: 750 }}>
+                          เปลี่ยนรหัสผ่าน
+                        </Button>
+                        <Stack direction="row" alignItems="center" justifyContent={{ xs: 'space-between', sm: 'flex-start' }} spacing={0.5} sx={{ minHeight: 40, px: { xs: 1, sm: 0 } }}>
+                          <Switch
+                            checked={user.active}
+                            disabled={isUpdating}
+                            onChange={event => void updateUser(user, { active: event.target.checked }, `${event.target.checked ? 'เปิด' : 'ปิด'}ใช้งาน ${user.username} แล้ว`)}
+                          />
+                          <Typography sx={{ color: user.active ? '#15803D' : '#64748B', fontSize: 12.5, fontWeight: 800 }}>{user.active ? 'เปิดใช้งาน' : 'ปิดใช้งาน'}</Typography>
+                        </Stack>
+                      </Box>
+                    </Box>
                   </Paper>
                 );
               })}
@@ -426,36 +444,103 @@ export default function StaffManagementPage() {
         </Card>
       </Stack>
 
-      <Dialog open={createOpen} onClose={() => !saving && setCreateOpen(false)} fullWidth maxWidth="xs">
-        <DialogTitle fontWeight={900}>เพิ่มบัญชีพนักงาน</DialogTitle>
-        <DialogContent>
-          <Stack spacing={2} sx={{ pt: 1 }}>
-            <TextField label="Username" value={username} onChange={event => setUsername(event.target.value)} autoFocus />
-            <PasswordFields
-              password={password}
-              confirmPassword={confirmPassword}
-              showPassword={showPassword}
-              onPasswordChange={setPassword}
-              onConfirmChange={setConfirmPassword}
-              onToggleVisibility={() => setShowPassword(value => !value)}
-            />
-            <FormControl>
-              <InputLabel>สิทธิ์การใช้งาน</InputLabel>
-              <Select label="สิทธิ์การใช้งาน" value={role} onChange={event => setRole(event.target.value as Role)}>
-                {Object.entries(roleLabels).map(([value, label]) => (
-                  <MenuItem key={value} value={value}>
-                    {label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+      <Dialog
+        open={createOpen}
+        onClose={() => !saving && setCreateOpen(false)}
+        fullWidth
+        maxWidth="sm"
+        slotProps={{ paper: { sx: { borderRadius: { xs: 3, sm: 4.5 }, overflow: 'hidden', boxShadow: '0 28px 80px rgba(15, 23, 42, 0.24)' } } }}>
+        <DialogTitle sx={{ p: 0 }}>
+          <Box sx={{ p: { xs: 2.25, sm: 3 }, background: 'linear-gradient(135deg, #F7FAFF 0%, #EEF4FF 100%)', borderBottom: '1px solid #E2E8F0' }}>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box sx={{ width: 48, height: 48, borderRadius: 3, display: 'grid', placeItems: 'center', color: '#2563EB', bgcolor: alpha('#2563EB', 0.12), flexShrink: 0 }}>
+                <AddRoundedIcon />
+              </Box>
+              <Box>
+                <Typography sx={{ fontSize: { xs: 21, sm: 24 }, lineHeight: 1.2, fontWeight: 900, color: '#0F172A' }}>เพิ่มบัญชีพนักงาน</Typography>
+                <Typography sx={{ mt: 0.5, color: '#64748B', fontSize: 13.5 }}>สร้างข้อมูลเข้าสู่ระบบและกำหนดสิทธิ์การใช้งานเริ่มต้น</Typography>
+              </Box>
+            </Stack>
+          </Box>
+        </DialogTitle>
+        <DialogContent sx={{ p: { xs: 2.25, sm: 3 } }}>
+          <Stack spacing={2.5}>
+            <Box>
+              <Typography sx={{ mb: 1.25, color: '#334155', fontSize: 13, fontWeight: 850 }}>ข้อมูลบัญชี</Typography>
+              <TextField
+                label="ชื่อผู้ใช้งาน"
+                placeholder="เช่น glossy.staff"
+                value={username}
+                onChange={event => setUsername(event.target.value)}
+                autoFocus
+                fullWidth
+                helperText="ใช้สำหรับเข้าสู่ระบบ และไม่ควรซ้ำกับบัญชีที่มีอยู่"
+                slotProps={{
+                  input: {
+                    startAdornment: (
+                      <InputAdornment position="start">
+                        <BadgeRoundedIcon sx={{ color: '#64748B' }} />
+                      </InputAdornment>
+                    ),
+                  },
+                }}
+                sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
+              />
+            </Box>
+            <Box sx={{ p: { xs: 1.75, sm: 2 }, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#F8FAFC' }}>
+              <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
+                <KeyRoundedIcon sx={{ color: '#2563EB', fontSize: 20 }} />
+                <Typography sx={{ color: '#334155', fontSize: 13, fontWeight: 850 }}>ตั้งรหัสผ่านเริ่มต้น</Typography>
+              </Stack>
+              <PasswordFields
+                password={password}
+                confirmPassword={confirmPassword}
+                showPassword={showPassword}
+                onPasswordChange={setPassword}
+                onConfirmChange={setConfirmPassword}
+                onToggleVisibility={() => setShowPassword(value => !value)}
+              />
+            </Box>
+            <Box>
+              <Typography sx={{ mb: 1.25, color: '#334155', fontSize: 13, fontWeight: 850 }}>สิทธิ์การใช้งาน</Typography>
+              <FormControl fullWidth>
+                <InputLabel>ระดับสิทธิ์</InputLabel>
+                <Select label="ระดับสิทธิ์" value={role} onChange={event => setRole(event.target.value as Role)} sx={{ borderRadius: 2.5 }}>
+                  {Object.entries(roleLabels).map(([value, label]) => (
+                    <MenuItem key={value} value={value}>
+                      {label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <Typography sx={{ mt: 1, color: '#64748B', fontSize: 12.5 }}>
+                {role === 'admin'
+                  ? 'ผู้ดูแลระบบสามารถจัดการบัญชีและการตั้งค่าทั้งหมด'
+                  : role === 'manager'
+                    ? 'ผู้จัดการเข้าถึงงานขายและการตั้งค่าที่ได้รับอนุญาต'
+                    : 'พนักงานใช้งานหน้าขาย รายการงาน และคลังไฟล์'}
+              </Typography>
+            </Box>
           </Stack>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5 }}>
-          <Button onClick={() => setCreateOpen(false)} disabled={saving}>
+        <DialogActions sx={{ px: { xs: 2.25, sm: 3 }, py: 2.25, borderTop: '1px solid #E2E8F0', bgcolor: '#FAFBFC', gap: 1 }}>
+          <Button
+            onClick={() => {
+              setCreateOpen(false);
+              setUsername('');
+              setRole('staff');
+              resetPasswordFields();
+            }}
+            disabled={saving}
+            sx={{ minHeight: 44, px: 2.25, borderRadius: 2.5, fontWeight: 800 }}>
             ยกเลิก
           </Button>
-          <Button variant="contained" onClick={() => void createUser()} disabled={saving || !username.trim() || !passwordValid}>
+          <Button
+            variant="contained"
+            startIcon={<AddRoundedIcon />}
+            onClick={() => void createUser()}
+            disabled={saving || !username.trim() || !passwordValid}
+            sx={{ minHeight: 44, px: 2.5, borderRadius: 2.5, fontWeight: 850, boxShadow: '0 10px 22px rgba(37, 99, 235, 0.24)' }}>
             {saving ? 'กำลังบันทึก…' : 'สร้างบัญชี'}
           </Button>
         </DialogActions>
