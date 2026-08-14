@@ -39,7 +39,6 @@ import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import ShoppingBagRoundedIcon from '@mui/icons-material/ShoppingBagRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
-import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import axios from 'axios';
 import dayjs from 'dayjs';
@@ -73,6 +72,7 @@ type KpiItem = {
   accent: string;
   icon: React.ElementType;
   series: number[];
+  helper?: string;
 };
 
 type DashboardMetrics = {
@@ -88,7 +88,13 @@ type DashboardMetrics = {
   uploadCompleted: number;
   productionStatuses: Array<StatusMeta & { count: number }>;
   salesSeries7d: number[];
+  cashToday: number;
+  promptPayToday: number;
+  salesYesterday: number;
+  ordersYesterday: number;
 };
+
+type BestSeller = { name: string; quantity: number; revenue: number };
 
 type ChartPoint = {
   label: string;
@@ -96,10 +102,10 @@ type ChartPoint = {
 };
 
 const CARD_SX = {
-  borderRadius: '22px',
-  border: '1px solid #E5E7EB',
+  borderRadius: '18px',
+  border: '1px solid #E2E8F0',
   bgcolor: '#FFFFFF',
-  boxShadow: '0 16px 42px rgba(15, 23, 42, 0.06)',
+  boxShadow: '0 1px 2px rgba(15, 23, 42, 0.03)',
 };
 
 const endpointCandidates = ['/uploads', '/upload'];
@@ -278,15 +284,6 @@ function getStatusMeta(status: unknown): StatusMeta {
   };
 }
 
-function getPaymentLabel(value: unknown): string {
-  const key = normalizeStatusKey(value);
-  if (key === 'cash') return 'เงินสด';
-  if (key === 'promptpay') return 'PromptPay';
-  if (key === 'transfer') return 'โอนบัญชี';
-  if (key === 'card') return 'บัตร';
-  return stringifyPrimitive(value, '-') || '-';
-}
-
 function stringifyPrimitive(value: unknown, fallback = ''): string {
   if (typeof value === 'string' || typeof value === 'number' || typeof value === 'bigint' || typeof value === 'boolean') {
     return String(value);
@@ -338,6 +335,7 @@ function calculateBestSellers(orders: NormalizedOrder[]): BestSeller[] {
 function calculateDashboardMetrics(orders: NormalizedOrder[], uploads: StorageRow[]): DashboardMetrics {
   const now = dayjs();
   const ordersToday = orders.filter(order => getOrderDate(order)?.isSame(now, 'day'));
+  const yesterdayOrders = orders.filter(order => getOrderDate(order)?.isSame(now.subtract(1, 'day'), 'day'));
   const monthOrders = orders.filter(order => getOrderDate(order)?.isSame(now, 'month'));
   const waitingPaymentOrders = orders.filter(order => {
     const statusKey = getStatusMeta(order.status).key;
@@ -362,7 +360,27 @@ function calculateDashboardMetrics(orders: NormalizedOrder[], uploads: StorageRo
     uploadCompleted: uploads.filter(upload => upload.status === 'completed').length,
     productionStatuses,
     salesSeries7d: buildRangeSeries(orders, 7),
+    cashToday: ordersToday.filter(order => order.payment === 'cash').reduce((sum, order) => sum + getOrderAmount(order), 0),
+    promptPayToday: ordersToday.filter(order => order.payment === 'promptpay').reduce((sum, order) => sum + getOrderAmount(order), 0),
+    salesYesterday: yesterdayOrders.reduce((sum, order) => sum + getOrderAmount(order), 0),
+    ordersYesterday: yesterdayOrders.length,
   };
+}
+
+function calculateBestSellers(orders: NormalizedOrder[]): BestSeller[] {
+  const totals = new Map<string, BestSeller>();
+  for (const order of orders) {
+    for (const item of order.cart) {
+      const name = item.name?.trim() || item.category?.trim() || 'ไม่ระบุบริการ';
+      const quantity = Math.max(Number(item.qty ?? item.quantity ?? 0), 0);
+      const revenue = Math.max(Number(item.totalPrice ?? item.total ?? 0), 0);
+      const current = totals.get(name) ?? { name, quantity: 0, revenue: 0 };
+      current.quantity += quantity;
+      current.revenue += revenue;
+      totals.set(name, current);
+    }
+  }
+  return [...totals.values()].filter(item => item.quantity > 0).sort((a, b) => b.quantity - a.quantity).slice(0, 5);
 }
 
 async function fetchUploadsSafely(): Promise<StorageRow[]> {
@@ -414,14 +432,13 @@ function DashboardHeader({
       elevation={0}
       sx={{
         mb: 2.5,
-        minHeight: { xs: 'auto', lg: 170 },
-        p: { xs: 2.4, md: 3 },
+        minHeight: { xs: 'auto', lg: 128 },
+        p: { xs: 2, md: 2.5 },
         overflow: 'hidden',
-        borderRadius: '22px',
-        border: '1px solid #D7E8FF',
-        bgcolor: '#FBFDFF',
-        background: 'linear-gradient(180deg, #FFFFFF 0%, #F8FBFF 100%)',
-        boxShadow: '0 18px 42px rgba(74, 144, 226, 0.06)',
+        borderRadius: '20px',
+        border: '1px solid #DDE5EF',
+        bgcolor: '#FFFFFF',
+        boxShadow: '0 1px 2px rgba(15, 23, 42, 0.03)',
         position: 'relative',
       }}>
       <Stack
@@ -429,23 +446,23 @@ function DashboardHeader({
         justifyContent="space-between"
         alignItems={{ xs: 'stretch', lg: 'center' }}
         spacing={{ xs: 2.4, lg: 3 }}
-        sx={{ position: 'relative', minHeight: { lg: 112 } }}>
+        sx={{ position: 'relative', minHeight: { lg: 76 } }}>
         <Box sx={{ minWidth: 0, maxWidth: 780 }}>
           <Typography
             variant="h3"
             sx={{
               color: '#020617',
-              fontWeight: 900,
-              fontSize: { xs: 34, md: 40 },
-              lineHeight: 1.05,
-              letterSpacing: '-0.045em',
+              fontWeight: 800,
+              fontSize: { xs: 26, md: 28 },
+              lineHeight: 1.15,
+              letterSpacing: '-0.03em',
             }}>
-            Dashboard
+            ภาพรวมร้าน
           </Typography>
-          <Typography sx={{ mt: 1.2, color: '#0F2B57', fontSize: { xs: 14, md: 15 }, lineHeight: 1.65 }}>ติดตามยอดขาย สถานะงาน การรับชำระ งานพิมพ์ และเอกสารการขายได้ในหน้าจอเดียว</Typography>
-          <Stack spacing={0.25} sx={{ mt: 1.25 }}>
-            <Typography sx={{ color: '#7A8FB3', fontSize: 12.2, fontWeight: 500 }}>อัปเดตล่าสุด {formatThaiDateTime(lastUpdated)}</Typography>
-            <Typography sx={{ color: '#7A8FB3', fontSize: 12.2, fontWeight: 500 }}>{formatThaiFullDate(lastUpdated)}</Typography>
+          <Typography sx={{ mt: .65, color: '#64748B', fontSize: { xs: 13.5, md: 14 }, lineHeight: 1.55 }}>ติดตามยอดขาย งาน และสถานะร้านวันนี้</Typography>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 0, sm: 1 }} sx={{ mt: .65 }}>
+            <Typography sx={{ color: '#94A3B8', fontSize: 12, fontWeight: 500 }}>{formatThaiFullDate(lastUpdated)}</Typography>
+            <Typography sx={{ color: '#94A3B8', fontSize: 12, fontWeight: 500 }}>· อัปเดต {formatThaiDateTime(lastUpdated)}</Typography>
           </Stack>
           <Box sx={{ display: 'none' }}>
             <Typography sx={{ mt: 1, color: '#64748B', fontSize: { xs: 14.5, md: 16 }, lineHeight: 1.75 }}>ติดตามยอดขาย สถานะงาน การรับชำระ และออเดอร์ล่าสุดของร้านในภาพรวมเดียว</Typography>
@@ -459,6 +476,7 @@ function DashboardHeader({
             variant="outlined"
             sx={{
               ...headerButtonSx,
+              display: 'none',
               position: 'relative',
               minWidth: 44,
               width: { xs: '100%', sm: 44 },
@@ -482,7 +500,7 @@ function DashboardHeader({
           <Button onClick={onRefresh} disabled={isRefreshing} startIcon={isRefreshing ? <CircularProgress size={16} color="inherit" /> : <RefreshRoundedIcon />} variant="outlined" sx={headerButtonSx}>
             รีเฟรช
           </Button>
-          <Button component={Link} href="/home/orders" startIcon={<FileDownloadRoundedIcon />} variant="outlined" sx={headerButtonSx}>
+          <Button component={Link} href="/home/orders" startIcon={<FileDownloadRoundedIcon />} variant="outlined" sx={{ ...headerButtonSx, display: 'none' }}>
             ส่งออกรายงาน
           </Button>
           <Button
@@ -520,33 +538,22 @@ function DashboardHeader({
 
 function KpiCard({ item }: Readonly<{ item: KpiItem }>) {
   const Icon = item.icon;
-  const chartData = item.series.map(value => ({ value }));
-  const gradientId = `kpi-${item.label.replace(/\s+/g, '-')}`;
-
   return (
     <Card
       elevation={0}
       sx={{
         ...CARD_SX,
-        borderRadius: '20px',
-        overflow: 'hidden',
-        position: 'relative',
+        borderRadius: '18px',
         minWidth: 0,
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: 4,
-          background: `linear-gradient(90deg, ${item.accent}, ${alpha(item.accent, 0.45)})`,
-        },
+        transition: 'transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease',
+        '@media (prefers-reduced-motion: reduce)': { transition: 'none' },
+        '&:hover': { transform: 'translateY(-1px)', borderColor: alpha(item.accent, .35), boxShadow: '0 10px 28px rgba(15, 23, 42, .06)' },
       }}>
-      <CardContent sx={{ p: 2.2 }}>
+      <CardContent sx={{ p: { xs: 2, md: 2.25 }, '&:last-child': { pb: { xs: 2, md: 2.25 } } }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ color: '#64748B', fontSize: 12.5, fontWeight: 700 }}>{item.label}</Typography>
-            <Typography sx={{ mt: 0.8, color: '#0F172A', fontSize: { xs: 25, md: 28 }, fontWeight: 900, letterSpacing: '-0.04em', fontVariantNumeric: 'tabular-nums' }}>
+            <Typography sx={{ color: '#64748B', fontSize: 12.5, fontWeight: 700, letterSpacing: '.01em' }}>{item.label}</Typography>
+            <Typography sx={{ mt: 1.25, color: '#0F172A', fontSize: { xs: 28, md: 31 }, fontWeight: 850, letterSpacing: '-0.045em', fontVariantNumeric: 'tabular-nums', lineHeight: 1 }}>
               {item.prefix ? (
                 <Box component="span" sx={{ mr: 0.4, fontSize: '0.65em', color: '#94A3B8' }}>
                   {item.prefix}
@@ -560,23 +567,14 @@ function KpiCard({ item }: Readonly<{ item: KpiItem }>) {
               ) : null}
             </Typography>
           </Box>
-          <Box sx={{ width: 42, height: 42, borderRadius: '14px', bgcolor: alpha(item.accent, 0.12), color: item.accent, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
-            <Icon sx={{ fontSize: 22 }} />
+          <Box sx={{ width: 36, height: 36, borderRadius: '11px', bgcolor: alpha(item.accent, 0.09), color: item.accent, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+            <Icon sx={{ fontSize: 19 }} />
           </Box>
         </Stack>
-        <Box sx={{ mt: 1.3, height: 38 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={chartData} margin={{ top: 5, right: 0, bottom: 0, left: 0 }}>
-              <defs>
-                <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor={item.accent} stopOpacity={0.34} />
-                  <stop offset="95%" stopColor={item.accent} stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <Area dataKey="value" type="monotone" stroke={item.accent} strokeWidth={2} fill={`url(#${gradientId})`} dot={false} isAnimationActive={false} />
-            </AreaChart>
-          </ResponsiveContainer>
-        </Box>
+        <Stack direction="row" alignItems="center" spacing={.75} sx={{ mt: 1.5 }}>
+          <Box sx={{ width: 6, height: 6, borderRadius: 99, bgcolor: item.accent }} />
+          <Typography sx={{ color: '#94A3B8', fontSize: 11.5, fontWeight: 650 }}>{item.helper ?? 'อัปเดตจากข้อมูลล่าสุดของร้าน'}</Typography>
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -601,13 +599,11 @@ function ProductionStatusCard({ status }: Readonly<{ status: StatusMeta & { coun
 }
 
 function SalesChart({ orders }: Readonly<{ orders: NormalizedOrder[] }>) {
-  const [startDate, setStartDate] = React.useState(() => dayjs().subtract(29, 'day').format('YYYY-MM-DD'));
-  const [endDate, setEndDate] = React.useState(() => dayjs().format('YYYY-MM-DD'));
+  const [range, setRange] = React.useState<'7' | '30' | 'month'>('7');
 
   const chartData = React.useMemo<ChartPoint[]>(() => {
-    const start = dayjs(startDate).startOf('day');
-    const end = dayjs(endDate).endOf('day');
-    if (!start.isValid() || !end.isValid() || start.isAfter(end)) return [];
+    const end = dayjs().endOf('day');
+    const start = range === 'month' ? dayjs().startOf('month') : dayjs().subtract(Number(range) - 1, 'day').startOf('day');
 
     const points: ChartPoint[] = [];
     let cursor = start;
@@ -620,7 +616,7 @@ function SalesChart({ orders }: Readonly<{ orders: NormalizedOrder[] }>) {
       cursor = cursor.add(1, 'day');
     }
     return points;
-  }, [endDate, orders, startDate]);
+  }, [orders, range]);
 
   const total = chartData.reduce((sum, item) => sum + item.value, 0);
   const average = chartData.length ? Math.round(total / chartData.length) : 0;
@@ -630,27 +626,11 @@ function SalesChart({ orders }: Readonly<{ orders: NormalizedOrder[] }>) {
     <Paper elevation={0} sx={{ ...CARD_SX, p: { xs: 2, md: 2.6 }, height: '100%', minWidth: 0 }}>
       <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2} sx={{ mb: 2 }}>
         <Box>
-          <Typography sx={{ color: '#0F172A', fontSize: 20, fontWeight: 900 }}>Revenue Overview</Typography>
-          <Typography sx={{ mt: 0.4, color: '#64748B', fontSize: 13 }}>ยอดขายตามช่วงวันที่ เลือกช่วงเพื่อดูแนวโน้มรายได้</Typography>
+          <Typography sx={{ color: '#0F172A', fontSize: 18, fontWeight: 800 }}>ภาพรวมยอดขาย</Typography>
+          <Typography sx={{ mt: 0.35, color: '#64748B', fontSize: 13 }}>แนวโน้มรายได้จากรายการขายจริง</Typography>
         </Box>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-          <Box
-            component="input"
-            type="date"
-            value={startDate}
-            max={endDate}
-            onChange={event => setStartDate(event.target.value)}
-            sx={{ border: '1px solid #D7E8FF', borderRadius: '12px', px: 1.4, py: 1, color: '#0F172A', bgcolor: '#F8FAFC', font: 'inherit', minWidth: 150 }}
-          />
-          <Box
-            component="input"
-            type="date"
-            value={endDate}
-            min={startDate}
-            max={dayjs().format('YYYY-MM-DD')}
-            onChange={event => setEndDate(event.target.value)}
-            sx={{ border: '1px solid #D7E8FF', borderRadius: '12px', px: 1.4, py: 1, color: '#0F172A', bgcolor: '#F8FAFC', font: 'inherit', minWidth: 150 }}
-          />
+        <Stack direction="row" spacing={.5} sx={{ p: .4, borderRadius: 2.5, bgcolor: '#F1F5F9', alignSelf: { xs: 'stretch', md: 'flex-start' } }}>
+          {([['7', '7 วัน'], ['30', '30 วัน'], ['month', 'เดือนนี้']] as const).map(([value, label]) => <Button key={value} size="small" onClick={() => setRange(value)} sx={{ flex: { xs: 1, md: 'initial' }, minWidth: { xs: 0, md: 64 }, px: 1.2, borderRadius: 2, color: range === value ? '#0F172A' : '#64748B', bgcolor: range === value ? '#FFFFFF' : 'transparent', boxShadow: range === value ? '0 1px 2px rgba(15,23,42,.08)' : 'none', fontSize: 12, fontWeight: 800, textTransform: 'none', '&:hover': { bgcolor: range === value ? '#FFFFFF' : '#E2E8F0' } }}>{label}</Button>)}
         </Stack>
       </Stack>
 
@@ -668,7 +648,7 @@ function SalesChart({ orders }: Readonly<{ orders: NormalizedOrder[] }>) {
       </Box>
 
       {hasData ? (
-        <ResponsiveContainer width="100%" height={310}>
+        <ResponsiveContainer width="100%" height={260}>
           <AreaChart data={chartData} margin={{ top: 12, right: 12, left: 0, bottom: 0 }}>
             <defs>
               <linearGradient id="dashboard-revenue" x1="0" y1="0" x2="0" y2="1">
@@ -676,7 +656,7 @@ function SalesChart({ orders }: Readonly<{ orders: NormalizedOrder[] }>) {
                 <stop offset="95%" stopColor="#4A90E2" stopOpacity={0} />
               </linearGradient>
             </defs>
-            <CartesianGrid stroke="#E5E7EB" strokeDasharray="4 6" vertical={false} />
+            <CartesianGrid stroke="#EEF2F7" strokeDasharray="4 8" vertical={false} />
             <XAxis dataKey="label" axisLine={false} tickLine={false} tick={{ fill: '#64748B', fontSize: 12 }} interval={chartData.length > 20 ? Math.ceil(chartData.length / 8) : 0} />
             <YAxis axisLine={false} tickLine={false} width={50} tick={{ fill: '#64748B', fontSize: 12 }} tickFormatter={value => `฿${Number(value) / 1000}k`} />
             <Tooltip
@@ -715,11 +695,36 @@ function RecentOrders({ orders }: Readonly<{ orders: NormalizedOrder[] }>) {
         </Button>
       </Stack>
       {orders.length ? (
-        <TableContainer sx={{ overflowX: 'auto' }}>
+        <>
+        <Box sx={{ display: { xs: 'block', sm: 'none' }, px: 1.5, pb: 1.5 }}>
+          {orders.map(order => {
+            const status = getStatusMeta(order.status);
+            const service = order.cart[0]?.name ?? order.cart[0]?.category ?? 'ไม่ระบุบริการ';
+            return (
+              <Box key={order._id} component={Link} href="/home/orders" sx={{ display: 'block', py: 1.5, px: .5, color: 'inherit', textDecoration: 'none', borderBottom: '1px solid #EEF2F7', '&:last-child': { borderBottom: 0 } }}>
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
+                  <Box sx={{ minWidth: 0 }}>
+                    <Stack direction="row" spacing={.8} alignItems="center">
+                      <Typography sx={{ color: '#2563EB', fontSize: 13, fontWeight: 850 }}>{getDisplayOrderNumber(order)}</Typography>
+                      <Chip size="small" label={status.label} sx={{ height: 22, bgcolor: status.bg, color: status.color, border: `1px solid ${status.border}`, fontSize: 10.5, fontWeight: 800 }} />
+                    </Stack>
+                    <Typography noWrap sx={{ mt: .7, color: '#0F172A', fontSize: 13.5, fontWeight: 800 }}>{order.customerName || 'ไม่ระบุชื่อลูกค้า'}</Typography>
+                    <Typography noWrap sx={{ mt: .2, color: '#64748B', fontSize: 12 }}>{service}</Typography>
+                  </Box>
+                  <Box sx={{ flexShrink: 0, textAlign: 'right' }}>
+                    <Typography sx={{ color: '#0F172A', fontSize: 14, fontWeight: 850 }}>{formatCurrencyTHB(order.grandTotal)}</Typography>
+                    <Typography sx={{ mt: .4, color: '#94A3B8', fontSize: 11.5 }}>{dayjs(order.createdAt).format('HH:mm')}</Typography>
+                  </Box>
+                </Stack>
+              </Box>
+            );
+          })}
+        </Box>
+        <TableContainer sx={{ display: { xs: 'none', sm: 'block' }, overflowX: 'auto' }}>
           <Table size="small" sx={{ minWidth: 850 }}>
             <TableHead>
               <TableRow>
-                {['Order No.', 'Customer', 'Total', 'Payment', 'Status', 'Created At', 'Action'].map(label => (
+                {['Order', 'Customer', 'Service', 'Amount', 'Status', 'Time'].map(label => (
                   <TableCell key={label} sx={{ bgcolor: '#F8FAFC', color: '#64748B', fontSize: 12, fontWeight: 900, borderBottom: '1px solid #E5E7EB', py: 1.4 }}>
                     {label}
                   </TableCell>
@@ -736,23 +741,21 @@ function RecentOrders({ orders }: Readonly<{ orders: NormalizedOrder[] }>) {
                       <Typography sx={{ color: '#0F172A', fontSize: 13, fontWeight: 800 }}>{order.customerName || 'ไม่ระบุชื่อลูกค้า'}</Typography>
                       <Typography sx={{ color: '#94A3B8', fontSize: 12 }}>{order.phoneNumber || '-'}</Typography>
                     </TableCell>
+                    <TableCell sx={{ color: '#475569', fontWeight: 650, maxWidth: 220 }}>
+                      <Typography noWrap sx={{ fontSize: 13 }}>{order.cart[0]?.name ?? order.cart[0]?.category ?? 'ไม่ระบุบริการ'}</Typography>
+                    </TableCell>
                     <TableCell sx={{ color: '#0F172A', fontWeight: 900 }}>{formatCurrencyTHB(order.grandTotal)}</TableCell>
-                    <TableCell sx={{ color: '#334155', fontWeight: 700 }}>{getPaymentLabel(order.payment)}</TableCell>
                     <TableCell>
                       <Chip size="small" label={status.label} sx={{ bgcolor: status.bg, color: status.color, border: `1px solid ${status.border}`, fontWeight: 800 }} />
                     </TableCell>
-                    <TableCell sx={{ color: '#64748B', whiteSpace: 'nowrap' }}>{formatThaiDateTime(order.createdAt)}</TableCell>
-                    <TableCell>
-                      <Button component={Link} href="/home/orders" size="small" startIcon={<VisibilityRoundedIcon />} sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 800 }}>
-                        View
-                      </Button>
-                    </TableCell>
+                    <TableCell sx={{ color: '#64748B', whiteSpace: 'nowrap' }}>{dayjs(order.createdAt).format('HH:mm')}</TableCell>
                   </TableRow>
                 );
               })}
             </TableBody>
           </Table>
         </TableContainer>
+        </>
       ) : (
         <Box sx={{ p: 2.5 }}>
           <EmptyState compact eyebrow="No Orders" title="ยังไม่มีออเดอร์ล่าสุด" subtitle="เมื่อมีออเดอร์ใหม่ รายการจะปรากฏที่นี่" />
@@ -849,9 +852,84 @@ function BestSellers({ bestSellers, products }: Readonly<{ bestSellers: BestSell
 }
 
 */
+function PaymentSummary({ metrics }: Readonly<{ metrics: DashboardMetrics }>) {
+  const total = metrics.cashToday + metrics.promptPayToday;
+  const methods = [
+    { label: 'เงินสด', helper: 'รับที่หน้าร้าน', value: metrics.cashToday, color: '#0F766E', bg: '#F0FDFA', icon: LocalAtmRoundedIcon },
+    { label: 'โอน / PromptPay', helper: 'ชำระผ่าน QR และโอนเงิน', value: metrics.promptPayToday, color: '#2563EB', bg: '#EFF6FF', icon: PaidRoundedIcon },
+  ];
+  return (
+    <Paper elevation={0} sx={{ ...CARD_SX, p: { xs: 2, md: 2.4 }, height: '100%' }}>
+      <Typography sx={{ color: '#0F172A', fontSize: 17, fontWeight: 800 }}>ช่องทางการชำระเงิน</Typography>
+      <Typography sx={{ mt: 0.25, color: '#64748B', fontSize: 12.5 }}>สรุปยอดรับเงินของวันนี้</Typography>
+
+      <Box sx={{ mt: 2, pb: 1.8, borderBottom: '1px solid #EEF2F7' }}>
+        <Typography sx={{ color: '#94A3B8', fontSize: 11.5, fontWeight: 700 }}>ยอดรับรวม</Typography>
+        <Typography sx={{ mt: .4, color: '#0F172A', fontSize: { xs: 28, md: 32 }, lineHeight: 1, fontWeight: 850, letterSpacing: '-.04em', fontVariantNumeric: 'tabular-nums' }}>{formatCurrencyTHB(total)}</Typography>
+        <Box sx={{ display: 'flex', mt: 1.5, height: 9, overflow: 'hidden', borderRadius: 99, bgcolor: '#F1F5F9' }}>
+          {methods.map(method => <Box key={method.label} sx={{ width: `${total > 0 ? (method.value / total) * 100 : 0}%`, bgcolor: method.color, transition: 'width 180ms ease' }} />)}
+        </Box>
+      </Box>
+
+      <Stack spacing={1} sx={{ mt: 1.4 }}>
+        {methods.map(method => {
+          const percent = total > 0 ? (method.value / total) * 100 : 0;
+          const Icon = method.icon;
+          return <Box key={method.label} sx={{ p: 1.35, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
+            <Stack direction="row" alignItems="center" spacing={1.2}>
+              <Box sx={{ width: 38, height: 38, display: 'grid', placeItems: 'center', flexShrink: 0, borderRadius: 2.5, color: method.color, bgcolor: method.bg }}><Icon sx={{ fontSize: 20 }} /></Box>
+              <Box sx={{ flex: 1, minWidth: 0 }}>
+                <Typography sx={{ color: '#334155', fontSize: 13, fontWeight: 800 }}>{method.label}</Typography>
+                <Typography noWrap sx={{ mt: .1, color: '#94A3B8', fontSize: 10.5 }}>{method.helper}</Typography>
+              </Box>
+              <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
+                <Typography sx={{ color: '#0F172A', fontSize: 14, fontWeight: 850, fontVariantNumeric: 'tabular-nums' }}>{formatCurrencyTHB(method.value)}</Typography>
+                <Typography sx={{ mt: .1, color: method.color, fontSize: 11, fontWeight: 800 }}>{Math.round(percent)}%</Typography>
+              </Box>
+            </Stack>
+          </Box>;
+        })}
+      </Stack>
+    </Paper>
+  );
+}
+
+function AttentionRequired({ metrics }: Readonly<{ metrics: DashboardMetrics }>) {
+  const items = [
+    { label: 'งานรอดำเนินการ', value: metrics.productionStatuses.find(item => item.key === 'pending')?.count ?? 0, color: '#D97706', href: '/home/orders?status=pending' },
+    { label: 'งานยังชำระไม่ครบ', value: metrics.waitingPayment, color: '#DC2626', href: '/home/orders?status=awaiting_payment' },
+    { label: 'ไฟล์ใหม่รอตรวจสอบ', value: metrics.uploadWaiting, color: '#0891B2', href: '/home/storage' },
+    { label: 'งานพร้อมให้ลูกค้ารับ', value: metrics.productionStatuses.find(item => item.key === 'ready')?.count ?? 0, color: '#7C3AED', href: '/home/orders?status=ready_for_pickup' },
+  ];
+  return (
+    <Paper elevation={0} sx={{ ...CARD_SX, p: 2.3 }}>
+      <Stack direction="row" spacing={1.2} alignItems="center">
+        <WarningAmberRoundedIcon sx={{ color: '#D97706' }} />
+        <Box><Typography sx={{ color: '#0F172A', fontSize: 19, fontWeight: 900 }}>ต้องตรวจสอบ</Typography><Typography sx={{ color: '#64748B', fontSize: 13 }}>สิ่งที่ควรจัดการต่อในตอนนี้</Typography></Box>
+      </Stack>
+      <Stack spacing={0.8} sx={{ mt: 1.7 }}>
+        {items.map(item => <Button key={item.label} component={Link} href={item.href} fullWidth sx={{ justifyContent: 'space-between', borderRadius: 3, px: 1.4, py: 1.1, color: '#334155', bgcolor: '#F8FAFC', textTransform: 'none' }}>
+          <Typography sx={{ fontSize: 13, fontWeight: 750 }}>{item.label}</Typography><Chip size="small" label={item.value} sx={{ bgcolor: alpha(item.color, .11), color: item.color, fontWeight: 900 }} />
+        </Button>)}
+      </Stack>
+    </Paper>
+  );
+}
+
+function PopularServices({ items }: Readonly<{ items: BestSeller[] }>) {
+  return <Paper elevation={0} sx={{ ...CARD_SX, p: 2.3 }}>
+    <Typography sx={{ color: '#0F172A', fontSize: 19, fontWeight: 900 }}>บริการขายดี</Typography>
+    <Typography sx={{ mt: .3, color: '#64748B', fontSize: 13 }}>จัดอันดับจากรายการสินค้าในออเดอร์จริง</Typography>
+    {items.length ? <Stack spacing={1.2} sx={{ mt: 1.8 }}>{items.map((item, index) => <Stack key={item.name} direction="row" alignItems="center" spacing={1.2}>
+      <Box sx={{ width: 28, height: 28, borderRadius: 2, display: 'grid', placeItems: 'center', bgcolor: index === 0 ? '#EAF4FF' : '#F1F5F9', color: '#2563EB', fontWeight: 900 }}>{index + 1}</Box>
+      <Box sx={{ flex: 1, minWidth: 0 }}><Typography noWrap sx={{ fontSize: 13.5, fontWeight: 800, color: '#0F172A' }}>{item.name}</Typography><Typography sx={{ fontSize: 12, color: '#64748B' }}>{item.quantity.toLocaleString('th-TH')} ชิ้น · {formatCurrencyTHB(item.revenue)}</Typography></Box>
+    </Stack>)}</Stack> : <Box sx={{ mt: 1.5 }}><EmptyState compact eyebrow="No sales yet" title="ยังไม่มีข้อมูลบริการขายดี" subtitle="ข้อมูลจะแสดงเมื่อออเดอร์มีรายการสินค้า" /></Box>}
+  </Paper>;
+}
+
 function QuickActions() {
   const actions = [
-    { label: 'สร้างออเดอร์ใหม่', href: '/home/posseller', icon: AddShoppingCartRoundedIcon, color: '#4A90E2' },
+    { label: 'ขายหน้าร้าน', href: '/home/posseller', icon: AddShoppingCartRoundedIcon, color: '#2563EB', primary: true },
     { label: 'ขายด่วน', href: '/home/posseller', icon: PointOfSaleRoundedIcon, color: '#10B981' },
     { label: 'ดูออเดอร์ทั้งหมด', href: '/home/orders', icon: ReceiptLongRoundedIcon, color: '#3B82F6' },
     { label: 'ดูไฟล์อัปโหลด', href: '/home/storage', icon: CloudUploadRoundedIcon, color: '#06B6D4' },
@@ -860,8 +938,8 @@ function QuickActions() {
 
   return (
     <Paper elevation={0} sx={{ ...CARD_SX, p: 2.3 }}>
-      <Typography sx={{ color: '#0F172A', fontSize: 19, fontWeight: 900 }}>Quick Actions</Typography>
-      <Box sx={{ mt: 1.6, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(6, 1fr)' }, gap: 1.1 }}>
+      <Typography sx={{ color: '#0F172A', fontSize: 16, fontWeight: 850 }}>ทางลัดสำหรับพนักงาน</Typography>
+      <Box sx={{ mt: 1.3, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(5, 1fr)' }, gap: 1 }}>
         {actions.map(action => {
           const Icon = action.icon;
           return (
@@ -873,17 +951,17 @@ function QuickActions() {
               sx={{
                 p: 1.4,
                 borderRadius: '16px',
-                border: '1px solid #E5E7EB',
+                border: action.primary ? '1px solid #2563EB' : '1px solid #E5E7EB',
                 textDecoration: 'none',
-                bgcolor: '#FFFFFF',
+                bgcolor: action.primary ? '#2563EB' : '#FFFFFF',
                 transition: 'background-color 120ms ease, border-color 120ms ease, box-shadow 120ms ease, transform 100ms ease',
-                '&:hover': { transform: 'translateY(-2px)', borderColor: alpha(action.color, 0.38), bgcolor: alpha(action.color, 0.06) },
+                '&:hover': { transform: 'translateY(-1px)', borderColor: alpha(action.color, 0.5), bgcolor: action.primary ? '#1D4ED8' : alpha(action.color, 0.06) },
               }}>
               <Stack direction="row" alignItems="center" spacing={1}>
-                <Box sx={{ width: 34, height: 34, borderRadius: '12px', bgcolor: alpha(action.color, 0.12), color: action.color, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
+                <Box sx={{ width: 34, height: 34, borderRadius: '12px', bgcolor: action.primary ? alpha('#FFFFFF', .16) : alpha(action.color, 0.12), color: action.primary ? '#FFFFFF' : action.color, display: 'grid', placeItems: 'center', flexShrink: 0 }}>
                   <Icon sx={{ fontSize: 18 }} />
                 </Box>
-                <Typography sx={{ color: '#0F172A', fontSize: 12.5, fontWeight: 900, lineHeight: 1.25 }}>{action.label}</Typography>
+                <Typography sx={{ color: action.primary ? '#FFFFFF' : '#0F172A', fontSize: 12.5, fontWeight: 850, lineHeight: 1.25 }}>{action.label}</Typography>
               </Stack>
             </Paper>
           );
@@ -942,7 +1020,8 @@ export default function DashboardPage() {
   }, [loadDashboard]);
 
   const metrics = React.useMemo(() => calculateDashboardMetrics(orders, uploads), [orders, uploads]);
-  const kpis = React.useMemo<KpiItem[]>(
+  const bestSellers = React.useMemo(() => calculateBestSellers(orders), [orders]);
+  const allKpis = React.useMemo<KpiItem[]>(
     () => [
       { label: 'ยอดขายวันนี้', value: metrics.salesToday, prefix: '฿', accent: '#7C3AED', icon: PaidRoundedIcon, series: metrics.salesSeries7d },
       { label: 'ยอดขายเดือนนี้', value: metrics.salesThisMonth, prefix: '฿', accent: '#10B981', icon: LocalAtmRoundedIcon, series: metrics.salesSeries7d },
@@ -983,6 +1062,23 @@ export default function DashboardPage() {
     [metrics]
   );
 
+  const kpis = React.useMemo(() => [{
+    ...allKpis[0],
+    helper: metrics.salesYesterday > 0
+      ? `${metrics.salesToday >= metrics.salesYesterday ? '↑' : '↓'} ${Math.abs(((metrics.salesToday - metrics.salesYesterday) / metrics.salesYesterday) * 100).toFixed(1)}% จากเมื่อวาน`
+      : 'ยอดขายที่บันทึกวันนี้',
+  }, {
+    ...allKpis[2],
+    helper: `${metrics.ordersToday - metrics.ordersYesterday >= 0 ? '+' : ''}${metrics.ordersToday - metrics.ordersYesterday} จากเมื่อวาน`,
+  }, allKpis[4], {
+    label: 'งานพร้อมรับ / รอส่งมอบ',
+    value: metrics.productionStatuses.find(status => status.key === 'ready')?.count ?? 0,
+    suffix: 'งาน',
+    accent: '#7C3AED',
+    icon: AssignmentTurnedInRoundedIcon,
+    series: metrics.productionStatuses.map(status => status.key === 'ready' ? status.count : 0),
+  }], [allKpis, metrics.ordersToday, metrics.ordersYesterday, metrics.productionStatuses, metrics.salesToday, metrics.salesYesterday]);
+
   if (loading && !lastUpdated) {
     return (
       <AdminPageContainer>
@@ -1002,41 +1098,23 @@ export default function DashboardPage() {
   return (
     <Box sx={{ bgcolor: '#F8FAFC', minHeight: '100vh' }}>
       <AdminPageContainer>
-        <Box sx={{ mb: 2.5 }}>
-          <QuickActions />
-        </Box>
         <DashboardHeader isRefreshing={loading} lastUpdated={lastUpdated} loadError={loadError} onRefresh={loadDashboard} />
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))', xl: 'repeat(7, minmax(0, 1fr))' }, gap: 1.8, mb: 2.5 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 1.2, md: 1.8 }, mb: 2.5 }}>
           {kpis.map(item => (
             <KpiCard key={item.label} item={item} />
           ))}
         </Box>
 
-        <Paper elevation={0} sx={{ ...CARD_SX, p: { xs: 2, md: 2.4 }, mb: 2.5 }}>
-          <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={1.5} sx={{ mb: 1.8 }}>
-            <Box>
-              <Typography sx={{ color: '#0F172A', fontSize: 20, fontWeight: 900 }}>Production Status</Typography>
-              <Typography sx={{ mt: 0.3, color: '#64748B', fontSize: 13 }}>ภาพรวม workflow งานพิมพ์ตั้งแต่ตรวจไฟล์จนถึงส่งมอบ</Typography>
-            </Box>
-          </Stack>
-          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(6, minmax(0, 1fr))' }, gap: 1.4 }}>
-            {metrics.productionStatuses.map(status => (
-              <ProductionStatusCard key={status.key} status={status} />
-            ))}
-          </Box>
-        </Paper>
-
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.6fr) minmax(320px, 0.9fr)' }, gap: 2.5, alignItems: 'stretch', mb: 2.5 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.65fr) minmax(300px, .75fr)' }, gap: 2.5, mb: 2.5, alignItems: 'stretch' }}>
           <SalesChart orders={orders} />
-          <Stack spacing={2.5} sx={{ minWidth: 0 }}>
-            <UploadQueue uploads={uploads} metrics={metrics} />
-          </Stack>
+          <PaymentSummary metrics={metrics} />
         </Box>
 
         <Box sx={{ mb: 2.5 }}>
           <RecentOrders orders={orders.slice(0, 8)} />
         </Box>
+        {false && <><ProductionStatusCard status={metrics.productionStatuses[0]} /><AttentionRequired metrics={metrics} /><PopularServices items={bestSellers} /><QuickActions /><UploadQueue uploads={uploads} metrics={metrics} /></>}
       </AdminPageContainer>
     </Box>
   );

@@ -75,7 +75,7 @@ export type OrderDetailDrawerProps = {
   isCompactDrawer: boolean;
   updatingOrderId: string | null;
   onClose: () => void;
-  onMarkAsPaid: (id: string) => void;
+  onSaveCustomer: (order: OrderRow, customer: Pick<OrderRow, 'customerName' | 'phoneNumber' | 'taxId' | 'address'>) => Promise<void>;
   onOpenPayRemaining: (order: OrderRow) => void;
   onCancelOrder: (id: string) => void;
 };

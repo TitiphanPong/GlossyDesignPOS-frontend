@@ -94,7 +94,7 @@ export function LoadingState() {
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: { xs: '1fr', md: 'repeat(4, minmax(0, 1fr))' },
+          gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' },
           gap: 2,
         }}>
         {['dashboard-kpi-1', 'dashboard-kpi-2', 'dashboard-kpi-3', 'dashboard-kpi-4'].map(key => (

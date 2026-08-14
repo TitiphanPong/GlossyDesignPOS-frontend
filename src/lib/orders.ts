@@ -109,6 +109,7 @@ type RemainingPaymentPayload = {
 
 type UpdateCustomerInfoPayload = {
   customerName: string;
+  phoneNumber?: string;
   taxId?: string;
   address?: string;
 };
@@ -195,6 +196,7 @@ export async function updateOrderCustomerInfo(
   customerInfo: UpdateCustomerInfoPayload,
 ): Promise<NormalizedOrder> {
   const normalizedCustomerName = customerInfo.customerName.trim();
+  const normalizedPhoneNumber = customerInfo.phoneNumber?.trim();
   const normalizedTaxId = customerInfo.taxId?.trim();
   const normalizedAddress = customerInfo.address?.trim();
 
@@ -203,6 +205,7 @@ export async function updateOrderCustomerInfo(
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       customerName: normalizedCustomerName || '-',
+      ...(normalizedPhoneNumber !== undefined ? { phoneNumber: normalizedPhoneNumber } : {}),
       taxId: normalizedTaxId || undefined,
       customerTaxId: normalizedTaxId || undefined,
       address: normalizedAddress || undefined,

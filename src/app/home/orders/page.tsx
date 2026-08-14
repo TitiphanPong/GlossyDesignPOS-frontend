@@ -50,6 +50,7 @@ import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder } from '../../../lib/contracts';
+import { updateOrderCustomerInfo } from '../../../lib/orders';
 import type { OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import {
@@ -212,6 +213,26 @@ export default function OrderManagementPage() {
       }
     },
     [loadOrders, rowsById]
+  );
+
+  const saveCustomer = React.useCallback(
+    async (order: OrderRow, customer: Pick<OrderRow, 'customerName' | 'phoneNumber' | 'taxId' | 'address'>) => {
+      setUpdatingOrderId(order.id);
+      setLoadError(null);
+      try {
+        const updatedOrder = await updateOrderCustomerInfo(order.id, customer);
+        const updatedRow = mapApiOrderToRow(updatedOrder);
+        setRows(prev => prev.map(row => (row.id === updatedRow.id ? updatedRow : row)));
+        setSelectedOrder(updatedRow);
+        await loadOrders();
+      } catch (error) {
+        setLoadError(error instanceof Error && error.message ? error.message : 'แก้ไขข้อมูลลูกค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        throw error;
+      } finally {
+        setUpdatingOrderId(null);
+      }
+    },
+    [loadOrders]
   );
 
   const handlePayRemainingSuccess = React.useCallback(
@@ -773,9 +794,7 @@ export default function OrderManagementPage() {
         isCompactDrawer={isCompactDrawer}
         updatingOrderId={updatingOrderId}
         onClose={closeDrawer}
-        onMarkAsPaid={targetId => {
-          void markAsPaid(targetId);
-        }}
+        onSaveCustomer={saveCustomer}
         onOpenPayRemaining={order => {
           setPayRemainingTarget(order);
         }}

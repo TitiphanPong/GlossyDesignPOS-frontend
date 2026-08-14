@@ -1,9 +1,12 @@
-import { alpha, Avatar, Box, Button, Card, CardContent, Chip, Divider, Drawer, Menu, MenuItem, Stack, Typography } from '@mui/material';
+import * as React from 'react';
+import { alpha, Avatar, Box, Button, Card, CardContent, Chip, Divider, Drawer, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
@@ -200,12 +203,41 @@ export function OrderDetailDrawer({
   isCompactDrawer,
   updatingOrderId,
   onClose,
-  onMarkAsPaid,
+  onSaveCustomer,
   onOpenPayRemaining,
   onCancelOrder,
 }: Readonly<OrderDetailDrawerProps>) {
   const drawerAnchor = isMobile ? 'bottom' : 'right';
   const drawerPaperSx = getOrderDetailDrawerPaperSx(isMobile);
+  const [isEditing, setIsEditing] = React.useState(false);
+  const [editError, setEditError] = React.useState<string | null>(null);
+  const [customerDraft, setCustomerDraft] = React.useState({ customerName: '', phoneNumber: '', taxId: '', address: '' });
+
+  React.useEffect(() => {
+    if (!selectedOrder) return;
+    setCustomerDraft({
+      customerName: selectedOrder.customerName === '-' ? '' : selectedOrder.customerName,
+      phoneNumber: selectedOrder.phoneNumber === '-' ? '' : selectedOrder.phoneNumber,
+      taxId: selectedOrder.taxId === '-' ? '' : selectedOrder.taxId,
+      address: selectedOrder.address === '-' ? '' : selectedOrder.address,
+    });
+    setIsEditing(false);
+    setEditError(null);
+  }, [selectedOrder]);
+
+  const saveCustomer = async () => {
+    if (!selectedOrder || !customerDraft.customerName.trim()) {
+      setEditError('กรุณาระบุชื่อลูกค้า');
+      return;
+    }
+    setEditError(null);
+    try {
+      await onSaveCustomer(selectedOrder, customerDraft);
+      setIsEditing(false);
+    } catch {
+      setEditError('แก้ไขข้อมูลลูกค้าไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+    }
+  };
 
   return (
     <Drawer
@@ -312,26 +344,22 @@ export function OrderDetailDrawer({
                       <Typography sx={{ fontWeight: 700 }}>ข้อมูลลูกค้า</Typography>
                     </Stack>
 
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <PersonRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
-                      <Typography>ชื่อลูกค้า : {selectedOrder.customerName}</Typography>
-                    </Stack>
-
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
-
-                      <Typography>เบอร์โทรศัพท์ : {selectedOrder.phoneNumber}</Typography>
-                    </Stack>
-
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <BadgeRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
-                      <Typography>เลขประจำตัวผู้เสียภาษี : {selectedOrder.taxId}</Typography>
-                    </Stack>
-
-                    <Stack direction="row" spacing={1} alignItems="center">
-                      <LocationOnRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} />
-                      <Typography>ที่อยู่ : {selectedOrder.address}</Typography>
-                    </Stack>
+                    {isEditing ? (
+                      <Stack spacing={1.4}>
+                        <TextField required label="ชื่อลูกค้า" value={customerDraft.customerName} onChange={event => setCustomerDraft(draft => ({ ...draft, customerName: event.target.value }))} size="small" error={Boolean(editError && !customerDraft.customerName.trim())} />
+                        <TextField label="เบอร์โทรศัพท์" value={customerDraft.phoneNumber} onChange={event => setCustomerDraft(draft => ({ ...draft, phoneNumber: event.target.value }))} size="small" />
+                        <TextField label="เลขประจำตัวผู้เสียภาษี" value={customerDraft.taxId} onChange={event => setCustomerDraft(draft => ({ ...draft, taxId: event.target.value }))} size="small" />
+                        <TextField label="ที่อยู่" value={customerDraft.address} onChange={event => setCustomerDraft(draft => ({ ...draft, address: event.target.value }))} size="small" multiline minRows={2} />
+                        {editError ? <Typography color="error" sx={{ fontSize: 12 }}>{editError}</Typography> : null}
+                      </Stack>
+                    ) : (
+                      <>
+                        <Stack direction="row" spacing={1} alignItems="center"><PersonRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} /><Typography>ชื่อลูกค้า : {selectedOrder.customerName}</Typography></Stack>
+                        <Stack direction="row" spacing={1} alignItems="center"><PhoneRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} /><Typography>เบอร์โทรศัพท์ : {selectedOrder.phoneNumber}</Typography></Stack>
+                        <Stack direction="row" spacing={1} alignItems="center"><BadgeRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} /><Typography>เลขประจำตัวผู้เสียภาษี : {selectedOrder.taxId}</Typography></Stack>
+                        <Stack direction="row" spacing={1} alignItems="center"><LocationOnRoundedIcon sx={{ fontSize: 16, color: '#64748B' }} /><Typography>ที่อยู่ : {selectedOrder.address}</Typography></Stack>
+                      </>
+                    )}
                   </Stack>
                 </CardContent>
               </Card>
@@ -407,13 +435,14 @@ export function OrderDetailDrawer({
               ) : null}
               <Button
                 variant="contained"
-                startIcon={<CheckCircleRoundedIcon />}
-                disabled={selectedOrder.status !== 'pending' || updatingOrderId === selectedOrder.id}
+                startIcon={isEditing ? <SaveRoundedIcon /> : <EditRoundedIcon />}
+                disabled={updatingOrderId === selectedOrder.id}
                 onClick={() => {
-                  onMarkAsPaid(selectedOrder.id);
+                  if (isEditing) void saveCustomer();
+                  else setIsEditing(true);
                 }}
                 sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
-                ยืนยันการชำระเงิน
+                {isEditing ? 'บันทึกข้อมูล' : 'แก้ไขข้อมูล'}
               </Button>
               <Button
                 variant="outlined"
