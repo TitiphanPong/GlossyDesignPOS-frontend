@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { alpha, Avatar, Box, Button, Card, CardContent, Chip, Divider, Drawer, InputAdornment, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import { Alert, alpha, Avatar, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Drawer, InputAdornment, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
@@ -15,6 +15,7 @@ import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
 import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 import ContactPageRoundedIcon from '@mui/icons-material/ContactPageRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import dayjs from 'dayjs';
 
 import JobTimelineCard from '../components/JobTimelineCard';
@@ -189,6 +190,7 @@ export function OrderDetailDrawer({
   onClose,
   onSaveCustomer,
   onOpenPayRemaining,
+  onConvertToTaxInvoice,
   onCancelOrder,
 }: Readonly<OrderDetailDrawerProps>) {
   const drawerAnchor = isMobile ? 'bottom' : 'right';
@@ -196,6 +198,8 @@ export function OrderDetailDrawer({
   const [isEditing, setIsEditing] = React.useState(false);
   const [editError, setEditError] = React.useState<string | null>(null);
   const [customerDraft, setCustomerDraft] = React.useState({ customerName: '', phoneNumber: '', taxId: '', address: '' });
+  const [taxInvoiceConfirmOpen, setTaxInvoiceConfirmOpen] = React.useState(false);
+  const [taxInvoiceError, setTaxInvoiceError] = React.useState<string | null>(null);
   const customerFieldSx = {
     '& .MuiOutlinedInput-root': {
       borderRadius: 2.75,
@@ -218,6 +222,8 @@ export function OrderDetailDrawer({
     });
     setIsEditing(false);
     setEditError(null);
+    setTaxInvoiceConfirmOpen(false);
+    setTaxInvoiceError(null);
   }, [selectedOrder]);
 
   const saveCustomer = async () => {
@@ -445,6 +451,53 @@ export function OrderDetailDrawer({
               </Card>
               <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                 <CardContent>
+                  <Stack spacing={1.25}>
+                    <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                      <Stack direction="row" alignItems="center" spacing={1}>
+                        <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#F59E0B', 0.14), color: '#B76E00' }}>
+                          <Inventory2RoundedIcon sx={{ fontSize: 18 }} />
+                        </Avatar>
+                        <Typography sx={{ fontWeight: 700 }}>รายการสินค้า / งาน</Typography>
+                      </Stack>
+                      <Chip
+                        label={`${selectedOrder.products.length} รายการ`}
+                        size="small"
+                        sx={{ ...statusChipSx, bgcolor: '#FFF7E8', color: '#9A5B00' }}
+                      />
+                    </Stack>
+
+                    {selectedOrder.products.length > 0 ? (
+                      <Stack divider={<Divider flexItem />}>
+                        {selectedOrder.products.map((product, index) => (
+                          <Stack
+                            key={`${product.name}-${index}`}
+                            direction="row"
+                            justifyContent="space-between"
+                            alignItems="flex-start"
+                            spacing={2}
+                            sx={{ py: 1.15 }}>
+                            <Box sx={{ minWidth: 0, flex: 1 }}>
+                              <Typography sx={{ color: '#1E293B', fontWeight: 700, overflowWrap: 'anywhere' }}>{product.name}</Typography>
+                              <Typography sx={{ mt: 0.25, color: '#64748B', fontSize: 13 }}>
+                                จำนวน {product.qty.toLocaleString('th-TH')} ชิ้น × ฿{formatMoney(product.price)}
+                              </Typography>
+                            </Box>
+                            <Typography sx={{ color: '#0F172A', fontWeight: 800, whiteSpace: 'nowrap' }}>
+                              ฿{formatMoney(product.qty * product.price)}
+                            </Typography>
+                          </Stack>
+                        ))}
+                      </Stack>
+                    ) : (
+                      <Box sx={{ px: 1.5, py: 1.4, borderRadius: 2.5, bgcolor: '#F8FAFC', border: '1px dashed #CBD5E1' }}>
+                        <Typography sx={{ color: '#64748B', fontSize: 13, textAlign: 'center' }}>ไม่พบข้อมูลรายการสินค้า / งาน</Typography>
+                      </Box>
+                    )}
+                  </Stack>
+                </CardContent>
+              </Card>
+              <Card sx={{ borderRadius: 3.8, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+                <CardContent>
                   <Stack spacing={1.05}>
                     <Stack direction="row" alignItems="center" spacing={1}>
                       <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#1F9D63', 0.14), color: '#1F9D63' }}>
@@ -527,12 +580,15 @@ export function OrderDetailDrawer({
               <Button
                 variant="outlined"
                 startIcon={<ReceiptRoundedIcon />}
-                disabled={selectedOrder.taxInvoice !== 'yes'}
-                onClick={() => {
-                  printDocument(selectedOrder, 'invoice');
+                disabled={updatingOrderId === selectedOrder.id}
+                onClick={async () => {
+                  if (selectedOrder.taxInvoice === 'yes') {
+                    await onConvertToTaxInvoice(selectedOrder);
+                    printDocument(selectedOrder, 'invoice');
+                  } else setTaxInvoiceConfirmOpen(true);
                 }}
                 sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
-                ใบกำกับภาษี
+                {selectedOrder.taxInvoice === 'yes' ? 'เปิดใบกำกับภาษี' : 'เปลี่ยนเป็นใบกำกับภาษี'}
               </Button>
               <Button
                 variant="outlined"
@@ -548,6 +604,37 @@ export function OrderDetailDrawer({
           </Box>
         </Stack>
       ) : null}
+      <Dialog open={taxInvoiceConfirmOpen} onClose={() => setTaxInvoiceConfirmOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>ยืนยันออกใบกำกับภาษี</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.5}>
+            <Typography color="text.secondary">
+              ระบบจะสร้างเลขที่ใบกำกับภาษีและบวก VAT 7% เพิ่มจากยอดเดิม ยอดรวมและยอดคงเหลือจะเพิ่มขึ้นตามภาษี
+            </Typography>
+            <Alert severity="warning">เมื่อยืนยันแล้ว จะไม่สามารถเปลี่ยนรายการนี้กลับเป็นใบเสร็จทั่วไปได้</Alert>
+            {taxInvoiceError ? <Alert severity="error">{taxInvoiceError}</Alert> : null}
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setTaxInvoiceConfirmOpen(false)} disabled={updatingOrderId === selectedOrder?.id}>ยกเลิก</Button>
+          <Button
+            variant="contained"
+            startIcon={<ReceiptRoundedIcon />}
+            disabled={!selectedOrder || updatingOrderId === selectedOrder.id}
+            onClick={async () => {
+              if (!selectedOrder) return;
+              setTaxInvoiceError(null);
+              try {
+                await onConvertToTaxInvoice(selectedOrder);
+                setTaxInvoiceConfirmOpen(false);
+              } catch {
+                setTaxInvoiceError('ไม่สามารถออกใบกำกับภาษีได้ กรุณาลองใหม่อีกครั้ง');
+              }
+            }}>
+            ยืนยันออกใบกำกับภาษี
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Drawer>
   );
 }

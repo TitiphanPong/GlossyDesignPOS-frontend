@@ -155,7 +155,11 @@ function getCompanyInfo(): CompanyInfo {
 export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documentType: InvoiceDocumentType): InvoiceData {
   const company = getCompanyInfo();
   const issuedDate = formatThaiTaxDate(order.issueDate || order.orderDate);
-  const totalAmount = order.grandTotal;
+  const taxableAmount = Math.max(0, order.subtotal);
+  const expectedVat = Math.round(taxableAmount * 0.07 * 100) / 100;
+  const shouldAddVat = documentType === 'tax-invoice' && order.grandTotal <= taxableAmount;
+  const vat = shouldAddVat ? expectedVat : order.vatAmount;
+  const totalAmount = shouldAddVat ? Math.round((taxableAmount + vat) * 100) / 100 : order.grandTotal;
   const customerAddress = formatCustomerAddress(order.customerInfo) || order.address;
   const items = order.cart.map(item => ({
     quantity: item.quantity,
@@ -178,7 +182,7 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
     },
     items,
     subtotal: order.subtotal,
-    vat: order.vatAmount,
+    vat,
     totalAmount,
     amountInWords: convertAmountToThaiText(totalAmount),
     paymentMethod: normalizePrintablePaymentMethod(order.paymentMethod),

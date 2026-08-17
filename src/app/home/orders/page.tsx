@@ -54,7 +54,7 @@ import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder } from '../../../lib/contracts';
-import { deleteOrder, updateOrderCustomerInfo } from '../../../lib/orders';
+import { convertOrderToTaxInvoice, deleteOrder, updateOrderCustomerInfo } from '../../../lib/orders';
 import type { OrderRow, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import {
@@ -213,6 +213,22 @@ export default function OrderManagementPage() {
     },
     [loadOrders]
   );
+
+  const convertToTaxInvoice = React.useCallback(async (order: OrderRow) => {
+    setUpdatingOrderId(order.id);
+    setLoadError(null);
+    try {
+      const updatedOrder = await convertOrderToTaxInvoice(order.id);
+      const updatedRow = mapApiOrderToRow(updatedOrder);
+      setRows(prev => prev.map(row => (row.id === updatedRow.id ? updatedRow : row)));
+      setSelectedOrder(updatedRow);
+    } catch (error) {
+      setLoadError(error instanceof Error && error.message ? error.message : 'ออกใบกำกับภาษีไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+      throw error;
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  }, []);
 
   const confirmDelete = async () => {
     if (!deleteTarget || !deletePassword) return;
@@ -762,6 +778,7 @@ export default function OrderManagementPage() {
         onOpenPayRemaining={order => {
           setPayRemainingTarget(order);
         }}
+        onConvertToTaxInvoice={convertToTaxInvoice}
         onCancelOrder={targetId => {
           void cancelOrder(targetId);
         }}

@@ -221,6 +221,15 @@ export async function updateOrderCustomerInfo(
   return updatedOrder;
 }
 
+export async function convertOrderToTaxInvoice(orderId: string): Promise<NormalizedOrder> {
+  const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}/tax-invoice`, {
+    method: 'POST',
+  });
+  const updatedOrder = extractOrderFromResponse(responseBody);
+  if (!updatedOrder) throw new Error('Backend did not return a valid updated order');
+  return updatedOrder;
+}
+
 export async function deleteOrder(orderId: string, password: string): Promise<void> {
   await fetchApiJson<unknown>(`/orders/${orderId}`, {
     method: 'DELETE',

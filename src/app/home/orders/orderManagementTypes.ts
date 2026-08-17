@@ -76,5 +76,6 @@ export type OrderDetailDrawerProps = {
   onClose: () => void;
   onSaveCustomer: (order: OrderRow, customer: Pick<OrderRow, 'customerName' | 'phoneNumber' | 'taxId' | 'address'>) => Promise<void>;
   onOpenPayRemaining: (order: OrderRow) => void;
+  onConvertToTaxInvoice: (order: OrderRow) => Promise<void>;
   onCancelOrder: (id: string) => void;
 };
