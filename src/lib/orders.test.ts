@@ -126,11 +126,16 @@ test('createOrder falls back to orderId when backend omits orderNumber', async (
 test('payRemainingBalance accepts a wrapped updated order response', async () => {
   const originalFetch = globalThis.fetch;
   const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  let capturedUrl = '';
+  let capturedMethod = '';
 
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
-  const mockFetch: typeof fetch = async () =>
-    new Response(
+  const mockFetch: typeof fetch = async (input, init) => {
+    capturedUrl = String(input);
+    capturedMethod = init?.method ?? '';
+
+    return new Response(
       JSON.stringify({
         order: {
           _id: 'abc126',
@@ -143,10 +148,13 @@ test('payRemainingBalance accepts a wrapped updated order response', async () =>
       }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
+  };
   globalThis.fetch = mockFetch;
 
   try {
     const result = await payRemainingBalance('abc126', { amount: 120, method: 'promptpay' });
+    assert.equal(capturedUrl, 'http://localhost:3001/orders/abc126/payments');
+    assert.equal(capturedMethod, 'POST');
     assert.equal(result.orderNumber, 'ORD-20260527-0004');
     assert.equal(result.status, 'paid');
     assert.equal(result._id, 'abc126');

@@ -164,7 +164,7 @@ export async function createOrder(payload: PendingOrderDraft): Promise<Normalize
 
 export async function payRemainingBalance(orderId: string, payload: RemainingPaymentPayload): Promise<NormalizedOrder> {
   const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}/payments`, {
-    method: 'PATCH',
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(payload),
   });
