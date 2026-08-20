@@ -65,6 +65,7 @@ export type RowActionsMenuProps = {
   onOpenDrawer: (row: OrderRow) => void;
   onCancelOrder: (id: string) => void;
   onDeleteOrder: (order: OrderRow) => void;
+  onPrintDocument: (order: OrderRow, mode: 'receipt' | 'invoice') => void;
 };
 
 export type OrderDetailDrawerProps = {
@@ -78,4 +79,5 @@ export type OrderDetailDrawerProps = {
   onOpenPayRemaining: (order: OrderRow) => void;
   onConvertToTaxInvoice: (order: OrderRow) => Promise<void>;
   onCancelOrder: (id: string) => void;
+  onPrintDocument: (order: OrderRow, mode: 'receipt' | 'invoice') => void;
 };

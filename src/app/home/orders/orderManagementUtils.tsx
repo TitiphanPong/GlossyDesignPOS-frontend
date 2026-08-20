@@ -12,7 +12,7 @@ import type { JobTimelineCardItem } from '../components/JobTimelineCard';
 import { statusChipSx } from '../components/adminUi';
 import { fetchApi } from '../../../lib/api';
 import { getDisplayOrderNumber, type NormalizedOrder, type PaymentMethod } from '../../../lib/contracts';
-import { fetchOrders, sortOrdersByNewest } from '../../../lib/orders';
+import { fetchOrdersPage, sortOrdersByNewest } from '../../../lib/orders';
 import { getOrderStatusConfig, ORDER_STATUS_CONFIG } from '../../../lib/order-status';
 import type { ExportType, OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } from './orderManagementTypes';
 
@@ -105,9 +105,23 @@ export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
   };
 }
 
-export async function fetchOrderRows(): Promise<OrderRow[]> {
-  const orders = await fetchOrders();
-  return sortOrdersByNewest(orders).map(mapApiOrderToRow);
+export type FetchOrderRowsParams = {
+  page: number;
+  limit: number;
+  search?: string;
+};
+
+export type FetchOrderRowsResult = {
+  rows: OrderRow[];
+  total: number;
+};
+
+export async function fetchOrderRows(params: FetchOrderRowsParams): Promise<FetchOrderRowsResult> {
+  const result = await fetchOrdersPage(params);
+  return {
+    rows: sortOrdersByNewest(result.data).map(mapApiOrderToRow),
+    total: result.total,
+  };
 }
 
 export async function updateOrderStatus(orderId: string, status: PaymentStatus): Promise<void> {
@@ -382,11 +396,10 @@ export function downloadCsv(rows: OrderRow[], label: ExportType) {
   downloadCsvFile(csv, `cashierprint-${label}-${dayjs().format('YYYY-MM-DD')}.csv`);
 }
 
-export function printDocument(row: OrderRow, mode: 'receipt' | 'invoice') {
+export function getPrintDocumentPath(row: OrderRow, mode: 'receipt' | 'invoice'): string | null {
   if (mode === 'invoice' && row.taxInvoice !== 'yes') {
-    return;
+    return null;
   }
   const documentType = mode === 'invoice' ? 'tax-invoice' : 'receipt';
-  const targetPath = `/print/invoice/${encodeURIComponent(row.id)}?documentType=${documentType}`;
-  globalThis.location.assign(targetPath);
+  return `/print/invoice/${encodeURIComponent(row.id)}?documentType=${documentType}`;
 }

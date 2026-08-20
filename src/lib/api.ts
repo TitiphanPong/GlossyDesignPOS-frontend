@@ -1,7 +1,11 @@
 export const MISSING_API_BASE_ERROR = 'missing_api_base';
 
 function normalizeApiBaseUrl(value: string): string {
-  return value.trim().replace(/\/+$/, '');
+  let normalized = value.trim();
+  while (normalized.endsWith('/')) {
+    normalized = normalized.slice(0, -1);
+  }
+  return normalized;
 }
 
 export function hasApiBaseUrl(): boolean {

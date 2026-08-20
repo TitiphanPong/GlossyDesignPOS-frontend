@@ -33,6 +33,7 @@ import {
 } from '@mui/material';
 import dayjs from 'dayjs';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import FileDownloadRoundedIcon from '@mui/icons-material/FileDownloadRounded';
@@ -72,13 +73,14 @@ import {
   formatThaiFullDate,
   getCustomerInitial,
   getLoadOrdersErrorMessage,
+  getPrintDocumentPath,
   mapApiOrderToRow,
-  printDocument,
   statusChip,
   updateOrderStatus,
 } from './orderManagementUtils';
 
 export default function OrderManagementPage() {
+  const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const isCompactDrawer = useMediaQuery(theme.breakpoints.down('lg'));
@@ -92,6 +94,7 @@ export default function OrderManagementPage() {
   const [sort, setSort] = React.useState<SortOrder>('newest');
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(8);
+  const [totalRows, setTotalRows] = React.useState(0);
 
   const [selectedOrder, setSelectedOrder] = React.useState<OrderRow | null>(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
@@ -111,11 +114,13 @@ export default function OrderManagementPage() {
     setMissingApiBase(false);
 
     try {
-      const mappedRows = await fetchOrderRows();
-      setRows(mappedRows);
+      const result = await fetchOrderRows({ page: page + 1, limit: rowsPerPage, search });
+      setRows(result.rows);
+      setTotalRows(result.total);
       setLastUpdated(dayjs());
     } catch (error) {
       setRows([]);
+      setTotalRows(0);
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
       } else {
@@ -124,7 +129,7 @@ export default function OrderManagementPage() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [page, rowsPerPage, search]);
 
   React.useEffect(() => {
     void loadOrders();
@@ -138,13 +143,10 @@ export default function OrderManagementPage() {
   const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
 
   const filteredRows = React.useMemo(() => {
-    return filterOrderRows(rows, search, 'all', monthFilter, sort);
-  }, [monthFilter, rows, search, sort]);
+    return filterOrderRows(rows, '', 'all', monthFilter, sort);
+  }, [monthFilter, rows, sort]);
 
-  const pagedRows = React.useMemo(() => {
-    const start = page * rowsPerPage;
-    return filteredRows.slice(start, start + rowsPerPage);
-  }, [filteredRows, page, rowsPerPage]);
+  const pagedRows = filteredRows;
 
   React.useEffect(() => {
     setPage(0);
@@ -175,6 +177,14 @@ export default function OrderManagementPage() {
   const closeDrawer = () => {
     setDrawerOpen(false);
   };
+
+  const printDocument = React.useCallback(
+    (row: OrderRow, mode: 'receipt' | 'invoice') => {
+      const targetPath = getPrintDocumentPath(row, mode);
+      if (targetPath) router.push(targetPath);
+    },
+    [router]
+  );
 
   const cancelOrder = React.useCallback(
     async (targetId: string) => {
@@ -734,7 +744,7 @@ export default function OrderManagementPage() {
 
           <TablePagination
             component="div"
-            count={filteredRows.length}
+            count={monthFilter === 'all' ? totalRows : filteredRows.length}
             page={page}
             onPageChange={(_, nextPage) => setPage(nextPage)}
             rowsPerPage={rowsPerPage}
@@ -765,6 +775,7 @@ export default function OrderManagementPage() {
           setDeletePassword('');
           setDeleteError(null);
         }}
+        onPrintDocument={printDocument}
       />
 
       <OrderDetailDrawer
@@ -782,6 +793,7 @@ export default function OrderManagementPage() {
         onCancelOrder={targetId => {
           void cancelOrder(targetId);
         }}
+        onPrintDocument={printDocument}
       />
       <PayRemainingModal
         open={Boolean(payRemainingTarget)}
