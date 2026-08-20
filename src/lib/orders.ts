@@ -17,9 +17,7 @@ function normalizeApiOrderCandidate(value: unknown): NormalizedOrder | null {
   }
 
   const order = value as ApiOrderLike;
-  const hasIdentifier =
-    (typeof order._id === 'string' && order._id.trim().length > 0) ||
-    (typeof order.id === 'string' && order.id.trim().length > 0);
+  const hasIdentifier = (typeof order._id === 'string' && order._id.trim().length > 0) || (typeof order.id === 'string' && order.id.trim().length > 0);
   const hasOrderId = typeof order.orderId === 'string' && order.orderId.trim().length > 0;
 
   if (!hasIdentifier || !hasOrderId) {
@@ -64,9 +62,7 @@ export function extractOrderFromResponse(value: unknown): NormalizedOrder | null
 
 export function extractOrdersFromResponse(value: unknown): NormalizedOrder[] | null {
   if (Array.isArray(value)) {
-    const normalizedOrders = value
-      .map(extractOrderFromResponse)
-      .filter((order): order is NormalizedOrder => Boolean(order));
+    const normalizedOrders = value.map(extractOrderFromResponse).filter((order): order is NormalizedOrder => Boolean(order));
     return normalizedOrders.length > 0 || value.length === 0 ? normalizedOrders : null;
   }
 
@@ -90,9 +86,7 @@ export function extractOrdersFromResponse(value: unknown): NormalizedOrder[] | n
       continue;
     }
 
-    const normalizedOrders = candidate
-      .map(extractOrderFromResponse)
-      .filter((order): order is NormalizedOrder => Boolean(order));
+    const normalizedOrders = candidate.map(extractOrderFromResponse).filter((order): order is NormalizedOrder => Boolean(order));
 
     if (normalizedOrders.length > 0 || candidate.length === 0) {
       return normalizedOrders;
@@ -113,6 +107,36 @@ type UpdateCustomerInfoPayload = {
   taxId?: string;
   address?: string;
 };
+
+type FetchOrdersParams = {
+  page?: number;
+  limit?: number;
+  search?: string;
+};
+
+export type FetchOrdersPage = {
+  data: NormalizedOrder[];
+  page: number;
+  limit: number;
+  total: number;
+};
+
+function buildOrdersPath(params: FetchOrdersParams = {}): string {
+  const query = new URLSearchParams();
+
+  if (params.page !== undefined) {
+    query.set('page', String(params.page));
+  }
+  if (params.limit !== undefined) {
+    query.set('limit', String(params.limit));
+  }
+  if (params.search?.trim()) {
+    query.set('search', params.search.trim());
+  }
+
+  const queryString = query.toString();
+  return queryString ? `/orders?${queryString}` : '/orders';
+}
 
 export function sortOrdersByNewest<T extends Pick<NormalizedOrder, 'createdAt'>>(orders: T[]): T[] {
   return [...orders].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
@@ -138,10 +162,7 @@ export async function createOrder(payload: PendingOrderDraft): Promise<Normalize
   return createdOrder;
 }
 
-export async function payRemainingBalance(
-  orderId: string,
-  payload: RemainingPaymentPayload,
-): Promise<NormalizedOrder> {
+export async function payRemainingBalance(orderId: string, payload: RemainingPaymentPayload): Promise<NormalizedOrder> {
   const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}/payments`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
@@ -156,8 +177,12 @@ export async function payRemainingBalance(
   return updatedOrder;
 }
 
-export async function fetchOrders(): Promise<NormalizedOrder[]> {
-  const responseBody = await fetchApiJson<unknown>('/orders', {
+export async function fetchOrders(params: FetchOrdersParams = {}): Promise<NormalizedOrder[]> {
+  return (await fetchOrdersPage(params)).data;
+}
+
+export async function fetchOrdersPage(params: FetchOrdersParams = {}): Promise<FetchOrdersPage> {
+  const responseBody = await fetchApiJson<unknown>(buildOrdersPath(params), {
     cache: 'no-store',
   });
   const orders = extractOrdersFromResponse(responseBody);
@@ -166,7 +191,21 @@ export async function fetchOrders(): Promise<NormalizedOrder[]> {
     throw new Error('Backend did not return a valid orders list');
   }
 
-  return orders;
+  if (!isRecord(responseBody)) {
+    return {
+      data: orders,
+      page: params.page ?? 1,
+      limit: params.limit ?? orders.length,
+      total: orders.length,
+    };
+  }
+
+  return {
+    data: orders,
+    page: typeof responseBody.page === 'number' ? responseBody.page : (params.page ?? 1),
+    limit: typeof responseBody.limit === 'number' ? responseBody.limit : (params.limit ?? orders.length),
+    total: typeof responseBody.total === 'number' ? responseBody.total : orders.length,
+  };
 }
 
 export async function fetchOrderById(orderId: string): Promise<NormalizedOrder> {
@@ -191,10 +230,7 @@ export async function fetchOrderById(orderId: string): Promise<NormalizedOrder> 
   throw lastError ?? new Error('Backend did not return a valid order');
 }
 
-export async function updateOrderCustomerInfo(
-  orderId: string,
-  customerInfo: UpdateCustomerInfoPayload,
-): Promise<NormalizedOrder> {
+export async function updateOrderCustomerInfo(orderId: string, customerInfo: UpdateCustomerInfoPayload): Promise<NormalizedOrder> {
   const normalizedCustomerName = customerInfo.customerName.trim();
   const normalizedPhoneNumber = customerInfo.phoneNumber?.trim();
   const normalizedTaxId = customerInfo.taxId?.trim();

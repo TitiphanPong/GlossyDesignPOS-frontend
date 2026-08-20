@@ -7,6 +7,7 @@ import {
   extractOrdersFromResponse,
   fetchOrderById,
   fetchOrders,
+  fetchOrdersPage,
   payRemainingBalance,
   sortOrdersByNewest,
   updateOrderCustomerInfo,
@@ -146,10 +147,10 @@ test('payRemainingBalance accepts a wrapped updated order response', async () =>
 
   try {
     const result = await payRemainingBalance('abc126', { amount: 120, method: 'promptpay' });
-  assert.equal(result.orderNumber, 'ORD-20260527-0004');
-  assert.equal(result.status, 'paid');
-  assert.equal(result._id, 'abc126');
-  assert.equal(result.paymentMethod, 'promptpay');
+    assert.equal(result.orderNumber, 'ORD-20260527-0004');
+    assert.equal(result.status, 'paid');
+    assert.equal(result._id, 'abc126');
+    assert.equal(result.paymentMethod, 'promptpay');
   } finally {
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;
@@ -186,6 +187,72 @@ test('fetchOrders accepts a wrapped orders list response', async () => {
     const result = await fetchOrders();
     assert.equal(result.length, 1);
     assert.equal(result[0]?.orderNumber, 'ORD-20260527-0005');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('fetchOrders sends explicit bounded list query params', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  let capturedUrl = '';
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+
+  const mockFetch: typeof fetch = async input => {
+    capturedUrl = String(input);
+    return new Response(JSON.stringify({ data: [] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+  globalThis.fetch = mockFetch;
+
+  try {
+    const result = await fetchOrders({ page: 2, limit: 50, search: '  GD-001  ' });
+    assert.equal(result.length, 0);
+    assert.equal(capturedUrl, 'http://localhost:3001/orders?page=2&limit=50&search=GD-001');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('fetchOrdersPage preserves backend pagination metadata', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+
+  const mockFetch: typeof fetch = async () =>
+    new Response(
+      JSON.stringify({
+        data: [
+          {
+            _id: 'abc127p',
+            orderId: 'legacy-005p',
+            orderNumber: 'ORD-20260527-0005P',
+            payment: 'cash',
+            status: 'pending',
+            createdAt: '2026-05-31T10:00:00.000Z',
+          },
+        ],
+        page: 3,
+        limit: 10,
+        total: 42,
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  globalThis.fetch = mockFetch;
+
+  try {
+    const result = await fetchOrdersPage({ page: 3, limit: 10 });
+    assert.equal(result.data.length, 1);
+    assert.equal(result.data[0]?.orderNumber, 'ORD-20260527-0005P');
+    assert.equal(result.page, 3);
+    assert.equal(result.limit, 10);
+    assert.equal(result.total, 42);
   } finally {
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;
@@ -400,7 +467,7 @@ test('updateOrderCustomerInfo sends only tax invoice customer fields', async () 
         status: 'pending',
         createdAt: '2026-05-31T10:00:00.000Z',
       }),
-      { status: 200, headers: { 'Content-Type': 'application/json' } },
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
     );
   };
   globalThis.fetch = mockFetch;
@@ -439,6 +506,12 @@ test('sortOrdersByNewest sorts newest createdAt first without mutating the origi
 
   const sorted = sortOrdersByNewest(orders);
 
-  assert.deepEqual(sorted.map(order => order.orderId), ['2', '1']);
-  assert.deepEqual(orders.map(order => order.orderId), ['1', '2']);
+  assert.deepEqual(
+    sorted.map(order => order.orderId),
+    ['2', '1']
+  );
+  assert.deepEqual(
+    orders.map(order => order.orderId),
+    ['1', '2']
+  );
 });
