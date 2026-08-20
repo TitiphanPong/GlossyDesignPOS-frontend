@@ -792,7 +792,7 @@ export default function OrderManagementPage() {
           void handlePayRemainingSuccess(updatedOrder);
         }}
       />
-      <Dialog open={Boolean(deleteTarget)} onClose={() => updatingOrderId ? undefined : setDeleteTarget(null)} fullWidth maxWidth="xs">
+      <Dialog open={Boolean(deleteTarget)} onClose={() => (updatingOrderId ? undefined : setDeleteTarget(null))} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 800, color: '#B42318' }}>ยืนยันการลบรายการ</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
@@ -813,7 +813,9 @@ export default function OrderManagementPage() {
           />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteTarget(null)} disabled={Boolean(updatingOrderId)}>ยกเลิก</Button>
+          <Button onClick={() => setDeleteTarget(null)} disabled={Boolean(updatingOrderId)}>
+            ยกเลิก
+          </Button>
           <Button color="error" variant="contained" disabled={!deletePassword || Boolean(updatingOrderId)} onClick={() => void confirmDelete()}>
             {updatingOrderId ? 'กำลังลบ...' : 'ลบรายการถาวร'}
           </Button>

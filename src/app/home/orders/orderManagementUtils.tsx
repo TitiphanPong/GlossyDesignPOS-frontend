@@ -18,9 +18,10 @@ import type { ExportType, OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } 
 
 export const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 export const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-export const STATUS_LABELS_TH: Record<PaymentStatus, string> = Object.fromEntries(
-  Object.entries(ORDER_STATUS_CONFIG).map(([status, config]) => [status, config.label])
-) as Record<PaymentStatus, string>;
+export const STATUS_LABELS_TH: Record<PaymentStatus, string> = Object.fromEntries(Object.entries(ORDER_STATUS_CONFIG).map(([status, config]) => [status, config.label])) as Record<
+  PaymentStatus,
+  string
+>;
 export const FILTER_STATUS_LABELS: Record<'all' | PaymentStatus, string> = {
   all: 'ทั้งหมด',
   ...STATUS_LABELS_TH,
@@ -238,11 +239,7 @@ export function buildOrderTimelineItems(order: OrderRow): JobTimelineCardItem[] 
   let activeStage: 'created' | 'payment' | 'production' = 'payment';
   if (order.status === 'pending') {
     activeStage = 'created';
-  } else if (
-    order.status === 'producing' ||
-    order.status === 'ready_for_pickup' ||
-    order.status === 'delivered'
-  ) {
+  } else if (order.status === 'producing' || order.status === 'ready_for_pickup' || order.status === 'delivered') {
     activeStage = 'production';
   }
   let productionSubtitle = 'รอเข้าสู่กระบวนการผลิต';
@@ -336,14 +333,7 @@ function compareOrderRows(a: OrderRow, b: OrderRow, sort: SortOrder): number {
   return sort === 'newest' ? t2 - t1 : t1 - t2;
 }
 
-export function filterOrderRows(
-  rows: OrderRow[],
-  search: string,
-  statusFilter: 'all' | PaymentStatus,
-  monthFilter: string,
-  sort: SortOrder,
-  orderTypeFilter: OrderTypeFilter = 'all'
-): OrderRow[] {
+export function filterOrderRows(rows: OrderRow[], search: string, statusFilter: 'all' | PaymentStatus, monthFilter: string, sort: SortOrder, orderTypeFilter: OrderTypeFilter = 'all'): OrderRow[] {
   return rows
     .filter(row => matchesSearch(row, search))
     .filter(row => matchesStatusFilter(row, statusFilter))

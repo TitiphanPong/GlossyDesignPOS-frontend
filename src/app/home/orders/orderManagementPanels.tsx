@@ -1,5 +1,26 @@
 import * as React from 'react';
-import { Alert, alpha, Avatar, Box, Button, Card, CardContent, Chip, Dialog, DialogActions, DialogContent, DialogTitle, Divider, Drawer, InputAdornment, Menu, MenuItem, Stack, TextField, Typography } from '@mui/material';
+import {
+  Alert,
+  alpha,
+  Avatar,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Divider,
+  Drawer,
+  InputAdornment,
+  Menu,
+  MenuItem,
+  Stack,
+  TextField,
+  Typography,
+} from '@mui/material';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
@@ -459,32 +480,20 @@ export function OrderDetailDrawer({
                         </Avatar>
                         <Typography sx={{ fontWeight: 700 }}>รายการสินค้า / งาน</Typography>
                       </Stack>
-                      <Chip
-                        label={`${selectedOrder.products.length} รายการ`}
-                        size="small"
-                        sx={{ ...statusChipSx, bgcolor: '#FFF7E8', color: '#9A5B00' }}
-                      />
+                      <Chip label={`${selectedOrder.products.length} รายการ`} size="small" sx={{ ...statusChipSx, bgcolor: '#FFF7E8', color: '#9A5B00' }} />
                     </Stack>
 
                     {selectedOrder.products.length > 0 ? (
                       <Stack divider={<Divider flexItem />}>
                         {selectedOrder.products.map((product, index) => (
-                          <Stack
-                            key={`${product.name}-${index}`}
-                            direction="row"
-                            justifyContent="space-between"
-                            alignItems="flex-start"
-                            spacing={2}
-                            sx={{ py: 1.15 }}>
+                          <Stack key={`${product.name}-${index}`} direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2} sx={{ py: 1.15 }}>
                             <Box sx={{ minWidth: 0, flex: 1 }}>
                               <Typography sx={{ color: '#1E293B', fontWeight: 700, overflowWrap: 'anywhere' }}>{product.name}</Typography>
                               <Typography sx={{ mt: 0.25, color: '#64748B', fontSize: 13 }}>
                                 จำนวน {product.qty.toLocaleString('th-TH')} ชิ้น × ฿{formatMoney(product.price)}
                               </Typography>
                             </Box>
-                            <Typography sx={{ color: '#0F172A', fontWeight: 800, whiteSpace: 'nowrap' }}>
-                              ฿{formatMoney(product.qty * product.price)}
-                            </Typography>
+                            <Typography sx={{ color: '#0F172A', fontWeight: 800, whiteSpace: 'nowrap' }}>฿{formatMoney(product.qty * product.price)}</Typography>
                           </Stack>
                         ))}
                       </Stack>
@@ -608,15 +617,15 @@ export function OrderDetailDrawer({
         <DialogTitle sx={{ fontWeight: 800 }}>ยืนยันออกใบกำกับภาษี</DialogTitle>
         <DialogContent>
           <Stack spacing={1.5}>
-            <Typography color="text.secondary">
-              ระบบจะสร้างเลขที่ใบกำกับภาษีและบวก VAT 7% เพิ่มจากยอดเดิม ยอดรวมและยอดคงเหลือจะเพิ่มขึ้นตามภาษี
-            </Typography>
+            <Typography color="text.secondary">ระบบจะสร้างเลขที่ใบกำกับภาษีและบวก VAT 7% เพิ่มจากยอดเดิม ยอดรวมและยอดคงเหลือจะเพิ่มขึ้นตามภาษี</Typography>
             <Alert severity="warning">เมื่อยืนยันแล้ว จะไม่สามารถเปลี่ยนรายการนี้กลับเป็นใบเสร็จทั่วไปได้</Alert>
             {taxInvoiceError ? <Alert severity="error">{taxInvoiceError}</Alert> : null}
           </Stack>
         </DialogContent>
         <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setTaxInvoiceConfirmOpen(false)} disabled={updatingOrderId === selectedOrder?.id}>ยกเลิก</Button>
+          <Button onClick={() => setTaxInvoiceConfirmOpen(false)} disabled={updatingOrderId === selectedOrder?.id}>
+            ยกเลิก
+          </Button>
           <Button
             variant="contained"
             startIcon={<ReceiptRoundedIcon />}
