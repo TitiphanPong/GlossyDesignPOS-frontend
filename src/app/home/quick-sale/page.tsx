@@ -57,6 +57,13 @@ type CompletedSale = { orderId: string; orderNumber: string; grandTotal: number;
 const money = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const touchButton = { minWidth: 44, minHeight: 44, borderRadius: 2.5 } as const;
 
+function localDateValue(value = new Date()): string {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function firstActiveVariant(product: Product) {
   return product.variants.find(variant => variant.active);
 }
@@ -103,6 +110,11 @@ export default function QuickSalePage() {
   const [submitting, setSubmitting] = React.useState(false);
   const [completed, setCompleted] = React.useState<CompletedSale | null>(null);
   const [checkoutDraftId, setCheckoutDraftId] = React.useState<string | null>(null);
+  const now = new Date();
+  const [entryMode, setEntryMode] = React.useState<'normal' | 'backdated'>('normal');
+  const [saleDate, setSaleDate] = React.useState(localDateValue(now));
+  const [saleTime, setSaleTime] = React.useState(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+  const [backdatedReason, setBackdatedReason] = React.useState('');
 
   const clearQuickSaleCustomerDisplay = React.useCallback(() => {
     const draftId = checkoutDraftId;
@@ -147,7 +159,7 @@ export default function QuickSalePage() {
   }, [loadProducts]);
   const subtotal = React.useMemo(() => roundMoney(items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)), [items]);
   const totals = React.useMemo(() => calculateQuickSale(subtotal, discountValue, discountMode), [subtotal, discountValue, discountMode]);
-  const vatAmount = React.useMemo(() => taxInvoice === 'yes' ? calculateAddedVat(totals.grandTotal) : 0, [taxInvoice, totals.grandTotal]);
+  const vatAmount = React.useMemo(() => (taxInvoice === 'yes' ? calculateAddedVat(totals.grandTotal) : 0), [taxInvoice, totals.grandTotal]);
   const payableTotal = React.useMemo(() => calculatePayableTotal(totals.grandTotal, taxInvoice), [taxInvoice, totals.grandTotal]);
   const customerDisplayDraft = React.useMemo(() => {
     const draftId = checkoutDraftId;
@@ -274,6 +286,8 @@ export default function QuickSalePage() {
     setReceivedAmount(0);
     setPaymentMethod('cash');
     setTaxInvoice('no');
+    setEntryMode('normal');
+    setBackdatedReason('');
   };
   const submitSale = async () => {
     if (!items.length || (paymentMethod === 'cash' && receivedAmount < payableTotal)) return;
@@ -284,6 +298,7 @@ export default function QuickSalePage() {
       const result = await createOrder({
         clientDraftId,
         orderType: 'QUICK_SALE',
+        ...(entryMode === 'backdated' ? { entryMode, saleDate: new Date(`${saleDate}T${saleTime}:00`).toISOString(), backdatedReason } : {}),
         salesChannel: 'quick_sale',
         customerName: 'ลูกค้าหน้าร้าน',
         phoneNumber: '',
@@ -355,7 +370,17 @@ export default function QuickSalePage() {
   );
   return (
     <AdminPageContainer>
-      <AdminHeroHeader title="Quick Sale" description="ขายสินค้าหน้าร้านอย่างรวดเร็ว เลือกรายการ รับชำระ และออกเอกสารในขั้นตอนเดียว" lastSynced={formatAdminLastSynced(lastSyncedAt)} thaiDate={formatAdminThaiDate(lastSyncedAt)} actions={<Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void loadProducts()} sx={heroOutlineButtonSx}>{loading ? 'กำลังโหลด...' : 'รีเฟรช'}</Button>} />
+      <AdminHeroHeader
+        title="Quick Sale"
+        description="ขายสินค้าหน้าร้านอย่างรวดเร็ว เลือกรายการ รับชำระ และออกเอกสารในขั้นตอนเดียว"
+        lastSynced={formatAdminLastSynced(lastSyncedAt)}
+        thaiDate={formatAdminThaiDate(lastSyncedAt)}
+        actions={
+          <Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void loadProducts()} sx={heroOutlineButtonSx}>
+            {loading ? 'กำลังโหลด...' : 'รีเฟรช'}
+          </Button>
+        }
+      />
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
           {error}
@@ -377,7 +402,11 @@ export default function QuickSalePage() {
                     <SearchRoundedIcon sx={{ color: '#64748B' }} />
                   </InputAdornment>
                 ),
-                endAdornment: <InputAdornment position="end"><Chip size="small" label="F2" sx={{ borderRadius: 1.5, color: '#64748B' }} /></InputAdornment>,
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <Chip size="small" label="F2" sx={{ borderRadius: 1.5, color: '#64748B' }} />
+                  </InputAdornment>
+                ),
               }}
             />
             <Button variant="outlined" startIcon={<AddRoundedIcon />} onClick={() => setCustomOpen(true)} sx={{ minWidth: 132, minHeight: 52, borderRadius: 2.5, bgcolor: '#FFFFFF', fontWeight: 800 }}>
@@ -399,8 +428,12 @@ export default function QuickSalePage() {
           </Stack>
           <Stack direction="row" alignItems="center" gap={0.75} sx={{ mb: 1.25 }}>
             <LocalFireDepartmentRoundedIcon sx={{ color: '#F97316', fontSize: 22 }} />
-            <Typography fontWeight={900} color="#172033">สินค้ายอดนิยม</Typography>
-            <Typography variant="body2" color="text.secondary">(กดเพิ่มลงรายการทันที)</Typography>
+            <Typography fontWeight={900} color="#172033">
+              สินค้ายอดนิยม
+            </Typography>
+            <Typography variant="body2" color="text.secondary">
+              (กดเพิ่มลงรายการทันที)
+            </Typography>
           </Stack>
           {loading ? (
             <Typography sx={{ py: 8, textAlign: 'center' }}>กำลังโหลดสินค้า...</Typography>
@@ -434,11 +467,23 @@ export default function QuickSalePage() {
                       transition: 'border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease',
                       '&:hover': { borderColor: '#2563EB', bgcolor: '#F8FBFF', boxShadow: '0 8px 20px rgba(37, 99, 235, 0.12)', transform: 'translateY(-1px)' },
                     }}>
-                    <Box sx={{ width: 54, height: 54, borderRadius: 2.5, display: 'grid', placeItems: 'center', bgcolor: product.emoji ? product.tint || visual.background : visual.background, color: visual.color, fontSize: 30 }}>
+                    <Box
+                      sx={{
+                        width: 54,
+                        height: 54,
+                        borderRadius: 2.5,
+                        display: 'grid',
+                        placeItems: 'center',
+                        bgcolor: product.emoji ? product.tint || visual.background : visual.background,
+                        color: visual.color,
+                        fontSize: 30,
+                      }}>
                       {product.emoji || <visual.Icon sx={{ fontSize: 34 }} />}
                     </Box>
                     <Box>
-                      <Typography color="#0F172A" fontSize={16} fontWeight={900} lineHeight={1.3}>{product.name}</Typography>
+                      <Typography color="#0F172A" fontSize={16} fontWeight={900} lineHeight={1.3}>
+                        {product.name}
+                      </Typography>
                       <Typography color="#53657D" fontSize={13} fontWeight={600} sx={{ mt: 0.35 }}>
                         {product.priceDisplayMode === 'STARTING_AT' ? 'เริ่มต้น ' : ''}฿{money.format(variant.price)}
                         {product.unitLabel ? ` / ${product.unitLabel}` : ''}
@@ -452,7 +497,9 @@ export default function QuickSalePage() {
           )}
           {!loading && otherProducts.length > 0 && (
             <Box sx={{ mt: 2.25 }}>
-              <Typography fontWeight={900} color="#172033" sx={{ mb: 1.1 }}>สินค้าทั้งหมด</Typography>
+              <Typography fontWeight={900} color="#172033" sx={{ mb: 1.1 }}>
+                สินค้าทั้งหมด
+              </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1 }}>
                 {otherProducts.map(product => {
                   const variant = firstActiveVariant(product)!;
@@ -467,9 +514,12 @@ export default function QuickSalePage() {
                         <visual.Icon fontSize="small" />
                       </Box>
                       <Box sx={{ minWidth: 0, flex: 1 }}>
-                        <Typography noWrap color="#172033" fontWeight={800}>{product.name}</Typography>
+                        <Typography noWrap color="#172033" fontWeight={800}>
+                          {product.name}
+                        </Typography>
                         <Typography variant="body2" color="text.secondary">
-                          {product.priceDisplayMode === 'STARTING_AT' ? 'เริ่มต้น ' : ''}฿{money.format(variant.price)}{product.unitLabel ? ` / ${product.unitLabel}` : ''}
+                          {product.priceDisplayMode === 'STARTING_AT' ? 'เริ่มต้น ' : ''}฿{money.format(variant.price)}
+                          {product.unitLabel ? ` / ${product.unitLabel}` : ''}
                         </Typography>
                       </Box>
                       <KeyboardArrowRightRoundedIcon sx={{ color: '#64748B' }} />
@@ -481,13 +531,34 @@ export default function QuickSalePage() {
           )}
         </Paper>
         {!compact && (
-          <Paper variant="outlined" sx={{ position: 'sticky', top: 20, height: 'min(760px, calc(100vh - 40px))', borderRadius: 4, overflow: 'hidden', borderColor: '#DCE4EF', boxShadow: '0 12px 32px rgba(15, 23, 42, 0.07)' }}>
+          <Paper
+            variant="outlined"
+            sx={{
+              position: 'sticky',
+              top: 20,
+              height: 'min(760px, calc(100vh - 40px))',
+              borderRadius: 4,
+              overflow: 'hidden',
+              borderColor: '#DCE4EF',
+              boxShadow: '0 12px 32px rgba(15, 23, 42, 0.07)',
+            }}>
             {cart}
           </Paper>
         )}
       </Box>
       {compact && (
-        <Paper sx={{ position: 'fixed', bottom: 0, left: mobile ? 0 : 92, right: 0, zIndex: 1000, p: 1.5, borderRadius: 0, borderTop: '1px solid #DCE4EF', boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.1)' }}>
+        <Paper
+          sx={{
+            position: 'fixed',
+            bottom: 0,
+            left: mobile ? 0 : 92,
+            right: 0,
+            zIndex: 1000,
+            p: 1.5,
+            borderRadius: 0,
+            borderTop: '1px solid #DCE4EF',
+            boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.1)',
+          }}>
           <Button fullWidth variant="contained" size="large" onClick={() => setCartOpen(true)} disabled={!items.length} sx={{ minHeight: 54 }}>
             ดูรายการ ({items.length}) · ฿{money.format(totals.grandTotal)}
           </Button>
@@ -510,8 +581,7 @@ export default function QuickSalePage() {
             overflow: 'hidden',
             boxShadow: '0 24px 64px rgba(15, 23, 42, 0.22)',
           },
-        }}
-      >
+        }}>
         <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.75, pb: 1 }}>
           <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={2}>
             <Box>
@@ -522,11 +592,7 @@ export default function QuickSalePage() {
                 สำหรับสินค้าหรือบริการที่ไม่มีในรายการ
               </Typography>
             </Box>
-            <IconButton
-              aria-label="ปิดหน้าต่าง"
-              onClick={() => setCustomOpen(false)}
-              sx={{ mt: -0.5, mr: -1, bgcolor: '#F1F5F9', color: '#475569', '&:hover': { bgcolor: '#E2E8F0' } }}
-            >
+            <IconButton aria-label="ปิดหน้าต่าง" onClick={() => setCustomOpen(false)} sx={{ mt: -0.5, mr: -1, bgcolor: '#F1F5F9', color: '#475569', '&:hover': { bgcolor: '#E2E8F0' } }}>
               <CloseRoundedIcon />
             </IconButton>
           </Stack>
@@ -547,18 +613,12 @@ export default function QuickSalePage() {
               <Typography component="label" fontSize={13} fontWeight={800} color="#475569">
                 จำนวน
               </Typography>
-              <Stack
-                direction="row"
-                alignItems="center"
-                justifyContent="space-between"
-                sx={{ mt: 0.75, p: 0.75, border: '1px solid #DCE4EF', borderRadius: 2.5, bgcolor: '#F8FAFC' }}
-              >
+              <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 0.75, p: 0.75, border: '1px solid #DCE4EF', borderRadius: 2.5, bgcolor: '#F8FAFC' }}>
                 <IconButton
                   aria-label="ลดจำนวน"
                   disabled={customQuantity <= 1}
                   onClick={() => setCustomQuantity(value => Math.max(1, value - 1))}
-                  sx={{ ...touchButton, border: '1px solid #DCE4EF', bgcolor: '#FFFFFF', '&:hover': { bgcolor: '#EFF6FF', borderColor: '#93C5FD' } }}
-                >
+                  sx={{ ...touchButton, border: '1px solid #DCE4EF', bgcolor: '#FFFFFF', '&:hover': { bgcolor: '#EFF6FF', borderColor: '#93C5FD' } }}>
                   <RemoveRoundedIcon />
                 </IconButton>
                 <TextField
@@ -571,8 +631,7 @@ export default function QuickSalePage() {
                 <IconButton
                   aria-label="เพิ่มจำนวน"
                   onClick={() => setCustomQuantity(value => value + 1)}
-                  sx={{ ...touchButton, border: '1px solid #BFDBFE', bgcolor: '#EFF6FF', color: '#1769E0', '&:hover': { bgcolor: '#DBEAFE' } }}
-                >
+                  sx={{ ...touchButton, border: '1px solid #BFDBFE', bgcolor: '#EFF6FF', color: '#1769E0', '&:hover': { bgcolor: '#DBEAFE' } }}>
                   <AddRoundedIcon />
                 </IconButton>
               </Stack>
@@ -594,7 +653,9 @@ export default function QuickSalePage() {
             />
 
             <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.5, borderRadius: 2.5, bgcolor: '#EFF6FF' }}>
-              <Typography fontSize={14} fontWeight={700} color="#52657C">ยอดรวม</Typography>
+              <Typography fontSize={14} fontWeight={700} color="#52657C">
+                ยอดรวม
+              </Typography>
               <Typography fontSize={20} fontWeight={900} color="#1769E0">
                 ฿{money.format(customQuantity * (Number(customPrice) || 0))}
               </Typography>
@@ -611,8 +672,7 @@ export default function QuickSalePage() {
             startIcon={<AddRoundedIcon />}
             disabled={!customName.trim() || customPrice === ''}
             onClick={addCustom}
-            sx={{ minHeight: 48, borderRadius: 2.5, fontWeight: 900, boxShadow: '0 8px 18px rgba(23, 105, 224, 0.22)' }}
-          >
+            sx={{ minHeight: 48, borderRadius: 2.5, fontWeight: 900, boxShadow: '0 8px 18px rgba(23, 105, 224, 0.22)' }}>
             เพิ่มรายการ
           </Button>
         </DialogActions>
@@ -627,22 +687,41 @@ export default function QuickSalePage() {
         taxInvoice={taxInvoice}
         receivedAmount={receivedAmount}
         submitting={submitting}
+        entryMode={entryMode}
+        saleDate={saleDate}
+        saleTime={saleTime}
+        backdatedReason={backdatedReason}
         onClose={closeCheckout}
         onPaymentMethodChange={setPaymentMethod}
         onTaxInvoiceChange={setTaxInvoice}
         onReceivedAmountChange={setReceivedAmount}
         onConfirm={() => void submitSale()}
+        onEntryModeChange={setEntryMode}
+        onSaleDateChange={setSaleDate}
+        onSaleTimeChange={setSaleTime}
+        onBackdatedReasonChange={setBackdatedReason}
       />
 
       <Dialog
         open={Boolean(completed)}
         fullWidth
         maxWidth="xs"
-        PaperProps={{ sx: { width: { xs: 'calc(100% - 24px)', sm: 440 }, m: 1.5, borderRadius: 4, overflow: 'hidden', boxShadow: '0 28px 72px rgba(15, 23, 42, 0.24)' } }}
-      >
+        PaperProps={{ sx: { width: { xs: 'calc(100% - 24px)', sm: 440 }, m: 1.5, borderRadius: 4, overflow: 'hidden', boxShadow: '0 28px 72px rgba(15, 23, 42, 0.24)' } }}>
         <DialogContent sx={{ p: 0 }}>
           <Box sx={{ px: { xs: 2.5, sm: 3.5 }, pt: 4, pb: 3, textAlign: 'center', background: 'linear-gradient(180deg, #F0FDF4 0%, #FFFFFF 100%)' }}>
-            <Box sx={{ width: 72, height: 72, mx: 'auto', mb: 2, borderRadius: '50%', bgcolor: '#22A447', color: '#FFFFFF', display: 'grid', placeItems: 'center', boxShadow: '0 12px 28px rgba(34, 164, 71, 0.26)' }}>
+            <Box
+              sx={{
+                width: 72,
+                height: 72,
+                mx: 'auto',
+                mb: 2,
+                borderRadius: '50%',
+                bgcolor: '#22A447',
+                color: '#FFFFFF',
+                display: 'grid',
+                placeItems: 'center',
+                boxShadow: '0 12px 28px rgba(34, 164, 71, 0.26)',
+              }}>
               <CheckRoundedIcon sx={{ fontSize: 44 }} />
             </Box>
             <Typography component="h2" fontSize={25} fontWeight={900} color="#172033">
@@ -657,21 +736,41 @@ export default function QuickSalePage() {
           <Box sx={{ px: { xs: 2.5, sm: 3.5 }, pb: 3.5 }}>
             <Stack gap={1.25} sx={{ p: 2, mb: 2.5, border: '1px solid #E6ECF4', borderRadius: 3, bgcolor: '#F8FAFC' }}>
               <Stack direction="row" alignItems="center" justifyContent="space-between">
-                <Typography fontSize={14} color="#64748B">ยอดชำระ</Typography>
-                <Typography fontSize={19} fontWeight={900} color="#172033">฿{money.format(completed?.grandTotal ?? 0)}</Typography>
+                <Typography fontSize={14} color="#64748B">
+                  ยอดชำระ
+                </Typography>
+                <Typography fontSize={19} fontWeight={900} color="#172033">
+                  ฿{money.format(completed?.grandTotal ?? 0)}
+                </Typography>
               </Stack>
               <Box sx={{ borderTop: '1px dashed #D8E1EC' }} />
               <Stack direction="row" alignItems="center" justifyContent="space-between">
-                <Typography fontSize={14} color="#64748B">เงินทอน</Typography>
-                <Typography fontSize={19} fontWeight={900} color="#22A447">฿{money.format(completed?.changeAmount ?? 0)}</Typography>
+                <Typography fontSize={14} color="#64748B">
+                  เงินทอน
+                </Typography>
+                <Typography fontSize={19} fontWeight={900} color="#22A447">
+                  ฿{money.format(completed?.changeAmount ?? 0)}
+                </Typography>
               </Stack>
             </Stack>
 
             <Stack gap={1.25}>
-              <Button fullWidth variant="contained" size="large" startIcon={<ReplayRoundedIcon />} onClick={startNew} sx={{ minHeight: 50, borderRadius: 2.5, fontWeight: 900, boxShadow: '0 8px 18px rgba(23, 105, 224, 0.22)' }}>
+              <Button
+                fullWidth
+                variant="contained"
+                size="large"
+                startIcon={<ReplayRoundedIcon />}
+                onClick={startNew}
+                sx={{ minHeight: 50, borderRadius: 2.5, fontWeight: 900, boxShadow: '0 8px 18px rgba(23, 105, 224, 0.22)' }}>
                 ขายรายการใหม่
               </Button>
-              <Button fullWidth variant="outlined" size="large" startIcon={<ReceiptLongRoundedIcon />} onClick={() => completed && globalThis.open(`/print/invoice/${encodeURIComponent(completed.orderId)}?documentType=receipt`, '_blank')} sx={{ minHeight: 50, borderRadius: 2.5, fontWeight: 800 }}>
+              <Button
+                fullWidth
+                variant="outlined"
+                size="large"
+                startIcon={<ReceiptLongRoundedIcon />}
+                onClick={() => completed && globalThis.open(`/print/invoice/${encodeURIComponent(completed.orderId)}?documentType=receipt`, '_blank')}
+                sx={{ minHeight: 50, borderRadius: 2.5, fontWeight: 800 }}>
                 พิมพ์ใบเสร็จ
               </Button>
             </Stack>

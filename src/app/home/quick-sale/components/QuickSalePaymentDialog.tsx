@@ -1,9 +1,25 @@
 'use client';
 
 import * as React from 'react';
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography, alpha } from '@mui/material';
+import {
+  Alert,
+  Box,
+  Button,
+  Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  IconButton,
+  InputAdornment,
+  Stack,
+  TextField,
+  Typography,
+  alpha,
+} from '@mui/material';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
+import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import DesktopWindowsOutlinedIcon from '@mui/icons-material/DesktopWindowsOutlined';
 import LocalAtmOutlinedIcon from '@mui/icons-material/LocalAtmOutlined';
@@ -12,6 +28,7 @@ import PaymentsOutlinedIcon from '@mui/icons-material/PaymentsOutlined';
 import QrCode2RoundedIcon from '@mui/icons-material/QrCode2Rounded';
 import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined';
+import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { QRCodeCanvas } from 'qrcode.react';
 import generatePayload from 'promptpay-qr';
@@ -27,11 +44,19 @@ type QuickSalePaymentDialogProps = Readonly<{
   taxInvoice: 'yes' | 'no';
   receivedAmount: number;
   submitting: boolean;
+  entryMode: 'normal' | 'backdated';
+  saleDate: string;
+  saleTime: string;
+  backdatedReason: string;
   onClose: () => void;
   onPaymentMethodChange: (method: PaymentMethod) => void;
   onTaxInvoiceChange: (value: 'yes' | 'no') => void;
   onReceivedAmountChange: (amount: number) => void;
   onConfirm: () => void;
+  onEntryModeChange: (mode: 'normal' | 'backdated') => void;
+  onSaleDateChange: (value: string) => void;
+  onSaleTimeChange: (value: string) => void;
+  onBackdatedReasonChange: (value: string) => void;
 }>;
 
 const money = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -105,11 +130,19 @@ export default function QuickSalePaymentDialog({
   taxInvoice,
   receivedAmount,
   submitting,
+  entryMode,
+  saleDate,
+  saleTime,
+  backdatedReason,
   onClose,
   onPaymentMethodChange,
   onTaxInvoiceChange,
   onReceivedAmountChange,
   onConfirm,
+  onEntryModeChange,
+  onSaleDateChange,
+  onSaleTimeChange,
+  onBackdatedReasonChange,
 }: QuickSalePaymentDialogProps) {
   const changeAmount = calculateChange(receivedAmount, grandTotal);
   const missingAmount = Math.max(0, grandTotal - receivedAmount);
@@ -208,8 +241,84 @@ export default function QuickSalePaymentDialog({
             </Button>
           </Box>
 
-          <Box>
-            <Typography fontWeight={800} sx={{ mb: 1 }}>
+          <Box sx={{ p: { xs: 1.5, sm: 1.75 }, border: '1px solid #E5EAF2', borderRadius: 3.5, bgcolor: '#FBFCFE' }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} sx={{ mb: 1.25 }}>
+              <Box>
+                <Typography fontWeight={900} color="#172033">
+                  ประเภทการบันทึก
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  เลือกวันที่เกิดรายการขาย
+                </Typography>
+              </Box>
+              {entryMode === 'backdated' ? <Chip size="small" label="ย้อนหลัง" color="warning" sx={{ fontWeight: 800 }} /> : null}
+            </Stack>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.25 }}>
+              <PaymentMethodCard selected={entryMode === 'normal'} icon={<CalendarTodayRoundedIcon />} title="ขายวันนี้" description="บันทึกด้วยวันที่ปัจจุบัน" onClick={() => onEntryModeChange('normal')} />
+              <PaymentMethodCard selected={entryMode === 'backdated'} icon={<HistoryRoundedIcon />} title="ลงรายการย้อนหลัง" description="เลือกวันที่เกิดการขายจริง" onClick={() => onEntryModeChange('backdated')} />
+            </Box>
+            {entryMode === 'backdated' ? (
+              <Stack gap={1.25} sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid #E8EDF4' }}>
+                <Stack direction="row" alignItems="flex-start" gap={1} sx={{ px: 1.25, py: 1, borderRadius: 2, bgcolor: '#FFF7E5', color: '#8A5A00' }}>
+                  <WarningAmberRoundedIcon sx={{ mt: 0.1, fontSize: 19 }} />
+                  <Typography variant="body2" fontWeight={700}>
+                    เลข Order ใช้เลขปัจจุบัน แต่วันที่ขายจะเป็นวันที่ที่เลือก
+                  </Typography>
+                </Stack>
+                <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.25}>
+                  <TextField
+                    fullWidth
+                    required
+                    type="date"
+                    label="วันที่ขาย"
+                    value={saleDate}
+                    onChange={event => onSaleDateChange(event.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FFFFFF' } }}
+                  />
+                  <TextField
+                    fullWidth
+                    type="time"
+                    label="เวลา"
+                    value={saleTime}
+                    onChange={event => onSaleTimeChange(event.target.value)}
+                    InputLabelProps={{ shrink: true }}
+                    sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FFFFFF' } }}
+                  />
+                </Stack>
+                <TextField
+                  fullWidth
+                  multiline
+                  minRows={2}
+                  label="เหตุผล / หมายเหตุ"
+                  value={backdatedReason}
+                  onChange={event => onBackdatedReasonChange(event.target.value)}
+                  sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FFFFFF' } }}
+                />
+              </Stack>
+            ) : null}
+          </Box>
+
+          <Box sx={{ p: { xs: 1.5, sm: 1.75 }, border: '1px solid #E5EAF2', borderRadius: 3.5, bgcolor: '#FBFCFE' }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} sx={{ mb: 1.25 }}>
+              <Box>
+                <Typography fontWeight={900} color="#172033">
+                  ประเภทเอกสาร
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  เลือกเอกสารสำหรับรายการขายนี้
+                </Typography>
+              </Box>
+              {taxInvoice === 'yes' ? <Chip size="small" label="VAT 7%" color="primary" sx={{ fontWeight: 800 }} /> : null}
+            </Stack>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.25 }}>
+              <PaymentMethodCard selected={taxInvoice === 'no'} icon={<ReceiptLongOutlinedIcon />} title="ใบเสร็จรับเงิน" description="เอกสารการขายทั่วไป" onClick={() => onTaxInvoiceChange('no')} />
+              <PaymentMethodCard selected={taxInvoice === 'yes'} icon={<RequestQuoteOutlinedIcon />} title="ใบกำกับภาษี" description="เอกสารพร้อม VAT 7%" onClick={() => onTaxInvoiceChange('yes')} />
+            </Box>
+          </Box>
+
+          <Box sx={{ p: { xs: 1.5, sm: 1.75 }, border: '1px solid #E5EAF2', borderRadius: 3.5, bgcolor: '#FBFCFE' }}>
+            <Typography fontWeight={900} color="#172033" sx={{ mb: 1.25 }}>
               วิธีชำระเงิน
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.25 }}>
@@ -222,67 +331,6 @@ export default function QuickSalePaymentDialog({
                 onClick={() => onPaymentMethodChange('promptpay')}
               />
             </Box>
-          </Box>
-
-          <Box
-            sx={{
-              p: { xs: 1.5, sm: 1.75 },
-              border: '1px solid #DFE7F2',
-              borderRadius: 4,
-              background: 'linear-gradient(135deg, #FAFCFF 0%, #F3F7FD 100%)',
-              boxShadow: '0 8px 24px rgba(36, 75, 125, 0.06)',
-            }}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'stretch', sm: 'center' }} justifyContent="space-between" gap={1.25}>
-              <Box>
-                <Typography fontWeight={900} color="#172033">
-                  ประเภทเอกสาร
-                </Typography>
-                <Typography variant="body2" color="#718096">
-                  เลือกเอกสารสำหรับรายการขายนี้
-                </Typography>
-              </Box>
-              <ToggleButtonGroup
-                exclusive
-                fullWidth
-                size="small"
-                value={taxInvoice}
-                onChange={(_, value: 'yes' | 'no' | null) => value && onTaxInvoiceChange(value)}
-                sx={{
-                  width: { sm: 'auto' },
-                  gap: 0.75,
-                  p: 0.5,
-                  borderRadius: 3,
-                  bgcolor: 'rgba(255,255,255,0.72)',
-                  border: '1px solid #E1E8F2',
-                  '& .MuiToggleButtonGroup-grouped': { border: 0, borderRadius: '10px !important' },
-                  '& .MuiToggleButton-root': {
-                    minHeight: 48,
-                    px: { xs: 1.25, sm: 1.75 },
-                    gap: 0.75,
-                    color: '#64748B',
-                    whiteSpace: 'nowrap',
-                    textTransform: 'none',
-                    fontWeight: 800,
-                    transition: 'all 160ms ease',
-                  },
-                  '& .MuiToggleButton-root:hover': { bgcolor: '#F3F7FC', color: '#245FB5' },
-                  '& .Mui-selected': {
-                    color: '#FFFFFF !important',
-                    bgcolor: '#216FDC !important',
-                    boxShadow: '0 7px 16px rgba(33, 111, 220, 0.25)',
-                  },
-                  '& .Mui-selected:hover': { bgcolor: '#1B62C5 !important' },
-                }}>
-                <ToggleButton value="no">
-                  <ReceiptLongOutlinedIcon sx={{ fontSize: 20 }} />
-                  ใบเสร็จรับเงิน
-                </ToggleButton>
-                <ToggleButton value="yes">
-                  <RequestQuoteOutlinedIcon sx={{ fontSize: 20 }} />
-                  ใบกำกับภาษี
-                </ToggleButton>
-              </ToggleButtonGroup>
-            </Stack>
           </Box>
 
           {paymentMethod === 'cash' ? (

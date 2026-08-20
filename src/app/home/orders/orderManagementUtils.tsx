@@ -46,6 +46,7 @@ export const ORDER_TABLE_PAYMENT_LABEL: Record<PaymentMethod, string> = {
 
 export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
   const createdAt = order.createdAt || dayjs().toISOString();
+  const saleDate = order.saleDate || createdAt;
   const products = (order.cart ?? []).map(item => ({
     name: item.name || item.category || 'สินค้าไม่ระบุชื่อ',
     qty: item.qty,
@@ -86,13 +87,17 @@ export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
     orderNumber: getDisplayOrderNumber(order),
     invoiceNumber: order.invoiceNumber,
     orderType: order.orderType,
+    saleDate,
+    isBackdated: order.isBackdated,
+    backdatedReason: order.backdatedReason,
     taxInvoice: order.taxInvoice,
     customerName: order.customerName || 'ลูกค้าไม่ระบุชื่อ',
     phoneNumber: order.phoneNumber || '-',
     taxId: order.taxId || '-',
     address: order.address || '-',
-    date: createdAt,
-    month: dayjs(createdAt).format('YYYY-MM'),
+    date: saleDate,
+    createdAt,
+    month: dayjs(saleDate).format('YYYY-MM'),
     status,
     subtotal: order.subtotal,
     discount: order.discount,

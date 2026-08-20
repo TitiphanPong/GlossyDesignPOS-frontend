@@ -636,6 +636,7 @@ export default function OrderManagementPage() {
                             color={row.orderType === 'QUICK_SALE' ? 'warning' : 'default'}
                             sx={{ ml: 0.7, height: 20, fontSize: 10, fontWeight: 700 }}
                           />
+                          {row.isBackdated ? <Chip size="small" label="ย้อนหลัง" color="warning" sx={{ ml: 0.7, height: 20, fontSize: 10, fontWeight: 700 }} /> : null}
                           <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.vat > 0 ? 'ใบกำกับภาษี' : 'ใบเสร็จทั่วไป'}</Typography>
                         </TableCell>
 
@@ -713,6 +714,7 @@ export default function OrderManagementPage() {
                         <TableCell>
                           <Typography sx={{ fontSize: 11.8, color: '#6B7280', whiteSpace: 'nowrap', fontWeight: 600 }}>{createdAt.relative}</Typography>
                           <Typography sx={{ mt: 0.35, fontSize: 11.2, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{createdAt.exact}</Typography>
+                          {row.isBackdated ? <Typography sx={{ mt: 0.25, fontSize: 10.5, color: '#9A6700', whiteSpace: 'nowrap' }}>บันทึก {formatOrderRowTime(row.createdAt).exact}</Typography> : null}
                         </TableCell>
 
                         <TableCell align="right" onClick={event => event.stopPropagation()}>

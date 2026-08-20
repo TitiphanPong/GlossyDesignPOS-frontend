@@ -9,6 +9,7 @@ export type LegacyPaymentOrderStatus = 'paid' | 'partial';
 export type OrderStatus = WorkflowOrderStatus | LegacyPaymentOrderStatus;
 
 export type OrderType = 'NORMAL' | 'QUICK_SALE';
+export type OrderEntryMode = 'normal' | 'backdated';
 
 export type ProductVariant = {
   id?: string;
@@ -179,6 +180,10 @@ export type ApiOrder = {
   orderNumber?: string;
   invoiceNumber?: string;
   orderType?: OrderType;
+  saleDate?: string;
+  entryMode?: OrderEntryMode;
+  isBackdated?: boolean;
+  backdatedReason?: string;
   receivedAmount?: number;
   changeAmount?: number;
   customerName?: string;
@@ -274,6 +279,10 @@ export type NormalizedOrder = {
   orderNumber: string;
   invoiceNumber?: string;
   orderType: OrderType;
+  saleDate: string;
+  entryMode: OrderEntryMode;
+  isBackdated: boolean;
+  backdatedReason?: string;
   customerName: string;
   phoneNumber: string;
   email: string;
@@ -328,10 +337,7 @@ export type NormalizedInvoiceOrder = {
   grandTotal: number;
 };
 
-function readInvoiceString(
-  value: Partial<ApiOrder>,
-  ...keys: Array<keyof ApiOrder>
-): string | null {
+function readInvoiceString(value: Partial<ApiOrder>, ...keys: Array<keyof ApiOrder>): string | null {
   for (const key of keys) {
     const resolved = readNonEmptyString(value[key]);
     if (resolved) {
@@ -450,6 +456,10 @@ export function normalizeApiOrder(
     orderNumber: getDisplayOrderNumber(order),
     invoiceNumber: typeof order.invoiceNumber === 'string' ? order.invoiceNumber : undefined,
     orderType: order.orderType === 'QUICK_SALE' ? 'QUICK_SALE' : 'NORMAL',
+    saleDate: readInvoiceString(order, 'saleDate', 'createdAt', 'updatedAt', 'issueDate') ?? '',
+    entryMode: order.entryMode === 'backdated' || order.isBackdated ? 'backdated' : 'normal',
+    isBackdated: order.entryMode === 'backdated' || order.isBackdated === true,
+    backdatedReason: readNonEmptyString(order.backdatedReason) ?? undefined,
     customerName: customerInfo.customerName,
     phoneNumber: customerInfo.phoneNumber ?? '-',
     email: customerInfo.email ?? '-',

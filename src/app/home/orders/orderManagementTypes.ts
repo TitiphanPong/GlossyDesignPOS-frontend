@@ -25,12 +25,16 @@ export type OrderRow = {
   orderNumber: string;
   invoiceNumber?: string;
   orderType: OrderType;
+  saleDate: string;
+  isBackdated: boolean;
+  backdatedReason?: string;
   taxInvoice: 'yes' | 'no';
   customerName: string;
   phoneNumber: string;
   taxId: string;
   address: string;
   date: string;
+  createdAt: string;
   month: string;
   status: PaymentStatus;
   subtotal: number;
