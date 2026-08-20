@@ -34,11 +34,14 @@ function HeaderButton({
       onClick={onClick}
       sx={{
         minHeight: 44,
-        px: 2,
+        flex: { xs: 1, sm: 'initial' },
+        minWidth: 0,
+        px: { xs: 1, sm: 2 },
         borderRadius: '12px',
-        fontSize: 14,
+        fontSize: { xs: 13, sm: 14 },
         fontWeight: 700,
         letterSpacing: '-0.01em',
+        whiteSpace: 'nowrap',
         textTransform: 'none',
         boxShadow: isContained ? '0 10px 24px rgba(37, 99, 235, 0.22)' : 'none',
         borderColor: '#E5E7EB',
@@ -73,20 +76,21 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
       }}>
         <Stack
         className="print-toolbar"
-        direction="row"
+        direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
-        alignItems="center"
+        alignItems={{ xs: 'stretch', sm: 'center' }}
+        spacing={{ xs: 1.5, sm: 0 }}
         sx={{
           position: 'sticky',
           top: 0,
           zIndex: 10,
-          minHeight: '92px',
-          px: '32px',
-          py: 2,
+          minHeight: { xs: 'auto', sm: '92px' },
+          px: { xs: 2, sm: '32px' },
+          py: { xs: 1.5, sm: 2 },
           borderBottom: '1px solid #E5E7EB',
           bgcolor: '#FFFFFF',
         }}>
-        <Stack direction="row" spacing={2} alignItems="center" sx={{ minWidth: 0 }}>
+        <Stack direction="row" spacing={{ xs: 1.25, sm: 2 }} alignItems="center" sx={{ minWidth: 0 }}>
           <ButtonBase
             component={Link}
             href="/home"
@@ -101,8 +105,8 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
             }}>
             <Box
               sx={{
-                width: 48,
-                height: 48,
+                width: { xs: 40, sm: 48 },
+                height: { xs: 40, sm: 48 },
                 borderRadius: '14px',
                 border: '1px solid #E5E7EB',
                 bgcolor: '#FFFFFF',
@@ -110,17 +114,17 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
                 placeItems: 'center',
                 boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
               }}>
-              <Image src="/logo/logo.png" alt="Glossy Design logo" width={34} height={34} priority />
+              <Image src="/logo/logo.png" alt="Glossy Design logo" width={30} height={30} priority />
             </Box>
           </ButtonBase>
 
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ mt: 0.55, fontSize: 20, fontWeight: 800, color: '#0F172A', lineHeight: 1.1, letterSpacing: '-0.03em' }}>{title}</Typography>
-            <Typography sx={{ mt: 0.55, fontSize: 16, fontWeight: 500, color: '#64748B', lineHeight: 1.2 }}>{invoiceNumber}</Typography>
+            <Typography sx={{ mt: { xs: 0, sm: 0.55 }, fontSize: { xs: 17, sm: 20 }, fontWeight: 800, color: '#0F172A', lineHeight: 1.1, letterSpacing: '-0.03em' }}>{title}</Typography>
+            <Typography sx={{ mt: 0.4, fontSize: { xs: 14, sm: 16 }, fontWeight: 500, color: '#64748B', lineHeight: 1.2, overflowWrap: 'anywhere' }}>{invoiceNumber}</Typography>
           </Box>
         </Stack>
 
-        <Stack direction="row" spacing={1.5} alignItems="center" sx={{ flexShrink: 0 }}>
+        <Stack direction="row" spacing={{ xs: 0.75, sm: 1.5 }} alignItems="center" sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>
           <HeaderButton label="Edit" icon={null} onClick={onEditCustomer} variant="outlined" />
           <HeaderButton label="Export PDF" icon={<PictureAsPdfRoundedIcon />} onClick={handlePrint} variant="outlined" />
           <HeaderButton label="Print" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" />
@@ -130,9 +134,9 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
       <Box
         className="print-document-scroll"
         sx={{
-          px: { xs: 0, md: 3 },
+          px: { xs: 1, md: 3 },
           py: { xs: 2.5, md: 4 },
-          overflowX: 'auto',
+          overflowX: { xs: 'hidden', sm: 'auto' },
           overflowY: 'visible',
         }}>
         {summary ? (
@@ -156,6 +160,10 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
             mx: 'auto',
             display: 'flex',
             justifyContent: 'center',
+            height: { xs: '67mm', sm: 'auto' },
+            '@media (max-width: 359.95px)': {
+              height: '58mm',
+            },
           }}>
           <Box
             className="print-document-only print-paper"
@@ -165,6 +173,11 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
               maxWidth: 'none',
               bgcolor: '#fff',
               boxShadow: '0 18px 45px rgba(15, 23, 42, 0.14)',
+              transform: { xs: 'scale(0.34)', sm: 'none' },
+              transformOrigin: { xs: 'top left', sm: 'initial' },
+              '@media (max-width: 359.95px)': {
+                transform: 'scale(0.288)',
+              },
             }}>
             {printableDocument}
           </Box>
@@ -205,6 +218,7 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
             padding: 0 !important;
             margin: 0 !important;
             min-height: auto !important;
+            height: auto !important;
             overflow: visible !important;
           }
 
@@ -213,6 +227,8 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
           .invoice-copy {
             box-shadow: none !important;
             background: #fff !important;
+            transform: none !important;
+            transform-origin: initial !important;
             break-inside: avoid !important;
             page-break-inside: avoid !important;
           }
