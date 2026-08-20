@@ -12,15 +12,16 @@ import type { JobTimelineCardItem } from '../components/JobTimelineCard';
 import { statusChipSx } from '../components/adminUi';
 import { fetchApi } from '../../../lib/api';
 import { getDisplayOrderNumber, type NormalizedOrder, type PaymentMethod } from '../../../lib/contracts';
-import { fetchOrders, sortOrdersByNewest } from '../../../lib/orders';
+import { fetchOrdersPage, sortOrdersByNewest } from '../../../lib/orders';
 import { getOrderStatusConfig, ORDER_STATUS_CONFIG } from '../../../lib/order-status';
 import type { ExportType, OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } from './orderManagementTypes';
 
 export const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 export const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-export const STATUS_LABELS_TH: Record<PaymentStatus, string> = Object.fromEntries(
-  Object.entries(ORDER_STATUS_CONFIG).map(([status, config]) => [status, config.label])
-) as Record<PaymentStatus, string>;
+export const STATUS_LABELS_TH: Record<PaymentStatus, string> = Object.fromEntries(Object.entries(ORDER_STATUS_CONFIG).map(([status, config]) => [status, config.label])) as Record<
+  PaymentStatus,
+  string
+>;
 export const FILTER_STATUS_LABELS: Record<'all' | PaymentStatus, string> = {
   all: 'ทั้งหมด',
   ...STATUS_LABELS_TH,
@@ -104,9 +105,23 @@ export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
   };
 }
 
-export async function fetchOrderRows(): Promise<OrderRow[]> {
-  const orders = await fetchOrders();
-  return sortOrdersByNewest(orders).map(mapApiOrderToRow);
+export type FetchOrderRowsParams = {
+  page: number;
+  limit: number;
+  search?: string;
+};
+
+export type FetchOrderRowsResult = {
+  rows: OrderRow[];
+  total: number;
+};
+
+export async function fetchOrderRows(params: FetchOrderRowsParams): Promise<FetchOrderRowsResult> {
+  const result = await fetchOrdersPage(params);
+  return {
+    rows: sortOrdersByNewest(result.data).map(mapApiOrderToRow),
+    total: result.total,
+  };
 }
 
 export async function updateOrderStatus(orderId: string, status: PaymentStatus): Promise<void> {
@@ -238,11 +253,7 @@ export function buildOrderTimelineItems(order: OrderRow): JobTimelineCardItem[] 
   let activeStage: 'created' | 'payment' | 'production' = 'payment';
   if (order.status === 'pending') {
     activeStage = 'created';
-  } else if (
-    order.status === 'producing' ||
-    order.status === 'ready_for_pickup' ||
-    order.status === 'delivered'
-  ) {
+  } else if (order.status === 'producing' || order.status === 'ready_for_pickup' || order.status === 'delivered') {
     activeStage = 'production';
   }
   let productionSubtitle = 'รอเข้าสู่กระบวนการผลิต';
@@ -336,14 +347,7 @@ function compareOrderRows(a: OrderRow, b: OrderRow, sort: SortOrder): number {
   return sort === 'newest' ? t2 - t1 : t1 - t2;
 }
 
-export function filterOrderRows(
-  rows: OrderRow[],
-  search: string,
-  statusFilter: 'all' | PaymentStatus,
-  monthFilter: string,
-  sort: SortOrder,
-  orderTypeFilter: OrderTypeFilter = 'all'
-): OrderRow[] {
+export function filterOrderRows(rows: OrderRow[], search: string, statusFilter: 'all' | PaymentStatus, monthFilter: string, sort: SortOrder, orderTypeFilter: OrderTypeFilter = 'all'): OrderRow[] {
   return rows
     .filter(row => matchesSearch(row, search))
     .filter(row => matchesStatusFilter(row, statusFilter))
@@ -392,11 +396,10 @@ export function downloadCsv(rows: OrderRow[], label: ExportType) {
   downloadCsvFile(csv, `cashierprint-${label}-${dayjs().format('YYYY-MM-DD')}.csv`);
 }
 
-export function printDocument(row: OrderRow, mode: 'receipt' | 'invoice') {
+export function getPrintDocumentPath(row: OrderRow, mode: 'receipt' | 'invoice'): string | null {
   if (mode === 'invoice' && row.taxInvoice !== 'yes') {
-    return;
+    return null;
   }
   const documentType = mode === 'invoice' ? 'tax-invoice' : 'receipt';
-  const targetPath = `/print/invoice/${encodeURIComponent(row.id)}?documentType=${documentType}`;
-  globalThis.location.assign(targetPath);
+  return `/print/invoice/${encodeURIComponent(row.id)}?documentType=${documentType}`;
 }
