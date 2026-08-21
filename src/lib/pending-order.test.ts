@@ -19,7 +19,8 @@ const pricingCart = [
 ];
 
 test('buildPendingOrderDraft creates the pending localStorage shape used by POS checkout', () => {
-  const totals = computeTotals(pricingCart, 20, 'yes');
+  const discount = { type: 'amount' as const, value: 20 };
+  const totals = computeTotals(pricingCart, discount, 'yes');
   const draft = buildPendingOrderDraft({
     draftId: 'draft-001',
     customer: {
@@ -30,7 +31,7 @@ test('buildPendingOrderDraft creates the pending localStorage shape used by POS 
       note: 'Pickup after 5 PM',
     },
     payment: 'promptpay',
-    discount: 20,
+    discount,
     taxInvoice: 'yes',
     totals,
   });
@@ -94,6 +95,29 @@ test('buildPendingOrderPayload preserves clientDraftId but removes transient syn
   assert.equal('orderSyncStatus' in payload, false);
   assert.equal('orderSyncStartedAt' in payload, false);
   assert.equal('lastSubmissionError' in payload, false);
+});
+
+test('percentage discount draft submits the source percentage after the cart total changes', () => {
+  const discount = { type: 'percent' as const, value: 10 };
+  const totals = computeTotals(
+    [
+      { name: 'Poster', qty: 2, unitPrice: 100, totalPrice: 200, fullPayment: true },
+    ],
+    discount,
+    'no'
+  );
+  const draft = buildPendingOrderDraft({
+    draftId: 'draft-percent-001',
+    customer: { customerName: 'Alice', phoneNumber: '0812345678', note: '' },
+    payment: 'cash',
+    discount,
+    taxInvoice: 'no',
+    totals,
+  });
+
+  assert.equal(draft.discount, 20);
+  assert.deepEqual(draft.discountSource, discount);
+  assert.deepEqual(buildPendingOrderPayload(draft, 'paid').discount, discount);
 });
 
 test('buildPendingOrderPayload emits only product identity, quantity and explicit price override', () => {

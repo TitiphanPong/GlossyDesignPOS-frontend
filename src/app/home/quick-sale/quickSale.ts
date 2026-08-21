@@ -1,3 +1,5 @@
+import { getDiscountAmount, roundCurrency } from '../../utils/computeTotal';
+
 export type DiscountMode = 'amount' | 'percent';
 
 export function isDefaultVariantName(value: string): boolean {
@@ -5,14 +7,12 @@ export function isDefaultVariantName(value: string): boolean {
 }
 
 export function roundMoney(value: number): number {
-  const finiteValue = Number.isFinite(value) ? value : 0;
-  return Math.round((finiteValue + Number.EPSILON) * 100) / 100;
+  return roundCurrency(value);
 }
 
 export function calculateQuickSale(subtotal: number, discountValue: number, mode: DiscountMode) {
   const safeSubtotal = Math.max(0, roundMoney(subtotal));
-  const safeDiscount = Math.max(0, Number.isFinite(discountValue) ? discountValue : 0);
-  const discount = mode === 'percent' ? roundMoney((safeSubtotal * Math.min(safeDiscount, 100)) / 100) : Math.min(roundMoney(safeDiscount), safeSubtotal);
+  const discount = getDiscountAmount(safeSubtotal, { type: mode, value: discountValue });
   return { subtotal: safeSubtotal, discount, grandTotal: roundMoney(safeSubtotal - discount) };
 }
 

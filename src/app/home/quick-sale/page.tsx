@@ -172,10 +172,11 @@ export default function QuickSalePage() {
         note: '',
       },
       payment: paymentMethod,
-      discount: totals.discount,
+      discount: { type: discountMode, value: discountValue },
       taxInvoice,
       totals: {
         total: totals.subtotal,
+        discountAmount: totals.discount,
         depositTotal: payableTotal,
         remainingTotal: 0,
         adjustedCart: items.map(item => ({
@@ -193,7 +194,7 @@ export default function QuickSalePage() {
         grandTotal: payableTotal,
       },
     });
-  }, [checkoutDraftId, items, paymentMethod, payableTotal, taxInvoice, totals, vatAmount]);
+  }, [checkoutDraftId, discountMode, discountValue, items, paymentMethod, payableTotal, taxInvoice, totals, vatAmount]);
 
   React.useEffect(() => {
     if (!checkoutOpen) return;

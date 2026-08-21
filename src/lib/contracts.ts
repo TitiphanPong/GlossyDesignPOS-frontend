@@ -286,6 +286,11 @@ export type CreateOrderLine = {
   [key: string]: unknown;
 };
 
+export type OrderDiscountInput = {
+  type: 'amount' | 'percent';
+  value: number;
+};
+
 export type CreateOrderRequest = {
   clientDraftId?: string;
   orderType?: OrderType;
@@ -299,7 +304,7 @@ export type CreateOrderRequest = {
   note?: string;
   salesChannel?: string;
   taxInvoice?: 'yes' | 'no';
-  discount?: { type: 'amount' | 'percent'; value: number };
+  discount?: OrderDiscountInput;
   initialPayment?: { amount: number; method: PaymentMethod; receivedAmount?: number };
   cart: CreateOrderLine[];
 };

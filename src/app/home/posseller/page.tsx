@@ -13,7 +13,7 @@ import TvRoundedIcon from '@mui/icons-material/TvRounded';
 import { CheckoutSidebar } from './components/CheckoutSidebar';
 import { ProductList } from './components/ProductList';
 
-import { useCart } from './components/useCart';
+import { EMPTY_DISCOUNT, useCart } from './components/useCart';
 import { createCartItemKey, useProductModals } from './components/useProductModals';
 import SuccessModal from './components/successModal';
 import CustomerInfoModal from './components/customerInfoModal';
@@ -139,7 +139,6 @@ export default function SellPage() {
   const [taxInvoice, setTaxInvoice] = React.useState<'yes' | 'no'>('no');
   const liveDraftIdRef = React.useRef<string | null>(null);
 
-  const total = cartState.total;
   const cart = cartState.cart;
   const setCart = cartState.setCart;
   const discount = cartState.discount;
@@ -317,7 +316,7 @@ export default function SellPage() {
 
         <CheckoutSidebar
           cart={cart}
-          total={total}
+          totals={totals}
           onCheckout={handleCheckout}
           discount={discount}
           onDiscountChange={setDiscount}
@@ -350,12 +349,12 @@ export default function SellPage() {
         }}
         onPaid={() => {
           setCart([]);
-          setDiscount(0);
+          setDiscount(EMPTY_DISCOUNT);
         }}
         onNewOrder={() => {
           setCart([]);
           setSuccessOpen(false);
-          setDiscount(0);
+          setDiscount(EMPTY_DISCOUNT);
         }}
       />
 
