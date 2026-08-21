@@ -3,6 +3,7 @@
 import * as React from 'react';
 import {
   Badge,
+  Alert,
   Box,
   Button,
   Card,
@@ -18,6 +19,7 @@ import {
   InputLabel,
   MenuItem,
   Select,
+  Snackbar,
   Stack,
   Table,
   TableBody,
@@ -32,6 +34,7 @@ import {
   useTheme,
 } from '@mui/material';
 import dayjs from 'dayjs';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
@@ -55,19 +58,16 @@ import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder } from '../../../lib/contracts';
-import { convertOrderToTaxInvoice, deleteOrder, updateOrderCustomerInfo } from '../../../lib/orders';
-import type { OrderRow, SortOrder } from './orderManagementTypes';
+import { convertOrderToTaxInvoice, deleteOrder, downloadOrdersExport, type OrderListSummary, updateOrderCustomerInfo } from '../../../lib/orders';
+import type { ExportType, OrderRow, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import {
   ORDER_TABLE_PAYMENT_LABEL,
   ORDER_TABLE_STATUS_UI,
   SORT_ORDER_LABELS,
   buildOrderLineSummary,
-  buildOrderStats,
   fetchOrderRows,
-  filterOrderRows,
   formatMoney,
-  formatMonthFilterLabel,
   formatOrderRowTime,
   formatTableCurrency,
   formatThaiFullDate,
@@ -91,70 +91,81 @@ export default function OrderManagementPage() {
   const [missingApiBase, setMissingApiBase] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [monthFilter, setMonthFilter] = React.useState<string>('all');
+  const [filtersReady, setFiltersReady] = React.useState(false);
   const [sort, setSort] = React.useState<SortOrder>('newest');
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(8);
   const [totalRows, setTotalRows] = React.useState(0);
+  const [stats, setStats] = React.useState<OrderListSummary>({ sales: 0, collections: 0, outstanding: 0, orders: 0, paidOrders: 0, cancelledOrders: 0 });
 
   const [selectedOrder, setSelectedOrder] = React.useState<OrderRow | null>(null);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [rowMenuAnchor, setRowMenuAnchor] = React.useState<null | HTMLElement>(null);
   const [menuOrderId, setMenuOrderId] = React.useState<string | null>(null);
   const [exportAnchor, setExportAnchor] = React.useState<null | HTMLElement>(null);
+  const [exporting, setExporting] = React.useState<ExportType | null>(null);
+  const [exportError, setExportError] = React.useState<string | null>(null);
   const [lastUpdated, setLastUpdated] = React.useState<dayjs.Dayjs | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = React.useState<string | null>(null);
   const [payRemainingTarget, setPayRemainingTarget] = React.useState<OrderRow | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<OrderRow | null>(null);
   const [deletePassword, setDeletePassword] = React.useState('');
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
+  const loadRequestRef = React.useRef(0);
 
   const loadOrders = React.useCallback(async () => {
+    const requestId = ++loadRequestRef.current;
     setIsLoading(true);
     setLoadError(null);
     setMissingApiBase(false);
 
     try {
-      const result = await fetchOrderRows({ page: page + 1, limit: rowsPerPage, search });
+      const result = await fetchOrderRows({
+        page: page + 1,
+        limit: rowsPerPage,
+        search,
+        saleMonth: monthFilter === 'all' ? undefined : monthFilter,
+        sort: sort === 'high' ? 'amount_desc' : sort === 'low' ? 'amount_asc' : sort,
+      });
+      if (requestId !== loadRequestRef.current) return;
       setRows(result.rows);
       setTotalRows(result.total);
+      setStats(result.summary);
       setLastUpdated(dayjs());
     } catch (error) {
+      if (requestId !== loadRequestRef.current) return;
       setRows([]);
       setTotalRows(0);
+      setStats({ sales: 0, collections: 0, outstanding: 0, orders: 0, paidOrders: 0, cancelledOrders: 0 });
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
       } else {
         setLoadError(getLoadOrdersErrorMessage(error));
       }
     } finally {
-      setIsLoading(false);
+      if (requestId === loadRequestRef.current) setIsLoading(false);
     }
-  }, [page, rowsPerPage, search]);
+  }, [monthFilter, page, rowsPerPage, search, sort]);
 
   React.useEffect(() => {
-    void loadOrders();
-  }, [loadOrders]);
+    const requestedMonth = new URLSearchParams(window.location.search).get('month');
+    if (requestedMonth && /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth)) {
+      setMonthFilter(requestedMonth);
+    }
+    setFiltersReady(true);
+  }, []);
 
-  const months = React.useMemo(() => {
-    const unique = Array.from(new Set(rows.map(row => row.month)));
-    return unique.sort((a, b) => b.localeCompare(a));
-  }, [rows]);
+  React.useEffect(() => {
+    if (filtersReady) void loadOrders();
+  }, [filtersReady, loadOrders]);
 
   const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
 
-  const filteredRows = React.useMemo(() => {
-    return filterOrderRows(rows, '', 'all', monthFilter, sort);
-  }, [monthFilter, rows, sort]);
-
-  const pagedRows = filteredRows;
+  const pagedRows = rows;
 
   React.useEffect(() => {
     setPage(0);
   }, [search, monthFilter, sort]);
-
-  const stats = React.useMemo(() => {
-    return buildOrderStats(rows);
-  }, [rows]);
 
   const rowMenuTarget = React.useMemo(() => (menuOrderId ? (rowsById.get(menuOrderId) ?? null) : null), [menuOrderId, rowsById]);
 
@@ -274,6 +285,29 @@ export default function OrderManagementPage() {
     setSelectedOrder(latest);
   }, [rowsById, selectedOrder]);
 
+  const handleExport = React.useCallback(
+    async (format: ExportType) => {
+      setExportAnchor(null);
+      setExportError(null);
+      setExporting(format);
+      try {
+        await downloadOrdersExport(
+          {
+            search,
+            saleMonth: monthFilter === 'all' ? undefined : monthFilter,
+            sort: sort === 'high' ? 'amount_desc' : sort === 'low' ? 'amount_asc' : sort,
+          },
+          format
+        );
+      } catch {
+        setExportError('ไม่สามารถสร้างไฟล์รายงานได้ กรุณาลองใหม่อีกครั้ง');
+      } finally {
+        setExporting(null);
+      }
+    },
+    [monthFilter, search, sort]
+  );
+
   const labelDisplayedRows = React.useCallback(({ from, to, count }: { from: number; to: number; count: number }) => {
     const totalLabel = count === -1 ? `มากกว่า ${to}` : `${count}`;
     return `${from}-${to} จาก ${totalLabel}`;
@@ -345,6 +379,7 @@ export default function OrderManagementPage() {
                     onClick={event => setExportAnchor(event.currentTarget)}
                     startIcon={<FileDownloadRoundedIcon />}
                     variant="outlined"
+                    disabled={Boolean(exporting)}
                     sx={{
                       ...commonButtonSx,
                       borderRadius: 3,
@@ -353,7 +388,7 @@ export default function OrderManagementPage() {
                       color: '#2A4365',
                       textTransform: 'none',
                     }}>
-                    ส่งออกรายงาน
+                    {exporting ? 'กำลังสร้างรายงาน...' : 'ส่งออกรายงาน'}
                   </Button>
 
                   <Button
@@ -383,19 +418,19 @@ export default function OrderManagementPage() {
             gap: 1.4,
           }}>
           <Box>
-            <StatCard title="ยอดขายรวม" value={`฿${formatMoney(stats.totalSales)}`} subtitle="ยอดขายรวมทั้งหมด" tone="#1E5EFF" icon={<AttachMoneyRoundedIcon />} />
+            <StatCard title="ยอดขาย" value={`฿${formatMoney(stats.sales)}`} subtitle={monthFilter === 'all' ? 'ยอดขายทั้งหมด' : `ยอดขายเดือน ${monthFilter}`} tone="#1E5EFF" icon={<AttachMoneyRoundedIcon />} />
           </Box>
           <Box>
-            <StatCard title="ยอดรอชำระ" value={`฿${formatMoney(stats.pendingPayments)}`} subtitle="ยอดที่รอชำระเงิน" tone="#F08C00" icon={<PaymentsRoundedIcon />} />
+            <StatCard title="ยอดรอชำระ" value={`฿${formatMoney(stats.outstanding)}`} subtitle="ยอดค้างของรายการตามตัวกรอง" tone="#F08C00" icon={<PaymentsRoundedIcon />} />
           </Box>
           <Box>
             <StatCard title="งานที่ชำระแล้ว" value={`${stats.paidOrders}`} subtitle="จำนวนงานที่ชำระเรียบร้อย" tone="#1F9D63" icon={<FactCheckRoundedIcon />} />
           </Box>
           <Box>
-            <StatCard title="งานวันนี้" value={`${stats.ordersToday}`} subtitle="จำนวนงานที่รับวันนี้" tone="#5C6AC4" icon={<TodayRoundedIcon />} />
+            <StatCard title="งานทั้งหมด" value={`${stats.orders}`} subtitle="จำนวนงานตามตัวกรอง" tone="#5C6AC4" icon={<TodayRoundedIcon />} />
           </Box>
           <Box>
-            <StatCard title="งานเดือนนี้" value={`${stats.ordersThisMonth}`} subtitle="จำนวนงานประจำเดือน" tone="#2563EB" icon={<CalendarMonthRoundedIcon />} />
+            <StatCard title="งานยกเลิก" value={`${stats.cancelledOrders}`} subtitle="ไม่นับรวมในยอดขาย" tone="#2563EB" icon={<CalendarMonthRoundedIcon />} />
           </Box>
         </Box>
 
@@ -443,22 +478,24 @@ export default function OrderManagementPage() {
                   }}
                 />
 
-                <FormControl size="small">
-                  <InputLabel id="month-filter">เดือน</InputLabel>
-                  <Select<string>
-                    labelId="month-filter"
-                    value={monthFilter}
+                <Stack direction="row" spacing={0.7}>
+                  <Button
+                    variant={monthFilter === 'all' ? 'contained' : 'outlined'}
+                    onClick={() => setMonthFilter('all')}
+                    sx={{ minWidth: 72, height: 46, borderRadius: 3, textTransform: 'none' }}>
+                    ทั้งหมด
+                  </Button>
+                  <DatePicker
                     label="เดือน"
-                    onChange={event => setMonthFilter(event.target.value)}
-                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
-                    <MenuItem value="all">ทั้งหมด</MenuItem>
-                    {months.map(month => (
-                      <MenuItem key={month} value={month}>
-                        {formatMonthFilterLabel(month)}
-                      </MenuItem>
-                    ))}
-                  </Select>
-                </FormControl>
+                    views={['year', 'month']}
+                    value={monthFilter === 'all' ? null : dayjs(`${monthFilter}-01`)}
+                    maxDate={dayjs()}
+                    onChange={value => {
+                      if (value?.isValid()) setMonthFilter(value.format('YYYY-MM'));
+                    }}
+                    slotProps={{ textField: { size: 'small', sx: { '& .MuiOutlinedInput-root': { height: 46, borderRadius: 3, bgcolor: '#FFFFFF' } } } }}
+                  />
+                </Stack>
 
                 <FormControl size="small">
                   <InputLabel id="sort-filter">เรียงลำดับ</InputLabel>
@@ -499,9 +536,9 @@ export default function OrderManagementPage() {
             }}>
             <Box>
               <Typography sx={{ fontSize: 16, fontWeight: 800, color: '#1A1035', letterSpacing: '-0.2px' }}>รายการงานทั้งหมด</Typography>
-              <Typography sx={{ mt: 0.35, fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>{filteredRows.length} รายการตามตัวกรองล่าสุด</Typography>
+              <Typography sx={{ mt: 0.35, fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>{totalRows} รายการตามตัวกรองล่าสุด</Typography>
             </Box>
-            <Chip label={`${filteredRows.length} รายการ`} sx={{ borderRadius: '999px', bgcolor: '#F5F0FF', color: '#6C4DFF', fontWeight: 700 }} />
+            <Chip label={`${totalRows} รายการ`} sx={{ borderRadius: '999px', bgcolor: '#F5F0FF', color: '#6C4DFF', fontWeight: 700 }} />
           </Box>
 
           {isMobile ? (
@@ -746,7 +783,7 @@ export default function OrderManagementPage() {
 
           <TablePagination
             component="div"
-            count={monthFilter === 'all' ? totalRows : filteredRows.length}
+            count={totalRows}
             page={page}
             onPageChange={(_, nextPage) => setPage(nextPage)}
             rowsPerPage={rowsPerPage}
@@ -761,7 +798,11 @@ export default function OrderManagementPage() {
         </Card>
       </Stack>
 
-      <ExportMenu anchorEl={exportAnchor} rows={filteredRows} onClose={() => setExportAnchor(null)} />
+      <ExportMenu anchorEl={exportAnchor} exporting={exporting} onClose={() => setExportAnchor(null)} onExport={format => void handleExport(format)} />
+
+      <Snackbar open={Boolean(exportError)} autoHideDuration={5000} onClose={() => setExportError(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+        <Alert severity="error" onClose={() => setExportError(null)}>{exportError}</Alert>
+      </Snackbar>
 
       <RowActionsMenu
         anchorEl={rowMenuAnchor}

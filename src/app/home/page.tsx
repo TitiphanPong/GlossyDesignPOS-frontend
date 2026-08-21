@@ -2,8 +2,10 @@
 
 import * as React from 'react';
 import {
-  Alert, Box, Button, Card, CardActionArea, CardContent, Chip, Divider, LinearProgress, Skeleton, Stack, Typography,
+  Alert, Box, Button, Card, CardActionArea, CardContent, Chip, Divider, LinearProgress, Skeleton, Stack, ToggleButton, ToggleButtonGroup, Typography,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
@@ -52,9 +54,9 @@ function KpiCard({ label, value, helper, icon, color, href }: Readonly<{ label: 
   </CardContent></CardActionArea></Card>;
 }
 
-function SalesTrend({ data }: Readonly<{ data: DashboardSummary['salesTrend'] }>) {
+function SalesTrend({ data, periodLabel }: Readonly<{ data: DashboardSummary['salesTrend']; periodLabel: string }>) {
   return <Card sx={{ ...cardSx, height: '100%' }}><CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
-    <SectionTitle title="แนวโน้มยอดขาย" action={<Chip label="7 วัน" size="small" color="primary" variant="outlined" />} />
+    <SectionTitle title="แนวโน้มยอดขาย" action={<Chip label={periodLabel} size="small" color="primary" variant="outlined" />} />
     <Box sx={{ height: 275 }}><ResponsiveContainer width="100%" height="100%"><AreaChart data={data} margin={{ left: -12, right: 8, top: 8, bottom: 0 }}>
       <defs><linearGradient id="sales-fill" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor="#6C4DFF" stopOpacity={.28} /><stop offset="100%" stopColor="#6C4DFF" stopOpacity={.02} /></linearGradient></defs>
       <CartesianGrid stroke="#EEF2F7" vertical={false} /><XAxis dataKey="date" tickFormatter={(v: string) => v.slice(5)} tick={{ fontSize: 11, fill: '#64748B' }} axisLine={false} tickLine={false} />
@@ -92,19 +94,19 @@ function TasksCard({ summary }: Readonly<{ summary: DashboardSummary }>) {
 
 function PaymentSummary({ summary }: Readonly<{ summary: DashboardSummary }>) {
   const p = summary.paymentSummary;
-  return <Card sx={{ ...cardSx, height: '100%' }}><CardContent sx={{ p: { xs: 2, md: 2.5 } }}><SectionTitle title="รายรับวันนี้" /><Typography sx={{ fontSize: 29, fontWeight: 900 }}>{money(p.received)}</Typography>
+  return <Card sx={{ ...cardSx, height: '100%' }}><CardContent sx={{ p: { xs: 2, md: 2.5 } }}><SectionTitle title={`รายรับ ${summary.period.label}`} /><Typography sx={{ fontSize: 29, fontWeight: 900 }}>{money(p.received)}</Typography>
     <Stack direction="row" spacing={1.2} sx={{ mt: 2 }}><Box sx={{ flex: 1, p: 1.4, bgcolor: '#F0FDF4', borderRadius: 2 }}><Typography sx={{ fontSize: 12, color: '#64748B' }}>เงินสด</Typography><Typography sx={{ fontWeight: 850 }}>{money(p.cash)}</Typography></Box><Box sx={{ flex: 1, p: 1.4, bgcolor: '#EFF6FF', borderRadius: 2 }}><Typography sx={{ fontSize: 12, color: '#64748B' }}>โอน / PromptPay</Typography><Typography sx={{ fontWeight: 850 }}>{money(p.transfer)}</Typography></Box></Stack>
     <Divider sx={{ my: 2 }} /><Stack spacing={1}>{[['ชำระเต็ม', p.fullPayment], ['เงินมัดจำ', p.deposits], ['รับยอดค้างเดิม', p.oldOutstandingPaid]].map(([label, value]) => <Stack key={String(label)} direction="row" justifyContent="space-between"><Typography sx={{ color: '#64748B', fontSize: 13 }}>{label}</Typography><Typography sx={{ fontWeight: 800, fontSize: 13 }}>{money(Number(value))}</Typography></Stack>)}</Stack>
     <Alert severity={Math.abs(p.cash + p.transfer - p.received) < .01 ? 'success' : 'warning'} sx={{ mt: 2, fontSize: 12 }}>{Math.abs(p.cash + p.transfer - p.received) < .01 ? 'ยอดตามช่องทางรับเงินตรงกับยอดรับจริง' : 'ยอดรับเงินจริงและช่องทางรับเงินไม่ตรงกัน'}</Alert>
   </CardContent></Card>;
 }
 
-function TopProducts({ items }: Readonly<{ items: DashboardProduct[] }>) {
-  return <Card sx={{ ...cardSx, height: '100%' }}><CardContent sx={{ p: 2.2 }}><SectionTitle title="ขายดีวันนี้" /><Stack spacing={1.4}>{items.length ? items.map((item, index) => <Stack direction="row" spacing={1.2} alignItems="center" key={item.name}><Box sx={{ width: 28, height: 28, borderRadius: 1.5, bgcolor: '#F1F5F9', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 12 }}>{index + 1}</Box><Box sx={{ minWidth: 0, flex: 1 }}><Typography noWrap sx={{ fontWeight: 750, fontSize: 13 }}>{item.name}</Typography><Typography sx={{ color: '#64748B', fontSize: 12 }}>{integer(item.quantity)} รายการ</Typography></Box><Typography sx={{ fontWeight: 850, fontSize: 13 }}>{money(item.revenue)}</Typography></Stack>) : <Typography sx={{ color: '#64748B', py: 3, textAlign: 'center' }}>ยังไม่มีรายการขายวันนี้</Typography>}</Stack></CardContent></Card>;
+function TopProducts({ items, periodLabel }: Readonly<{ items: DashboardProduct[]; periodLabel: string }>) {
+  return <Card sx={{ ...cardSx, height: '100%' }}><CardContent sx={{ p: 2.2 }}><SectionTitle title={`ขายดี ${periodLabel}`} /><Stack spacing={1.4}>{items.length ? items.map((item, index) => <Stack direction="row" spacing={1.2} alignItems="center" key={item.name}><Box sx={{ width: 28, height: 28, borderRadius: 1.5, bgcolor: '#F1F5F9', display: 'grid', placeItems: 'center', fontWeight: 900, fontSize: 12 }}>{index + 1}</Box><Box sx={{ minWidth: 0, flex: 1 }}><Typography noWrap sx={{ fontWeight: 750, fontSize: 13 }}>{item.name}</Typography><Typography sx={{ color: '#64748B', fontSize: 12 }}>{integer(item.quantity)} รายการ</Typography></Box><Typography sx={{ fontWeight: 850, fontSize: 13 }}>{money(item.revenue)}</Typography></Stack>) : <Typography sx={{ color: '#64748B', py: 3, textAlign: 'center' }}>ยังไม่มีรายการขายในช่วงนี้</Typography>}</Stack></CardContent></Card>;
 }
 
 function QuickSeller({ summary }: Readonly<{ summary: DashboardSummary }>) {
-  return <Card sx={{ ...cardSx, height: '100%' }}><CardContent sx={{ p: 2.2 }}><SectionTitle title="ขายด่วนวันนี้" action={<PointOfSaleRoundedIcon color="primary" />} /><Stack direction="row" spacing={3}><Box><Typography sx={{ color: '#64748B', fontSize: 12 }}>ออเดอร์</Typography><Typography sx={{ fontSize: 24, fontWeight: 900 }}>{summary.quickSeller.orders}</Typography></Box><Box><Typography sx={{ color: '#64748B', fontSize: 12 }}>ยอดขาย</Typography><Typography sx={{ fontSize: 24, fontWeight: 900 }}>{money(summary.quickSeller.revenue)}</Typography></Box></Stack><Divider sx={{ my: 1.7 }} /><Stack spacing={.8}>{summary.quickSeller.items.map((item) => <Stack key={item.name} direction="row" justifyContent="space-between"><Typography noWrap sx={{ maxWidth: '70%', fontSize: 13 }}>{item.name}</Typography><Typography sx={{ fontSize: 13, fontWeight: 800 }}>{item.quantity}</Typography></Stack>)}{summary.quickSeller.items.length === 0 && <Typography sx={{ color: '#64748B', fontSize: 13 }}>ยังไม่มีรายการขายด่วนวันนี้</Typography>}</Stack></CardContent></Card>;
+  return <Card sx={{ ...cardSx, height: '100%' }}><CardContent sx={{ p: 2.2 }}><SectionTitle title={`ขายด่วน ${summary.period.label}`} action={<PointOfSaleRoundedIcon color="primary" />} /><Stack direction="row" spacing={3}><Box><Typography sx={{ color: '#64748B', fontSize: 12 }}>ออเดอร์</Typography><Typography sx={{ fontSize: 24, fontWeight: 900 }}>{summary.quickSeller.orders}</Typography></Box><Box><Typography sx={{ color: '#64748B', fontSize: 12 }}>ยอดขาย</Typography><Typography sx={{ fontSize: 24, fontWeight: 900 }}>{money(summary.quickSeller.revenue)}</Typography></Box></Stack><Divider sx={{ my: 1.7 }} /><Stack spacing={.8}>{summary.quickSeller.items.map((item) => <Stack key={item.name} direction="row" justifyContent="space-between"><Typography noWrap sx={{ maxWidth: '70%', fontSize: 13 }}>{item.name}</Typography><Typography sx={{ fontSize: 13, fontWeight: 800 }}>{item.quantity}</Typography></Stack>)}{summary.quickSeller.items.length === 0 && <Typography sx={{ color: '#64748B', fontSize: 13 }}>ยังไม่มีรายการขายด่วนในช่วงนี้</Typography>}</Stack></CardContent></Card>;
 }
 
 function UploadsCard({ summary }: Readonly<{ summary: DashboardSummary }>) {
@@ -129,28 +131,31 @@ export default function DashboardPage() {
   const [summary, setSummary] = React.useState<DashboardSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const load = React.useCallback(async () => { setLoading(true); setError(null); try { setSummary(await fetchDashboardSummary()); } catch (cause) { setError(isMissingApiBaseError(cause) ? 'ยังไม่ได้ตั้งค่า Backend API' : 'โหลดข้อมูล Dashboard ไม่สำเร็จ'); } finally { setLoading(false); } }, []);
+  const [period, setPeriod] = React.useState<'today' | 'month'>('today');
+  const [month, setMonth] = React.useState(dayjs().format('YYYY-MM'));
+  const load = React.useCallback(async () => { setLoading(true); setError(null); try { setSummary(await fetchDashboardSummary({ period, month: period === 'month' ? month : undefined })); } catch (cause) { setError(isMissingApiBaseError(cause) ? 'ยังไม่ได้ตั้งค่า Backend API' : 'โหลดข้อมูล Dashboard ไม่สำเร็จ'); } finally { setLoading(false); } }, [month, period]);
   React.useEffect(() => { void load(); }, [load]);
   if (!summary && loading) return <DashboardSkeleton />;
   if (!summary) return <AdminPageContainer><Alert severity="error" action={<Button onClick={() => void load()}>ลองใหม่</Button>}>{error}</Alert></AdminPageContainer>;
 
-  const salesDelta = percentChange(summary.today.sales, summary.today.yesterdaySales);
+  const salesDelta = percentChange(summary.periodSummary.sales, summary.periodSummary.previousSales);
+  const comparisonLabel = period === 'month' ? 'เดือนก่อน' : 'เมื่อวาน';
   const kpis = [
-    { label: 'ยอดขายวันนี้', value: money(summary.today.sales), helper: salesDelta === null ? 'ยังไม่มีฐานเปรียบเทียบเมื่อวาน' : `${salesDelta >= 0 ? '+' : ''}${salesDelta.toFixed(1)}% จากเมื่อวาน`, icon: TrendingUpRoundedIcon, color: '#6C4DFF', href: '/home/orders' },
-    { label: 'รับเงินจริงวันนี้', value: money(summary.today.received), helper: 'เงินที่รับเข้าจริงทุกประเภท', icon: PaidRoundedIcon, color: '#059669', href: '/home/orders' },
-    { label: 'ออเดอร์วันนี้', value: integer(summary.today.orders), helper: `${summary.today.customers} ลูกค้า`, icon: ReceiptLongRoundedIcon, color: '#2563EB', href: '/home/orders' },
+    { label: `ยอดขาย ${summary.period.label}`, value: money(summary.periodSummary.sales), helper: salesDelta === null ? `ยังไม่มีฐานเปรียบเทียบ${comparisonLabel}` : `${salesDelta >= 0 ? '+' : ''}${salesDelta.toFixed(1)}% จาก${comparisonLabel}`, icon: TrendingUpRoundedIcon, color: '#6C4DFF', href: period === 'month' ? `/home/orders?month=${month}` : '/home/orders' },
+    { label: `รับเงินจริง ${summary.period.label}`, value: money(summary.periodSummary.collections), helper: 'เงินที่รับเข้าจริงทุกประเภท', icon: PaidRoundedIcon, color: '#059669', href: period === 'month' ? `/home/orders?month=${month}` : '/home/orders' },
+    { label: `ออเดอร์ ${summary.period.label}`, value: integer(summary.periodSummary.orders), helper: `${summary.periodSummary.customers} ลูกค้า`, icon: ReceiptLongRoundedIcon, color: '#2563EB', href: period === 'month' ? `/home/orders?month=${month}` : '/home/orders' },
     { label: 'ยอดค้างชำระ', value: money(summary.outstandingAging.total), helper: 'จากออเดอร์ที่ยังชำระไม่ครบ', icon: LocalAtmRoundedIcon, color: '#DC2626', href: '/home/orders?payment=unpaid' },
     { label: 'งานกำลังดำเนินการ', value: integer((summary.orderStatus.pending ?? 0) + (summary.orderStatus.producing ?? 0)), helper: `${summary.orderStatus.ready_for_pickup ?? 0} งานพร้อมรับ`, icon: AssignmentTurnedInRoundedIcon, color: '#D97706', href: '/home/orders?status=producing' },
     { label: 'ไฟล์ใหม่', value: integer(summary.uploads.newFiles), helper: `${summary.uploads.waitingReview} อัปโหลดรอตรวจสอบ`, icon: CloudUploadRoundedIcon, color: '#0891B2', href: '/home/storage' },
   ];
 
   return <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAFC' }}><AdminPageContainer>
-    <AdminHeroHeader title="Dashboard" description="ภาพรวมการขาย เงินรับ งานค้าง และสถานะการดำเนินงานของร้านวันนี้" lastSynced={formatAdminLastSynced(new Date(summary.generatedAt))} thaiDate={formatAdminThaiDate(new Date(summary.generatedAt))} actions={<Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroOutlineButtonSx}>{loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}</Button>} />
+    <AdminHeroHeader title="Dashboard" description="ภาพรวมการขาย เงินรับ งานค้าง และสถานะการดำเนินงานของร้าน" lastSynced={formatAdminLastSynced(new Date(summary.generatedAt))} thaiDate={formatAdminThaiDate(new Date(summary.generatedAt))} actions={<Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}><ToggleButtonGroup exclusive size="small" value={period} onChange={(_, value: 'today' | 'month' | null) => { if (value) setPeriod(value); }}><ToggleButton value="today">วันนี้</ToggleButton><ToggleButton value="month">รายเดือน</ToggleButton></ToggleButtonGroup>{period === 'month' ? <DatePicker label="เดือน" views={['year', 'month']} value={dayjs(`${month}-01`)} maxDate={dayjs()} onChange={value => { if (value?.isValid()) setMonth(value.format('YYYY-MM')); }} slotProps={{ textField: { size: 'small', sx: { width: 170 } } }} /> : null}<Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroOutlineButtonSx}>{loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}</Button></Stack>} />
     {error && <Alert severity="warning" sx={{ mb: 2 }} action={<Button onClick={() => void load()}>ลองใหม่</Button>}>{error}</Alert>}
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(6, minmax(0, 1fr))' }, gap: 1.5, mb: 2.5 }}>{kpis.map((item) => <KpiCard key={item.label} {...item} />)}</Box>
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2fr) minmax(300px, 1fr)' }, gap: 2.5, mb: 2.5 }}><SalesTrend data={summary.salesTrend} /><OrderStatusCard summary={summary} /></Box>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2fr) minmax(300px, 1fr)' }, gap: 2.5, mb: 2.5 }}><SalesTrend data={summary.salesTrend} periodLabel={period === 'month' ? summary.period.label : '7 วัน'} /><OrderStatusCard summary={summary} /></Box>
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2fr) minmax(300px, 1fr)' }, gap: 2.5, mb: 2.5 }}><TasksCard summary={summary} /><PaymentSummary summary={summary} /></Box>
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' }, gap: 2.5, mb: 2.5 }}><TopProducts items={summary.topProducts} /><QuickSeller summary={summary} /><UploadsCard summary={summary} /></Box>
+    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' }, gap: 2.5, mb: 2.5 }}><TopProducts items={summary.topProducts} periodLabel={summary.period.label} /><QuickSeller summary={summary} /><UploadsCard summary={summary} /></Box>
     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(0, 1.35fr)' }, gap: 2.5 }}><OutstandingCard summary={summary} /><ActivityCard summary={summary} /></Box>
   </AdminPageContainer></Box>;
 }

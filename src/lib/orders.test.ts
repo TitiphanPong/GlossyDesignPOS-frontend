@@ -230,6 +230,44 @@ test('fetchOrders sends explicit bounded list query params', async () => {
   }
 });
 
+test('fetchOrdersPage forwards server-side month and sort and preserves full-result summary', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  let capturedUrl = '';
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+  globalThis.fetch = async input => {
+    capturedUrl = String(input);
+    return new Response(
+      JSON.stringify({
+        data: [],
+        page: 1,
+        limit: 8,
+        total: 28,
+        summary: {
+          sales: 62000,
+          collections: 52000,
+          outstanding: 10000,
+          orders: 28,
+          paidOrders: 18,
+          cancelledOrders: 1,
+        },
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  };
+
+  try {
+    const result = await fetchOrdersPage({ page: 1, limit: 8, saleMonth: '2026-08', sort: 'amount_desc' });
+    assert.equal(capturedUrl, 'http://localhost:3001/orders?page=1&limit=8&saleMonth=2026-08&sort=amount_desc');
+    assert.equal(result.total, 28);
+    assert.equal(result.summary.sales, 62000);
+    assert.equal(result.summary.cancelledOrders, 1);
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
 test('fetchOrdersPage preserves backend pagination metadata', async () => {
   const originalFetch = globalThis.fetch;
   const originalApiBase = process.env.NEXT_PUBLIC_API_URL;

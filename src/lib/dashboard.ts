@@ -8,6 +8,8 @@ export type DashboardActivity = { type: 'order' | 'upload'; id: string; title: s
 export type DashboardSummary = {
   generatedAt: string;
   timezone: 'Asia/Bangkok';
+  period: { mode: 'today' | 'month'; month?: string; from: string; toExclusive: string; label: string };
+  periodSummary: { sales: number; collections: number; orders: number; customers: number; previousSales: number; previousOrders: number };
   today: { sales: number; received: number; orders: number; customers: number; outstanding: number; urgentJobs: number; yesterdaySales: number; yesterdayOrders: number };
   paymentSummary: { received: number; cash: number; transfer: number; fullPayment: number; deposits: number; oldOutstandingPaid: number };
   orderStatus: Record<OrderStatus, number>;
@@ -21,6 +23,10 @@ export type DashboardSummary = {
   capabilities: { dueDates: boolean; urgentFlag: boolean; uploadOrderLink: boolean };
 };
 
-export function fetchDashboardSummary(): Promise<DashboardSummary> {
-  return fetchApiJson<DashboardSummary>('/dashboard/summary', { cache: 'no-store' });
+export function fetchDashboardSummary(params: { period?: 'today' | 'month'; month?: string } = {}): Promise<DashboardSummary> {
+  const query = new URLSearchParams();
+  if (params.period) query.set('period', params.period);
+  if (params.period === 'month' && params.month) query.set('month', params.month);
+  const suffix = query.size ? `?${query.toString()}` : '';
+  return fetchApiJson<DashboardSummary>(`/dashboard/summary${suffix}`, { cache: 'no-store' });
 }

@@ -5,7 +5,7 @@ import type { OrderStatus, OrderType, PaymentMethod } from '../../../lib/contrac
 export type PaymentStatus = OrderStatus;
 export type SortOrder = 'newest' | 'oldest' | 'high' | 'low';
 export type OrderTypeFilter = 'all' | OrderType;
-export type ExportType = 'excel' | 'pdf' | 'sales';
+export type ExportType = 'xlsx' | 'pdf';
 
 export type OrderProduct = {
   name: string;
@@ -57,8 +57,9 @@ export type StatCardProps = {
 
 export type ExportMenuProps = {
   anchorEl: HTMLElement | null;
-  rows: OrderRow[];
+  exporting: ExportType | null;
   onClose: () => void;
+  onExport: (format: ExportType) => void;
 };
 
 export type RowActionsMenuProps = {
