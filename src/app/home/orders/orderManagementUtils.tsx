@@ -2,7 +2,6 @@
 
 import { Chip } from '@mui/material';
 import dayjs from 'dayjs';
-import { createExcelCompatibleCsv, downloadCsvFile } from '@/lib/csv';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
@@ -12,9 +11,9 @@ import type { JobTimelineCardItem } from '../components/JobTimelineCard';
 import { statusChipSx } from '../components/adminUi';
 import { fetchApi } from '../../../lib/api';
 import { getDisplayOrderNumber, type NormalizedOrder, type PaymentMethod } from '../../../lib/contracts';
-import { fetchOrdersPage, sortOrdersByNewest } from '../../../lib/orders';
+import { fetchOrdersPage, type OrderListSummary } from '../../../lib/orders';
 import { getOrderStatusConfig, ORDER_STATUS_CONFIG } from '../../../lib/order-status';
-import type { ExportType, OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } from './orderManagementTypes';
+import type { OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } from './orderManagementTypes';
 
 export const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 export const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
@@ -114,18 +113,23 @@ export type FetchOrderRowsParams = {
   page: number;
   limit: number;
   search?: string;
+  saleMonth?: string;
+  sort?: 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';
+  signal?: AbortSignal;
 };
 
 export type FetchOrderRowsResult = {
   rows: OrderRow[];
   total: number;
+  summary: OrderListSummary;
 };
 
 export async function fetchOrderRows(params: FetchOrderRowsParams): Promise<FetchOrderRowsResult> {
   const result = await fetchOrdersPage(params);
   return {
-    rows: sortOrdersByNewest(result.data).map(mapApiOrderToRow),
+    rows: result.data.map(mapApiOrderToRow),
     total: result.total,
+    summary: result.summary,
   };
 }
 
@@ -392,13 +396,6 @@ export function buildOrderStats(rows: OrderRow[]) {
       ordersThisMonth: 0,
     }
   );
-}
-
-export function downloadCsv(rows: OrderRow[], label: ExportType) {
-  const headers = ['เลขที่งาน', 'ลูกค้า', 'เบอร์โทรศัพท์', 'วันที่', 'สถานะ', 'ยอดรวม'];
-  const lines = rows.map(row => [row.orderNumber, row.customerName, row.phoneNumber, dayjs(row.date).format('DD/MM/YYYY HH:mm'), STATUS_LABELS_TH[row.status], row.total]);
-  const csv = createExcelCompatibleCsv([headers, ...lines]);
-  downloadCsvFile(csv, `cashierprint-${label}-${dayjs().format('YYYY-MM-DD')}.csv`);
 }
 
 export function getPrintDocumentPath(row: OrderRow, mode: 'receipt' | 'invoice'): string | null {

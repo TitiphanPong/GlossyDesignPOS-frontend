@@ -42,7 +42,7 @@ import dayjs from 'dayjs';
 import JobTimelineCard from '../components/JobTimelineCard';
 import { commonButtonSx, statusChipSx } from '../components/adminUi';
 import type { ExportMenuProps, OrderDetailDrawerProps, OrderRow, RowActionsMenuProps, StatCardProps } from './orderManagementTypes';
-import { buildOrderTimelineItems, downloadCsv, formatMoney, PAYMENT_METHOD_LABELS_TH, statusChip } from './orderManagementUtils';
+import { buildOrderTimelineItems, formatMoney, PAYMENT_METHOD_LABELS_TH, statusChip } from './orderManagementUtils';
 
 export function StatCard({ title, value, subtitle, tone, icon }: Readonly<StatCardProps>) {
   return (
@@ -80,12 +80,7 @@ export function StatCard({ title, value, subtitle, tone, icon }: Readonly<StatCa
   );
 }
 
-export function ExportMenu({ anchorEl, rows, onClose }: Readonly<ExportMenuProps>) {
-  const handleExport = (label: 'excel' | 'pdf' | 'sales') => {
-    downloadCsv(rows, label);
-    onClose();
-  };
-
+export function ExportMenu({ anchorEl, exporting, onClose, onExport }: Readonly<ExportMenuProps>) {
   return (
     <Menu
       open={Boolean(anchorEl)}
@@ -101,9 +96,8 @@ export function ExportMenu({ anchorEl, rows, onClose }: Readonly<ExportMenuProps
           },
         },
       }}>
-      <MenuItem onClick={() => handleExport('excel')}>ส่งออก Excel</MenuItem>
-      <MenuItem onClick={() => handleExport('pdf')}>ส่งออก PDF</MenuItem>
-      <MenuItem onClick={() => handleExport('sales')}>ส่งออกรายงานยอดขาย</MenuItem>
+      <MenuItem disabled={Boolean(exporting)} onClick={() => onExport('xlsx')}>{exporting === 'xlsx' ? 'กำลังสร้าง Excel...' : 'ส่งออก Excel (.xlsx)'}</MenuItem>
+      <MenuItem disabled={Boolean(exporting)} onClick={() => onExport('pdf')}>{exporting === 'pdf' ? 'กำลังสร้าง PDF...' : 'ส่งออก PDF (.pdf)'}</MenuItem>
     </Menu>
   );
 }

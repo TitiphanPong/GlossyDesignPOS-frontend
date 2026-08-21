@@ -1,4 +1,4 @@
-import type { CreateOrderRequest, PaymentMethod, PendingOrderDraft } from './contracts';
+import type { CreateOrderRequest, OrderDiscountInput, PaymentMethod, PendingOrderDraft } from './contracts';
 
 export type PendingOrderSyncStatus = 'pending' | 'submitting' | 'submitted';
 export const PENDING_ORDER_SUBMIT_LOCK_TTL_MS = 60 * 1000;
@@ -9,6 +9,7 @@ export type StoredPendingOrderDraft = PendingOrderDraft & {
   clientDraftId?: string;
   payment?: PaymentMethod;
   discount?: number;
+  discountSource?: OrderDiscountInput;
   customerName?: string;
   phoneNumber?: string;
   taxId?: string;
@@ -30,6 +31,7 @@ type CheckoutCustomerInfo = {
 
 type CheckoutTotals = {
   total: number;
+  discountAmount: number;
   depositTotal: number;
   remainingTotal: number;
   adjustedCart: unknown[];
@@ -204,7 +206,7 @@ export function buildPendingOrderPayload(order: StoredPendingOrderDraft, status:
     address: order.address,
     note: order.note,
     taxInvoice: order.taxInvoice,
-    discount: { type: 'amount', value: Number(order.discount ?? 0) },
+    discount: order.discountSource ?? { type: 'amount', value: Number(order.discount ?? 0) },
     ...(paymentAmount > 0
       ? {
           initialPayment: {
@@ -229,7 +231,7 @@ export function buildPendingOrderDraft({
   draftId: string;
   customer: CheckoutCustomerInfo;
   payment: PaymentMethod;
-  discount: number;
+  discount: OrderDiscountInput;
   taxInvoice: 'yes' | 'no';
   totals: CheckoutTotals;
 }): StoredPendingOrderDraft {
@@ -238,7 +240,8 @@ export function buildPendingOrderDraft({
     ...customer,
     payment,
     total: totals.total,
-    discount,
+    discount: totals.discountAmount,
+    discountSource: discount,
     status: 'pending',
     orderSyncStatus: 'pending',
     orderSyncStartedAt: undefined,

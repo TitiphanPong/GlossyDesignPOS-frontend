@@ -1,4 +1,4 @@
-import { fetchApiJson } from './api';
+import { fetchApi, fetchApiJson } from './api';
 import { normalizeApiOrder, type ApiOrder, type CreateOrderRequest, type NormalizedOrder } from './contracts';
 
 type ApiOrderLike = Partial<ApiOrder> & {
@@ -108,10 +108,24 @@ type UpdateCustomerInfoPayload = {
   address?: string;
 };
 
-type FetchOrdersParams = {
+export type OrderListSort = 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';
+
+export type OrderListSummary = {
+  sales: number;
+  collections: number;
+  outstanding: number;
+  orders: number;
+  paidOrders: number;
+  cancelledOrders: number;
+};
+
+export type FetchOrdersParams = {
   page?: number;
   limit?: number;
   search?: string;
+  saleMonth?: string;
+  sort?: OrderListSort;
+  signal?: AbortSignal;
 };
 
 export type FetchOrdersPage = {
@@ -119,6 +133,7 @@ export type FetchOrdersPage = {
   page: number;
   limit: number;
   total: number;
+  summary: OrderListSummary;
 };
 
 function buildOrdersPath(params: FetchOrdersParams = {}): string {
@@ -132,6 +147,12 @@ function buildOrdersPath(params: FetchOrdersParams = {}): string {
   }
   if (params.search?.trim()) {
     query.set('search', params.search.trim());
+  }
+  if (params.saleMonth) {
+    query.set('saleMonth', params.saleMonth);
+  }
+  if (params.sort) {
+    query.set('sort', params.sort);
   }
 
   const queryString = query.toString();
@@ -184,6 +205,7 @@ export async function fetchOrders(params: FetchOrdersParams = {}): Promise<Norma
 export async function fetchOrdersPage(params: FetchOrdersParams = {}): Promise<FetchOrdersPage> {
   const responseBody = await fetchApiJson<unknown>(buildOrdersPath(params), {
     cache: 'no-store',
+    signal: params.signal,
   });
   const orders = extractOrdersFromResponse(responseBody);
 
@@ -197,6 +219,14 @@ export async function fetchOrdersPage(params: FetchOrdersParams = {}): Promise<F
       page: params.page ?? 1,
       limit: params.limit ?? orders.length,
       total: orders.length,
+      summary: {
+        sales: orders.reduce((sum, order) => sum + (order.status === 'cancelled' ? 0 : order.grandTotal), 0),
+        collections: orders.reduce((sum, order) => sum + order.paidAmount, 0),
+        outstanding: orders.reduce((sum, order) => sum + (order.status === 'cancelled' ? 0 : order.remainingTotal), 0),
+        orders: orders.length,
+        paidOrders: orders.filter(order => order.status === 'paid' || order.status === 'delivered').length,
+        cancelledOrders: orders.filter(order => order.status === 'cancelled').length,
+      },
     };
   }
 
@@ -205,7 +235,39 @@ export async function fetchOrdersPage(params: FetchOrdersParams = {}): Promise<F
     page: typeof responseBody.page === 'number' ? responseBody.page : (params.page ?? 1),
     limit: typeof responseBody.limit === 'number' ? responseBody.limit : (params.limit ?? orders.length),
     total: typeof responseBody.total === 'number' ? responseBody.total : orders.length,
+    summary: isRecord(responseBody.summary)
+      ? {
+          sales: typeof responseBody.summary.sales === 'number' ? responseBody.summary.sales : 0,
+          collections: typeof responseBody.summary.collections === 'number' ? responseBody.summary.collections : 0,
+          outstanding: typeof responseBody.summary.outstanding === 'number' ? responseBody.summary.outstanding : 0,
+          orders: typeof responseBody.summary.orders === 'number' ? responseBody.summary.orders : orders.length,
+          paidOrders: typeof responseBody.summary.paidOrders === 'number' ? responseBody.summary.paidOrders : 0,
+          cancelledOrders: typeof responseBody.summary.cancelledOrders === 'number' ? responseBody.summary.cancelledOrders : 0,
+        }
+      : { sales: 0, collections: 0, outstanding: 0, orders: orders.length, paidOrders: 0, cancelledOrders: 0 },
   };
+}
+
+export async function downloadOrdersExport(
+  params: Pick<FetchOrdersParams, 'search' | 'saleMonth' | 'sort'>,
+  format: 'xlsx' | 'pdf'
+): Promise<void> {
+  const query = new URLSearchParams({ format });
+  if (params.search?.trim()) query.set('search', params.search.trim());
+  if (params.saleMonth) query.set('saleMonth', params.saleMonth);
+  if (params.sort) query.set('sort', params.sort);
+  const response = await fetchApi(`/orders/export?${query.toString()}`, { cache: 'no-store' });
+  const blob = await response.blob();
+  const disposition = response.headers.get('content-disposition') ?? '';
+  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] ?? `orders-${params.saleMonth ?? 'all'}.${format}`;
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  document.body.appendChild(anchor);
+  anchor.click();
+  anchor.remove();
+  URL.revokeObjectURL(url);
 }
 
 export async function fetchOrderById(orderId: string): Promise<NormalizedOrder> {

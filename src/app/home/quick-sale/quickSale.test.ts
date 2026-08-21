@@ -30,6 +30,37 @@ test('POS and Quick Sale stay in satang parity across representative rounding ca
   }
 });
 
+test('POS and Quick Sale keep percentage discount and VAT rounding in parity', () => {
+  for (let satang = 1; satang <= 10_000; satang += 37) {
+    const unitPrice = satang / 100;
+    const quick = calculateQuickSale(unitPrice * 3, 12.5, 'percent');
+    for (const taxInvoice of ['no', 'yes'] as const) {
+      const pos = computeTotals(
+        [{ qty: 3, unitPrice, fullPayment: true }],
+        { type: 'percent', value: 12.5 },
+        taxInvoice
+      );
+      const quickPayable = calculatePayableTotal(quick.grandTotal, taxInvoice);
+
+      assert.equal(pos.discountAmount, quick.discount);
+      assert.equal(pos.grandTotal, quickPayable);
+    }
+  }
+});
+
+test('POS and Quick Sale use the same basis-point rule for percentage input', () => {
+  const quick = calculateQuickSale(333.33, 12.345, 'percent');
+  const pos = computeTotals(
+    [{ qty: 1, unitPrice: 333.33, fullPayment: true }],
+    { type: 'percent', value: 12.345 },
+    'yes'
+  );
+
+  assert.equal(quick.discount, 41.17);
+  assert.equal(pos.discountAmount, quick.discount);
+  assert.equal(pos.grandTotal, calculatePayableTotal(quick.grandTotal, 'yes'));
+});
+
 test('cash change never becomes negative', () => {
   assert.equal(calculateChange(500, 350), 150);
   assert.equal(calculateChange(100, 350), 0);

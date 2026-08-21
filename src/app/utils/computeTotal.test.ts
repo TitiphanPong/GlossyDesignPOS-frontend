@@ -132,6 +132,51 @@ test('computeTotals allocates rounding residuals so line payments reconcile to g
   );
 });
 
+test('percentage discount remains the source value across cart mutations', () => {
+  const discount = { type: 'percent' as const, value: 10 };
+  const scenarios = [
+    { label: 'initial', cart: [{ qty: 1, unitPrice: 100, fullPayment: true }], subtotal: 100, discount: 10, grandTotal: 90 },
+    {
+      label: 'add',
+      cart: [
+        { qty: 1, unitPrice: 100, fullPayment: true },
+        { qty: 1, unitPrice: 100, fullPayment: true },
+      ],
+      subtotal: 200,
+      discount: 20,
+      grandTotal: 180,
+    },
+    { label: 'edit', cart: [{ qty: 1, unitPrice: 250, fullPayment: true }], subtotal: 250, discount: 25, grandTotal: 225 },
+    { label: 'quantity', cart: [{ qty: 3, unitPrice: 100, fullPayment: true }], subtotal: 300, discount: 30, grandTotal: 270 },
+    { label: 'delete', cart: [{ qty: 1, unitPrice: 100, fullPayment: true }], subtotal: 100, discount: 10, grandTotal: 90 },
+  ];
+
+  for (const scenario of scenarios) {
+    const result = computeTotals(scenario.cart, discount, 'no');
+    assert.equal(result.total, scenario.subtotal, scenario.label);
+    assert.equal(result.discountAmount, scenario.discount, scenario.label);
+    assert.equal(result.grandTotal, scenario.grandTotal, scenario.label);
+    assert.equal(
+      roundCurrency(result.adjustedCart.reduce((sum, item) => sum + Number(item.totalPrice || 0), 0)),
+      result.finalTotal,
+      `${scenario.label} line allocation`
+    );
+  }
+});
+
+test('percentage discount rounds to backend basis points before calculating satang', () => {
+  const result = computeTotals(
+    [{ qty: 1, unitPrice: 333.33, fullPayment: true }],
+    { type: 'percent', value: 12.345 },
+    'yes'
+  );
+
+  assert.equal(result.discountAmount, 41.17);
+  assert.equal(result.finalTotal, 292.16);
+  assert.equal(result.vatAmount, 20.45);
+  assert.equal(result.grandTotal, 312.61);
+});
+
 test('computeOrderPaymentSummary uses deposit for partial orders and grand total for fully paid orders', () => {
   const partialSummary = computeOrderPaymentSummary({
     total: 250,

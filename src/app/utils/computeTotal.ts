@@ -1,6 +1,9 @@
 import type { CartItem } from '../home/posseller/types/cart';
+import type { OrderDiscountInput } from '../../lib/contracts';
 
 type TaxInvoiceValue = 'yes' | 'no';
+
+export type DiscountSource = OrderDiscountInput;
 
 export type CartPricingItem = {
   qty?: number;
@@ -17,7 +20,7 @@ export interface TotalsResult<TCartItem extends CartPricingItem = CartItem> {
   finalTotal: number;
   vatAmount: number;
   grandTotal: number;
-  adjustedCart: TCartItem[];
+  adjustedCart: Array<TCartItem & { totalPrice: number; deposit: number; remaining: number }>;
   depositTotal: number;
   remainingTotal: number;
 }
@@ -59,9 +62,24 @@ export function getDiscountedTotal(total: number, discount: number): number {
   return roundCurrency(Math.max(safeTotal - discountAmount, 0));
 }
 
-export function computeTotals<TCartItem extends CartPricingItem>(cart: TCartItem[], discount: number, taxInvoice: TaxInvoiceValue): TotalsResult<TCartItem> {
+export function getDiscountAmount(total: number, discount: DiscountSource | number): number {
+  const safeTotal = Math.max(roundCurrency(total), 0);
+  if (typeof discount === 'number') {
+    return Math.min(roundCurrency(Math.max(discount, 0)), safeTotal);
+  }
+
+  const safeValue = Number.isFinite(discount.value) ? Math.max(discount.value, 0) : 0;
+  if (discount.type === 'percent') {
+    const basisPoints = Math.min(Math.round((safeValue + Number.EPSILON) * 100), 10_000);
+    return roundCurrency((safeTotal * basisPoints) / 10_000);
+  }
+
+  return Math.min(roundCurrency(safeValue), safeTotal);
+}
+
+export function computeTotals<TCartItem extends CartPricingItem>(cart: TCartItem[], discount: DiscountSource | number, taxInvoice: TaxInvoiceValue): TotalsResult<TCartItem> {
   const total = getCartSubtotal(cart);
-  const discountAmount = roundCurrency(Math.min(Math.max(discount, 0), total));
+  const discountAmount = getDiscountAmount(total, discount);
   const finalTotal = getDiscountedTotal(total, discountAmount);
   const vatAmount = taxInvoice === 'yes' ? roundCurrency(finalTotal * 0.07) : 0;
   const grandTotal = roundCurrency(finalTotal + vatAmount);

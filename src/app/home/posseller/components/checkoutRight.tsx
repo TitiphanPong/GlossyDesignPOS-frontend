@@ -4,55 +4,15 @@ import React, { useEffect, useState } from 'react';
 import styles from './checkoutRight.module.css';
 import ButtonEdit from './buttonEdit';
 import ButtonDelete from './buttonDelete';
-import type { ProductVariant } from '@/lib/contracts';
-
-type CartItem = {
-  key: string;
-  name: string;
-  category?: string;
-  variant?: Omit<Partial<ProductVariant>, 'name'> & { name: string; custom?: boolean; width: number; height: number };
-  qty: number;
-  unitPrice: number;
-  totalPrice: number;
-
-  // ✅ รายละเอียดสินค้า
-  productNote?: string;
-
-  // นามบัตร
-  material?: string;
-  sides?: string;
-  colorMode?: string;
-
-  // ตรายาง
-  type?: 'normal' | 'inked';
-  shape?: 'circle' | 'square';
-  size?: string;
-
-  // สินค้าพรีเมียม
-  typePremium?: 'roundpin' | 'shirt-screen' | 'coffee-mug' | 'acrylic-sign';
-
-  // โพสการ์ด
-  setCount?: number; // ✅ จำนวนชุด
-
-  // อิงค์เจ็ท
-  sizeFlex?: { height: string; width: string }[]; // ✅ เพิ่มเข้าไป
-  inkjetType?: 'paper-gloss' | 'pp-board' | 'pp-banner' | 'vinyl' | 'pp-passwood' | 'backlid' | 'canvas';
-
-  // StickerPVC
-  stickerPVCType?: string;
-
-  // ✅ การชำระเงิน
-  deposit?: number;
-  remaining?: number;
-  fullPayment?: boolean;
-};
+import type { DiscountSource, TotalsResult } from '../../../utils/computeTotal';
+import type { CartItem } from '../types/cart';
 
 type Props = {
   cart: CartItem[];
-  total: number;
-  discount: number;
+  totals: TotalsResult<CartItem>;
+  discount: DiscountSource;
   onCheckout: (payment: 'cash' | 'promptpay') => void;
-  onDiscountChange?: (discount: number) => void;
+  onDiscountChange?: (discount: DiscountSource) => void;
   onPaymentChange?: (payment: 'cash' | 'promptpay') => void;
   onTaxInvoiceChange?: (value: 'yes' | 'no') => void; // ✅ เพิ่มเข้ามา
 
@@ -221,79 +181,40 @@ function CartItemDetailsList({ item }: Readonly<{ item: CartItem }>) {
   );
 }
 
-const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onDiscountChange, onPaymentChange, onEditItem, onDeleteItem, onTaxInvoiceChange }) => {
+const CheckOutRight: React.FC<Props> = ({ cart, totals, discount, onCheckout, onDiscountChange, onPaymentChange, onEditItem, onDeleteItem, onTaxInvoiceChange }) => {
   const [discountInput, setDiscountInput] = useState('');
-  const [discountValue, setDiscountValue] = useState(0);
-  const [discountType, setDiscountType] = useState<'percent' | 'fixed' | null>(null);
   const [payment, setPayment] = useState<'cash' | 'promptpay'>('cash');
   const [taxInvoice, setTaxInvoice] = useState<'yes' | 'no'>('no');
+  const { total, discountAmount, vatAmount, depositTotal, remainingTotal } = totals;
 
   useEffect(() => {
-    if (discount === 0) {
+    if (discount.value === 0) {
       setDiscountInput('');
-      setDiscountValue(0);
-      setDiscountType(null);
+      return;
     }
+
+    setDiscountInput(discount.type === 'percent' ? `${discount.value}%` : `-${discount.value}`);
   }, [discount]);
-
-  // ✅ ยอดสุทธิหลังส่วนลด
-  let finalTotal = total;
-  if (discountType === 'percent') {
-    finalTotal = total - (total * discountValue) / 100;
-  } else if (discountType === 'fixed') {
-    finalTotal = Math.max(total - discountValue, 0);
-  }
-
-  // ✅ คำนวณ VAT และยอดสุทธิ
-  const vatAmount = taxInvoice === 'yes' ? Math.round(finalTotal * 0.07 * 100) / 100 : 0;
-  const grandTotal = Math.round((finalTotal + vatAmount) * 100) / 100;
-
-  // ✅ กระจายส่วนลดลงสินค้าใน cart
-  let totalDeposit = 0;
-  let totalRemaining = 0;
-
-  cart.forEach(item => {
-    const itemPrice = item.totalPrice || 0;
-    const ratio = total > 0 ? itemPrice / total : 0;
-    const discountedItemPrice = grandTotal * ratio;
-
-    if (item.fullPayment) {
-      totalDeposit += discountedItemPrice;
-    } else {
-      const scale = discountedItemPrice / itemPrice;
-      const depositPart = (item.deposit || 0) * scale;
-      const remainingPart = (item.remaining || 0) * scale;
-
-      totalDeposit += depositPart;
-      totalRemaining += remainingPart;
-    }
-  });
 
   const handleApplyDiscount = () => {
     const value = discountInput.trim();
 
     if (!value) {
-      setDiscountValue(0);
-      setDiscountType(null);
-      onDiscountChange?.(0);
+      onDiscountChange?.({ type: 'amount', value: 0 });
       return;
     }
 
     if (value.endsWith('%')) {
       const percent = Number.parseFloat(value.replace('%', ''));
       if (!Number.isNaN(percent) && percent >= 0 && percent <= 100) {
-        setDiscountValue(percent);
-        setDiscountType('percent');
-        onDiscountChange?.((total * percent) / 100);
+        onDiscountChange?.({ type: 'percent', value: percent });
       } else {
         alert('กรุณากรอกเปอร์เซ็นต์ 0-100%');
       }
     } else if (value.startsWith('-')) {
       const fixed = Number.parseFloat(value.replace('-', ''));
       if (!Number.isNaN(fixed) && fixed > 0) {
-        setDiscountValue(fixed);
-        setDiscountType('fixed');
-        onDiscountChange?.(fixed);
+        onDiscountChange?.({ type: 'amount', value: fixed });
       } else {
         alert('กรุณากรอกจำนวนเงินที่ถูกต้อง เช่น -20');
       }
@@ -456,8 +377,8 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
             ยืนยัน
           </button>
         </form>
-        {discountType === 'percent' && <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginTop: '4px' }}>ใช้ส่วนลด {discountValue}%</p>}
-        {discountType === 'fixed' && <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginTop: '4px' }}>ใช้ส่วนลด {discountValue.toFixed(2)} บาท</p>}
+        {discount.type === 'percent' && discount.value > 0 && <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginTop: '4px' }}>ใช้ส่วนลด {discount.value}%</p>}
+        {discount.type === 'amount' && discount.value > 0 && <p style={{ fontSize: '0.85rem', color: '#2e7d32', marginTop: '4px' }}>ใช้ส่วนลด {discount.value.toFixed(2)} บาท</p>}
       </div>
 
       {/* ✅ Checkout Section */}
@@ -468,10 +389,10 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
           <span>ยอดรวม:</span>
           <span>฿{total.toFixed(2)}</span>
         </div>
-        {discount > 0 && (
+        {discountAmount > 0 && (
           <div className={styles.details}>
             <span>ส่วนลด :</span>
-            <span>-฿{discount.toFixed(2)}</span>
+            <span>-฿{discountAmount.toFixed(2)}</span>
           </div>
         )}
         <div className={styles.details}>
@@ -489,10 +410,10 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
         <div className={styles['checkout--footer']} style={{ flexDirection: 'column', alignItems: 'stretch', gap: '0.5rem' }}>
           <label className={styles.price}>
             <span className="currency">฿</span>
-            {totalDeposit.toFixed(2)}
+            {depositTotal.toFixed(2)}
           </label>
 
-          {totalRemaining > 0 && <p style={{ textAlign: 'center', margin: 0, color: '#d32f2f', fontWeight: 600 }}>ค้างชำระ {totalRemaining.toFixed(2)} บาท</p>}
+          {remainingTotal > 0 && <p style={{ textAlign: 'center', margin: 0, color: '#d32f2f', fontWeight: 600 }}>ค้างชำระ {remainingTotal.toFixed(2)} บาท</p>}
 
           <button className={styles['checkout-btn']} onClick={() => onCheckout(payment)} disabled={cart.length === 0} style={{ width: '100%' }}>
             ชำระเงิน
