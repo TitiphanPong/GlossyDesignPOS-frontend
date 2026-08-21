@@ -1,4 +1,4 @@
-import type { PaymentMethod, PendingOrderDraft } from './contracts';
+import type { CreateOrderRequest, PaymentMethod, PendingOrderDraft } from './contracts';
 
 export type PendingOrderSyncStatus = 'pending' | 'submitting' | 'submitted';
 export const PENDING_ORDER_SUBMIT_LOCK_TTL_MS = 60 * 1000;
@@ -159,19 +159,62 @@ export function isPendingOrderSettled(order: Pick<StoredPendingOrderDraft, 'stat
   return order.status === 'paid' || (order.status === 'partial' && Number(order.remainingTotal ?? 0) === 0);
 }
 
-export function buildPendingOrderPayload(order: StoredPendingOrderDraft, status: 'partial' | 'paid'): PendingOrderDraft {
-  const payload = { ...order };
-  delete payload.orderSyncStatus;
-  delete payload.orderSyncStartedAt;
-  delete payload.lastSubmissionError;
+export function buildPendingOrderPayload(order: StoredPendingOrderDraft, status: 'partial' | 'paid'): CreateOrderRequest {
+  void status;
+  const cart = Array.isArray(sanitizeCartForBackend(order.cart))
+    ? (sanitizeCartForBackend(order.cart) as Array<Record<string, unknown>>).map(item => {
+        const variant = isRecord(item.variant) ? item.variant : {};
+        const productId = typeof item.productId === 'string' ? item.productId : undefined;
+        const productCode = typeof item.productCode === 'string' ? item.productCode : undefined;
+        const typeCode = typeof item.typeCode === 'string' ? item.typeCode : undefined;
+        const name = typeof item.name === 'string' ? item.name : 'Custom item';
+        const rawUnitPrice = Number(item.unitPrice ?? 0);
+        const unitPrice = Math.round((rawUnitPrice + Number.EPSILON) * 100) / 100;
+
+        return {
+          ...(productId ? { productId } : {}),
+          ...(productCode ? { productCode } : {}),
+          ...(typeCode ? { typeCode } : {}),
+          ...(typeof variant.id === 'string' ? { variantId: variant.id } : {}),
+          ...(typeof variant._id === 'string' ? { variantId: variant._id } : {}),
+          ...(typeof variant.name === 'string' ? { variantName: variant.name } : {}),
+          ...(!productId && !productCode && !typeCode ? { customName: name } : {}),
+          quantity: Number(item.qty ?? item.quantity ?? 0),
+          priceOverride: { unitPrice, reason: 'configured_pos_quote' },
+          ...Object.fromEntries(
+            ['material', 'colorMode', 'type', 'typePremium', 'shape', 'size', 'setCount', 'inkjetType', 'sizeFlex', 'stickerPVCType', 'plotPlanType', 'sides', 'productNote', 'note', 'fullPayment']
+              .filter(field => item[field] !== undefined)
+              .map(field => [field, item[field]])
+          ),
+        };
+      })
+    : [];
+  const paymentAmount = Number(order.depositTotal ?? 0) > 0
+    ? Number(order.depositTotal)
+    : Number(order.remainingTotal ?? 0) === 0
+      ? Number(order.grandTotal ?? 0)
+      : 0;
 
   return {
-    ...payload,
-    status,
-    taxInvoice: payload.taxInvoice,
-    vatAmount: payload.vatAmount,
-    grandTotal: payload.grandTotal,
-    cart: sanitizeCartForBackend(payload.cart),
+    clientDraftId: order.clientDraftId,
+    orderType: 'NORMAL',
+    customerName: order.customerName,
+    phoneNumber: order.phoneNumber,
+    taxId: order.taxId,
+    address: order.address,
+    note: order.note,
+    taxInvoice: order.taxInvoice,
+    discount: { type: 'amount', value: Number(order.discount ?? 0) },
+    ...(paymentAmount > 0
+      ? {
+          initialPayment: {
+            amount: paymentAmount,
+            method: order.payment ?? 'cash',
+            receivedAmount: paymentAmount,
+          },
+        }
+      : {}),
+    cart,
   };
 }
 

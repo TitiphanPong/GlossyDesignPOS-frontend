@@ -221,9 +221,18 @@ export default function SellPage() {
     (item: CartItem) => {
       if (editingItem) {
         const editingKey = editingItem.key;
-        setCart(prev => prev.map(it => (it.key === editingKey ? { ...item, key: editingKey } : it)));
+        setCart(prev => prev.map(it => (it.key === editingKey ? { ...it, ...item, key: editingKey } : it)));
       } else if (activeProduct) {
-        setCart(prev => [...prev, { ...item, key: createCartItemKey(activeProduct.id) }]);
+        setCart(prev => [
+          ...prev,
+          {
+            ...item,
+            key: createCartItemKey(activeProduct.id),
+            productId: activeProduct.id,
+            productCode: activeProduct.code,
+            typeCode: activeProduct.typeCode,
+          },
+        ]);
       }
 
       closeModal();
@@ -275,7 +284,7 @@ export default function SellPage() {
         <PosStatCard
           title="Amount Due"
           value={summaryStats.amountDue.toLocaleString('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 })}
-          subtitle={taxInvoice === 'yes' ? 'แยก VAT 7% จากราคาที่รวมภาษีแล้ว' : 'ไม่ออกใบกำกับภาษี'}
+          subtitle={taxInvoice === 'yes' ? 'บวก VAT 7% จากราคาก่อนภาษี · ออกใบกำกับภาษี' : 'ใบเสร็จรับเงิน · ไม่บวก VAT'}
           tone="#0EA5A3"
           icon={<PaymentsRoundedIcon />}
         />

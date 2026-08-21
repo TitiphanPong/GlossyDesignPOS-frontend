@@ -1,21 +1,15 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import {
-  computeOrderPaymentSummary,
-  computeTotals,
-  getCartSubtotal,
-  getDiscountedTotal,
-  roundCurrency,
-} from './computeTotal';
+import { computeOrderPaymentSummary, computeTotals, getCartSubtotal, getDiscountedTotal, roundCurrency } from './computeTotal';
 
-test('getCartSubtotal sums item quantities and unit prices', () => {
+test('getCartSubtotal rounds unit prices to satang before multiplying quantity', () => {
   const subtotal = getCartSubtotal([
     { qty: 2, unitPrice: 99.995 },
     { qty: 1, unitPrice: 50 },
   ]);
 
-  assert.equal(subtotal, 249.99);
+  assert.equal(subtotal, 250);
 });
 
 test('getDiscountedTotal clamps discounts to a valid non-negative range', () => {
@@ -24,7 +18,7 @@ test('getDiscountedTotal clamps discounts to a valid non-negative range', () => 
   assert.equal(getDiscountedTotal(100, 250), 0);
 });
 
-test('computeTotals extracts VAT from VAT-inclusive prices without changing the amount due', () => {
+test('computeTotals adds 7% VAT to VAT-exclusive prices', () => {
   const result = computeTotals(
     [
       {
@@ -43,35 +37,44 @@ test('computeTotals extracts VAT from VAT-inclusive prices without changing the 
       },
     ],
     25,
-    'yes',
+    'yes'
   );
 
   assert.equal(result.total, 250);
   assert.equal(result.discountAmount, 25);
   assert.equal(result.finalTotal, 225);
-  assert.equal(result.vatAmount, 14.72);
-  assert.equal(result.grandTotal, 225);
+  assert.equal(result.vatAmount, 15.75);
+  assert.equal(result.grandTotal, 240.75);
 
   assert.deepEqual(result.adjustedCart, [
     {
       qty: 2,
       unitPrice: 100,
-      totalPrice: 168.22,
-      deposit: 45,
-      remaining: 135,
+      totalPrice: 180,
+      deposit: 48.15,
+      remaining: 144.45,
       fullPayment: false,
     },
     {
       qty: 1,
       unitPrice: 50,
-      totalPrice: 42.06,
-      deposit: 45,
+      totalPrice: 45,
+      deposit: 48.15,
       remaining: 0,
       fullPayment: true,
     },
   ]);
-  assert.equal(result.depositTotal, 90);
-  assert.equal(result.remainingTotal, 135);
+  assert.equal(result.depositTotal, 96.3);
+  assert.equal(result.remainingTotal, 144.45);
+});
+
+test('computeTotals does not add VAT for a regular receipt', () => {
+  const result = computeTotals([{ qty: 4, unitPrice: 60, deposit: 0, fullPayment: true }], 0, 'no');
+
+  assert.equal(result.finalTotal, 240);
+  assert.equal(result.vatAmount, 0);
+  assert.equal(result.grandTotal, 240);
+  assert.equal(result.depositTotal, 240);
 });
 
 test('computeTotals handles zero-value carts without producing NaN values', () => {
@@ -86,7 +89,7 @@ test('computeTotals handles zero-value carts without producing NaN values', () =
       },
     ],
     10,
-    'no',
+    'no'
   );
 
   assert.equal(result.total, 0);
@@ -108,6 +111,27 @@ test('computeTotals handles zero-value carts without producing NaN values', () =
   ]);
 });
 
+test('computeTotals allocates rounding residuals so line payments reconcile to grand total', () => {
+  const result = computeTotals(
+    [
+      { qty: 1, unitPrice: 0.05, deposit: 0, fullPayment: true },
+      { qty: 1, unitPrice: 0.05, deposit: 0, fullPayment: true },
+      { qty: 1, unitPrice: 0.05, deposit: 0, fullPayment: true },
+    ],
+    0,
+    'no'
+  );
+
+  assert.equal(result.grandTotal, 0.15);
+  assert.equal(result.depositTotal, result.grandTotal);
+  assert.equal(
+    roundCurrency(
+      result.adjustedCart.reduce((sum, item) => sum + Number(item.deposit), 0)
+    ),
+    result.grandTotal
+  );
+});
+
 test('computeOrderPaymentSummary uses deposit for partial orders and grand total for fully paid orders', () => {
   const partialSummary = computeOrderPaymentSummary({
     total: 250,
@@ -123,8 +147,8 @@ test('computeOrderPaymentSummary uses deposit for partial orders and grand total
     subtotal: 250,
     discount: 25,
     netTotal: 225,
-    vat: 14.72,
-    grandTotal: 225,
+    vat: 15.75,
+    grandTotal: 240.75,
     deposit: 90,
     remaining: 135,
     hasDeposit: true,

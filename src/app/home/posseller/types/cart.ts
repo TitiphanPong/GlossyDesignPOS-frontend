@@ -32,6 +32,9 @@ export type ProductModalComponentProps = {
 
 export type CartItem = {
   key: string;
+  productId?: string;
+  productCode?: string;
+  typeCode?: string;
   name: string;
   category?: string;
 

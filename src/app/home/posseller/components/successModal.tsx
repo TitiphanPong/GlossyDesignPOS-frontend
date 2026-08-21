@@ -68,7 +68,17 @@ function buildSubmittingOrder(order: StoredPendingOrderDraft): StoredPendingOrde
 
 function buildSubmittedOrder(
   order: StoredPendingOrderDraft,
-  backendOrder: { orderId: string; orderNumber?: string; status?: StoredPendingOrderDraft['status'] },
+  backendOrder: {
+    orderId: string;
+    orderNumber?: string;
+    status?: StoredPendingOrderDraft['status'];
+    subtotal?: number;
+    discount?: number;
+    vatAmount?: number;
+    grandTotal?: number;
+    paidAmount?: number;
+    remainingTotal?: number;
+  },
   status: StoredPendingOrderDraft['status']
 ): StoredPendingOrderDraft {
   return {
@@ -76,6 +86,12 @@ function buildSubmittedOrder(
     orderId: backendOrder.orderId,
     orderNumber: getDisplayOrderNumber(backendOrder),
     status: backendOrder.status ?? status,
+    total: backendOrder.subtotal ?? order.total,
+    discount: backendOrder.discount ?? order.discount,
+    vatAmount: backendOrder.vatAmount ?? order.vatAmount,
+    grandTotal: backendOrder.grandTotal ?? order.grandTotal,
+    depositTotal: backendOrder.paidAmount ?? order.depositTotal,
+    remainingTotal: backendOrder.remainingTotal ?? order.remainingTotal,
     orderSyncStatus: 'submitted',
     orderSyncStartedAt: undefined,
     lastSubmissionError: null,

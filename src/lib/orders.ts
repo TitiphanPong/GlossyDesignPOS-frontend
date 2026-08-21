@@ -1,5 +1,5 @@
 import { fetchApiJson } from './api';
-import { normalizeApiOrder, type ApiOrder, type NormalizedOrder, type PendingOrderDraft } from './contracts';
+import { normalizeApiOrder, type ApiOrder, type CreateOrderRequest, type NormalizedOrder } from './contracts';
 
 type ApiOrderLike = Partial<ApiOrder> & {
   id?: string;
@@ -142,7 +142,7 @@ export function sortOrdersByNewest<T extends Pick<NormalizedOrder, 'createdAt'>>
   return [...orders].sort((left, right) => new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime());
 }
 
-export async function createOrder(payload: PendingOrderDraft): Promise<NormalizedOrder> {
+export async function createOrder(payload: CreateOrderRequest): Promise<NormalizedOrder> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (typeof payload.clientDraftId === 'string' && payload.clientDraftId.trim().length > 0) {
     headers['Idempotency-Key'] = payload.clientDraftId.trim();

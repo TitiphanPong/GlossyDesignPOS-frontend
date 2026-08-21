@@ -1,22 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Chip,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  InputAdornment,
-  Stack,
-  TextField,
-  Typography,
-  alpha,
-} from '@mui/material';
+import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Stack, TextField, Typography, alpha } from '@mui/material';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
@@ -30,6 +15,8 @@ import ReceiptLongOutlinedIcon from '@mui/icons-material/ReceiptLongOutlined';
 import RequestQuoteOutlinedIcon from '@mui/icons-material/RequestQuoteOutlined';
 import HistoryRoundedIcon from '@mui/icons-material/HistoryRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
+import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
+import dayjs from 'dayjs';
 import { QRCodeCanvas } from 'qrcode.react';
 import generatePayload from 'promptpay-qr';
 import type { PaymentMethod } from '@/lib/contracts';
@@ -45,8 +32,7 @@ type QuickSalePaymentDialogProps = Readonly<{
   receivedAmount: number;
   submitting: boolean;
   entryMode: 'normal' | 'backdated';
-  saleDate: string;
-  saleTime: string;
+  saleDateTime: string;
   backdatedReason: string;
   onClose: () => void;
   onPaymentMethodChange: (method: PaymentMethod) => void;
@@ -54,8 +40,7 @@ type QuickSalePaymentDialogProps = Readonly<{
   onReceivedAmountChange: (amount: number) => void;
   onConfirm: () => void;
   onEntryModeChange: (mode: 'normal' | 'backdated') => void;
-  onSaleDateChange: (value: string) => void;
-  onSaleTimeChange: (value: string) => void;
+  onSaleDateTimeChange: (value: string) => void;
   onBackdatedReasonChange: (value: string) => void;
 }>;
 
@@ -131,8 +116,7 @@ export default function QuickSalePaymentDialog({
   receivedAmount,
   submitting,
   entryMode,
-  saleDate,
-  saleTime,
+  saleDateTime,
   backdatedReason,
   onClose,
   onPaymentMethodChange,
@@ -140,8 +124,7 @@ export default function QuickSalePaymentDialog({
   onReceivedAmountChange,
   onConfirm,
   onEntryModeChange,
-  onSaleDateChange,
-  onSaleTimeChange,
+  onSaleDateTimeChange,
   onBackdatedReasonChange,
 }: QuickSalePaymentDialogProps) {
   const changeAmount = calculateChange(receivedAmount, grandTotal);
@@ -254,46 +237,113 @@ export default function QuickSalePaymentDialog({
               {entryMode === 'backdated' ? <Chip size="small" label="ย้อนหลัง" color="warning" sx={{ fontWeight: 800 }} /> : null}
             </Stack>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.25 }}>
-              <PaymentMethodCard selected={entryMode === 'normal'} icon={<CalendarTodayRoundedIcon />} title="ขายวันนี้" description="บันทึกด้วยวันที่ปัจจุบัน" onClick={() => onEntryModeChange('normal')} />
-              <PaymentMethodCard selected={entryMode === 'backdated'} icon={<HistoryRoundedIcon />} title="ลงรายการย้อนหลัง" description="เลือกวันที่เกิดการขายจริง" onClick={() => onEntryModeChange('backdated')} />
+              <PaymentMethodCard
+                selected={entryMode === 'normal'}
+                icon={<CalendarTodayRoundedIcon />}
+                title="ขายวันนี้"
+                description="บันทึกด้วยวันที่ปัจจุบัน"
+                onClick={() => onEntryModeChange('normal')}
+              />
+              <PaymentMethodCard
+                selected={entryMode === 'backdated'}
+                icon={<HistoryRoundedIcon />}
+                title="ลงรายการย้อนหลัง"
+                description="เลือกวันที่เกิดการขายจริง"
+                onClick={() => onEntryModeChange('backdated')}
+              />
             </Box>
             {entryMode === 'backdated' ? (
-              <Stack gap={1.25} sx={{ mt: 1.5, pt: 1.5, borderTop: '1px solid #E8EDF4' }}>
-                <Stack direction="row" alignItems="flex-start" gap={1} sx={{ px: 1.25, py: 1, borderRadius: 2, bgcolor: '#FFF7E5', color: '#8A5A00' }}>
-                  <WarningAmberRoundedIcon sx={{ mt: 0.1, fontSize: 19 }} />
-                  <Typography variant="body2" fontWeight={700}>
-                    เลข Order ใช้เลขปัจจุบัน แต่วันที่ขายจะเป็นวันที่ที่เลือก
+              <Stack
+                gap={1.5}
+                sx={{
+                  mt: 1.5,
+                  p: { xs: 1.5, sm: 1.75 },
+                  border: '1px solid #F1DFC1',
+                  borderRadius: 3,
+                  background: 'linear-gradient(180deg, #FFFCF6 0%, #FFFFFF 72%)',
+                }}>
+                <Stack direction="row" alignItems="center" gap={1.25}>
+                  <Box
+                    sx={{
+                      width: 38,
+                      height: 38,
+                      borderRadius: 2.25,
+                      display: 'grid',
+                      placeItems: 'center',
+                      bgcolor: '#FFF0CF',
+                      color: '#9A5B00',
+                      flexShrink: 0,
+                    }}>
+                    <HistoryRoundedIcon sx={{ fontSize: 21 }} />
+                  </Box>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
+                    <Typography fontWeight={900} color="#3A2A10">
+                      รายละเอียดการขายย้อนหลัง
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      ระบุวันและเวลาที่เกิดการขายจริง
+                    </Typography>
+                  </Box>
+                </Stack>
+
+                <Alert
+                  severity="warning"
+                  variant="outlined"
+                  icon={<WarningAmberRoundedIcon fontSize="inherit" />}
+                  sx={{
+                    alignItems: 'flex-start',
+                    borderRadius: 2.5,
+                    borderColor: '#F4D99B',
+                    bgcolor: '#FFF8E8',
+                    color: '#704600',
+                    '& .MuiAlert-icon': { color: '#B76E00', pt: 0.25 },
+                    '& .MuiAlert-message': { py: 0 },
+                  }}>
+                  <Typography variant="body2" fontWeight={800}>
+                    เลข Order จะออกตามวันที่บันทึกปัจจุบัน
                   </Typography>
-                </Stack>
-                <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.25}>
-                  <TextField
-                    fullWidth
-                    required
-                    type="date"
-                    label="วันที่ขาย"
-                    value={saleDate}
-                    onChange={event => onSaleDateChange(event.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FFFFFF' } }}
-                  />
-                  <TextField
-                    fullWidth
-                    type="time"
-                    label="เวลา"
-                    value={saleTime}
-                    onChange={event => onSaleTimeChange(event.target.value)}
-                    InputLabelProps={{ shrink: true }}
-                    sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FFFFFF' } }}
-                  />
-                </Stack>
+                  <Typography variant="caption" sx={{ display: 'block', mt: 0.25, color: '#835C19' }}>
+                    ยอดขายและรายงานจะนับตามวันขายย้อนหลังที่เลือกด้านล่าง
+                  </Typography>
+                </Alert>
+
+                <DateTimePicker
+                  label="วันที่และเวลาที่เกิดการขาย"
+                  value={dayjs(saleDateTime)}
+                  onChange={value => {
+                    if (value?.isValid()) onSaleDateTimeChange(value.format('YYYY-MM-DDTHH:mm'));
+                  }}
+                  format="DD/MM/YYYY HH:mm"
+                  ampm={false}
+                  disableFuture
+                  maxDateTime={dayjs()}
+                  slotProps={{
+                    actionBar: { actions: ['today', 'cancel', 'accept'] },
+                    textField: {
+                      fullWidth: true,
+                      required: true,
+                      helperText: 'ใช้เป็นวันขายในรายงาน · เวลาโดยประมาณได้',
+                      sx: {
+                        '& .MuiPickersOutlinedInput-root, & .MuiOutlinedInput-root': { bgcolor: '#FFFFFF', borderRadius: 2.5 },
+                        '& .MuiFormHelperText-root': { mx: 0.5 },
+                      },
+                    },
+                  }}
+                />
                 <TextField
                   fullWidth
                   multiline
-                  minRows={2}
-                  label="เหตุผล / หมายเหตุ"
+                  minRows={2.5}
+                  label="เหตุผลที่ลงรายการย้อนหลัง"
+                  placeholder="เช่น นำเข้ารายการขายที่ตกหล่นจากวันที่ก่อน"
                   value={backdatedReason}
                   onChange={event => onBackdatedReasonChange(event.target.value)}
-                  sx={{ '& .MuiOutlinedInput-root': { bgcolor: '#FFFFFF' } }}
+                  helperText={`${backdatedReason.length}/500 · ข้อมูลนี้ช่วยในการตรวจสอบย้อนหลัง`}
+                  inputProps={{ maxLength: 500 }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': { bgcolor: '#FFFFFF', borderRadius: 2.5 },
+                    '& .MuiFormHelperText-root': { mx: 0.5, textAlign: 'right' },
+                  }}
                 />
               </Stack>
             ) : null}

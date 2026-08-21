@@ -76,7 +76,7 @@ test('buildPendingOrderPayload preserves clientDraftId but removes transient syn
       lastSubmissionError: 'retry me',
       depositTotal: 85.6,
       remainingTotal: 214,
-      cart: [{ name: 'Poster', qty: 1 }],
+      cart: [{ productId: 'product-1', name: 'Poster', qty: 1, unitPrice: 280 }],
       taxInvoice: 'yes',
       vatAmount: 18.2,
       grandTotal: 298.2,
@@ -84,17 +84,19 @@ test('buildPendingOrderPayload preserves clientDraftId but removes transient syn
     'partial'
   );
 
-  assert.equal(payload.status, 'partial');
+  assert.equal('status' in payload, false);
   assert.equal(payload.taxInvoice, 'yes');
-  assert.equal(payload.vatAmount, 18.2);
-  assert.equal(payload.grandTotal, 298.2);
+  assert.equal('vatAmount' in payload, false);
+  assert.equal('grandTotal' in payload, false);
   assert.equal(payload.clientDraftId, 'draft-001');
+  assert.deepEqual(payload.discount, { type: 'amount', value: 20 });
+  assert.deepEqual(payload.initialPayment, { amount: 85.6, method: 'cash', receivedAmount: 85.6 });
   assert.equal('orderSyncStatus' in payload, false);
   assert.equal('orderSyncStartedAt' in payload, false);
   assert.equal('lastSubmissionError' in payload, false);
 });
 
-test('buildPendingOrderPayload removes frontend-only variant fields rejected by backend validation', () => {
+test('buildPendingOrderPayload emits only product identity, quantity and explicit price override', () => {
   const payload = buildPendingOrderPayload(
     {
       clientDraftId: 'draft-variant-001',
@@ -108,6 +110,7 @@ test('buildPendingOrderPayload removes frontend-only variant fields rejected by 
       cart: [
         {
           name: 'Name Card',
+          productId: 'product-name-card',
           qty: 100,
           unitPrice: 3.745,
           totalPrice: 374.5,
@@ -126,12 +129,14 @@ test('buildPendingOrderPayload removes frontend-only variant fields rejected by 
     'paid'
   );
 
-  const firstItem = (payload.cart as Array<{ variant?: Record<string, unknown> }> | undefined)?.[0];
+  const firstItem = (payload.cart as Array<Record<string, unknown>> | undefined)?.[0];
   assert.ok(firstItem);
-  assert.equal(firstItem.variant?.name, '90 x 55 mm / MATTE');
-  assert.equal(firstItem.variant?.width, 90);
-  assert.equal(firstItem.variant?.height, 55);
-  assert.equal('paperKind' in (firstItem.variant ?? {}), false);
+  assert.equal(firstItem.productId, 'product-name-card');
+  assert.equal(firstItem.variantName, '90 x 55 mm / MATTE');
+  assert.equal(firstItem.quantity, 100);
+  assert.deepEqual(firstItem.priceOverride, { unitPrice: 3.75, reason: 'configured_pos_quote' });
+  assert.equal('variant' in firstItem, false);
+  assert.equal('totalPrice' in firstItem, false);
 });
 
 test('isPendingOrderSubmissionLocked only blocks fresh in-flight submissions', () => {

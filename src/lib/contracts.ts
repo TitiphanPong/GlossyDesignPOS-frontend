@@ -205,6 +205,7 @@ export type ApiOrder = {
   shippingAddress?: string;
   note?: string;
   category?: string;
+  subtotal?: number;
   total?: number;
   remainingTotal?: number;
   discount?: number;
@@ -273,6 +274,36 @@ export type NormalizedOrderAmounts = {
   paidAmount: number;
 };
 
+export type CreateOrderLine = {
+  productId?: string;
+  productCode?: string;
+  typeCode?: string;
+  variantId?: string;
+  variantName?: string;
+  customName?: string;
+  quantity: number;
+  priceOverride?: { unitPrice: number; reason: string };
+  [key: string]: unknown;
+};
+
+export type CreateOrderRequest = {
+  clientDraftId?: string;
+  orderType?: OrderType;
+  entryMode?: OrderEntryMode;
+  saleDate?: string;
+  backdatedReason?: string;
+  customerName?: string;
+  phoneNumber?: string;
+  taxId?: string;
+  address?: string;
+  note?: string;
+  salesChannel?: string;
+  taxInvoice?: 'yes' | 'no';
+  discount?: { type: 'amount' | 'percent'; value: number };
+  initialPayment?: { amount: number; method: PaymentMethod; receivedAmount?: number };
+  cart: CreateOrderLine[];
+};
+
 export type NormalizedOrder = {
   _id: string;
   orderId: string;
@@ -309,6 +340,8 @@ export type NormalizedOrder = {
   grandTotal: number;
   remainingTotal: number;
   paidAmount: number;
+  receivedAmount: number;
+  changeAmount: number;
 };
 
 export type NormalizedInvoiceOrder = {
@@ -404,10 +437,10 @@ export function normalizeApiOrderAmounts(
   }
 ): NormalizedOrderAmounts {
   const cart = Array.isArray(order.cart) ? order.cart.map(normalizeApiCartItem) : [];
-  const subtotal = cart.reduce((sum, item) => sum + item.totalPrice, 0);
+  const subtotal = Math.max(readNumber(order.subtotal) ?? cart.reduce((sum, item) => sum + item.totalPrice, 0), 0);
   const discount = Math.max(readNumber(order.discount) ?? 0, 0);
   const vatAmount = Math.max(readNumber(order.vatAmount) ?? 0, 0);
-  const finalTotal = Math.max(readNumber(order.finalTotal) ?? readNumber(order.total) ?? subtotal - discount, 0);
+  const finalTotal = Math.max(readNumber(order.finalTotal) ?? subtotal - discount, 0);
   const grandTotal = Math.max(readNumber(order.grandTotal) ?? finalTotal + vatAmount, 0);
   const remainingTotal = Math.max(readNumber(order.remainingTotal) ?? 0, 0);
   const paidAmount = Math.min(grandTotal, Math.max(grandTotal - remainingTotal, 0));
@@ -486,6 +519,8 @@ export function normalizeApiOrder(
     grandTotal: amounts.grandTotal,
     remainingTotal: amounts.remainingTotal,
     paidAmount: amounts.paidAmount,
+    receivedAmount: Math.max(readNumber(order.receivedAmount) ?? amounts.paidAmount, 0),
+    changeAmount: Math.max(readNumber(order.changeAmount) ?? 0, 0),
   };
 }
 

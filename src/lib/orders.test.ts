@@ -54,7 +54,10 @@ test('createOrder accepts a direct order response with orderNumber', async () =>
   globalThis.fetch = mockFetch;
 
   try {
-    const result = await createOrder({ status: 'paid', clientDraftId: 'draft-001' });
+    const result = await createOrder({
+      clientDraftId: 'draft-001',
+      cart: [{ customName: 'Test', quantity: 1, priceOverride: { unitPrice: 1, reason: 'test' } }],
+    });
     assert.equal(result.orderNumber, 'ORD-20260527-0001');
     assert.equal(result._id, 'abc123');
     assert.equal(getHeaderValue(capturedHeaders, 'Idempotency-Key'), 'draft-001');
@@ -87,7 +90,7 @@ test('createOrder accepts a wrapped order response with orderNumber', async () =
   globalThis.fetch = mockFetch;
 
   try {
-    const result = await createOrder({ status: 'partial' });
+    const result = await createOrder({ cart: [{ customName: 'Test', quantity: 1, priceOverride: { unitPrice: 1, reason: 'test' } }] });
     assert.equal(result.orderNumber, 'ORD-20260527-0002');
     assert.equal(result._id, 'abc124');
   } finally {
@@ -113,7 +116,7 @@ test('createOrder falls back to orderId when backend omits orderNumber', async (
   globalThis.fetch = mockFetch;
 
   try {
-    const result = await createOrder({ status: 'paid' });
+    const result = await createOrder({ cart: [{ customName: 'Test', quantity: 1, priceOverride: { unitPrice: 1, reason: 'test' } }] });
     assert.equal(result.orderId, 'legacy-003');
     assert.equal(result.orderNumber, 'legacy-003');
     assert.equal(result._id, 'abc125');

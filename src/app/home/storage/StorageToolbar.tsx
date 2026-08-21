@@ -1,8 +1,10 @@
-import { Box, Button, Card, CardContent, FormControl, InputAdornment, InputLabel, MenuItem, OutlinedInput, Select, Stack, TextField, Typography } from '@mui/material';
+import { Box, Button, Card, CardContent, FormControl, InputAdornment, InputLabel, MenuItem, OutlinedInput, Select, Stack, Typography } from '@mui/material';
 import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import dayjs from 'dayjs';
 import type { StorageStatus } from './normalizers';
 import type { SortType } from './storageData';
 
@@ -72,14 +74,28 @@ export default function StorageToolbar(props: Readonly<StorageToolbarProps>) {
                 <MenuItem value="completed">เสร็จสิ้น</MenuItem>
               </Select>
             </FormControl>
-            <TextField
+            <DatePicker
               label="วันที่"
-              size="small"
-              type="date"
-              value={dateFilter}
-              onChange={event => onDateChange(event.target.value)}
-              slotProps={{ inputLabel: { shrink: true } }}
-              sx={{ '& .MuiOutlinedInput-root': { borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' } }}
+              value={dateFilter ? dayjs(dateFilter) : null}
+              onChange={value => onDateChange(value?.isValid() ? value.format('YYYY-MM-DD') : '')}
+              format="DD/MM/YYYY"
+              disableFuture
+              maxDate={dayjs()}
+              slotProps={{
+                actionBar: { actions: ['clear', 'today', 'cancel', 'accept'] },
+                field: { clearable: true },
+                textField: {
+                  size: 'small',
+                  sx: {
+                    '& .MuiPickersOutlinedInput-root, & .MuiOutlinedInput-root': {
+                      borderRadius: 3,
+                      height: 46,
+                      bgcolor: '#FFFFFF',
+                      boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)',
+                    },
+                  },
+                },
+              }}
             />
             <FormControl size="small">
               <InputLabel id="sort-filter">เรียงลำดับ</InputLabel>

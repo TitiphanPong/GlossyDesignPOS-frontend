@@ -37,10 +37,14 @@ export type QuickSaleCartItem = {
   key: string;
   productId?: string;
   productCode?: string;
+  typeCode?: string;
+  variantId?: string;
+  variantName?: string;
   productName: string;
   category: string;
   quantity: number;
   unitPrice: number;
+  catalogUnitPrice?: number;
 };
 
 type QuickSaleTotals = {

@@ -49,7 +49,7 @@ import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlin
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import QuickSellerCart, { type QuickSaleCartItem } from './components/QuickSellerCart';
 import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
-import { calculateAddedVat, calculateChange, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, type DiscountMode } from './quickSale';
+import { calculateAddedVat, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, type DiscountMode } from './quickSale';
 
 type QuickItem = QuickSaleCartItem;
 type CompletedSale = { orderId: string; orderNumber: string; grandTotal: number; changeAmount: number };
@@ -112,8 +112,7 @@ export default function QuickSalePage() {
   const [checkoutDraftId, setCheckoutDraftId] = React.useState<string | null>(null);
   const now = new Date();
   const [entryMode, setEntryMode] = React.useState<'normal' | 'backdated'>('normal');
-  const [saleDate, setSaleDate] = React.useState(localDateValue(now));
-  const [saleTime, setSaleTime] = React.useState(`${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
+  const [saleDateTime, setSaleDateTime] = React.useState(`${localDateValue(now)}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
   const [backdatedReason, setBackdatedReason] = React.useState('');
 
   const clearQuickSaleCustomerDisplay = React.useCallback(() => {
@@ -157,7 +156,7 @@ export default function QuickSalePage() {
   React.useEffect(() => {
     void loadProducts();
   }, [loadProducts]);
-  const subtotal = React.useMemo(() => roundMoney(items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0)), [items]);
+  const subtotal = React.useMemo(() => roundMoney(items.reduce((sum, item) => sum + item.quantity * roundMoney(item.unitPrice), 0)), [items]);
   const totals = React.useMemo(() => calculateQuickSale(subtotal, discountValue, discountMode), [subtotal, discountValue, discountMode]);
   const vatAmount = React.useMemo(() => (taxInvoice === 'yes' ? calculateAddedVat(totals.grandTotal) : 0), [taxInvoice, totals.grandTotal]);
   const payableTotal = React.useMemo(() => calculatePayableTotal(totals.grandTotal, taxInvoice), [taxInvoice, totals.grandTotal]);
@@ -236,10 +235,14 @@ export default function QuickSalePage() {
               key,
               productId: product.id,
               productCode: product.code,
+              typeCode: product.typeCode,
+              variantId: variant.id || variant._id || undefined,
+              variantName: variant.name,
               productName: !isDefaultVariantName(variant.name) ? `${product.name} — ${variant.name}` : product.name,
               category: product.category,
               quantity: 1,
               unitPrice: variant.price,
+              catalogUnitPrice: variant.price,
             },
           ]
     );
@@ -298,49 +301,50 @@ export default function QuickSalePage() {
       const result = await createOrder({
         clientDraftId,
         orderType: 'QUICK_SALE',
-        ...(entryMode === 'backdated' ? { entryMode, saleDate: new Date(`${saleDate}T${saleTime}:00`).toISOString(), backdatedReason } : {}),
+        ...(entryMode === 'backdated' ? { entryMode, saleDate: new Date(`${saleDateTime}:00`).toISOString(), backdatedReason } : {}),
         salesChannel: 'quick_sale',
         customerName: 'ลูกค้าหน้าร้าน',
         phoneNumber: '',
         note: '',
         cart: items.map(item => ({
-          productId: item.productId,
-          productCode: item.productCode,
-          name: item.productName,
-          category: item.category,
-          qty: item.quantity,
-          unitPrice: item.unitPrice,
-          totalPrice: roundMoney(item.quantity * item.unitPrice),
-          lineTotal: roundMoney(item.quantity * item.unitPrice),
+          ...(item.productId ? { productId: item.productId } : {}),
+          ...(item.productCode ? { productCode: item.productCode } : {}),
+          ...(item.typeCode ? { typeCode: item.typeCode } : {}),
+          ...(item.variantId ? { variantId: item.variantId } : {}),
+          ...(item.variantName ? { variantName: item.variantName } : {}),
+          ...(!item.productId && !item.productCode ? { customName: item.productName } : {}),
+          quantity: item.quantity,
+          ...(item.catalogUnitPrice === undefined || item.unitPrice !== item.catalogUnitPrice
+            ? { priceOverride: { unitPrice: roundMoney(item.unitPrice), reason: item.catalogUnitPrice === undefined ? 'quick_sale_custom_item' : 'quick_sale_manual_price' } }
+            : {}),
           fullPayment: true,
         })),
-        subtotal: totals.subtotal,
-        total: totals.subtotal,
-        discount: totals.discount,
-        grandTotal: payableTotal,
-        payment: paymentMethod,
-        paymentMethod,
-        paidAmount: payableTotal,
-        depositTotal: payableTotal,
-        remainingTotal: 0,
-        receivedAmount: paymentMethod === 'cash' ? receivedAmount : payableTotal,
-        changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, payableTotal) : 0,
-        status: 'paid',
+        discount: { type: discountMode, value: discountValue },
+        initialPayment: {
+          amount: payableTotal,
+          method: paymentMethod,
+          receivedAmount: paymentMethod === 'cash' ? receivedAmount : payableTotal,
+        },
         taxInvoice,
-        vatAmount,
       });
       setCompleted({
         orderId: result.orderId,
         orderNumber: result.orderNumber,
-        grandTotal: payableTotal,
-        changeAmount: paymentMethod === 'cash' ? calculateChange(receivedAmount, payableTotal) : 0,
+        grandTotal: result.grandTotal,
+        changeAmount: result.changeAmount,
       });
       if (customerDisplayDraft) {
         persistPendingOrderDraft({
           ...customerDisplayDraft,
           orderId: result.orderId,
           orderNumber: result.orderNumber,
-          status: 'paid',
+          status: result.status,
+          total: result.subtotal,
+          discount: result.discount,
+          vatAmount: result.vatAmount,
+          grandTotal: result.grandTotal,
+          depositTotal: result.paidAmount,
+          remainingTotal: result.remainingTotal,
           orderSyncStatus: 'submitted',
         });
       }
@@ -688,8 +692,7 @@ export default function QuickSalePage() {
         receivedAmount={receivedAmount}
         submitting={submitting}
         entryMode={entryMode}
-        saleDate={saleDate}
-        saleTime={saleTime}
+        saleDateTime={saleDateTime}
         backdatedReason={backdatedReason}
         onClose={closeCheckout}
         onPaymentMethodChange={setPaymentMethod}
@@ -697,8 +700,7 @@ export default function QuickSalePage() {
         onReceivedAmountChange={setReceivedAmount}
         onConfirm={() => void submitSale()}
         onEntryModeChange={setEntryMode}
-        onSaleDateChange={setSaleDate}
-        onSaleTimeChange={setSaleTime}
+        onSaleDateTimeChange={setSaleDateTime}
         onBackdatedReasonChange={setBackdatedReason}
       />
 

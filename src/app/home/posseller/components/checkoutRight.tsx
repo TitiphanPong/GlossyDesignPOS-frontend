@@ -245,8 +245,8 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
   }
 
   // ✅ คำนวณ VAT และยอดสุทธิ
-  const vatAmount = taxInvoice === 'yes' ? (finalTotal * 7) / 107 : 0;
-  const grandTotal = finalTotal;
+  const vatAmount = taxInvoice === 'yes' ? Math.round(finalTotal * 0.07 * 100) / 100 : 0;
+  const grandTotal = Math.round((finalTotal + vatAmount) * 100) / 100;
 
   // ✅ กระจายส่วนลดลงสินค้าใน cart
   let totalDeposit = 0;
@@ -400,7 +400,7 @@ const CheckOutRight: React.FC<Props> = ({ cart, total, discount, onCheckout, onD
       {/* ✅ Tax Invoice Section */}
       <div className={`${styles.card} ${styles.payment}`}>
         <div className={styles.title}>🧾 ใบกำกับภาษี</div>
-        <div style={{ marginTop: 8, color: '#64748B', fontSize: 13 }}>เลือกออกใบกำกับภาษีเพื่อแยก VAT 7% จากราคาที่รวมภาษีแล้ว โดยยอดชำระไม่เปลี่ยน</div>
+        <div style={{ marginTop: 8, color: '#64748B', fontSize: 13 }}>ใบเสร็จรับเงินไม่บวก VAT; เลือกใบกำกับภาษีเพื่อบวก VAT 7% จากราคาก่อนภาษี</div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginTop: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '11px 12px', border: '1px solid #DCE6F4', borderRadius: 12, cursor: 'pointer', background: '#FCFDFF' }}>
