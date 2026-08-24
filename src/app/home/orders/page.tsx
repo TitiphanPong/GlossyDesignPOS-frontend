@@ -2,7 +2,6 @@
 
 import * as React from 'react';
 import {
-  Badge,
   Alert,
   Box,
   Button,
@@ -16,7 +15,6 @@ import {
   FormControl,
   IconButton,
   InputAdornment,
-  InputLabel,
   MenuItem,
   Select,
   Snackbar,
@@ -37,17 +35,19 @@ import dayjs from 'dayjs';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import FileDownloadRoundedIcon from '@mui/icons-material/FileDownloadRounded';
 import AddShoppingCartRoundedIcon from '@mui/icons-material/AddShoppingCartRounded';
 import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import SortRoundedIcon from '@mui/icons-material/SortRounded';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import TodayRoundedIcon from '@mui/icons-material/TodayRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import ClearRoundedIcon from '@mui/icons-material/ClearRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
@@ -57,17 +57,19 @@ import { commonButtonSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
-import { type NormalizedOrder } from '../../../lib/contracts';
+import { type NormalizedOrder, type PaymentMethod } from '../../../lib/contracts';
 import { convertOrderToTaxInvoice, deleteOrder, downloadOrdersExport, type OrderListSummary, updateOrderCustomerInfo } from '../../../lib/orders';
 import type { ExportType, OrderRow, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import {
   ORDER_TABLE_PAYMENT_LABEL,
   ORDER_TABLE_STATUS_UI,
+  PAYMENT_METHOD_LABELS_TH,
   SORT_ORDER_LABELS,
   buildOrderLineSummary,
   fetchOrderRows,
   formatMoney,
+  formatMonthFilterLabel,
   formatOrderRowTime,
   formatTableCurrency,
   formatThaiFullDate,
@@ -78,6 +80,125 @@ import {
   statusChip,
   updateOrderStatus,
 } from './orderManagementUtils';
+
+type TaxInvoiceFilter = 'all' | 'yes' | 'no';
+type DatePreset = 'all' | 'today' | 'last7' | 'last30' | 'month' | 'custom';
+
+const DATE_PRESET_LABELS: Record<Exclude<DatePreset, 'custom'>, string> = {
+  all: 'ทั้งหมด',
+  today: 'วันนี้',
+  last7: 'ย้อนหลัง 7 วัน',
+  last30: '30 วัน',
+  month: 'เดือนนี้',
+};
+
+function bangkokDateParam(value: dayjs.Dayjs, endOfDay = false): string {
+  return `${value.format('YYYY-MM-DD')}T${endOfDay ? '23:59:59' : '00:00:00'}+07:00`;
+}
+
+function resolveDatePreset(preset: Exclude<DatePreset, 'custom'>): { start: dayjs.Dayjs | null; end: dayjs.Dayjs | null } {
+  const today = dayjs();
+  if (preset === 'all') return { start: null, end: null };
+  if (preset === 'today') return { start: today, end: today };
+  if (preset === 'last7') return { start: today.subtract(6, 'day'), end: today };
+  if (preset === 'last30') return { start: today.subtract(29, 'day'), end: today };
+  return { start: today.startOf('month'), end: today };
+}
+
+type ReportDateRangePanelProps = {
+  preset: DatePreset;
+  startDate: dayjs.Dayjs | null;
+  endDate: dayjs.Dayjs | null;
+  onPresetChange: (preset: Exclude<DatePreset, 'custom'>) => void;
+  onStartDateChange: (value: dayjs.Dayjs | null) => void;
+  onEndDateChange: (value: dayjs.Dayjs | null) => void;
+};
+
+function ReportDateRangePanel({ preset, startDate, endDate, onPresetChange, onStartDateChange, onEndDateChange }: Readonly<ReportDateRangePanelProps>) {
+  const dateFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      height: 48,
+      borderRadius: 1.5,
+      bgcolor: '#FFFFFF',
+      '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
+      '&:hover fieldset': { borderColor: '#94A3B8' },
+      '&.Mui-focused fieldset': { borderColor: '#2563EB' },
+    },
+    '& .MuiInputBase-input': { fontSize: 13, py: 0 },
+  };
+
+  return (
+    <Box
+      sx={{
+        gridColumn: { xs: 'auto', lg: 2 },
+        gridRow: { xs: 'auto', lg: '1 / span 2' },
+        border: '1px solid #E2E8F0',
+        borderRadius: 2.5,
+        p: { xs: 1.5, sm: 2.25 },
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        minWidth: 0,
+      }}>
+      <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
+        <Box sx={{ width: 34, height: 34, borderRadius: 1.5, display: 'grid', placeItems: 'center', bgcolor: '#EFF6FF', color: '#2563EB' }}>
+          <CalendarMonthRoundedIcon sx={{ fontSize: 19 }} />
+        </Box>
+        <Typography sx={{ color: '#0F172A', fontWeight: 700, fontSize: 15 }}>ช่วงวันที่</Typography>
+      </Stack>
+      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 0.5, p: 0.5, border: '1px solid #E2E8F0', borderRadius: 1.75, mb: 2 }}>
+        {(['today', 'last7', 'month'] as const).map(item => (
+          <Button
+            key={item}
+            variant="text"
+            onClick={() => onPresetChange(item)}
+            aria-pressed={preset === item}
+            sx={{
+              minWidth: 0,
+              minHeight: 38,
+              px: 0.5,
+              borderRadius: 1.25,
+              textTransform: 'none',
+              color: preset === item ? '#1D4ED8' : '#64748B',
+              bgcolor: preset === item ? '#EFF6FF' : 'transparent',
+              fontSize: 12.5,
+              fontWeight: preset === item ? 700 : 600,
+              '&:hover': { bgcolor: '#F8FAFC' },
+            }}>
+            {DATE_PRESET_LABELS[item]}
+          </Button>
+        ))}
+      </Box>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) auto minmax(0, 1fr)' }, alignItems: 'end', gap: 0.75 }}>
+        <DatePicker
+          label="วันที่เริ่มต้น"
+          value={startDate}
+          maxDate={endDate ?? dayjs()}
+          format="DD/MM/YYYY"
+          onChange={onStartDateChange}
+          slotProps={{ textField: { size: 'small', fullWidth: true, sx: dateFieldSx } }}
+        />
+        <Typography sx={{ display: { xs: 'none', sm: 'block' }, pb: 1.6, color: '#94A3B8', fontSize: 18 }}>→</Typography>
+        <DatePicker
+          label="วันที่สิ้นสุด"
+          value={endDate}
+          minDate={startDate ?? undefined}
+          maxDate={dayjs()}
+          format="DD/MM/YYYY"
+          onChange={onEndDateChange}
+          slotProps={{ textField: { size: 'small', fullWidth: true, sx: dateFieldSx } }}
+        />
+      </Box>
+      {preset === 'custom' ? <Typography sx={{ mt: 0.75, color: '#2563EB', fontSize: 12, fontWeight: 600 }}>กำหนดเอง</Typography> : null}
+    </Box>
+  );
+}
+
+const TAX_INVOICE_FILTER_LABELS: Record<TaxInvoiceFilter, string> = {
+  all: 'ทั้งหมด',
+  yes: 'ใบกำกับภาษี',
+  no: 'ใบเสร็จทั่วไป',
+};
 
 export default function OrderManagementPage() {
   const router = useRouter();
@@ -91,6 +212,11 @@ export default function OrderManagementPage() {
   const [missingApiBase, setMissingApiBase] = React.useState(false);
   const [search, setSearch] = React.useState('');
   const [monthFilter, setMonthFilter] = React.useState<string>('all');
+  const [datePreset, setDatePreset] = React.useState<DatePreset>('all');
+  const [startDate, setStartDate] = React.useState<dayjs.Dayjs | null>(null);
+  const [endDate, setEndDate] = React.useState<dayjs.Dayjs | null>(null);
+  const [paymentMethodFilter, setPaymentMethodFilter] = React.useState<'all' | PaymentMethod>('all');
+  const [taxInvoiceFilter, setTaxInvoiceFilter] = React.useState<TaxInvoiceFilter>('all');
   const [filtersReady, setFiltersReady] = React.useState(false);
   const [sort, setSort] = React.useState<SortOrder>('newest');
   const [page, setPage] = React.useState(0);
@@ -124,7 +250,12 @@ export default function OrderManagementPage() {
         page: page + 1,
         limit: rowsPerPage,
         search,
-        saleMonth: monthFilter === 'all' ? undefined : monthFilter,
+        saleMonth: datePreset === 'month' ? monthFilter : undefined,
+        period: datePreset === 'today' ? 'today' : undefined,
+        saleFrom: datePreset !== 'all' && datePreset !== 'today' && datePreset !== 'month' && startDate ? bangkokDateParam(startDate) : undefined,
+        saleTo: datePreset !== 'all' && datePreset !== 'today' && datePreset !== 'month' && endDate ? bangkokDateParam(endDate, true) : undefined,
+        paymentMethod: paymentMethodFilter === 'all' ? undefined : paymentMethodFilter,
+        taxInvoice: taxInvoiceFilter === 'all' ? undefined : taxInvoiceFilter,
         sort: sort === 'high' ? 'amount_desc' : sort === 'low' ? 'amount_asc' : sort,
       });
       if (requestId !== loadRequestRef.current) return;
@@ -145,12 +276,16 @@ export default function OrderManagementPage() {
     } finally {
       if (requestId === loadRequestRef.current) setIsLoading(false);
     }
-  }, [monthFilter, page, rowsPerPage, search, sort]);
+  }, [datePreset, endDate, monthFilter, page, paymentMethodFilter, rowsPerPage, search, sort, startDate, taxInvoiceFilter]);
 
   React.useEffect(() => {
     const requestedMonth = new URLSearchParams(window.location.search).get('month');
     if (requestedMonth && /^\d{4}-(0[1-9]|1[0-2])$/.test(requestedMonth)) {
       setMonthFilter(requestedMonth);
+      setDatePreset('month');
+      const requestedDate = dayjs(`${requestedMonth}-01`);
+      setStartDate(requestedDate);
+      setEndDate(requestedDate.endOf('month'));
     }
     setFiltersReady(true);
   }, []);
@@ -165,7 +300,7 @@ export default function OrderManagementPage() {
 
   React.useEffect(() => {
     setPage(0);
-  }, [search, monthFilter, sort]);
+  }, [search, monthFilter, datePreset, startDate, endDate, paymentMethodFilter, taxInvoiceFilter, sort]);
 
   const rowMenuTarget = React.useMemo(() => (menuOrderId ? (rowsById.get(menuOrderId) ?? null) : null), [menuOrderId, rowsById]);
 
@@ -294,7 +429,12 @@ export default function OrderManagementPage() {
         await downloadOrdersExport(
           {
             search,
-            saleMonth: monthFilter === 'all' ? undefined : monthFilter,
+            saleMonth: datePreset === 'month' ? monthFilter : undefined,
+            period: datePreset === 'today' ? 'today' : undefined,
+            saleFrom: datePreset !== 'all' && datePreset !== 'today' && datePreset !== 'month' && startDate ? bangkokDateParam(startDate) : undefined,
+            saleTo: datePreset !== 'all' && datePreset !== 'today' && datePreset !== 'month' && endDate ? bangkokDateParam(endDate, true) : undefined,
+            paymentMethod: paymentMethodFilter === 'all' ? undefined : paymentMethodFilter,
+            taxInvoice: taxInvoiceFilter === 'all' ? undefined : taxInvoiceFilter,
             sort: sort === 'high' ? 'amount_desc' : sort === 'low' ? 'amount_asc' : sort,
           },
           format
@@ -305,13 +445,25 @@ export default function OrderManagementPage() {
         setExporting(null);
       }
     },
-    [monthFilter, search, sort]
+    [datePreset, endDate, monthFilter, paymentMethodFilter, search, sort, startDate, taxInvoiceFilter]
   );
 
   const labelDisplayedRows = React.useCallback(({ from, to, count }: { from: number; to: number; count: number }) => {
     const totalLabel = count === -1 ? `มากกว่า ${to}` : `${count}`;
     return `${from}-${to} จาก ${totalLabel}`;
   }, []);
+
+  const hasActiveFilters = Boolean(search.trim()) || datePreset !== 'all' || paymentMethodFilter !== 'all' || taxInvoiceFilter !== 'all' || sort !== 'newest';
+  const resetFilters = () => {
+    setSearch('');
+    setMonthFilter('all');
+    setDatePreset('all');
+    setStartDate(null);
+    setEndDate(null);
+    setPaymentMethodFilter('all');
+    setTaxInvoiceFilter('all');
+    setSort('newest');
+  };
 
   return (
     <AdminPageContainer>
@@ -341,22 +493,6 @@ export default function OrderManagementPage() {
                 </Box>
 
                 <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ minHeight: { md: 110 } }}>
-                  <Tooltip title="การแจ้งเตือน">
-                    <IconButton
-                      sx={{
-                        borderRadius: 3,
-                        border: '1px solid #DFE8F5',
-                        bgcolor: '#FFFFFF',
-                        width: 44,
-                        height: 44,
-                        boxShadow: '0 10px 20px rgba(12, 56, 110, 0.08)',
-                      }}>
-                      <Badge color="error" variant="dot">
-                        <NotificationsRoundedIcon sx={{ color: '#2A4365' }} />
-                      </Badge>
-                    </IconButton>
-                  </Tooltip>
-
                   <Button
                     onClick={() => {
                       void loadOrders();
@@ -418,7 +554,13 @@ export default function OrderManagementPage() {
             gap: 1.4,
           }}>
           <Box>
-            <StatCard title="ยอดขาย" value={`฿${formatMoney(stats.sales)}`} subtitle={monthFilter === 'all' ? 'ยอดขายทั้งหมด' : `ยอดขายเดือน ${monthFilter}`} tone="#1E5EFF" icon={<AttachMoneyRoundedIcon />} />
+            <StatCard
+              title="ยอดขาย"
+              value={`฿${formatMoney(stats.sales)}`}
+              subtitle={monthFilter === 'all' ? 'ยอดขายทั้งหมด' : monthFilter === 'today' ? 'ยอดขายวันนี้' : `ยอดขายเดือน ${formatMonthFilterLabel(monthFilter)}`}
+              tone="#1E5EFF"
+              icon={<AttachMoneyRoundedIcon />}
+            />
           </Box>
           <Box>
             <StatCard title="ยอดรอชำระ" value={`฿${formatMoney(stats.outstanding)}`} subtitle="ยอดค้างของรายการตามตัวกรอง" tone="#F08C00" icon={<PaymentsRoundedIcon />} />
@@ -436,23 +578,38 @@ export default function OrderManagementPage() {
 
         <Card
           sx={{
-            borderRadius: 4.6,
-            border: '1px solid #E7EDF7',
-            boxShadow: '0 12px 30px rgba(15, 37, 74, 0.08)',
+            borderRadius: 5,
+            border: '1px solid #E2E8F0',
+            boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
             background: '#FFFFFF',
           }}>
-          <CardContent sx={{ p: { xs: 1.8, md: 2.3 } }}>
-            <Stack spacing={1.6}>
-              <Stack direction="row" alignItems="center" spacing={1}>
-                <TuneRoundedIcon sx={{ color: '#3866E8', fontSize: 20 }} />
-                <Typography sx={{ color: '#102A43', fontWeight: 800, fontSize: 15 }}>ค้นหารายการงาน</Typography>
+          <CardContent sx={{ p: { xs: 1.5, md: 2.25 } }}>
+            <Stack spacing={1.5}>
+              <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
+                <Stack direction="row" alignItems="center" spacing={1}>
+                  <TuneRoundedIcon sx={{ color: '#2563EB', fontSize: 19 }} />
+                  <Box>
+                    <Typography sx={{ color: '#0F172A', fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>ค้นหารายงาน</Typography>
+                    <Typography sx={{ color: '#64748B', fontSize: 12, mt: 0.25 }}>ค้นหาและกรองรายการขายย้อนหลัง</Typography>
+                  </Box>
+                </Stack>
+                <Button
+                  size="small"
+                  disabled={!hasActiveFilters}
+                  onClick={resetFilters}
+                  startIcon={<RefreshRoundedIcon sx={{ fontSize: 16 }} />}
+                  sx={{ minHeight: 32, px: 1, color: '#64748B', textTransform: 'none', fontWeight: 600, '&:hover': { bgcolor: '#F8FAFC', color: '#2563EB' } }}>
+                  ล้างตัวกรอง
+                </Button>
               </Stack>
 
               <Box
                 sx={{
                   display: 'grid',
-                  gridTemplateColumns: { xs: '1fr', md: 'minmax(280px, 1.6fr) repeat(2, minmax(150px, 0.7fr))' },
-                  gap: 1.2,
+                  gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1.7fr) minmax(360px, 1fr)' },
+                  gridTemplateRows: { xs: 'auto', lg: 'auto auto' },
+                  gap: { xs: 1.5, lg: 2 },
+                  alignItems: 'stretch',
                 }}>
                 <TextField
                   size="small"
@@ -466,52 +623,190 @@ export default function OrderManagementPage() {
                           <SearchRoundedIcon sx={{ color: '#6B7A90' }} />
                         </InputAdornment>
                       ),
+                      endAdornment: search ? (
+                        <InputAdornment position="end">
+                          <IconButton aria-label="ล้างคำค้นหา" size="small" onClick={() => setSearch('')} edge="end">
+                            <ClearRoundedIcon fontSize="small" />
+                          </IconButton>
+                        </InputAdornment>
+                      ) : undefined,
                     },
                   }}
                   sx={{
                     '& .MuiOutlinedInput-root': {
-                      borderRadius: 3,
-                      height: 46,
+                      borderRadius: 2.5,
+                      height: 64,
                       bgcolor: '#FFFFFF',
-                      boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)',
+                      '& input': { fontSize: 15, color: '#0F172A' },
+                      '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
+                      '&:hover fieldset': { borderColor: '#94A3B8' },
+                      '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.12)' },
+                      '&.Mui-focused fieldset': { borderColor: '#2563EB' },
                     },
                   }}
                 />
 
-                <Stack direction="row" spacing={0.7}>
-                  <Button
-                    variant={monthFilter === 'all' ? 'contained' : 'outlined'}
-                    onClick={() => setMonthFilter('all')}
-                    sx={{ minWidth: 72, height: 46, borderRadius: 3, textTransform: 'none' }}>
-                    ทั้งหมด
-                  </Button>
-                  <DatePicker
-                    label="เดือน"
-                    views={['year', 'month']}
-                    value={monthFilter === 'all' ? null : dayjs(`${monthFilter}-01`)}
-                    maxDate={dayjs()}
-                    onChange={value => {
-                      if (value?.isValid()) setMonthFilter(value.format('YYYY-MM'));
-                    }}
-                    slotProps={{ textField: { size: 'small', sx: { '& .MuiOutlinedInput-root': { height: 46, borderRadius: 3, bgcolor: '#FFFFFF' } } } }}
-                  />
-                </Stack>
+                <ReportDateRangePanel
+                  preset={datePreset}
+                  startDate={startDate}
+                  endDate={endDate}
+                  onPresetChange={preset => {
+                    const range = resolveDatePreset(preset);
+                    setDatePreset(preset);
+                    setStartDate(range.start);
+                    setEndDate(range.end);
+                    if (preset === 'month' && range.start) setMonthFilter(range.start.format('YYYY-MM'));
+                    else setMonthFilter('all');
+                  }}
+                  onStartDateChange={value => {
+                    if (!value || !value.isValid()) return;
+                    setDatePreset('custom');
+                    setMonthFilter('all');
+                    setStartDate(value);
+                    if (endDate && value.isAfter(endDate, 'day')) setEndDate(value);
+                  }}
+                  onEndDateChange={value => {
+                    if (!value || !value.isValid()) return;
+                    setDatePreset('custom');
+                    setMonthFilter('all');
+                    setEndDate(value);
+                    if (startDate && value.isBefore(startDate, 'day')) setStartDate(value);
+                  }}
+                />
 
-                <FormControl size="small">
-                  <InputLabel id="sort-filter">เรียงลำดับ</InputLabel>
-                  <Select<SortOrder>
-                    labelId="sort-filter"
-                    value={sort}
-                    label="เรียงลำดับ"
-                    onChange={event => setSort(event.target.value)}
-                    sx={{ borderRadius: 3, height: 46, bgcolor: '#FFFFFF', boxShadow: '0 8px 18px rgba(38, 63, 102, 0.08)' }}>
-                    <MenuItem value="newest">{SORT_ORDER_LABELS.newest}</MenuItem>
-                    <MenuItem value="oldest">{SORT_ORDER_LABELS.oldest}</MenuItem>
-                    <MenuItem value="high">{SORT_ORDER_LABELS.high}</MenuItem>
-                    <MenuItem value="low">{SORT_ORDER_LABELS.low}</MenuItem>
-                  </Select>
-                </FormControl>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    gap: 1,
+                    justifyContent: { xs: 'stretch', sm: 'flex-end' },
+                    gridColumn: { xs: 'auto', lg: 1 },
+                    gridRow: { xs: 'auto', lg: 2 },
+                  }}>
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 190 } }}>
+                    <Typography sx={{ mb: 0.4, color: '#475569', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>วิธีชำระเงิน</Typography>
+                    <Select<'all' | PaymentMethod>
+                      labelId="payment-method-filter"
+                      value={paymentMethodFilter}
+                      label="วิธีชำระเงิน"
+                      inputProps={{ 'aria-label': 'วิธีชำระเงิน' }}
+                      onChange={event => setPaymentMethodFilter(event.target.value as 'all' | PaymentMethod)}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <PaymentsRoundedIcon sx={{ fontSize: 18, color: '#64748B' }} />
+                        </InputAdornment>
+                      }
+                      sx={{
+                        borderRadius: 2,
+                        height: 48,
+                        bgcolor: '#FFFFFF',
+                        '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
+                        '&:hover fieldset': { borderColor: '#94A3B8' },
+                        '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: 1 },
+                      }}>
+                      <MenuItem value="all">ทั้งหมด</MenuItem>
+                      <MenuItem value="cash">{PAYMENT_METHOD_LABELS_TH.cash}</MenuItem>
+                      <MenuItem value="promptpay">{PAYMENT_METHOD_LABELS_TH.promptpay}</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 190 } }}>
+                    <Typography sx={{ mb: 0.4, color: '#475569', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>ประเภทเอกสาร</Typography>
+                    <Select<TaxInvoiceFilter>
+                      labelId="tax-invoice-filter"
+                      value={taxInvoiceFilter}
+                      label="ประเภทเอกสาร"
+                      inputProps={{ 'aria-label': 'ประเภทเอกสาร' }}
+                      onChange={event => setTaxInvoiceFilter(event.target.value as TaxInvoiceFilter)}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <DescriptionRoundedIcon sx={{ fontSize: 18, color: '#64748B' }} />
+                        </InputAdornment>
+                      }
+                      sx={{
+                        borderRadius: 2,
+                        height: 48,
+                        bgcolor: '#FFFFFF',
+                        '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
+                        '&:hover fieldset': { borderColor: '#94A3B8' },
+                        '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: 1 },
+                      }}>
+                      <MenuItem value="all">{TAX_INVOICE_FILTER_LABELS.all}</MenuItem>
+                      <MenuItem value="yes">{TAX_INVOICE_FILTER_LABELS.yes}</MenuItem>
+                      <MenuItem value="no">{TAX_INVOICE_FILTER_LABELS.no}</MenuItem>
+                    </Select>
+                  </FormControl>
+
+                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 190 } }}>
+                    <Typography sx={{ mb: 0.4, color: '#475569', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>เรียงลำดับ</Typography>
+                    <Select<SortOrder>
+                      labelId="sort-filter"
+                      value={sort}
+                      label="เรียงลำดับ"
+                      inputProps={{ 'aria-label': 'เรียงลำดับ' }}
+                      onChange={event => setSort(event.target.value)}
+                      startAdornment={
+                        <InputAdornment position="start">
+                          <SortRoundedIcon sx={{ fontSize: 18, color: '#64748B' }} />
+                        </InputAdornment>
+                      }
+                      sx={{
+                        borderRadius: 2,
+                        height: 48,
+                        bgcolor: '#FFFFFF',
+                        '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
+                        '&:hover fieldset': { borderColor: '#94A3B8' },
+                        '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: 1 },
+                      }}>
+                      <MenuItem value="newest">{SORT_ORDER_LABELS.newest}</MenuItem>
+                      <MenuItem value="oldest">{SORT_ORDER_LABELS.oldest}</MenuItem>
+                      <MenuItem value="high">{SORT_ORDER_LABELS.high}</MenuItem>
+                      <MenuItem value="low">{SORT_ORDER_LABELS.low}</MenuItem>
+                    </Select>
+                  </FormControl>
+                </Box>
               </Box>
+
+              {hasActiveFilters ? (
+                <Stack direction="row" alignItems="center" flexWrap="wrap" gap={0.75} sx={{ pt: 1.35, borderTop: '1px solid #F1F5F9' }}>
+                  <Typography sx={{ color: '#64748B', fontSize: 12, fontWeight: 600, mr: 0.25 }}>ตัวกรองที่ใช้:</Typography>
+                  {search.trim() ? (
+                    <Chip size="small" label={`ค้นหา: ${search.trim()}`} onDelete={() => setSearch('')} sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5, maxWidth: '100%' }} />
+                  ) : null}
+                  {datePreset !== 'all' ? (
+                    <Chip
+                      size="small"
+                      label={datePreset === 'month' ? `เดือน ${formatMonthFilterLabel(monthFilter)}` : datePreset === 'custom' ? 'กำหนดเอง' : DATE_PRESET_LABELS[datePreset]}
+                      onDelete={() => {
+                        setDatePreset('all');
+                        setMonthFilter('all');
+                        setStartDate(null);
+                        setEndDate(null);
+                      }}
+                      sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }}
+                    />
+                  ) : null}
+                  {paymentMethodFilter !== 'all' ? (
+                    <Chip
+                      size="small"
+                      label={`ชำระเงิน: ${PAYMENT_METHOD_LABELS_TH[paymentMethodFilter]}`}
+                      onDelete={() => setPaymentMethodFilter('all')}
+                      sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }}
+                    />
+                  ) : null}
+                  {taxInvoiceFilter !== 'all' ? (
+                    <Chip
+                      size="small"
+                      label={`เอกสาร: ${TAX_INVOICE_FILTER_LABELS[taxInvoiceFilter]}`}
+                      onDelete={() => setTaxInvoiceFilter('all')}
+                      sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }}
+                    />
+                  ) : null}
+                  {sort !== 'newest' ? (
+                    <Chip size="small" label={`เรียง: ${SORT_ORDER_LABELS[sort]}`} onDelete={() => setSort('newest')} sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }} />
+                  ) : null}
+                </Stack>
+              ) : null}
             </Stack>
           </CardContent>
         </Card>
@@ -801,7 +1096,9 @@ export default function OrderManagementPage() {
       <ExportMenu anchorEl={exportAnchor} exporting={exporting} onClose={() => setExportAnchor(null)} onExport={format => void handleExport(format)} />
 
       <Snackbar open={Boolean(exportError)} autoHideDuration={5000} onClose={() => setExportError(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
-        <Alert severity="error" onClose={() => setExportError(null)}>{exportError}</Alert>
+        <Alert severity="error" onClose={() => setExportError(null)}>
+          {exportError}
+        </Alert>
       </Snackbar>
 
       <RowActionsMenu

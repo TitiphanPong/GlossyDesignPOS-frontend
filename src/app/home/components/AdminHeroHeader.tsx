@@ -1,8 +1,7 @@
 'use client';
 
-import { Badge, Box, Card, CardContent, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
-import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import { commonButtonSx } from './adminUi';
 import type { ReactNode } from 'react';
 
@@ -19,14 +18,21 @@ type AdminHeroHeaderProps = {
 export function formatAdminLastSynced(date: Date | null) {
   if (!date) return '-';
   return new Intl.DateTimeFormat('th-TH', {
-    day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit',
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
   }).format(date);
 }
 
 export function formatAdminThaiDate(date: Date | null) {
   if (!date) return 'ยังไม่มีข้อมูลวันที่';
   return new Intl.DateTimeFormat('th-TH', {
-    weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
   }).format(date);
 }
 
@@ -46,15 +52,6 @@ export const heroPrimaryButtonSx = {
   bgcolor: '#2B62EE',
   boxShadow: '0 14px 28px rgba(43, 98, 238, 0.34)',
 } satisfies SxProps<Theme>;
-
-export const heroIconButtonSx: SxProps<Theme> = {
-  borderRadius: 3,
-  border: '1px solid #DFE8F5',
-  bgcolor: '#FFFFFF',
-  width: 44,
-  height: 44,
-  boxShadow: '0 10px 20px rgba(12, 56, 110, 0.08)',
-};
 
 export default function AdminHeroHeader({ title, description, lastSynced, thaiDate, actions, notice, mb = 2.5 }: Readonly<AdminHeroHeaderProps>) {
   return (
@@ -78,13 +75,6 @@ export default function AdminHeroHeader({ title, description, lastSynced, thaiDa
           </Box>
 
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ minHeight: { md: 110 } }}>
-            <Tooltip title="Notifications">
-              <IconButton sx={heroIconButtonSx}>
-                <Badge color="error" variant="dot">
-                  <NotificationsRoundedIcon sx={{ color: '#2A4365' }} />
-                </Badge>
-              </IconButton>
-            </Tooltip>
             {actions}
           </Stack>
         </Stack>

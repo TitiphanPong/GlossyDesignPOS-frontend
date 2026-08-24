@@ -1,13 +1,14 @@
 'use client';
 
 import * as React from 'react';
-import { Box, Button, CircularProgress, IconButton, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
-import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
+import { Box, Button, CircularProgress, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import axios from 'axios';
 import SideMenu from './components/SideMenu';
 import PageTransition from '@/components/transitions/PageTransition';
 import { destroyAdminBrowserSession } from '@/lib/admin-auth';
+import { GlobalNotificationHeader } from '@/components/notifications/GlobalNotificationHeader';
+import { MobileHeader } from '@/components/notifications/MobileHeader';
 
 const DESKTOP_DRAWER_WIDTH = 286;
 const DESKTOP_COLLAPSED_WIDTH = 92;
@@ -54,8 +55,10 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
           redirectToLogin();
           return;
         }
-        if ((globalThis.location.pathname.startsWith('/home/staff') && payload.role !== 'admin') ||
-            (globalThis.location.pathname.startsWith('/home/settings/quick-menu') && payload.role === 'staff')) {
+        if (
+          (globalThis.location.pathname.startsWith('/home/staff') && payload.role !== 'admin') ||
+          (globalThis.location.pathname.startsWith('/home/settings/quick-menu') && payload.role === 'staff')
+        ) {
           globalThis.location.replace('/home');
           return;
         }
@@ -112,8 +115,12 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
           </Typography>
           {sessionState === 'unavailable' ? (
             <Stack direction="row" spacing={1}>
-              <Button variant="contained" onClick={() => setSessionCheck(value => value + 1)}>ลองใหม่</Button>
-              <Button variant="outlined" onClick={handleReturnToLogin}>ออกจากระบบ</Button>
+              <Button variant="contained" onClick={() => setSessionCheck(value => value + 1)}>
+                ลองใหม่
+              </Button>
+              <Button variant="outlined" onClick={handleReturnToLogin}>
+                ออกจากระบบ
+              </Button>
             </Stack>
           ) : null}
         </Stack>
@@ -132,7 +139,14 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
       {isMobile ? (
         <SideMenu role={role ?? undefined} variant="temporary" open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} currentPath={pathname ?? '/'} />
       ) : (
-        <SideMenu role={role ?? undefined} width={DESKTOP_DRAWER_WIDTH} collapsedWidth={DESKTOP_COLLAPSED_WIDTH} currentPath={pathname ?? '/'} collapsed={desktopCollapsed} onToggleCollapsed={handleToggleDesktopMenu} />
+        <SideMenu
+          role={role ?? undefined}
+          width={DESKTOP_DRAWER_WIDTH}
+          collapsedWidth={DESKTOP_COLLAPSED_WIDTH}
+          currentPath={pathname ?? '/'}
+          collapsed={desktopCollapsed}
+          onToggleCollapsed={handleToggleDesktopMenu}
+        />
       )}
 
       <Box
@@ -145,26 +159,11 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,
+          position: 'relative',
         }}>
-        {isMobile && (
-          <IconButton
-            onClick={() => setMobileMenuOpen(true)}
-            sx={{
-              position: 'fixed',
-              top: { xs: 12, md: 16 },
-              left: { xs: 12, md: 16 },
-              zIndex: 1100,
-              border: '1px solid rgba(148, 163, 184, 0.22)',
-              bgcolor: 'rgba(255,255,255,0.9)',
-              backdropFilter: 'blur(12px)',
-              boxShadow: '0 8px 20px rgba(15, 23, 42, 0.08)',
-              '&:hover': {
-                bgcolor: '#FFFFFF',
-              },
-            }}>
-            <MenuRoundedIcon />
-          </IconButton>
-        )}
+        <GlobalNotificationHeader />
+
+        <MobileHeader onMenuOpen={() => setMobileMenuOpen(true)} />
 
         <PageTransition routeKey={pathname ?? '/'}>{children}</PageTransition>
       </Box>

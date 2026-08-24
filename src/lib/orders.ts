@@ -124,6 +124,11 @@ export type FetchOrdersParams = {
   limit?: number;
   search?: string;
   saleMonth?: string;
+  period?: 'today';
+  saleFrom?: string;
+  saleTo?: string;
+  paymentMethod?: ApiOrder['payment'];
+  taxInvoice?: 'yes' | 'no';
   sort?: OrderListSort;
   signal?: AbortSignal;
 };
@@ -150,6 +155,21 @@ function buildOrdersPath(params: FetchOrdersParams = {}): string {
   }
   if (params.saleMonth) {
     query.set('saleMonth', params.saleMonth);
+  }
+  if (params.period) {
+    query.set('period', params.period);
+  }
+  if (params.saleFrom) {
+    query.set('saleFrom', params.saleFrom);
+  }
+  if (params.saleTo) {
+    query.set('saleTo', params.saleTo);
+  }
+  if (params.paymentMethod) {
+    query.set('paymentMethod', params.paymentMethod);
+  }
+  if (params.taxInvoice) {
+    query.set('taxInvoice', params.taxInvoice);
   }
   if (params.sort) {
     query.set('sort', params.sort);
@@ -249,12 +269,17 @@ export async function fetchOrdersPage(params: FetchOrdersParams = {}): Promise<F
 }
 
 export async function downloadOrdersExport(
-  params: Pick<FetchOrdersParams, 'search' | 'saleMonth' | 'sort'>,
+  params: Pick<FetchOrdersParams, 'search' | 'saleMonth' | 'period' | 'saleFrom' | 'saleTo' | 'paymentMethod' | 'taxInvoice' | 'sort'>,
   format: 'xlsx' | 'pdf'
 ): Promise<void> {
   const query = new URLSearchParams({ format });
   if (params.search?.trim()) query.set('search', params.search.trim());
   if (params.saleMonth) query.set('saleMonth', params.saleMonth);
+  if (params.period) query.set('period', params.period);
+  if (params.saleFrom) query.set('saleFrom', params.saleFrom);
+  if (params.saleTo) query.set('saleTo', params.saleTo);
+  if (params.paymentMethod) query.set('paymentMethod', params.paymentMethod);
+  if (params.taxInvoice) query.set('taxInvoice', params.taxInvoice);
   if (params.sort) query.set('sort', params.sort);
   const response = await fetchApi(`/orders/export?${query.toString()}`, { cache: 'no-store' });
   const blob = await response.blob();

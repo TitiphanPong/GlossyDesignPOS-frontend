@@ -1,10 +1,9 @@
-import { Alert, alpha, Badge, Box, Button, Card, CardContent, IconButton, Stack, Typography } from '@mui/material';
+import { Alert, alpha, Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import FileDownloadDoneRoundedIcon from '@mui/icons-material/FileDownloadDoneRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
-import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import PendingActionsRoundedIcon from '@mui/icons-material/PendingActionsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
@@ -87,24 +86,19 @@ export default function StorageOverview(props: Readonly<StorageOverviewProps>) {
               <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{formatThaiFullDate(lastSyncedAt)}</Typography>
             </Box>
             <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ minHeight: { md: 110 } }}>
-              <IconButton aria-label="การแจ้งเตือน" sx={{ borderRadius: 3, border: '1px solid #DFE8F5', bgcolor: '#FFFFFF', width: 44, height: 44, boxShadow: '0 10px 20px rgba(12, 56, 110, 0.08)' }}>
-                <Badge variant="dot" sx={{ '& .MuiBadge-badge': { bgcolor: '#E5484D', boxShadow: '0 0 0 2px #FFFFFF' } }}>
-                  <NotificationsRoundedIcon sx={{ color: '#2A4365' }} />
-                </Badge>
-              </IconButton>
               <Button
                 onClick={onRefresh}
                 startIcon={<RefreshRoundedIcon />}
                 variant="outlined"
                 sx={{ minHeight: 40, borderRadius: 3, borderColor: '#D7E3F4', bgcolor: '#FFFFFF', color: '#2A4365', px: 1.8, textTransform: 'none', fontWeight: 700 }}>
-                Refresh
+                รีเฟรช
               </Button>
               <Button
                 onClick={onExport}
                 startIcon={<FileDownloadDoneRoundedIcon />}
                 variant="outlined"
                 sx={{ minHeight: 40, borderRadius: 3, borderColor: '#D7E3F4', bgcolor: '#FFFFFF', color: '#2A4365', px: 1.8, textTransform: 'none', fontWeight: 700 }}>
-                Export
+                ส่งออก
               </Button>
               <Button
                 onClick={onDownloadSelected}

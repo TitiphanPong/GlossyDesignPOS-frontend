@@ -114,6 +114,11 @@ export type FetchOrderRowsParams = {
   limit: number;
   search?: string;
   saleMonth?: string;
+  period?: 'today';
+  saleFrom?: string;
+  saleTo?: string;
+  paymentMethod?: PaymentMethod;
+  taxInvoice?: 'yes' | 'no';
   sort?: 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';
   signal?: AbortSignal;
 };

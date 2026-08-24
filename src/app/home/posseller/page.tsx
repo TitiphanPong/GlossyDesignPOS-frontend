@@ -62,7 +62,9 @@ function createDraftId(): string {
     return globalThis.crypto.randomUUID();
   }
 
-  return `draft-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+  const bytes = new Uint8Array(8);
+  globalThis.crypto?.getRandomValues(bytes);
+  return `draft-${Date.now()}-${Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')}`;
 }
 
 function formatLastSynced(date: Date | null) {
@@ -251,13 +253,13 @@ export default function SellPage() {
         actions={
           <>
             <Button onClick={() => void loadProducts(true)} startIcon={<RefreshRoundedIcon />} variant="outlined" disabled={loading} sx={heroOutlineButtonSx}>
-              {loading ? 'Refreshing...' : 'Refresh'}
+              {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
             </Button>
             <Button component={Link} href="/home/orders" startIcon={<ReceiptLongRoundedIcon />} variant="outlined" sx={heroOutlineButtonSx}>
-              View Orders
+              ดูรายการงาน
             </Button>
             <Button component={Link} href="/customer" startIcon={<TvRoundedIcon />} variant="contained" sx={heroPrimaryButtonSx}>
-              Customer Display
+              หน้าจอลูกค้า
             </Button>
           </>
         }
