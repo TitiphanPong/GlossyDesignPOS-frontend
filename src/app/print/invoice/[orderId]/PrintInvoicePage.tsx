@@ -181,7 +181,12 @@ function CustomerEditDrawer({ open, saving, errorMessage, formValues, onClose, o
                   sx={customerFieldSx}
                   label={`ชื่อรายการที่ ${index + 1}`}
                   value={itemName}
-                  onChange={event => onChange('itemNames', formValues.itemNames.map((name, itemIndex) => (itemIndex === index ? event.target.value : name)))}
+                  onChange={event =>
+                    onChange(
+                      'itemNames',
+                      formValues.itemNames.map((name, itemIndex) => (itemIndex === index ? event.target.value : name))
+                    )
+                  }
                   fullWidth
                 />
               ))}
@@ -260,7 +265,12 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
 
         const normalized = createInvoiceOrderFromNormalizedOrder(data);
         setOrder(normalized);
-        setFormValues(createFormValues(getCustomerInfoFromOrder(normalized), normalized.cart.map(item => item.name)));
+        setFormValues(
+          createFormValues(
+            getCustomerInfoFromOrder(normalized),
+            normalized.cart.map(item => item.name)
+          )
+        );
         setLoadError(null);
       } catch (error) {
         if (!mounted) {
@@ -296,7 +306,12 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
       return;
     }
 
-    setFormValues(createFormValues(getCustomerInfoFromOrder(order), order.cart.map(item => item.name)));
+    setFormValues(
+      createFormValues(
+        getCustomerInfoFromOrder(order),
+        order.cart.map(item => item.name)
+      )
+    );
     setDrawerError(null);
     setDrawerOpen(true);
   };
@@ -327,7 +342,12 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
       const normalized = createInvoiceOrderFromNormalizedOrder(updatedOrder);
 
       setOrder(normalized);
-      setFormValues(createFormValues(getCustomerInfoFromOrder(normalized), normalized.cart.map(item => item.name)));
+      setFormValues(
+        createFormValues(
+          getCustomerInfoFromOrder(normalized),
+          normalized.cart.map(item => item.name)
+        )
+      );
       setDrawerOpen(false);
       setSnackbarMessage('Customer information updated successfully.');
     } catch (error) {

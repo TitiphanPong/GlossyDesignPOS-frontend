@@ -293,10 +293,16 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
           <Box sx={{ display: 'grid', gridTemplateColumns: '56% 44%', alignItems: 'center' }}>
             <Box sx={{ pr: '4mm', textAlign: 'left' }}>
               <Typography sx={{ fontSize: '3.5mm', fontWeight: 800, lineHeight: 1.1, color: '#000' }}>
-                {invoiceData.company.thaiName} <Box component="span" sx={{ fontSize: '2.7mm', fontWeight: 400 }}>(สาขา 00001)</Box>
+                {invoiceData.company.thaiName}{' '}
+                <Box component="span" sx={{ fontSize: '2.7mm', fontWeight: 400 }}>
+                  (สาขา 00001)
+                </Box>
               </Typography>
               <Typography sx={{ mt: '0.5mm', fontSize: '3.5mm', fontWeight: 700, lineHeight: 1.1, color: '#000' }}>
-                {invoiceData.company.englishName} <Box component="span" sx={{ fontSize: '2.7mm', fontWeight: 400 }}>(Branch 00001)</Box>
+                {invoiceData.company.englishName}{' '}
+                <Box component="span" sx={{ fontSize: '2.7mm', fontWeight: 400 }}>
+                  (Branch 00001)
+                </Box>
               </Typography>
               <Typography sx={{ mt: '1mm', fontSize: '2.75mm', lineHeight: 1.2, color: '#000' }}>Tax ID : {invoiceData.company.taxId}</Typography>
             </Box>
