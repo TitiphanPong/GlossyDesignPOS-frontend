@@ -59,13 +59,30 @@ function isActivePath(currentPath: string, href: string) {
 
 function Brand({ collapsed = false, onToggleCollapsed }: Readonly<{ collapsed?: boolean; onToggleCollapsed?: () => void }>) {
   return (
-    <Box sx={{ position: 'relative', px: collapsed ? 1.5 : 2.2, py: 2.3 }}>
+    <Box
+      sx={{
+        position: 'relative',
+        mx: collapsed ? 0.8 : 1.2,
+        mt: 1.2,
+        mb: 0.8,
+        px: collapsed ? 1 : 1.4,
+        py: 1.5,
+        border: '1px solid rgba(191, 219, 254, 0.16)',
+        borderRadius: 3,
+        bgcolor: 'rgba(255,255,255,0.065)',
+        boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.08), 0 12px 24px rgba(5, 12, 34, 0.16)',
+      }}>
       <Stack direction="row" spacing={1.1} alignItems="center" sx={{ minWidth: 0, justifyContent: collapsed ? 'center' : 'flex-start' }}>
         <Box
           sx={{
             position: 'relative',
-            width: 36,
-            height: 36,
+            width: collapsed ? 40 : 42,
+            height: collapsed ? 40 : 42,
+            flexShrink: 0,
+            borderRadius: '13px',
+            bgcolor: '#FFFFFF',
+            border: '2px solid rgba(147, 197, 253, 0.5)',
+            boxShadow: '0 7px 16px rgba(2, 8, 23, 0.22)',
           }}>
           <Image
             src="/logo/logo.png"
@@ -74,15 +91,15 @@ function Brand({ collapsed = false, onToggleCollapsed }: Readonly<{ collapsed?: 
             sizes="30px"
             style={{
               objectFit: 'contain',
-              borderRadius: 20,
+              borderRadius: 11,
               display: 'block',
             }}
           />
         </Box>
         {!collapsed && (
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ color: '#F8FAFC', fontWeight: 800, fontSize: 14.5, letterSpacing: 0.2 }}>GLOSSY DESIGN</Typography>
-            <Typography sx={{ color: 'rgba(235,244,255,0.75)', fontSize: 11.5 }}>ระบบจัดการหน้าร้าน</Typography>
+            <Typography sx={{ color: '#FFFFFF', fontWeight: 800, fontSize: 15, letterSpacing: 0.35, lineHeight: 1.15 }}>GLOSSY DESIGN</Typography>
+            <Typography sx={{ mt: 0.45, color: '#BFD7FF', fontSize: 11, lineHeight: 1.2 }}>ระบบจัดการหน้าร้าน</Typography>
           </Box>
         )}
       </Stack>

@@ -402,8 +402,12 @@ function RenderNotificationContent({
             }
             onNotificationClick?.(n);
           }}
-          onResolve={() => onNotificationResolve?.(notification._id)}
-          onDismiss={() => onNotificationDismiss?.(notification._id)}
+          onResolve={async () => {
+            await onNotificationResolve?.(notification._id);
+          }}
+          onDismiss={async () => {
+            await onNotificationDismiss?.(notification._id);
+          }}
         />
       ))}
     </Stack>
