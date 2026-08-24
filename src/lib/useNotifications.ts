@@ -1,4 +1,5 @@
 import { useEffect, useState, useCallback, useRef } from 'react';
+import { fetchApiJson } from './api';
 
 export type NotificationCountResponse = {
   total: number;
@@ -44,8 +45,6 @@ type ListNotificationsResponse = {
   limit: number;
 };
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || '/api';
-
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [count, setCount] = useState<NotificationCountResponse | null>(null);
@@ -59,12 +58,7 @@ export function useNotifications() {
       setIsLoading(true);
       setError(null);
 
-      const response = await fetch(`${API_BASE}/notifications/active`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch notifications');
-      }
-
-      const data = (await response.json()) as Notification[];
+      const data = await fetchApiJson<Notification[]>('/notifications/active');
       setNotifications(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -77,12 +71,7 @@ export function useNotifications() {
   // Fetch notification count
   const fetchCount = useCallback(async () => {
     try {
-      const response = await fetch(`${API_BASE}/notifications/count`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch notification count');
-      }
-
-      const data = (await response.json()) as NotificationCountResponse;
+      const data = await fetchApiJson<NotificationCountResponse>('/notifications/count');
       setCount(data);
     } catch (err) {
       console.error('Failed to fetch notification count:', err);
@@ -93,15 +82,11 @@ export function useNotifications() {
   const resolveNotification = useCallback(
     async (notificationId: string): Promise<void> => {
       try {
-        const response = await fetch(`${API_BASE}/notifications/${notificationId}/resolve`, {
+        await fetchApiJson<Notification>(`/notifications/${notificationId}/resolve`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({}),
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to resolve notification');
-        }
 
         // Remove from list
         setNotifications(prev => prev.filter(n => n._id !== notificationId));
@@ -120,15 +105,11 @@ export function useNotifications() {
   const dismissNotification = useCallback(
     async (notificationId: string): Promise<void> => {
       try {
-        const response = await fetch(`${API_BASE}/notifications/${notificationId}/dismiss`, {
+        await fetchApiJson<Notification>(`/notifications/${notificationId}/dismiss`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({}),
         });
-
-        if (!response.ok) {
-          throw new Error('Failed to dismiss notification');
-        }
 
         // Remove from list
         setNotifications(prev => prev.filter(n => n._id !== notificationId));
@@ -146,15 +127,11 @@ export function useNotifications() {
   // Mark as read
   const markAsRead = useCallback(async (notificationId: string): Promise<void> => {
     try {
-      const response = await fetch(`${API_BASE}/notifications/${notificationId}/read`, {
+      await fetchApiJson<Notification>(`/notifications/${notificationId}/read`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ isRead: true }),
       });
-
-      if (!response.ok) {
-        throw new Error('Failed to mark notification as read');
-      }
 
       // Update in list
       setNotifications(prev => prev.map(n => (n._id === notificationId ? { ...n, isRead: true } : n)));

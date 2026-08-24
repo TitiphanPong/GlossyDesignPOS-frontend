@@ -113,14 +113,20 @@ function NotificationCard({
   return (
     <Box
       sx={{
-        p: 2,
-        borderBottom: '1px solid #E2E8F0',
+        p: 1.6,
+        mx: 1.5,
+        mb: 1.2,
+        border: '1px solid #E2E8F0',
+        borderRadius: 2.5,
+        bgcolor: '#FFFFFF',
+        boxShadow: '0 10px 22px rgba(15, 23, 42, 0.05)',
         '&:hover': {
-          bgcolor: alpha('#F8FAFC', 0.5),
+          borderColor: alpha(priorityColor, 0.35),
+          boxShadow: '0 14px 28px rgba(15, 23, 42, 0.08)',
         },
         cursor: 'pointer',
-        transition: 'background-color 0.2s',
-        borderLeft: `4px solid ${priorityColor}`,
+        transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
+        borderLeft: `5px solid ${priorityColor}`,
         opacity: notification.status === 'resolved' ? 0.6 : 1,
       }}>
       <Stack spacing={1.5}>
@@ -158,7 +164,8 @@ function NotificationCard({
             sx={{
               p: 1.2,
               bgcolor: '#F8FAFC',
-              borderRadius: 1,
+              border: '1px solid #E2E8F0',
+              borderRadius: 2,
               fontSize: 13,
               color: '#475467',
             }}>
@@ -193,14 +200,15 @@ function NotificationCard({
               size="small"
               variant="contained"
               sx={{
-                bgcolor: '#2B62EE',
+                bgcolor: '#2563EB',
                 color: 'white',
                 textTransform: 'none',
                 fontSize: 13,
                 fontWeight: 600,
+                borderRadius: 2,
                 px: 1.5,
                 py: 0.5,
-                '&:hover': { bgcolor: '#1D4A9F' },
+                '&:hover': { bgcolor: '#1D4ED8' },
               }}
               onClick={() => onAction?.(notification)}>
               {notification.action.label}
@@ -282,19 +290,24 @@ export function NotificationDrawer({
       slotProps={{
         paper: {
           sx: {
-            width: { xs: '100%', sm: 430 },
-            maxWidth: 430,
+            width: { xs: '100%', sm: 450 },
+            maxWidth: 450,
+            bgcolor: '#F6F8FC',
+            boxShadow: '-18px 0 44px rgba(15, 23, 42, 0.16)',
           },
         },
       }}>
       <Stack sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} spacing={0}>
         {/* Header */}
-        <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ p: 2.5, borderBottom: '1px solid #E2E8F0' }}>
-          <Stack spacing={0.5}>
-            <Typography sx={{ fontWeight: 800, fontSize: 18, color: '#101828' }}>งานที่ต้องจัดการ</Typography>
-            <Typography sx={{ fontSize: 13, color: '#64748B' }}>{notificationCount?.actionRequired ?? 0} รายการ</Typography>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ px: 2.5, pt: 2.6, pb: 2.2, bgcolor: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
+          <Stack spacing={0.85}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Typography sx={{ fontWeight: 850, fontSize: 20, color: '#0F172A', lineHeight: 1.1 }}>งานที่ต้องจัดการ</Typography>
+              <Box sx={{ px: 1, py: 0.25, borderRadius: '999px', bgcolor: '#EEF2FF', color: '#2563EB', fontSize: 12, fontWeight: 800 }}>{notificationCount?.actionRequired ?? 0}</Box>
+            </Stack>
+            <Typography sx={{ fontSize: 13, color: '#64748B' }}>ติดตามงานเร่งด่วนและการแจ้งเตือนหน้าร้าน</Typography>
           </Stack>
-          <IconButton onClick={onClose} size="small" sx={{ color: '#64748B' }}>
+          <IconButton onClick={onClose} size="small" sx={{ color: '#64748B', border: '1px solid #E2E8F0', bgcolor: '#FFFFFF', '&:hover': { bgcolor: '#F8FAFC' } }}>
             <CloseIcon />
           </IconButton>
         </Stack>
@@ -304,9 +317,12 @@ export function NotificationDrawer({
           direction="row"
           spacing={1}
           sx={{
-            p: 1.5,
+            m: 1.5,
+            p: 0.5,
+            border: '1px solid #E2E8F0',
+            borderRadius: 2.5,
+            bgcolor: '#FFFFFF',
             overflowX: 'auto',
-            borderBottom: '1px solid #E2E8F0',
             '&::-webkit-scrollbar': { height: 4 },
             '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
             '&::-webkit-scrollbar-thumb': { bgcolor: '#CBD5E1', borderRadius: 2 },
@@ -324,19 +340,22 @@ export function NotificationDrawer({
               sx={{
                 textTransform: 'none',
                 fontSize: 13,
-                fontWeight: 600,
-                px: 1.5,
+                fontWeight: 750,
+                px: 1.6,
                 py: 0.75,
+                borderRadius: 2,
                 whiteSpace: 'nowrap',
+                boxShadow: 'none',
                 ...(selectedCategory === tab.key
                   ? {
-                      bgcolor: '#2B62EE',
+                      bgcolor: '#0F172A',
                       color: 'white',
-                      borderColor: '#2B62EE',
+                      borderColor: '#0F172A',
                     }
                   : {
-                      borderColor: '#D7E3F4',
-                      color: '#2A4365',
+                      borderColor: 'transparent',
+                      color: '#475569',
+                      bgcolor: 'transparent',
                     }),
               }}>
               {tab.label}
@@ -372,8 +391,9 @@ function RenderNotificationContent({
 }>) {
   if (isLoading) {
     return (
-      <Stack alignItems="center" justifyContent="center" sx={{ height: 300 }}>
-        <CircularProgress />
+      <Stack alignItems="center" justifyContent="center" spacing={1.4} sx={{ flex: 1, mx: 1.5, my: 2, border: '1px solid #E2E8F0', borderRadius: 3, bgcolor: '#FFFFFF' }}>
+        <CircularProgress size={28} sx={{ color: '#0F172A' }} />
+        <Typography sx={{ fontSize: 13, color: '#64748B' }}>กำลังโหลดรายการ...</Typography>
       </Stack>
     );
   }
@@ -382,16 +402,18 @@ function RenderNotificationContent({
 
   if (isEmpty) {
     return (
-      <Stack alignItems="center" justifyContent="center" spacing={1.5} sx={{ py: 6, px: 2, textAlign: 'center' }}>
-        <CheckCircleIcon sx={{ fontSize: 48, color: '#7C3AED' }} />
-        <Typography sx={{ fontWeight: 700, fontSize: 16, color: '#101828' }}>เรียบร้อยทั้งหมด</Typography>
-        <Typography sx={{ fontSize: 14, color: '#64748B' }}>ตอนนี้ไม่มีงานที่ต้องจัดการ</Typography>
+      <Stack alignItems="center" justifyContent="center" spacing={1.4} sx={{ flex: 1, mx: 1.5, my: 2, px: 3, textAlign: 'center', border: '1px solid #E2E8F0', borderRadius: 3, bgcolor: '#FFFFFF' }}>
+        <Box sx={{ width: 54, height: 54, borderRadius: '18px', display: 'grid', placeItems: 'center', bgcolor: '#ECFDF5', color: '#059669' }}>
+          <CheckCircleIcon sx={{ fontSize: 34 }} />
+        </Box>
+        <Typography sx={{ fontWeight: 800, fontSize: 17, color: '#0F172A' }}>เรียบร้อยทั้งหมด</Typography>
+        <Typography sx={{ fontSize: 13.5, color: '#64748B', lineHeight: 1.45 }}>ตอนนี้ไม่มีงานที่ต้องจัดการ</Typography>
       </Stack>
     );
   }
 
   return (
-    <Stack sx={{ flex: 1, overflow: 'auto', minWidth: 0 }}>
+    <Stack sx={{ flex: 1, overflow: 'auto', minWidth: 0, pt: 0.2, pb: 1.5 }}>
       {sortedNotifications.map(notification => (
         <NotificationCard
           key={notification._id}
