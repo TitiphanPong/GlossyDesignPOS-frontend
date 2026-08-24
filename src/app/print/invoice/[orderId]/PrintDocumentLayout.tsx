@@ -4,6 +4,8 @@ import Image from 'next/image';
 import Link from 'next/link';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
 
 type PrintDocumentLayoutProps = Readonly<{
@@ -72,9 +74,10 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
       className="print-page-root"
       sx={{
         minHeight: '100vh',
-        bgcolor: '#F3F4F6',
+        bgcolor: '#EEF2F7',
+        backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(226,232,240,0.55))',
       }}>
-        <Stack
+      <Stack
         className="print-toolbar"
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
@@ -84,11 +87,22 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
           position: 'sticky',
           top: 0,
           zIndex: 10,
-          minHeight: { xs: 'auto', sm: '92px' },
+          minHeight: { xs: 'auto', sm: '88px' },
           px: { xs: 2, sm: '32px' },
-          py: { xs: 1.5, sm: 2 },
-          borderBottom: '1px solid #E5E7EB',
-          bgcolor: '#FFFFFF',
+          py: { xs: 1.5, sm: '1.8rem' },
+          borderBottom: '1px solid #CBD5E1',
+          bgcolor: 'rgba(255,255,255,0.94)',
+          backdropFilter: 'blur(16px)',
+          boxShadow: '0 8px 26px rgba(15, 23, 42, 0.06)',
+          '&::before': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: 0,
+            right: 0,
+            height: 3,
+            bgcolor: '#2563EB',
+          },
         }}>
         <Stack direction="row" spacing={{ xs: 1.25, sm: 2 }} alignItems="center" sx={{ minWidth: 0 }}>
           <ButtonBase
@@ -107,25 +121,43 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
               sx={{
                 width: { xs: 40, sm: 48 },
                 height: { xs: 40, sm: 48 },
-                borderRadius: '14px',
+                borderRadius: '16px',
                 border: '1px solid #E5E7EB',
                 bgcolor: '#FFFFFF',
                 display: 'grid',
                 placeItems: 'center',
-                boxShadow: '0 8px 24px rgba(15, 23, 42, 0.08)',
+                boxShadow: '0 10px 22px rgba(15, 23, 42, 0.16)',
               }}>
               <Image src="/logo/logo.png" alt="Glossy Design logo" width={30} height={30} priority />
             </Box>
           </ButtonBase>
 
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ mt: { xs: 0, sm: 0.55 }, fontSize: { xs: 17, sm: 20 }, fontWeight: 800, color: '#0F172A', lineHeight: 1.1, letterSpacing: '-0.03em' }}>{title}</Typography>
-            <Typography sx={{ mt: 0.4, fontSize: { xs: 14, sm: 16 }, fontWeight: 500, color: '#64748B', lineHeight: 1.2, overflowWrap: 'anywhere' }}>{invoiceNumber}</Typography>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <DescriptionRoundedIcon sx={{ display: { xs: 'none', sm: 'block' }, fontSize: 18, color: '#2563EB' }} />
+              <Typography sx={{ mt: { xs: 0, sm: 0.55 }, fontSize: { xs: 17, sm: 20 }, fontWeight: 800, color: '#0F172A', lineHeight: 1.1, letterSpacing: '-0.03em' }}>{title}</Typography>
+            </Stack>
+            <Typography
+              sx={{
+                mt: 0.55,
+                display: 'inline-block',
+                px: 1,
+                py: 0.25,
+                borderRadius: '6px',
+                bgcolor: '#EFF6FF',
+                fontSize: { xs: 12, sm: 13 },
+                fontWeight: 700,
+                color: '#1D4ED8',
+                lineHeight: 1.2,
+                overflowWrap: 'anywhere',
+              }}>
+              {invoiceNumber}
+            </Typography>
           </Box>
         </Stack>
 
         <Stack direction="row" spacing={{ xs: 0.75, sm: 1.5 }} alignItems="center" sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>
-          <HeaderButton label="Edit" icon={null} onClick={onEditCustomer} variant="outlined" />
+          <HeaderButton label="Edit" icon={<EditRoundedIcon />} onClick={onEditCustomer} variant="outlined" />
           <HeaderButton label="Export PDF" icon={<PictureAsPdfRoundedIcon />} onClick={handlePrint} variant="outlined" />
           <HeaderButton label="Print" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" />
         </Stack>

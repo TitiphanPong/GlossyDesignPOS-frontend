@@ -3,6 +3,9 @@
 import { use, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Alert, Box, Button, CircularProgress, Drawer, Snackbar, Stack, TextField, Typography } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
+import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import { isMissingApiBaseError } from '../../../../lib/api';
 import { createInvoiceOrderFromNormalizedOrder, type CustomerInfo, type NormalizedInvoiceOrder } from '../../../../lib/contracts';
 import { fetchOrderById, updateOrderCustomerInfo } from '../../../../lib/orders';
@@ -18,6 +21,7 @@ type CustomerFormValues = {
   customerName: string;
   taxId: string;
   address: string;
+  itemNames: string[];
 };
 
 function LoadingState() {
@@ -74,11 +78,12 @@ function getCustomerInfoFromOrder(order: NormalizedInvoiceOrder): CustomerInfo {
   };
 }
 
-function createFormValues(customerInfo: CustomerInfo): CustomerFormValues {
+function createFormValues(customerInfo: CustomerInfo, itemNames: string[] = []): CustomerFormValues {
   return {
     customerName: customerInfo.customerName || '',
     taxId: customerInfo.taxId || '',
     address: customerInfo.address || '',
+    itemNames,
   };
 }
 
@@ -88,6 +93,7 @@ function applyCustomerInfoToOrder(order: NormalizedInvoiceOrder, values: Custome
     customerName: values.customerName.trim() || '-',
     taxId: values.taxId.trim() || '-',
     address: values.address.trim() || '-',
+    cart: order.cart.map((item, index) => ({ ...item, name: values.itemNames[index]?.trim() || item.name })),
     customerInfo: {
       ...order.customerInfo,
       customerName: values.customerName.trim() || '-',
@@ -104,10 +110,23 @@ type CustomerEditDrawerProps = Readonly<{
   formValues: CustomerFormValues;
   onClose: () => void;
   onSave: () => void;
-  onChange: (field: keyof CustomerFormValues, value: string) => void;
+  onChange: (field: keyof CustomerFormValues, value: CustomerFormValues[keyof CustomerFormValues]) => void;
 }>;
 
 function CustomerEditDrawer({ open, saving, errorMessage, formValues, onClose, onSave, onChange }: CustomerEditDrawerProps) {
+  const customerFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      borderRadius: '10px',
+      bgcolor: '#FFFFFF',
+      '& fieldset': { borderColor: '#CBD5E1', transition: 'border-color 160ms ease, box-shadow 160ms ease' },
+      '&:hover fieldset': { borderColor: '#94A3B8' },
+      '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: 1, boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.10)' },
+    },
+    '& .MuiInputLabel-root': { color: '#64748B', fontSize: 14 },
+    '& .MuiInputLabel-root.Mui-focused': { color: '#1D4ED8' },
+    '& .MuiInputBase-input': { color: '#1E293B', fontSize: 15 },
+  };
+
   return (
     <Drawer
       anchor="right"
@@ -116,31 +135,61 @@ function CustomerEditDrawer({ open, saving, errorMessage, formValues, onClose, o
       slotProps={{
         paper: {
           sx: {
-            width: { xs: '100%', md: 520 },
-            bgcolor: '#FFFFFF',
+            width: { xs: '100%', sm: 520, md: 560 },
+            bgcolor: '#F8FAFC',
+            boxShadow: '-18px 0 45px rgba(15, 23, 42, 0.14)',
           },
         },
       }}>
       <Stack sx={{ height: '100%' }}>
-        <Box sx={{ px: 3, py: 2.5, borderBottom: '1px solid #E5E7EB' }}>
-          <Typography sx={{ fontSize: 22, fontWeight: 800, color: '#0F172A' }}>ข้อมูลลูกค้า</Typography>
-          <Typography sx={{ mt: 0.7, fontSize: 13, color: '#64748B' }}>จัดการข้อมูลการเรียกเก็บเงิน และใบกำกับภาษี</Typography>
+        <Box sx={{ position: 'relative', px: { xs: 2.5, sm: 3.5 }, pt: 3, pb: 3, bgcolor: '#0F172A', color: '#FFFFFF', overflow: 'hidden' }}>
+          <Box sx={{ position: 'absolute', width: 180, height: 180, right: -70, top: -90, border: '1px solid rgba(147,197,253,0.28)', borderRadius: '50%' }} />
+          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ position: 'relative' }}>
+            <Stack direction="row" spacing={1.5} alignItems="center">
+              <Box sx={{ width: 42, height: 42, borderRadius: '12px', display: 'grid', placeItems: 'center', bgcolor: '#2563EB', color: '#FFFFFF' }}>
+                <PersonOutlineRoundedIcon />
+              </Box>
+              <Box>
+                <Typography sx={{ fontSize: 22, fontWeight: 800, lineHeight: 1.1 }}>ข้อมูลลูกค้า</Typography>
+                <Typography sx={{ mt: 0.6, fontSize: 12.5, color: '#BFDBFE', lineHeight: 1.3 }}>Billing & tax invoice details</Typography>
+              </Box>
+            </Stack>
+            <Button
+              onClick={onClose}
+              aria-label="ปิด"
+              sx={{ minWidth: 36, width: 36, height: 36, p: 0, borderRadius: '10px', color: '#CBD5E1', '&:hover': { bgcolor: 'rgba(255,255,255,0.1)', color: '#FFFFFF' } }}>
+              <CloseRoundedIcon />
+            </Button>
+          </Stack>
         </Box>
 
-        <Box sx={{ flex: 1, overflowY: 'auto', px: 3, py: 2.5 }}>
-          <Stack spacing={3}>
+        <Box sx={{ flex: 1, overflowY: 'auto', px: { xs: 2.5, sm: 3.5 }, py: 3, bgcolor: '#F1F5F9' }}>
+          <Stack spacing={2.5}>
             {errorMessage ? <Alert severity="error">{errorMessage}</Alert> : null}
 
-            <Stack spacing={1.6}>
-              <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>แก้ไขข้อมูล</Typography>
-              <TextField label="ชื่อลูกค้า" value={formValues.customerName} onChange={event => onChange('customerName', event.target.value)} fullWidth />
-              <TextField label="เลขประจำตัวผู้เสียภาษี" value={formValues.taxId} onChange={event => onChange('taxId', event.target.value)} fullWidth />
-              <TextField label="ที่อยู่" value={formValues.address} onChange={event => onChange('address', event.target.value)} fullWidth multiline minRows={4} />
+            <Stack spacing={1.5} sx={{ p: { xs: 2, sm: 2.5 }, border: '1px solid #E2E8F0', borderRadius: '14px', bgcolor: '#FFFFFF', boxShadow: '0 5px 16px rgba(15, 23, 42, 0.04)' }}>
+              <Box sx={{ pl: 1.5, borderLeft: '3px solid #2563EB' }}>
+                <Typography sx={{ fontSize: 15, fontWeight: 800, color: '#0F172A' }}>แก้ไขข้อมูล</Typography>
+                <Typography sx={{ mt: 0.4, fontSize: 12.5, color: '#64748B' }}>ข้อมูลนี้จะแสดงบนใบเสร็จและใบกำกับภาษี</Typography>
+              </Box>
+              <TextField sx={customerFieldSx} label="ชื่อลูกค้า" value={formValues.customerName} onChange={event => onChange('customerName', event.target.value)} fullWidth />
+              <TextField sx={customerFieldSx} label="ที่อยู่" value={formValues.address} onChange={event => onChange('address', event.target.value)} fullWidth multiline minRows={4} />
+              <TextField sx={customerFieldSx} label="เลขประจำตัวผู้เสียภาษี" value={formValues.taxId} onChange={event => onChange('taxId', event.target.value)} fullWidth />
+              {formValues.itemNames.map((itemName, index) => (
+                <TextField
+                  key={itemName || 'item-name'}
+                  sx={customerFieldSx}
+                  label={`ชื่อรายการที่ ${index + 1}`}
+                  value={itemName}
+                  onChange={event => onChange('itemNames', formValues.itemNames.map((name, itemIndex) => (itemIndex === index ? event.target.value : name)))}
+                  fullWidth
+                />
+              ))}
             </Stack>
           </Stack>
         </Box>
 
-        <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ px: 3, py: 2.25, borderTop: '1px solid #E5E7EB' }}>
+        <Stack direction="row" spacing={1.5} justifyContent="flex-end" sx={{ px: { xs: 2.5, sm: 3.5 }, py: 2.25, borderTop: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
           <Button
             variant="outlined"
             onClick={onClose}
@@ -148,7 +197,7 @@ function CustomerEditDrawer({ open, saving, errorMessage, formValues, onClose, o
             sx={{
               minHeight: 42,
               px: 2.4,
-              borderRadius: '12px',
+              borderRadius: '10px',
               borderColor: '#E5E7EB',
               color: '#0F172A',
               fontWeight: 700,
@@ -160,10 +209,11 @@ function CustomerEditDrawer({ open, saving, errorMessage, formValues, onClose, o
             variant="contained"
             onClick={onSave}
             disabled={saving}
+            startIcon={<SaveRoundedIcon />}
             sx={{
               minHeight: 42,
               px: 2.6,
-              borderRadius: '12px',
+              borderRadius: '10px',
               bgcolor: '#2563EB',
               boxShadow: '0 10px 24px rgba(37, 99, 235, 0.22)',
               fontWeight: 700,
@@ -195,6 +245,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
     customerName: '',
     taxId: '',
     address: '',
+    itemNames: [],
   });
 
   useEffect(() => {
@@ -209,7 +260,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
 
         const normalized = createInvoiceOrderFromNormalizedOrder(data);
         setOrder(normalized);
-        setFormValues(createFormValues(getCustomerInfoFromOrder(normalized)));
+        setFormValues(createFormValues(getCustomerInfoFromOrder(normalized), normalized.cart.map(item => item.name)));
         setLoadError(null);
       } catch (error) {
         if (!mounted) {
@@ -245,12 +296,12 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
       return;
     }
 
-    setFormValues(createFormValues(getCustomerInfoFromOrder(order)));
+    setFormValues(createFormValues(getCustomerInfoFromOrder(order), order.cart.map(item => item.name)));
     setDrawerError(null);
     setDrawerOpen(true);
   };
 
-  const handleChangeFormValue = (field: keyof CustomerFormValues, value: string) => {
+  const handleChangeFormValue = (field: keyof CustomerFormValues, value: CustomerFormValues[keyof CustomerFormValues]) => {
     setFormValues(current => ({ ...current, [field]: value }));
   };
 
@@ -271,11 +322,12 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
         customerName: formValues.customerName.trim() || '-',
         taxId: formValues.taxId.trim() || undefined,
         address: formValues.address.trim() || undefined,
+        itemNames: formValues.itemNames,
       });
       const normalized = createInvoiceOrderFromNormalizedOrder(updatedOrder);
 
       setOrder(normalized);
-      setFormValues(createFormValues(getCustomerInfoFromOrder(normalized)));
+      setFormValues(createFormValues(getCustomerInfoFromOrder(normalized), normalized.cart.map(item => item.name)));
       setDrawerOpen(false);
       setSnackbarMessage('Customer information updated successfully.');
     } catch (error) {
@@ -299,12 +351,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
   }
 
   if (missingCompanyConfig.length > 0) {
-    return (
-      <ErrorState
-        title="ยังไม่สามารถพิมพ์เอกสารได้"
-        subtitle={`กรุณาตั้งค่าข้อมูลบริษัทให้ครบก่อนออกเอกสาร: ${missingCompanyConfig.join(', ')}`}
-      />
-    );
+    return <ErrorState title="ยังไม่สามารถพิมพ์เอกสารได้" subtitle={`กรุณาตั้งค่าข้อมูลบริษัทให้ครบก่อนออกเอกสาร: ${missingCompanyConfig.join(', ')}`} />;
   }
 
   if (documentType === 'tax-invoice' && order.taxInvoice !== 'yes') {
@@ -315,7 +362,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
     <>
       <PrintDocumentLayout
         title="ใบกำกับภาษี / Tax Invoice"
-        invoiceNumber={`#${documentType === 'tax-invoice' ? (order.invoiceNumber || order.orderNumber || order.orderId) : (order.orderNumber || order.orderId)}`}
+        invoiceNumber={`#${documentType === 'tax-invoice' ? order.invoiceNumber || order.orderNumber || order.orderId : order.orderNumber || order.orderId}`}
         onEditCustomer={handleOpenDrawer}
         printableDocument={<InvoiceDocument documentType={documentType} order={order} />}
       />

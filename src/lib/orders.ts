@@ -106,6 +106,7 @@ type UpdateCustomerInfoPayload = {
   phoneNumber?: string;
   taxId?: string;
   address?: string;
+  itemNames?: string[];
 };
 
 export type OrderListSort = 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';
@@ -333,6 +334,7 @@ export async function updateOrderCustomerInfo(orderId: string, customerInfo: Upd
       customerTaxId: normalizedTaxId || undefined,
       address: normalizedAddress || undefined,
       customerAddress: normalizedAddress || undefined,
+      ...(customerInfo.itemNames ? { itemNames: customerInfo.itemNames.map(itemName => itemName.trim() || '-') } : {}),
     }),
   });
 
