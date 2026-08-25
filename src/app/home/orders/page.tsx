@@ -53,6 +53,7 @@ import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
 
 import AdminPageContainer from '../components/AdminPageContainer';
+import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
 import { commonButtonSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
@@ -484,82 +485,46 @@ export default function OrderManagementPage() {
     <AdminPageContainer>
       <Stack spacing={2.5}>
         <Box>
-          <Card
-            sx={{
-              borderRadius: 5.6,
-              border: '1px solid #E6EDF8',
-              boxShadow: '0 20px 45px rgba(18, 45, 82, 0.08)',
-              background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
-            }}>
-            <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
-              {missingApiBase ? (
-                <Box sx={{ mb: 2.2 }}>
-                  <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้ารายการงานดึงข้อมูลจากระบบได้" />
-                </Box>
-              ) : null}
-
-              <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
-                <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
-                  <Typography sx={{ color: '#101828', fontWeight: 800, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>Orders</Typography>
-                  <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>ติดตามรายการงานลูกค้า สถานะการชำระเงิน งานพิมพ์ และเอกสารการขายได้ในหน้าจอเดียว</Typography>
-                  <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>อัปเดตล่าสุด {lastUpdated ? lastUpdated.format('DD/MM/YYYY HH:mm') : '-'}</Typography>
-                  <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{formatThaiFullDate(lastUpdated)}</Typography>
-                  {loadError ? <Typography sx={{ mt: 0.8, color: '#C62828', fontSize: 12.5 }}>{loadError}</Typography> : null}
-                </Box>
-
-                <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', sm: 'center' }} sx={{ minHeight: { md: 110 } }}>
-                  <Button
-                    onClick={() => {
-                      void loadOrders();
-                    }}
-                    startIcon={<RefreshRoundedIcon />}
-                    variant="outlined"
-                    disabled={isLoading}
-                    sx={{
-                      ...commonButtonSx,
-                      borderRadius: 3,
-                      borderColor: '#D7E3F4',
-                      bgcolor: '#FFFFFF',
-                      color: '#2A4365',
-                      textTransform: 'none',
-                    }}>
-                    {isLoading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
-                  </Button>
-
-                  <Button
-                    onClick={event => setExportAnchor(event.currentTarget)}
-                    startIcon={<FileDownloadRoundedIcon />}
-                    variant="outlined"
-                    disabled={Boolean(exporting)}
-                    sx={{
-                      ...commonButtonSx,
-                      borderRadius: 3,
-                      borderColor: '#D7E3F4',
-                      bgcolor: '#FFFFFF',
-                      color: '#2A4365',
-                      textTransform: 'none',
-                    }}>
-                    {exporting ? 'กำลังสร้างรายงาน...' : 'ส่งออกรายงาน'}
-                  </Button>
-
-                  <Button
-                    component={Link}
-                    href="/home/posseller"
-                    startIcon={<AddShoppingCartRoundedIcon />}
-                    variant="contained"
-                    sx={{
-                      ...commonButtonSx,
-                      borderRadius: 3,
-                      textTransform: 'none',
-                      bgcolor: '#2B62EE',
-                      boxShadow: '0 14px 28px rgba(43, 98, 238, 0.34)',
-                    }}>
-                    สร้างรายการงานใหม่
-                  </Button>
+          <AdminHeroHeader
+            title="Orders"
+            description="ติดตามรายการงานลูกค้า สถานะการชำระเงิน งานพิมพ์ และเอกสารการขายได้ในหน้าจอเดียว"
+            lastSynced={lastUpdated ? lastUpdated.format('DD/MM/YYYY HH:mm') : '-'}
+            thaiDate={formatThaiFullDate(lastUpdated)}
+            notice={
+              missingApiBase || loadError ? (
+                <Stack spacing={1}>
+                  {missingApiBase ? <MissingApiConfigState subtitle="กรุณาตั้งค่า NEXT_PUBLIC_API_URL เพื่อให้หน้ารายการงานดึงข้อมูลจากระบบได้" /> : null}
+                  {loadError ? <Alert severity="warning">{loadError}</Alert> : null}
                 </Stack>
-              </Stack>
-            </CardContent>
-          </Card>
+              ) : undefined
+            }
+            actions={
+              <>
+                <Button
+                  onClick={() => {
+                    void loadOrders();
+                  }}
+                  startIcon={<RefreshRoundedIcon />}
+                  variant="outlined"
+                  disabled={isLoading}
+                  sx={heroOutlineButtonSx}>
+                  {isLoading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
+                </Button>
+                <Button
+                  onClick={event => setExportAnchor(event.currentTarget)}
+                  startIcon={<FileDownloadRoundedIcon />}
+                  variant="outlined"
+                  disabled={Boolean(exporting)}
+                  sx={heroOutlineButtonSx}>
+                  {exporting ? 'กำลังสร้างรายงาน...' : 'ส่งออกรายงาน'}
+                </Button>
+                <Button component={Link} href="/home/posseller" startIcon={<AddShoppingCartRoundedIcon />} variant="contained" sx={heroPrimaryButtonSx}>
+                  สร้างรายการงานใหม่
+                </Button>
+              </>
+            }
+            mb={0}
+          />
         </Box>
 
         <Box

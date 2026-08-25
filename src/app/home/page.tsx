@@ -81,7 +81,7 @@ function CashTransferKpiCard({ cash, transfer, href }: Readonly<{ cash: number; 
                 <Box sx={{ width: 26, height: 26, borderRadius: 1.5, bgcolor: '#EFF6FF', color: '#2563EB', display: 'grid', placeItems: 'center' }}>
                   <AccountBalanceRoundedIcon sx={{ fontSize: 15 }} />
                 </Box>
-                <Typography sx={{ color: '#64748B', fontSize: 12 }}>โอน / PromptPay</Typography>
+                <Typography sx={{ color: '#64748B', fontSize: 12 }}>PromptPay</Typography>
               </Stack>
               <Typography noWrap sx={{ mt: 0.5, color: '#0F172A', fontSize: { xs: 18, md: 22 }, lineHeight: 1.15, fontWeight: 900 }}>
                 {money(transfer)}
@@ -257,7 +257,7 @@ function PaymentSummary({ summary }: Readonly<{ summary: DashboardSummary }>) {
             <Typography sx={{ fontWeight: 850 }}>{money(p.cash)}</Typography>
           </Box>
           <Box sx={{ flex: 1, p: 1.4, bgcolor: '#EFF6FF', borderRadius: 2 }}>
-            <Typography sx={{ fontSize: 12, color: '#64748B' }}>โอน / PromptPay</Typography>
+            <Typography sx={{ fontSize: 12, color: '#64748B' }}>PromptPay</Typography>
             <Typography sx={{ fontWeight: 850 }}>{money(p.transfer)}</Typography>
           </Box>
         </Stack>
