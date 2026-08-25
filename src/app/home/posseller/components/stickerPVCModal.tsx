@@ -18,8 +18,8 @@ import {
   CardContent,
   IconButton,
 } from '@mui/material';
-import React, { useState, useEffect } from 'react';
-import { CartItem } from '../types/cart';
+import { useEffect, useState } from 'react';
+import type { CartItem, ProductModalInitialData } from '../types/cart';
 import Delete from '@mui/icons-material/Delete';
 import { formatMoneySummary, posSellerLocale } from '../locales/th';
 
@@ -28,7 +28,7 @@ interface StickerPVCModalProps {
   onClose: () => void;
   onSelect: (item: CartItem) => void;
   productName: string;
-  initialData?: Partial<CartItem>;
+  initialData?: ProductModalInitialData;
 }
 
 interface SizeItem {

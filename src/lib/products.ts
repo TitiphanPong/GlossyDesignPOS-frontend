@@ -14,7 +14,7 @@ function cachedProducts(current: ProductCacheEntry | null, load: () => Promise<P
   return entry.promise;
 }
 
-export function invalidateProductCache(): void {
+function invalidateProductCache(): void {
   productCache = null;
   quickProductCache = null;
 }
@@ -50,7 +50,7 @@ function fallbackTypeCode(name: string, category: string): string {
   return source || 'general';
 }
 
-export function normalizeProductVariant(value: unknown): ProductVariant {
+function normalizeProductVariant(value: unknown): ProductVariant {
   const raw = isRecord(value) ? value : {};
   return {
     id: readString(raw.id),
@@ -65,7 +65,7 @@ export function normalizeProductVariant(value: unknown): ProductVariant {
   };
 }
 
-export function normalizeProduct(value: unknown): Product | null {
+function normalizeProduct(value: unknown): Product | null {
   if (!isRecord(value)) return null;
 
   const name = readString(value.name);
@@ -100,13 +100,13 @@ export function normalizeProduct(value: unknown): Product | null {
   };
 }
 
-export function extractProductsFromResponse(value: unknown): Product[] {
+function extractProductsFromResponse(value: unknown): Product[] {
   const payload = extractArrayPayload(value, ['data', 'products', 'items', 'result', 'payload']);
   if (!payload) return [];
   return payload.map(normalizeProduct).filter((product): product is Product => Boolean(product));
 }
 
-export function extractProductFromResponse(value: unknown): Product | null {
+function extractProductFromResponse(value: unknown): Product | null {
   const direct = normalizeProduct(value);
   if (direct) return direct;
 
@@ -156,61 +156,5 @@ export async function updateQuickProduct(id: string, payload: Partial<QuickProdu
 
 export async function deleteQuickProduct(id: string): Promise<void> {
   await fetchApi(`/quick-products/${encodeURIComponent(id)}`, { method: 'DELETE' });
-  invalidateProductCache();
-}
-
-export type ProductPayload = Omit<Product, 'id' | '_id'> & {
-  id?: string;
-  _id?: string;
-};
-
-type ProductVariantPayload = Omit<ProductVariant, 'id' | '_id'>;
-
-type ProductRequestPayload = Omit<ProductPayload, 'id' | '_id' | 'variants'> & {
-  variants: ProductVariantPayload[];
-};
-
-function sanitizeProductPayload(payload: ProductPayload): ProductRequestPayload {
-  const productFields = { ...payload };
-  delete productFields.id;
-  delete productFields._id;
-
-  return {
-    ...productFields,
-    variants: payload.variants.map(variant => {
-      const variantFields = { ...variant };
-      delete variantFields.id;
-      delete variantFields._id;
-      return variantFields;
-    }),
-  };
-}
-
-export async function createProduct(payload: ProductPayload): Promise<Product> {
-  const responseBody = await fetchApiJson<unknown>('/products', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(sanitizeProductPayload(payload)),
-  });
-  const product = extractProductFromResponse(responseBody);
-  if (!product) throw new Error('Backend did not return a valid product');
-  invalidateProductCache();
-  return product;
-}
-
-export async function updateProduct(productId: string, payload: ProductPayload): Promise<Product> {
-  const responseBody = await fetchApiJson<unknown>(`/products/${encodeURIComponent(productId)}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(sanitizeProductPayload(payload)),
-  });
-  const product = extractProductFromResponse(responseBody);
-  if (!product) throw new Error('Backend did not return a valid product');
-  invalidateProductCache();
-  return product;
-}
-
-export async function deleteProduct(productId: string): Promise<void> {
-  await fetchApi(`/products/${encodeURIComponent(productId)}`, { method: 'DELETE' });
   invalidateProductCache();
 }

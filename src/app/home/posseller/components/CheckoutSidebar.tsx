@@ -1,4 +1,3 @@
-import * as React from 'react';
 import { Box } from '@mui/material';
 import CheckOutRight from './checkoutRight';
 import { CartItem } from '../types/cart';

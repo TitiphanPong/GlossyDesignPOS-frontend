@@ -1,8 +1,8 @@
 ﻿'use client';
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Stack, Box, Card, TextField, Divider } from '@mui/material';
-import React, { useState, useEffect } from 'react';
-import { CartItem } from '../types/cart';
+import { useEffect, useState } from 'react';
+import type { CartItem, ProductModalInitialData } from '../types/cart';
 import { formatMoneySummary, posSellerLocale } from '../locales/th';
 import PosPaymentSummaryFields from './PosPaymentSummaryFields';
 
@@ -13,7 +13,7 @@ interface PremiumProductProps {
   onClose: () => void;
   onSelect: (item: CartItem) => void;
   productName: string;
-  initialData?: Partial<CartItem>;
+  initialData?: ProductModalInitialData;
 }
 
 export default function PremiumProductModal({ open, onClose, onSelect, productName, initialData }: Readonly<PremiumProductProps>) {

@@ -1,8 +1,8 @@
 ﻿'use client';
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Stack, Box, Card, TextField, Divider, FormControlLabel, RadioGroup, Radio } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { CartItem } from '../types/cart';
+import { useEffect, useState } from 'react';
+import type { CartItem, ProductModalInitialData } from '../types/cart';
 import { formatMoneySummary, posSellerLocale } from '../locales/th';
 import PosPaymentSummaryFields from './PosPaymentSummaryFields';
 
@@ -18,7 +18,7 @@ interface DocumentPrintModalProps {
   onClose: () => void;
   onSelect: (item: CartItem) => void;
   productName: string;
-  initialData?: any;
+  initialData?: ProductModalInitialData;
 }
 
 const variantList: VariantOption[] = [
@@ -52,7 +52,7 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
       setDeposit(initialData.deposit || 0);
       setFullPayment(initialData.fullPayment || false);
       setMaterial(initialData.material || '');
-      setSides(initialData.sides || '1');
+      setSides(initialData.sides === '2' ? '2' : '1');
       setColorMode(initialData.colorMode || 'bw');
       setTotal(initialData.total ?? initialData.totalPrice ?? 0);
       if (initialData.variant) setSelected(initialData.variant);
@@ -218,7 +218,7 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
             <Typography variant="body2" sx={{ mr: 1, fontWeight: 600 }}>
               {posSellerLocale.documentPrint.colorModeLabel}
             </Typography>
-            <RadioGroup row value={colorMode} onChange={e => setColorMode(e.target.value as any)}>
+            <RadioGroup row value={colorMode} onChange={e => setColorMode(e.target.value)}>
               <FormControlLabel value="bw" control={<Radio />} label={posSellerLocale.common.blackAndWhite} />
               <FormControlLabel value="color" control={<Radio />} label={posSellerLocale.common.color} />
             </RadioGroup>

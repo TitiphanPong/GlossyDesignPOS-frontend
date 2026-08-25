@@ -8,7 +8,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "test": "node --import tsx --test src/**/*.test.ts",
-    "lint": "eslint .",
+    "lint": "eslint . --max-warnings=0",
     "check:utf8": "node scripts/check-utf8.cjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
     "codex:todo:select": "node scripts/codex-select-task.cjs --output selected-task.json",

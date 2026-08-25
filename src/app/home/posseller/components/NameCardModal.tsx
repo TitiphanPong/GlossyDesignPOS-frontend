@@ -1,8 +1,8 @@
 ﻿'use client';
 
 import { Dialog, DialogTitle, DialogContent, DialogActions, Typography, Button, Stack, Box, Card, TextField, Divider, FormControlLabel, RadioGroup, Radio } from '@mui/material';
-import React, { useEffect, useState } from 'react';
-import { CartItem } from '../types/cart';
+import { useEffect, useState } from 'react';
+import type { CartItem, ProductModalInitialData } from '../types/cart';
 import { formatMoneySummary, posSellerLocale } from '../locales/th';
 import PosPaymentSummaryFields from './PosPaymentSummaryFields';
 
@@ -19,7 +19,7 @@ interface NameCardModalProps {
   onClose: () => void;
   onSelect: (item: CartItem) => void;
   productName: string;
-  initialData?: any;
+  initialData?: ProductModalInitialData;
 }
 
 const variantList: VariantOption[] = [
@@ -51,10 +51,12 @@ export default function NameCardModal({ open, onClose, onSelect, productName, in
       setDeposit(initialData.deposit || 0);
       setFullPayment(initialData.fullPayment || false);
       setMaterial(initialData.material || '');
-      setSides(initialData.sides || '2');
+      setSides(initialData.sides === '1' ? '1' : '2');
       setColorMode(initialData.colorMode || 'color');
       setTotal(initialData.total ?? initialData.totalPrice ?? 0);
-      if (initialData.variant) setSelected(initialData.variant);
+      if (initialData.variant) {
+        setSelected({ ...initialData.variant, paperKind: initialData.variant.paperKind ?? 'CUSTOM' });
+      }
     }
   }, [initialData, open]);
 

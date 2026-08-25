@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Drawer, Stack, Typography, Box, Chip, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
 import { alpha } from '@mui/material/styles';
 import CloseIcon from '@mui/icons-material/Close';
@@ -8,30 +8,15 @@ import WarningAmberIcon from '@mui/icons-material/WarningAmber';
 import ErrorIcon from '@mui/icons-material/Error';
 import InfoIcon from '@mui/icons-material/Info';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import type { Notification, NotificationCategory } from '@/lib/useNotifications';
 
-export type Notification = {
-  _id: string;
-  type: string;
-  category: 'action_required' | 'today' | 'follow_up' | 'system';
-  priority: 'critical' | 'high' | 'normal' | 'low';
-  status: 'active' | 'resolved' | 'dismissed';
-  title: string;
-  message?: string;
-  orderId?: string;
-  orderCode?: string;
-  customerName?: string;
-  amount?: number;
-  dueDate?: string | Date;
-  action?: {
-    label: string;
-    href?: string;
-    action?: string;
-  };
-  isRead: boolean;
-  createdAt: string | Date;
-  updatedAt: string | Date;
-  resolvedAt?: string | Date;
-};
+type SelectedCategory = 'all' | Extract<NotificationCategory, 'action_required' | 'today'>;
+
+const CATEGORY_TABS: ReadonlyArray<{ key: SelectedCategory; label: string }> = [
+  { key: 'action_required', label: 'ต้องจัดการ' },
+  { key: 'today', label: 'วันนี้' },
+  { key: 'all', label: 'ทั้งหมด' },
+];
 
 type NotificationDrawerProps = {
   open: boolean;
@@ -87,8 +72,8 @@ function NotificationCard({
   onResolve?: () => Promise<void>;
   onDismiss?: () => Promise<void>;
 }>) {
-  const [resolving, setResolving] = React.useState(false);
-  const [dismissing, setDismissing] = React.useState(false);
+  const [resolving, setResolving] = useState(false);
+  const [dismissing, setDismissing] = useState(false);
 
   const handleResolve = async () => {
     try {
@@ -259,7 +244,7 @@ export function NotificationDrawer({
   onNotificationResolve,
   onNotificationDismiss,
 }: Readonly<NotificationDrawerProps>) {
-  const [selectedCategory, setSelectedCategory] = React.useState<'all' | 'action_required' | 'today'>('action_required');
+  const [selectedCategory, setSelectedCategory] = useState<SelectedCategory>('action_required');
 
   const filteredNotifications = useMemo(() => {
     if (selectedCategory === 'all') return notifications;
@@ -327,16 +312,12 @@ export function NotificationDrawer({
             '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
             '&::-webkit-scrollbar-thumb': { bgcolor: '#CBD5E1', borderRadius: 2 },
           }}>
-          {[
-            { key: 'action_required', label: 'ต้องจัดการ' },
-            { key: 'today', label: 'วันนี้' },
-            { key: 'all', label: 'ทั้งหมด' },
-          ].map(tab => (
+          {CATEGORY_TABS.map(tab => (
             <Button
               key={tab.key}
               variant={selectedCategory === tab.key ? 'contained' : 'outlined'}
               size="small"
-              onClick={() => setSelectedCategory(tab.key as any)}
+              onClick={() => setSelectedCategory(tab.key)}
               sx={{
                 textTransform: 'none',
                 fontSize: 13,

@@ -1,6 +1,9 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { HeroSection } from './sections/HeroSection';
+import { QuickOrderSection } from './sections/QuickOrderSection';
+import { UploadHighlightSection } from './sections/UploadHighlightSection';
+import { WhyChooseUsSection } from './sections/WhyChooseUsSection';
 
 type NavItem = {
   label: string;
@@ -220,6 +223,8 @@ export default function LandingPage() {
           </div>
         </section>
 
+        <QuickOrderSection />
+
         <section id="portfolio" className="mx-auto max-w-7xl px-5 py-2 sm:px-6 lg:px-8">
           <div className="grid gap-8 lg:grid-cols-[0.92fr_1.08fr] lg:items-end">
             <div className="max-w-xl">
@@ -240,6 +245,8 @@ export default function LandingPage() {
             </div>
           </div>
         </section>
+
+        <UploadHighlightSection />
 
         <section id="process" className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="overflow-hidden rounded-[2.2rem] border border-slate-200/70 bg-slate-950 px-5 py-6 text-white shadow-[0_34px_90px_rgba(15,23,42,0.18)] sm:px-6 lg:px-8 lg:py-8">
@@ -281,6 +288,8 @@ export default function LandingPage() {
             ))}
           </div>
         </section>
+
+        <WhyChooseUsSection />
 
         <section className="mx-auto max-w-7xl px-5 py-16 sm:px-6 lg:px-8 lg:py-24">
           <div className="overflow-hidden rounded-[2.4rem] bg-[linear-gradient(135deg,#0f172a_0%,#1e3a8a_55%,#38bdf8_100%)] px-5 py-8 text-white shadow-[0_36px_100px_rgba(30,58,138,0.28)] sm:px-6 lg:px-8 lg:py-10">

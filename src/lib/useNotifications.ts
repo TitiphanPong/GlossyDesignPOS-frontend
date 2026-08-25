@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback, useRef } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { fetchApiJson } from './api';
 
 export type NotificationCountResponse = {
@@ -38,20 +38,13 @@ export type Notification = {
   dismissedAt?: string;
 };
 
-type ListNotificationsResponse = {
-  data: Notification[];
-  total: number;
-  skip: number;
-  limit: number;
-};
+export type NotificationCategory = Notification['category'];
 
 export function useNotifications() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [count, setCount] = useState<NotificationCountResponse | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null);
-
   // Fetch notifications
   const fetchNotifications = useCallback(async () => {
     try {
@@ -144,20 +137,13 @@ export function useNotifications() {
   useEffect(() => {
     fetchNotifications();
     fetchCount();
-  }, [fetchNotifications, fetchCount]);
 
-  // Set up polling (refetch every 30 seconds)
-  useEffect(() => {
-    pollingIntervalRef.current = setInterval(() => {
+    const pollingInterval = setInterval(() => {
       fetchNotifications();
       fetchCount();
     }, 30000);
 
-    return () => {
-      if (pollingIntervalRef.current) {
-        clearInterval(pollingIntervalRef.current);
-      }
-    };
+    return () => clearInterval(pollingInterval);
   }, [fetchNotifications, fetchCount]);
 
   return {

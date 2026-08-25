@@ -7,6 +7,7 @@ export type CartItemVariant = Omit<Partial<ProductVariant>, 'name'> & {
   custom?: boolean;
   width: number;
   height: number;
+  paperKind?: string;
 };
 
 export type SizeItem = {
@@ -22,12 +23,17 @@ export type ActiveProduct = {
   typeCode?: string;
 };
 
+export type ProductModalInitialData = Partial<CartItem> & {
+  /** Legacy modal drafts used `total`; persisted cart items use `totalPrice`. */
+  total?: number;
+};
+
 export type ProductModalComponentProps = {
   open: boolean;
   onClose: () => void;
   onSelect: (item: CartItem) => void;
   productName: string;
-  initialData?: Partial<CartItem>;
+  initialData?: ProductModalInitialData;
 };
 
 export type CartItem = {
