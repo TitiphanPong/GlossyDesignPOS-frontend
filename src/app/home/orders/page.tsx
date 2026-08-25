@@ -234,6 +234,7 @@ export default function OrderManagementPage() {
   const [lastUpdated, setLastUpdated] = React.useState<dayjs.Dayjs | null>(null);
   const [updatingOrderId, setUpdatingOrderId] = React.useState<string | null>(null);
   const [payRemainingTarget, setPayRemainingTarget] = React.useState<OrderRow | null>(null);
+  const [cancelTarget, setCancelTarget] = React.useState<OrderRow | null>(null);
   const [deleteTarget, setDeleteTarget] = React.useState<OrderRow | null>(null);
   const [deletePassword, setDeletePassword] = React.useState('');
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
@@ -335,14 +336,16 @@ export default function OrderManagementPage() {
   const cancelOrder = React.useCallback(
     async (targetId: string) => {
       const target = rowsById.get(targetId);
-      if (!target) return;
+      if (!target) return false;
 
       setUpdatingOrderId(targetId);
       try {
         await updateOrderStatus(targetId, 'cancelled');
         await loadOrders();
+        return true;
       } catch (error) {
         setLoadError(error instanceof Error && error.message ? error.message : 'ยกเลิกรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        return false;
       } finally {
         setUpdatingOrderId(null);
       }
@@ -398,6 +401,18 @@ export default function OrderManagementPage() {
       await loadOrders();
     } catch {
       setDeleteError('รหัสผ่านไม่ถูกต้อง หรือไม่สามารถลบรายการได้');
+    } finally {
+      setUpdatingOrderId(null);
+    }
+  };
+
+  const confirmCancel = async () => {
+    if (!cancelTarget) return;
+    const targetId = cancelTarget.id;
+    setUpdatingOrderId(targetId);
+    setLoadError(null);
+    try {
+      if (await cancelOrder(targetId)) setCancelTarget(null);
     } finally {
       setUpdatingOrderId(null);
     }
@@ -1108,7 +1123,8 @@ export default function OrderManagementPage() {
         onClose={closeRowMenu}
         onOpenDrawer={openDrawer}
         onCancelOrder={targetId => {
-          void cancelOrder(targetId);
+          const target = rowsById.get(targetId);
+          if (target) setCancelTarget(target);
         }}
         onDeleteOrder={order => {
           setDeleteTarget(order);
@@ -1131,7 +1147,8 @@ export default function OrderManagementPage() {
         }}
         onConvertToTaxInvoice={convertToTaxInvoice}
         onCancelOrder={targetId => {
-          void cancelOrder(targetId);
+          const target = rowsById.get(targetId);
+          if (target) setCancelTarget(target);
         }}
         onPrintDocument={printDocument}
       />
@@ -1144,6 +1161,22 @@ export default function OrderManagementPage() {
           void handlePayRemainingSuccess(updatedOrder);
         }}
       />
+      <Dialog open={Boolean(cancelTarget)} onClose={() => (updatingOrderId ? undefined : setCancelTarget(null))} fullWidth maxWidth="xs">
+        <DialogTitle sx={{ fontWeight: 800, color: '#B42318' }}>ยืนยันการยกเลิกงาน</DialogTitle>
+        <DialogContent>
+          <Typography>
+            ต้องการยกเลิกงาน <strong>{cancelTarget?.orderNumber}</strong> ใช่หรือไม่? การยกเลิกงานนี้ไม่สามารถย้อนกลับได้
+          </Typography>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={() => setCancelTarget(null)} disabled={Boolean(updatingOrderId)}>
+            ยกเลิก
+          </Button>
+          <Button color="error" variant="contained" disabled={Boolean(updatingOrderId)} onClick={() => void confirmCancel()}>
+            {updatingOrderId ? 'กำลังยกเลิก...' : 'ยืนยันยกเลิกงาน'}
+          </Button>
+        </DialogActions>
+      </Dialog>
       <Dialog open={Boolean(deleteTarget)} onClose={() => (updatingOrderId ? undefined : setDeleteTarget(null))} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 800, color: '#B42318' }}>ยืนยันการลบรายการ</DialogTitle>
         <DialogContent>
