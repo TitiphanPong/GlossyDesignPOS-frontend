@@ -30,7 +30,7 @@ export default function GlossyBrandMark({ size = 42, priority = false }: Readonl
           width: '100%',
           height: '100%',
           objectFit: 'contain',
-          transform: 'scale(1.67) translateY(13%)',
+          transform: 'scale(1.15) translateY(1%)',
           transformOrigin: '50% 50%',
         }}
       />

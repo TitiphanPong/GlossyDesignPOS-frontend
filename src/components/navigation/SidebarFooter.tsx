@@ -2,7 +2,7 @@
 
 import LogoutRoundedIcon from '@mui/icons-material/LogoutRounded';
 import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
-import { Avatar, Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, ButtonBase, Stack, Tooltip, Typography } from '@mui/material';
 import { sidebarMotion, sidebarTokens } from './sidebarTheme';
 import type { AdminRole } from './sidebarTypes';
 
@@ -83,29 +83,40 @@ export default function SidebarFooter({ username, role, collapsed, mobile, onLog
           </Stack>
         </Tooltip>
 
-        <Tooltip title="ออกจากระบบ" placement={collapsed ? 'right' : 'top'} enterDelay={250}>
-          <IconButton
+        <Tooltip title={collapsed ? 'ออกจากระบบ' : ''} placement="right" enterDelay={250}>
+          <ButtonBase
             onClick={onLogout}
             aria-label="ออกจากระบบ"
             sx={{
-              width: 40,
+              width: '100%',
               height: 40,
-              ml: 0.6,
+              ml: 0,
+              px: collapsed ? 0 : 1.2,
               flexShrink: 0,
+              justifyContent: collapsed ? 'center' : 'flex-start',
+              gap: 0.7,
+              overflow: 'hidden',
               border: `1px solid ${sidebarTokens.border}`,
               borderRadius: '11px',
               color: sidebarTokens.textMuted,
               bgcolor: sidebarTokens.backgroundElevated,
-              transition: `background-color ${sidebarMotion.interaction}, color ${sidebarMotion.interaction}, border-color ${sidebarMotion.interaction}`,
+              transition: `width ${sidebarMotion.drawer}, background-color ${sidebarMotion.interaction}, color ${sidebarMotion.interaction}, border-color ${sidebarMotion.interaction}`,
               '&:hover': {
                 borderColor: 'rgba(180, 35, 24, 0.2)',
                 color: sidebarTokens.danger,
                 bgcolor: sidebarTokens.dangerBackground,
               },
-              '&:focus-visible': { outline: `2px solid ${sidebarTokens.focusRing}`, outlineOffset: 2 },
+              '&.Mui-focusVisible': { outline: `2px solid ${sidebarTokens.focusRing}`, outlineOffset: 2 },
             }}>
-            <LogoutRoundedIcon aria-hidden="true" sx={{ fontSize: 19 }} />
-          </IconButton>
+            <Box sx={{ width: 26, height: 20, flexShrink: 0, display: 'grid', placeItems: 'center' }}>
+              <LogoutRoundedIcon aria-hidden="true" sx={{ fontSize: 19 }} />
+            </Box>
+            {!collapsed ? (
+              <Typography noWrap sx={{ fontFamily: 'inherit', fontSize: 12.75, fontWeight: 600, lineHeight: 1.2 }}>
+                ออกจากระบบ
+              </Typography>
+            ) : null}
+          </ButtonBase>
         </Tooltip>
       </Stack>
     </Box>

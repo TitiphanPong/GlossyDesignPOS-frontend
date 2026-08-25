@@ -157,9 +157,9 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
         </Stack>
 
         <Stack direction="row" spacing={{ xs: 0.75, sm: 1.5 }} alignItems="center" sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>
-          <HeaderButton label="Edit" icon={<EditRoundedIcon />} onClick={onEditCustomer} variant="outlined" />
-          <HeaderButton label="Export PDF" icon={<PictureAsPdfRoundedIcon />} onClick={handlePrint} variant="outlined" />
-          <HeaderButton label="Print" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" />
+          <HeaderButton label="แก้ไข" icon={<EditRoundedIcon />} onClick={onEditCustomer} variant="outlined" />
+          <HeaderButton label="ส่งออก PDF" icon={<PictureAsPdfRoundedIcon />} onClick={handlePrint} variant="outlined" />
+          <HeaderButton label="พิมพ์" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" />
         </Stack>
       </Stack>
 
