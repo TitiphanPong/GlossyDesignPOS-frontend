@@ -280,25 +280,25 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
         breakInside: 'avoid',
       }}>
       <Stack spacing="0.8mm">
-        <Stack direction="row">
-          <Box sx={{ width: '50%', px: '1.4mm', py: '1.1mm' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: '56% 44%' }}>
+          <Box sx={{ px: '1.4mm', py: '1.1mm' }}>
             <Typography sx={{ fontSize: '3mm', lineHeight: 1.2 }}>เล่มที่ Book No. {invoiceData.bookNo}</Typography>
           </Box>
-          <Box sx={{ width: '50%', px: '1.4mm', py: '1.1mm', textAlign: 'right' }}>
+          <Box sx={{ pl: '4mm', py: '1.1mm', textAlign: 'left' }}>
             <Typography sx={{ fontSize: '3mm', lineHeight: 1.2 }}>เลขที่ Invoice No. {invoiceData.invoiceNo}</Typography>
           </Box>
-        </Stack>
+        </Box>
 
-        <Box sx={{ px: '1mm', py: '1.5mm', borderBottom: '0.3mm solid #64748B' }}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: '56% 44%', alignItems: 'center' }}>
+        <Box sx={{ px: '1mm', py: '1.5mm' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '56% 44%', alignItems: 'start' }}>
             <Box sx={{ pr: '4mm', textAlign: 'left' }}>
-              <Typography sx={{ fontSize: '3.5mm', fontWeight: 800, lineHeight: 1.1, color: '#000' }}>
+              <Typography sx={{ fontSize: '3.2mm', fontWeight: 800, lineHeight: 1.1, color: '#000' }}>
                 {invoiceData.company.thaiName}{' '}
                 <Box component="span" sx={{ fontSize: '2.7mm', fontWeight: 400 }}>
                   (สาขา 00001)
                 </Box>
               </Typography>
-              <Typography sx={{ mt: '0.5mm', fontSize: '3.5mm', fontWeight: 700, lineHeight: 1.1, color: '#000' }}>
+              <Typography sx={{ mt: '0.5mm', fontSize: '3.2mm', fontWeight: 700, lineHeight: 1.1, color: '#000' }}>
                 {invoiceData.company.englishName}{' '}
                 <Box component="span" sx={{ fontSize: '2.7mm', fontWeight: 400 }}>
                   (Branch 00001)
@@ -306,7 +306,7 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
               </Typography>
               <Typography sx={{ mt: '1mm', fontSize: '2.75mm', lineHeight: 1.2, color: '#000' }}>Tax ID : {invoiceData.company.taxId}</Typography>
             </Box>
-            <Box sx={{ pl: '4mm', borderLeft: '0.2mm solid #CBD5E1', textAlign: 'left' }}>
+            <Box sx={{ pl: '4mm', borderLeft: '0.2mm solid #555', textAlign: 'left' }}>
               <Typography sx={{ fontSize: '3mm', fontWeight: 400, lineHeight: 1.2, color: '#000' }}>{invoiceData.company.address}</Typography>
               <Typography sx={{ mt: '0.55mm', fontSize: '2.75mm', lineHeight: 1.2, color: '#000' }}>โทร / Phone : {invoiceData.company.phone}</Typography>
               <Typography sx={{ mt: '0.25mm', fontSize: '2.75mm', lineHeight: 1.2, color: '#000' }}>Email : {invoiceData.company.email}</Typography>
