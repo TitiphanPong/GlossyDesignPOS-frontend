@@ -96,8 +96,12 @@ export function ExportMenu({ anchorEl, exporting, onClose, onExport }: Readonly<
           },
         },
       }}>
-      <MenuItem disabled={Boolean(exporting)} onClick={() => onExport('xlsx')}>{exporting === 'xlsx' ? 'กำลังสร้าง Excel...' : 'ส่งออก Excel (.xlsx)'}</MenuItem>
-      <MenuItem disabled={Boolean(exporting)} onClick={() => onExport('pdf')}>{exporting === 'pdf' ? 'กำลังสร้าง PDF...' : 'ส่งออก PDF (.pdf)'}</MenuItem>
+      <MenuItem disabled={Boolean(exporting)} onClick={() => onExport('xlsx')}>
+        {exporting === 'xlsx' ? 'กำลังสร้าง Excel...' : 'ส่งออก Excel (.xlsx)'}
+      </MenuItem>
+      <MenuItem disabled={Boolean(exporting)} onClick={() => onExport('pdf')}>
+        {exporting === 'pdf' ? 'กำลังสร้าง PDF...' : 'ส่งออก PDF (.pdf)'}
+      </MenuItem>
     </Menu>
   );
 }
@@ -131,18 +135,7 @@ export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClo
           <Typography sx={{ fontSize: 14 }}>ดูรายละเอียด</Typography>
         </Stack>
       </MenuItem>
-      <MenuItem
-        sx={{ color: '#B42318' }}
-        disabled={cancelOrderDisabled}
-        onClick={() => {
-          if (rowMenuTarget) onDeleteOrder(rowMenuTarget);
-          onClose();
-        }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <DeleteForeverRoundedIcon fontSize="small" />
-          <Typography sx={{ fontSize: 14, fontWeight: 700 }}>ลบรายการ</Typography>
-        </Stack>
-      </MenuItem>
+
       <MenuItem
         onClick={() => {
           if (rowMenuTarget) onPrintDocument(rowMenuTarget, 'receipt');
@@ -162,6 +155,18 @@ export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClo
         <Stack direction="row" spacing={1} alignItems="center">
           <ReceiptRoundedIcon fontSize="small" />
           <Typography sx={{ fontSize: 14 }}>พิมพ์ใบกำกับภาษี</Typography>
+        </Stack>
+      </MenuItem>
+      <MenuItem
+        sx={{ color: '#B42318' }}
+        disabled={cancelOrderDisabled}
+        onClick={() => {
+          if (rowMenuTarget) onDeleteOrder(rowMenuTarget);
+          onClose();
+        }}>
+        <Stack direction="row" spacing={1} alignItems="center">
+          <DeleteForeverRoundedIcon fontSize="small" />
+          <Typography sx={{ fontSize: 14 }}>ลบรายการ</Typography>
         </Stack>
       </MenuItem>
       <MenuItem
