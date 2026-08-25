@@ -4,14 +4,20 @@ import * as React from 'react';
 import { Box, Button, CircularProgress, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import axios from 'axios';
-import SideMenu from './components/SideMenu';
+import AppSidebar from '@/components/navigation/AppSidebar';
+import { sidebarDimensions } from '@/components/navigation/sidebarTheme';
 import PageTransition from '@/components/transitions/PageTransition';
 import { destroyAdminBrowserSession } from '@/lib/admin-auth';
 import { GlobalNotificationHeader } from '@/components/notifications/GlobalNotificationHeader';
 import { MobileHeader } from '@/components/notifications/MobileHeader';
 
-const DESKTOP_DRAWER_WIDTH = 286;
-const DESKTOP_COLLAPSED_WIDTH = 92;
+const SIDEBAR_STORAGE_KEY = 'glossy-admin-sidemenu-collapsed';
+const MOBILE_SIDEBAR_ID = 'app-mobile-sidebar';
+
+type AdminSessionUser = {
+  username?: string;
+  role: 'staff' | 'manager' | 'admin';
+};
 
 export default function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
@@ -19,8 +25,9 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
   const [desktopCollapsed, setDesktopCollapsed] = React.useState(false);
+  const [collapsePreferenceReady, setCollapsePreferenceReady] = React.useState(false);
   const [sessionState, setSessionState] = React.useState<'checking' | 'authenticated' | 'unavailable'>('checking');
-  const [role, setRole] = React.useState<'staff' | 'manager' | 'admin' | null>(null);
+  const [sessionUser, setSessionUser] = React.useState<AdminSessionUser | null>(null);
   const [sessionCheck, setSessionCheck] = React.useState(0);
 
   const redirectToLogin = React.useCallback(() => {
@@ -30,8 +37,13 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
 
   const handleReturnToLogin = React.useCallback(() => {
     void (async () => {
-      await destroyAdminBrowserSession();
-      globalThis.location.replace('/login');
+      try {
+        await destroyAdminBrowserSession();
+      } catch {
+        // Local session data is still cleared when the backend logout request is unavailable.
+      } finally {
+        globalThis.location.replace('/login');
+      }
     })();
   }, []);
 
@@ -50,7 +62,7 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
           setSessionState('unavailable');
           return;
         }
-        const payload = (await response.json()) as { authenticated?: boolean; role?: 'staff' | 'manager' | 'admin' };
+        const payload = (await response.json()) as { authenticated?: boolean; username?: string; role?: 'staff' | 'manager' | 'admin' };
         if (!payload.authenticated || !payload.role) {
           redirectToLogin();
           return;
@@ -62,7 +74,10 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
           globalThis.location.replace('/home');
           return;
         }
-        setRole(payload.role);
+        setSessionUser({
+          username: typeof payload.username === 'string' ? payload.username.trim() || undefined : undefined,
+          role: payload.role,
+        });
         setSessionState('authenticated');
       } catch {
         if (!controller.signal.aborted) setSessionState('unavailable');
@@ -87,31 +102,39 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
   }, [redirectToLogin]);
 
   React.useEffect(() => {
-    const saved = globalThis.localStorage.getItem('glossy-admin-sidemenu-collapsed');
-    setDesktopCollapsed(saved === 'true');
+    try {
+      const saved = globalThis.localStorage.getItem(SIDEBAR_STORAGE_KEY);
+      setDesktopCollapsed(saved === 'true');
+    } catch {
+      setDesktopCollapsed(false);
+    } finally {
+      setCollapsePreferenceReady(true);
+    }
   }, []);
 
   React.useEffect(() => {
-    if (isMobile) {
-      setMobileMenuOpen(false);
-    }
+    setMobileMenuOpen(false);
   }, [isMobile, pathname]);
 
   const handleToggleDesktopMenu = React.useCallback(() => {
     setDesktopCollapsed(prev => {
       const next = !prev;
-      globalThis.localStorage.setItem('glossy-admin-sidemenu-collapsed', String(next));
+      try {
+        globalThis.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
+      } catch {
+        // The menu remains usable when browser storage is unavailable.
+      }
       return next;
     });
   }, []);
 
-  if (sessionState !== 'authenticated') {
+  if (sessionState !== 'authenticated' || !collapsePreferenceReady) {
     return (
       <Box sx={{ minHeight: '100dvh', display: 'grid', placeItems: 'center', bgcolor: 'background.default' }}>
         <Stack alignItems="center" spacing={1.5}>
-          {sessionState === 'checking' ? <CircularProgress size={34} /> : null}
+          {sessionState === 'checking' || !collapsePreferenceReady ? <CircularProgress size={34} /> : null}
           <Typography sx={{ color: 'text.secondary', fontWeight: 600 }}>
-            {sessionState === 'checking' ? 'กำลังตรวจสอบสิทธิ์การเข้าใช้งาน…' : 'ไม่สามารถตรวจสอบสิทธิ์ได้ กรุณาลองรีเฟรชอีกครั้ง'}
+            {sessionState === 'checking' || !collapsePreferenceReady ? 'กำลังเตรียมพื้นที่ทำงาน…' : 'ไม่สามารถตรวจสอบสิทธิ์ได้ กรุณาลองรีเฟรชอีกครั้ง'}
           </Typography>
           {sessionState === 'unavailable' ? (
             <Stack direction="row" spacing={1}>
@@ -132,17 +155,26 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
     <Box
       sx={{
         display: 'flex',
-        minHeight: '100dvh',
+        height: '100dvh',
         bgcolor: 'background.default',
         overflow: 'hidden',
       }}>
       {isMobile ? (
-        <SideMenu role={role ?? undefined} variant="temporary" open={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} currentPath={pathname ?? '/'} />
+        <AppSidebar
+          id={MOBILE_SIDEBAR_ID}
+          role={sessionUser?.role}
+          username={sessionUser?.username}
+          variant="temporary"
+          open={mobileMenuOpen}
+          onClose={() => setMobileMenuOpen(false)}
+          currentPath={pathname ?? '/'}
+        />
       ) : (
-        <SideMenu
-          role={role ?? undefined}
-          width={DESKTOP_DRAWER_WIDTH}
-          collapsedWidth={DESKTOP_COLLAPSED_WIDTH}
+        <AppSidebar
+          role={sessionUser?.role}
+          username={sessionUser?.username}
+          width={sidebarDimensions.expanded}
+          collapsedWidth={sidebarDimensions.collapsed}
           currentPath={pathname ?? '/'}
           collapsed={desktopCollapsed}
           onToggleCollapsed={handleToggleDesktopMenu}
@@ -153,17 +185,16 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
         component="main"
         sx={{
           flex: 1,
-          overflow: 'auto',
+          overflow: isMobile && mobileMenuOpen ? 'hidden' : 'auto',
           bgcolor: 'background.default',
-          minHeight: '100vh',
+          height: '100%',
+          minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,
           position: 'relative',
         }}>
-        <GlobalNotificationHeader />
-
-        <MobileHeader onMenuOpen={() => setMobileMenuOpen(true)} />
+        {isMobile ? <MobileHeader onMenuOpen={() => setMobileMenuOpen(true)} menuOpen={mobileMenuOpen} menuId={MOBILE_SIDEBAR_ID} /> : <GlobalNotificationHeader />}
 
         <PageTransition routeKey={pathname ?? '/'}>{children}</PageTransition>
       </Box>
