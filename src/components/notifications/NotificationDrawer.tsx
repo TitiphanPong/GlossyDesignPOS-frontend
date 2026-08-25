@@ -300,7 +300,7 @@ export function NotificationDrawer({
         {/* Category tabs */}
         <Stack
           direction="row"
-          spacing={1}
+          spacing={0.5}
           sx={{
             m: 1.5,
             p: 0.5,
@@ -319,10 +319,12 @@ export function NotificationDrawer({
               size="small"
               onClick={() => setSelectedCategory(tab.key)}
               sx={{
+                flex: 1,
+                minWidth: 0,
                 textTransform: 'none',
                 fontSize: 13,
                 fontWeight: 750,
-                px: 1.6,
+                px: 1,
                 py: 0.75,
                 borderRadius: 2,
                 whiteSpace: 'nowrap',
