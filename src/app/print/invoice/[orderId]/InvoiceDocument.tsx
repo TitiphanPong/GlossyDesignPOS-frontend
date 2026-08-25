@@ -33,6 +33,7 @@ export type InvoiceData = {
   invoiceNo: string;
   copyTitle: string;
   issuedDate: string;
+  issuedTime: string;
   customer: CustomerInfo;
   items: InvoiceItem[];
   subtotal: number;
@@ -140,6 +141,25 @@ function formatThaiTaxDate(value: string): string {
   return `${day.padStart(2, '0')}/${month.padStart(2, '0')}/${buddhistYear}`;
 }
 
+function formatThaiTaxTime(value: string): string {
+  const parsed = new Date(value);
+  if (Number.isNaN(parsed.getTime())) {
+    return '-';
+  }
+
+  const formatter = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Asia/Bangkok',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  });
+  const parts = formatter.formatToParts(parsed);
+  const hour = parts.find(part => part.type === 'hour')?.value ?? '-';
+  const minute = parts.find(part => part.type === 'minute')?.value ?? '-';
+
+  return `${hour}:${minute}`;
+}
+
 function getCompanyInfo(): CompanyInfo {
   return {
     thaiName: readEnv(process.env.NEXT_PUBLIC_COMPANY_THAI_NAME),
@@ -155,7 +175,9 @@ function getCompanyInfo(): CompanyInfo {
 
 export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documentType: InvoiceDocumentType): InvoiceData {
   const company = getCompanyInfo();
-  const issuedDate = formatThaiTaxDate(order.issueDate || order.orderDate);
+  const issuedAt = order.issueDate || order.orderDate;
+  const issuedDate = formatThaiTaxDate(issuedAt);
+  const issuedTime = formatThaiTaxTime(issuedAt);
   const taxableAmount = Math.max(0, order.subtotal);
   const expectedVat = Math.round(taxableAmount * 0.07 * 100) / 100;
   const shouldAddVat = documentType === 'tax-invoice' && order.grandTotal <= taxableAmount;
@@ -174,6 +196,7 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
     invoiceNo: documentType === 'tax-invoice' ? order.invoiceNumber || order.orderNumber || order.orderId : order.orderNumber || order.orderId,
     copyTitle: getCopyTitle(documentType, order.taxInvoice),
     issuedDate,
+    issuedTime,
     customer: {
       name: order.customerInfo.customerName || order.customerName,
       taxId: order.customerInfo.taxId || order.taxId,
@@ -490,6 +513,110 @@ export function TaxInvoiceTemplate({ invoiceData, minItemRows = MIN_ITEM_ROWS }:
   );
 }
 
+export function ReceiptTemplate({ invoiceData }: Readonly<{ invoiceData: InvoiceData }>) {
+  const hasVat = invoiceData.vat > 0;
+
+  return (
+    <Box
+      className="receipt-document-sheet"
+      sx={{
+        width: '80mm',
+        minHeight: '110mm',
+        boxSizing: 'border-box',
+        px: '4mm',
+        py: '5mm',
+        color: '#111827',
+        bgcolor: '#fff',
+        fontFamily: '"Noto Sans Thai", Tahoma, sans-serif',
+        printColorAdjust: 'exact',
+        WebkitPrintColorAdjust: 'exact',
+      }}>
+      <Stack spacing="3mm">
+        <Stack spacing="1mm" alignItems="center" textAlign="center">
+          <Typography sx={{ fontSize: '4.5mm', fontWeight: 800, lineHeight: 1.15 }}>{invoiceData.company.thaiName}</Typography>
+          {invoiceData.company.englishName !== '-' ? <Typography sx={{ fontSize: '2.7mm', lineHeight: 1.2 }}>{invoiceData.company.englishName}</Typography> : null}
+          <Typography sx={{ fontSize: '2.5mm', lineHeight: 1.35, whiteSpace: 'pre-line' }}>{invoiceData.company.address}</Typography>
+          <Typography sx={{ fontSize: '2.5mm', lineHeight: 1.25 }}>โทร. {invoiceData.company.phone}</Typography>
+          <Typography sx={{ fontSize: '2.5mm', lineHeight: 1.25 }}>เลขประจำตัวผู้เสียภาษี {invoiceData.company.taxId}</Typography>
+        </Stack>
+
+        <Box sx={{ borderTop: '0.3mm dashed #111827', borderBottom: '0.3mm dashed #111827', py: '2.5mm', textAlign: 'center' }}>
+          <Typography sx={{ fontSize: '4.1mm', fontWeight: 800, lineHeight: 1.2 }}>ใบเสร็จรับเงิน</Typography>
+          <Typography sx={{ mt: '0.5mm', fontSize: '2.5mm', letterSpacing: '0.08em', lineHeight: 1.2 }}>RECEIPT</Typography>
+        </Box>
+
+        <Stack spacing="1mm" sx={{ fontSize: '2.7mm' }}>
+          <Stack direction="row" justifyContent="space-between" spacing="3mm">
+            <Typography sx={{ fontSize: '2.7mm' }}>เลขที่</Typography>
+            <Typography sx={{ fontSize: '2.7mm', fontWeight: 700, textAlign: 'right', overflowWrap: 'anywhere' }}>{invoiceData.invoiceNo}</Typography>
+          </Stack>
+          <Stack direction="row" justifyContent="space-between" spacing="3mm">
+            <Typography sx={{ fontSize: '2.7mm' }}>วันที่</Typography>
+            <Typography sx={{ fontSize: '2.7mm', textAlign: 'right' }}>{invoiceData.issuedDate}</Typography>
+          </Stack>
+          <Stack direction="row" justifyContent="space-between" spacing="3mm">
+            <Typography sx={{ fontSize: '2.7mm' }}>เวลา</Typography>
+            <Typography sx={{ fontSize: '2.7mm', textAlign: 'right' }}>{invoiceData.issuedTime} น.</Typography>
+          </Stack>
+          <Stack direction="row" justifyContent="space-between" spacing="3mm">
+            <Typography sx={{ fontSize: '2.7mm' }}>ชำระโดย</Typography>
+            <Typography sx={{ fontSize: '2.7mm', textAlign: 'right' }}>{invoiceData.paymentMethod === 'cash' ? 'เงินสด' : 'โอนเงิน'}</Typography>
+          </Stack>
+        </Stack>
+
+        <Box sx={{ borderTop: '0.3mm dashed #111827', pt: '2mm' }}>
+          <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 10mm 17mm', columnGap: '1.5mm', pb: '1.5mm', borderBottom: '0.2mm solid #111827' }}>
+            <Typography sx={{ fontSize: '2.5mm', fontWeight: 800 }}>รายการ</Typography>
+            <Typography sx={{ fontSize: '2.5mm', fontWeight: 800, textAlign: 'right' }}>จำนวน</Typography>
+            <Typography sx={{ fontSize: '2.5mm', fontWeight: 800, textAlign: 'right' }}>รวม</Typography>
+          </Box>
+          <Stack spacing="1.8mm" sx={{ pt: '2mm' }}>
+            {invoiceData.items.map((item, itemIndex) => (
+              <Box key={`${item.description}-${itemIndex}`} sx={{ display: 'grid', gridTemplateColumns: '1fr 10mm 17mm', columnGap: '1.5mm', alignItems: 'start' }}>
+                <Box>
+                  <Typography sx={{ fontSize: '2.8mm', lineHeight: 1.25, overflowWrap: 'anywhere' }}>{item.description}</Typography>
+                  <Typography sx={{ mt: '0.4mm', fontSize: '2.35mm', color: '#4B5563', lineHeight: 1.2 }}>{formatCurrency(item.unitPrice)} / หน่วย</Typography>
+                </Box>
+                <Typography sx={{ fontSize: '2.8mm', lineHeight: 1.25, textAlign: 'right' }}>{item.quantity}</Typography>
+                <Typography sx={{ fontSize: '2.8mm', lineHeight: 1.25, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(item.amount)}</Typography>
+              </Box>
+            ))}
+          </Stack>
+        </Box>
+
+        <Stack spacing="1.2mm" sx={{ borderTop: '0.3mm dashed #111827', pt: '2.5mm' }}>
+          <Stack direction="row" justifyContent="space-between">
+            <Typography sx={{ fontSize: '2.8mm' }}>รวมค่าสินค้า</Typography>
+            <Typography sx={{ fontSize: '2.8mm', fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(invoiceData.subtotal)}</Typography>
+          </Stack>
+          {hasVat ? (
+            <Stack direction="row" justifyContent="space-between">
+              <Typography sx={{ fontSize: '2.8mm' }}>ภาษีมูลค่าเพิ่ม 7%</Typography>
+              <Typography sx={{ fontSize: '2.8mm', fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(invoiceData.vat)}</Typography>
+            </Stack>
+          ) : null}
+          <Stack direction="row" justifyContent="space-between" alignItems="baseline" sx={{ mt: '0.8mm', pt: '1.8mm', borderTop: '0.2mm solid #111827' }}>
+            <Typography sx={{ fontSize: '3.4mm', fontWeight: 800 }}>ยอดชำระสุทธิ</Typography>
+            <Typography sx={{ fontSize: '4mm', fontWeight: 800, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(invoiceData.totalAmount)}</Typography>
+          </Stack>
+          <Typography sx={{ pt: '0.8mm', fontSize: '2.55mm', lineHeight: 1.35, textAlign: 'center', overflowWrap: 'anywhere' }}>({invoiceData.amountInWords})</Typography>
+        </Stack>
+
+        <Stack spacing="1.5mm" alignItems="center" sx={{ borderTop: '0.3mm dashed #111827', pt: '3mm', textAlign: 'center' }}>
+          {invoiceData.notes ? <Typography sx={{ fontSize: '2.35mm', lineHeight: 1.35 }}>{invoiceData.notes}</Typography> : null}
+          <Typography sx={{ fontSize: '2.8mm', fontWeight: 700, lineHeight: 1.3 }}>ขอบคุณที่ใช้บริการ</Typography>
+        </Stack>
+      </Stack>
+    </Box>
+  );
+}
+
 export function InvoiceDocument({ documentType, order }: Readonly<InvoiceDocumentProps>) {
-  return <TaxInvoiceTemplate invoiceData={buildInvoiceDataFromOrder(order, documentType)} />;
+  const invoiceData = buildInvoiceDataFromOrder(order, documentType);
+
+  if (documentType === 'receipt') {
+    return <ReceiptTemplate invoiceData={invoiceData} />;
+  }
+
+  return <TaxInvoiceTemplate invoiceData={invoiceData} />;
 }

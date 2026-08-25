@@ -11,7 +11,7 @@ import { createInvoiceOrderFromNormalizedOrder, type CustomerInfo, type Normaliz
 import { fetchOrderById, updateOrderCustomerInfo } from '../../../../lib/orders';
 import { getMissingCompanyConfigFields, InvoiceDocument } from './InvoiceDocument';
 import { PrintDocumentLayout } from './PrintDocumentLayout';
-import { resolveInvoiceDocumentType } from '../../../home/invoice/[orderId]/invoice-utils';
+import { getInvoiceDocumentMeta, resolveInvoiceDocumentType } from '../../../home/invoice/[orderId]/invoice-utils';
 
 type PrintInvoicePageProps = Readonly<{
   params: Promise<{ orderId: string }>;
@@ -24,12 +24,12 @@ type CustomerFormValues = {
   itemNames: string[];
 };
 
-function LoadingState() {
+function LoadingState({ documentTitle }: Readonly<{ documentTitle: string }>) {
   return (
     <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', bgcolor: '#F8FAFC', px: 2 }}>
       <Stack spacing={2} alignItems="center">
         <CircularProgress size={30} sx={{ color: '#0F172A' }} />
-        <Typography sx={{ fontSize: 14, color: '#475569' }}>กำลังโหลดเอกสารใบกำกับภาษี...</Typography>
+        <Typography sx={{ fontSize: 14, color: '#475569' }}>กำลังโหลดเอกสาร{documentTitle}...</Typography>
       </Stack>
     </Box>
   );
@@ -299,6 +299,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
   }, [orderId]);
 
   const documentType = useMemo(() => resolveInvoiceDocumentType(searchParams.get('documentType'), order, order?.taxInvoice), [order, searchParams]);
+  const documentMeta = getInvoiceDocumentMeta(documentType);
   const missingCompanyConfig = useMemo(() => getMissingCompanyConfigFields(), []);
 
   const handleOpenDrawer = () => {
@@ -359,7 +360,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
   };
 
   if (loading) {
-    return <LoadingState />;
+    return <LoadingState documentTitle={documentMeta.titleTh} />;
   }
 
   if (missingApiBase) {
@@ -367,7 +368,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
   }
 
   if (!order) {
-    return <ErrorState title="ไม่พบข้อมูลใบกำกับภาษี" subtitle={loadError ?? 'ไม่พบข้อมูลออเดอร์ที่ต้องการพิมพ์ กรุณากลับไปตรวจสอบรายการอีกครั้ง'} />;
+    return <ErrorState title={`ไม่พบข้อมูล${documentMeta.titleTh}`} subtitle={loadError ?? 'ไม่พบข้อมูลออเดอร์ที่ต้องการพิมพ์ กรุณากลับไปตรวจสอบรายการอีกครั้ง'} />;
   }
 
   if (missingCompanyConfig.length > 0) {
@@ -381,8 +382,9 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
   return (
     <>
       <PrintDocumentLayout
-        title="ใบกำกับภาษี / Tax Invoice"
+        title={`${documentMeta.titleTh} / ${documentMeta.titleEn}`}
         invoiceNumber={`#${documentType === 'tax-invoice' ? order.invoiceNumber || order.orderNumber || order.orderId : order.orderNumber || order.orderId}`}
+        documentType={documentType}
         onEditCustomer={handleOpenDrawer}
         printableDocument={<InvoiceDocument documentType={documentType} order={order} />}
       />

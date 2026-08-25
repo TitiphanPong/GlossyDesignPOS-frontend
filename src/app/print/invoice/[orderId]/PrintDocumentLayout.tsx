@@ -1,16 +1,19 @@
 'use client';
 
+import { useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
 
 type PrintDocumentLayoutProps = Readonly<{
   title: string;
   invoiceNumber: string;
+  documentType: 'quotation' | 'tax-invoice' | 'receipt';
   onEditCustomer: () => void;
   summary?: React.ReactNode;
   printableDocument: React.ReactNode;
@@ -60,13 +63,38 @@ function HeaderButton({
   );
 }
 
-export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summary, printableDocument }: PrintDocumentLayoutProps) {
+export function PrintDocumentLayout({ title, invoiceNumber, documentType, onEditCustomer, summary, printableDocument }: PrintDocumentLayoutProps) {
+  const isReceipt = documentType === 'receipt';
+  const documentStageRef = useRef<HTMLDivElement>(null);
+
   const handlePrint = async () => {
     if (typeof document !== 'undefined' && 'fonts' in document) {
       await document.fonts.ready;
     }
 
     globalThis.print();
+  };
+
+  const handleDownloadReceipt = async () => {
+    const receiptElement = documentStageRef.current?.querySelector<HTMLElement>('.receipt-document-sheet');
+    if (!receiptElement) {
+      return;
+    }
+
+    if (typeof document !== 'undefined' && 'fonts' in document) {
+      await document.fonts.ready;
+    }
+
+    const { default: html2canvas } = await import('html2canvas');
+    const canvas = await html2canvas(receiptElement, {
+      backgroundColor: '#FFFFFF',
+      scale: 2,
+      useCORS: true,
+    });
+    const downloadLink = document.createElement('a');
+    downloadLink.href = canvas.toDataURL('image/png');
+    downloadLink.download = `receipt-${invoiceNumber.replace(/^#/, '')}.png`;
+    downloadLink.click();
   };
 
   return (
@@ -158,7 +186,8 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
 
         <Stack direction="row" spacing={{ xs: 0.75, sm: 1.5 }} alignItems="center" sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>
           <HeaderButton label="แก้ไข" icon={<EditRoundedIcon />} onClick={onEditCustomer} variant="outlined" />
-          <HeaderButton label="ส่งออก PDF" icon={<PictureAsPdfRoundedIcon />} onClick={handlePrint} variant="outlined" />
+          {isReceipt ? <HeaderButton label="ดาวน์โหลดใบเสร็จ" icon={<DownloadRoundedIcon />} onClick={() => void handleDownloadReceipt()} variant="outlined" /> : null}
+          {!isReceipt ? <HeaderButton label="ส่งออก PDF" icon={<PictureAsPdfRoundedIcon />} onClick={handlePrint} variant="outlined" /> : null}
           <HeaderButton label="พิมพ์" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" />
         </Stack>
       </Stack>
@@ -186,30 +215,31 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
 
         <Box
           className="print-document-stage"
+          ref={documentStageRef}
           sx={{
             width: 'fit-content',
             minWidth: '100%',
             mx: 'auto',
             display: 'flex',
             justifyContent: 'center',
-            height: { xs: '67mm', sm: 'auto' },
-            '@media (max-width: 359.95px)': {
-              height: '58mm',
-            },
+            height: 'auto',
           }}>
           <Box
             className="print-document-only print-paper"
             sx={{
-              width: '285mm',
-              height: '197mm',
+              width: isReceipt ? { xs: 'calc(100vw - 24px)', sm: '80mm' } : '285mm',
+              height: isReceipt ? 'auto' : '197mm',
               maxWidth: 'none',
               bgcolor: '#fff',
               boxShadow: '0 18px 45px rgba(15, 23, 42, 0.14)',
-              transform: { xs: 'scale(0.34)', sm: 'none' },
-              transformOrigin: { xs: 'top left', sm: 'initial' },
-              '@media (max-width: 359.95px)': {
-                transform: 'scale(0.288)',
-              },
+              zoom: isReceipt ? { xs: 1, md: 1.32 } : 1,
+              transform: isReceipt ? 'none' : { xs: 'scale(0.34)', sm: 'none' },
+              transformOrigin: isReceipt ? 'initial' : { xs: 'top left', sm: 'initial' },
+              '@media (max-width: 359.95px)': isReceipt
+                ? {}
+                : {
+                    transform: 'scale(0.288)',
+                  },
             }}>
             {printableDocument}
           </Box>
@@ -218,8 +248,8 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
 
       <style jsx global>{`
         @page {
-          size: A4 landscape;
-          margin: 6mm;
+          size: ${isReceipt ? '80mm auto' : 'A4 landscape'};
+          margin: ${isReceipt ? '0' : '6mm'};
         }
 
         @media print {
@@ -259,6 +289,7 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
           .invoice-copy {
             box-shadow: none !important;
             background: #fff !important;
+            zoom: 1 !important;
             transform: none !important;
             transform-origin: initial !important;
             break-inside: avoid !important;
@@ -269,7 +300,7 @@ export function PrintDocumentLayout({ title, invoiceNumber, onEditCustomer, summ
             position: absolute;
             left: 0;
             top: 0;
-            width: 285mm !important;
+            width: ${isReceipt ? '80mm' : '285mm'} !important;
             margin: 0 !important;
           }
         }
