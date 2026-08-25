@@ -1,16 +1,17 @@
+import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
+import DashboardCustomizeRoundedIcon from '@mui/icons-material/DashboardCustomizeRounded';
 import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
 import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded';
-import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
-import RestaurantMenuRoundedIcon from '@mui/icons-material/RestaurantMenuRounded';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
+import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import type { SidebarMenuGroup, SidebarNavItem } from './sidebarTypes';
 
 export const SIDEBAR_PRIMARY_ACTION: SidebarNavItem = {
-  id: 'new-sale',
-  label: 'ขายหน้าร้าน',
-  href: '/home/posseller',
-  icon: PointOfSaleRoundedIcon,
+  id: 'quick-sale',
+  label: 'Quick Seller',
+  href: '/home/quick-sale',
+  icon: BoltRoundedIcon,
 };
 
 export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
@@ -32,10 +33,10 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
     label: 'SALES',
     items: [
       {
-        id: 'quick-sale',
-        label: 'Quick Seller',
-        href: '/home/quick-sale',
-        icon: PointOfSaleRoundedIcon,
+        id: 'pos-seller',
+        label: 'ขายหน้าร้าน',
+        href: '/home/posseller',
+        icon: StorefrontRoundedIcon,
       },
       {
         id: 'orders',
@@ -66,7 +67,7 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
         id: 'quick-menu-settings',
         label: 'จัดการเมนูขายด่วน',
         href: '/home/settings/quick-menu',
-        icon: RestaurantMenuRoundedIcon,
+        icon: DashboardCustomizeRoundedIcon,
         roles: ['manager', 'admin'],
       },
       {

@@ -4,9 +4,9 @@ import Link from 'next/link';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, ButtonBase, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import GlossyBrandMark from './GlossyBrandMark';
-import { sidebarTokens } from './sidebarTheme';
+import { sidebarMotion, sidebarTokens } from './sidebarTheme';
 
 type SidebarHeaderProps = {
   collapsed: boolean;
@@ -107,24 +107,36 @@ export default function SidebarHeader({ collapsed, mobile, onToggleCollapsed, on
             <CloseRoundedIcon sx={{ fontSize: 21 }} />
           </IconButton>
         ) : onToggleCollapsed ? (
-          <Tooltip title={collapseLabel} placement={collapsed ? 'right' : 'bottom'} enterDelay={250}>
-            <IconButton
+          <Tooltip title={collapsed ? collapseLabel : ''} placement="right" enterDelay={250}>
+            <ButtonBase
               onClick={onToggleCollapsed}
               aria-label={collapseLabel}
               sx={{
-                width: 40,
+                width: collapsed ? 40 : '100%',
                 height: 40,
-                ml: 0.6,
+                ml: collapsed ? 0.6 : 0,
+                px: collapsed ? 0 : 1.2,
                 flexShrink: 0,
+                justifyContent: collapsed ? 'center' : 'flex-start',
+                gap: 0.7,
+                overflow: 'hidden',
                 border: `1px solid ${sidebarTokens.border}`,
-                borderRadius: collapsed ? '10px' : '12px',
+                borderRadius: '11px',
                 color: sidebarTokens.textSoft,
                 bgcolor: sidebarTokens.backgroundElevated,
+                transition: `width ${sidebarMotion.drawer}, background-color ${sidebarMotion.interaction}, color ${sidebarMotion.interaction}`,
                 '&:hover': { bgcolor: sidebarTokens.hoverBackground },
-                '&:focus-visible': { outline: `2px solid ${sidebarTokens.focusRing}`, outlineOffset: 2 },
+                '&.Mui-focusVisible': { outline: `2px solid ${sidebarTokens.focusRing}`, outlineOffset: 2 },
               }}>
-              {collapsed ? <ChevronRightRoundedIcon sx={{ fontSize: 20 }} /> : <ChevronLeftRoundedIcon sx={{ fontSize: 20 }} />}
-            </IconButton>
+              <Box sx={{ width: 26, height: 20, flexShrink: 0, display: 'grid', placeItems: 'center' }}>
+                {collapsed ? <ChevronRightRoundedIcon aria-hidden="true" sx={{ fontSize: 20 }} /> : <ChevronLeftRoundedIcon aria-hidden="true" sx={{ fontSize: 20 }} />}
+              </Box>
+              {!collapsed ? (
+                <Typography noWrap sx={{ fontFamily: 'inherit', fontSize: 12.75, fontWeight: 600, lineHeight: 1.2 }}>
+                  ยุบเมนู
+                </Typography>
+              ) : null}
+            </ButtonBase>
           </Tooltip>
         ) : null}
       </Stack>

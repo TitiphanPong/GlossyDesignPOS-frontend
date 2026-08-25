@@ -1,9 +1,17 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import { SIDEBAR_MENU_GROUPS, SIDEBAR_PRIMARY_ACTION } from './sidebarConfig';
 import { filterSidebarGroups, isRouteActive, isSidebarItemActive } from './sidebarNavigation';
 import type { SidebarMenuGroup, SidebarNavItem } from './sidebarTypes';
 
 const icon = undefined as unknown as SidebarNavItem['icon'];
+
+test('quick seller is the primary action and point of sale stays in the sales group', () => {
+  const salesGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'sales');
+
+  assert.equal(SIDEBAR_PRIMARY_ACTION.href, '/home/quick-sale');
+  assert.equal(salesGroup?.items[0]?.href, '/home/posseller');
+});
 
 test('route matching supports child routes without prefix collisions', () => {
   assert.equal(isRouteActive('/home/orders', '/home/orders'), true);
