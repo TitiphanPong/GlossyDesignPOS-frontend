@@ -179,6 +179,9 @@ export type ApiOrder = {
   orderId: string;
   orderNumber?: string;
   invoiceNumber?: string;
+  bookNo?: string;
+  invoiceSequence?: string;
+  invoicePeriod?: string;
   orderType?: OrderType;
   saleDate?: string;
   entryMode?: OrderEntryMode;
@@ -314,6 +317,9 @@ export type NormalizedOrder = {
   orderId: string;
   orderNumber: string;
   invoiceNumber?: string;
+  bookNo?: string;
+  invoiceSequence?: string;
+  invoicePeriod?: string;
   orderType: OrderType;
   saleDate: string;
   entryMode: OrderEntryMode;
@@ -353,6 +359,9 @@ export type NormalizedInvoiceOrder = {
   orderId: string;
   orderNumber: string;
   invoiceNumber?: string;
+  bookNo?: string;
+  invoiceSequence?: string;
+  invoicePeriod?: string;
   customerName: string;
   phoneNumber: string;
   email: string;
@@ -493,6 +502,9 @@ export function normalizeApiOrder(
     orderId: readNonEmptyString(order.orderId) ?? readNonEmptyString(order._id) ?? readNonEmptyString(order.id) ?? '-',
     orderNumber: getDisplayOrderNumber(order),
     invoiceNumber: typeof order.invoiceNumber === 'string' ? order.invoiceNumber : undefined,
+    bookNo: typeof order.bookNo === 'string' ? order.bookNo : undefined,
+    invoiceSequence: typeof order.invoiceSequence === 'string' ? order.invoiceSequence : undefined,
+    invoicePeriod: typeof order.invoicePeriod === 'string' ? order.invoicePeriod : undefined,
     orderType: order.orderType === 'QUICK_SALE' ? 'QUICK_SALE' : 'NORMAL',
     saleDate: readInvoiceString(order, 'saleDate', 'createdAt', 'updatedAt', 'issueDate') ?? '',
     entryMode: order.entryMode === 'backdated' || order.isBackdated ? 'backdated' : 'normal',
@@ -558,6 +570,9 @@ export function normalizeApiOrderForInvoice(
     orderId: readNonEmptyString(order.orderId) ?? readNonEmptyString(order._id) ?? '-',
     orderNumber: getDisplayOrderNumber(order),
     invoiceNumber: typeof order.invoiceNumber === 'string' ? order.invoiceNumber : undefined,
+    bookNo: typeof order.bookNo === 'string' ? order.bookNo : undefined,
+    invoiceSequence: typeof order.invoiceSequence === 'string' ? order.invoiceSequence : undefined,
+    invoicePeriod: typeof order.invoicePeriod === 'string' ? order.invoicePeriod : undefined,
     customerName: customerInfo.customerName,
     phoneNumber: customerInfo.phoneNumber ?? '-',
     email: customerInfo.email ?? '-',
@@ -586,6 +601,9 @@ export function createInvoiceOrderFromNormalizedOrder(order: NormalizedOrder): N
     orderId: order.orderId,
     orderNumber: order.orderNumber,
     invoiceNumber: order.invoiceNumber,
+    bookNo: order.bookNo,
+    invoiceSequence: order.invoiceSequence,
+    invoicePeriod: order.invoicePeriod,
     customerName: order.customerName,
     phoneNumber: order.phoneNumber,
     email: order.email,

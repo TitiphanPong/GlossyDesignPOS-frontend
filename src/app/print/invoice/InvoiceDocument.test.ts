@@ -8,6 +8,9 @@ const sampleOrder: NormalizedInvoiceOrder = {
   orderId: 'order-123',
   orderNumber: 'ORD-2026-00123',
   invoiceNumber: 'TAX-2026-00023',
+  bookNo: '002',
+  invoiceSequence: '001',
+  invoicePeriod: '202608',
   customerName: 'Customer Name',
   phoneNumber: '0812345678',
   email: '-',
@@ -49,7 +52,8 @@ test('tax invoice data uses its invoice number and receipt dispatch selects the 
   const receiptDocument = InvoiceDocument({ documentType: 'receipt', order: sampleOrder });
   const taxInvoiceDocument = InvoiceDocument({ documentType: 'tax-invoice', order: sampleOrder });
 
-  assert.equal(taxInvoiceData.invoiceNo, sampleOrder.invoiceNumber);
+  assert.equal(taxInvoiceData.bookNo, sampleOrder.bookNo);
+  assert.equal(taxInvoiceData.invoiceNo, sampleOrder.invoiceSequence);
   assert.equal(receiptDocument.type, ReceiptTemplate);
   assert.equal(taxInvoiceDocument.type, TaxInvoiceTemplate);
 });

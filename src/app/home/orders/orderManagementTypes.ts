@@ -24,6 +24,9 @@ export type OrderRow = {
   orderId: string;
   orderNumber: string;
   invoiceNumber?: string;
+  bookNo?: string;
+  invoiceSequence?: string;
+  invoicePeriod?: string;
   orderType: OrderType;
   saleDate: string;
   isBackdated: boolean;
