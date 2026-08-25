@@ -1,81 +1,369 @@
 'use client';
 
 import * as React from 'react';
-import { Alert, Box, Button, Card, CardContent, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControl, IconButton, InputAdornment, InputLabel, MenuItem, Pagination, Select, Skeleton, Snackbar, Stack, Switch, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Tooltip, Typography } from '@mui/material';
+import { Alert, Button, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Stack, Typography } from '@mui/material';
+import type { DragEndEvent } from '@dnd-kit/core';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import DragIndicatorRoundedIcon from '@mui/icons-material/DragIndicatorRounded';
-import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import Inventory2OutlinedIcon from '@mui/icons-material/Inventory2Outlined';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
-import PauseRoundedIcon from '@mui/icons-material/PauseRounded';
-import UnfoldMoreRoundedIcon from '@mui/icons-material/UnfoldMoreRounded';
 import AdminPageContainer from '../../components/AdminPageContainer';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx, heroPrimaryButtonSx } from '../../components/AdminHeroHeader';
-import { tableShellSx, uiCardSx } from '../../components/adminUi';
 import type { Product } from '@/lib/contracts';
-import { createQuickProduct, deleteQuickProduct, fetchQuickProductsForAdmin, updateQuickProduct, type QuickProductPayload } from '@/lib/products';
-import InlinePriceEditor from './components/InlinePriceEditor';
+import {
+  createQuickProduct,
+  deleteQuickProduct,
+  fetchQuickProductsForAdmin,
+  reorderQuickProducts,
+  updateQuickProduct,
+  type QuickProductPayload,
+} from '@/lib/products';
+import { computeReorder, moveVisibleRow, sortByDisplayOrder } from './reorder';
+import QuickMenuCardList from './components/QuickMenuCardList';
+import QuickMenuStats from './components/QuickMenuStats';
+import QuickMenuTable, { type CategoryTab } from './components/QuickMenuTable';
+import QuickMenuToolbar, { type QuickMenuSort, type QuickMenuStatusFilter } from './components/QuickMenuToolbar';
 import QuickSellerEditor from './components/QuickSellerEditor';
 
 const ALL = 'ทั้งหมด';
+const PAGE_SIZES = [10, 25, 50, 100];
 const EMPTY: QuickProductPayload = { name: '', code: '', category: 'ทั่วไป', price: 0, unitLabel: 'ชิ้น', emoji: '📄', tint: '#E2E8F0', active: true, isHotMenu: false, quickSaleSortOrder: 0 };
-type Sort = 'order' | 'name' | 'updated';
-const pageSizes = [10, 25, 50, 100];
-const formatDate = (value?: string) => value ? new Date(value).toLocaleString('th-TH', { dateStyle: 'medium', timeStyle: 'short' }) : '—';
-const toPayload = (p: Product): QuickProductPayload => ({ name: p.name, code: p.code, typeCode: p.typeCode, category: p.category, price: p.variants[0]?.price ?? 0, unitLabel: p.unitLabel, emoji: p.emoji, tint: p.tint, isHotMenu: p.isHotMenu, active: p.active, quickSaleSortOrder: p.quickSaleSortOrder ?? 0 });
+
+const toPayload = (product: Product): QuickProductPayload => ({
+  name: product.name,
+  code: product.code,
+  typeCode: product.typeCode,
+  category: product.category,
+  price: product.variants[0]?.price ?? 0,
+  unitLabel: product.unitLabel,
+  emoji: product.emoji,
+  tint: product.tint,
+  isHotMenu: product.isHotMenu,
+  active: product.active,
+  quickSaleSortOrder: product.quickSaleSortOrder ?? 0,
+});
 
 export default function QuickMenuSettingsPage() {
   const [products, setProducts] = React.useState<Product[]>([]);
-  const [query, setQuery] = React.useState(''); const [category, setCategory] = React.useState(ALL); const [status, setStatus] = React.useState(ALL); const [sort, setSort] = React.useState<Sort>('order');
-  const [page, setPage] = React.useState(1); const [rowsPerPage, setRowsPerPage] = React.useState(10); const [selected, setSelected] = React.useState<string[]>([]);
-  const [loading, setLoading] = React.useState(true); const [error, setError] = React.useState<string | null>(null); const [notice, setNotice] = React.useState<string | null>(null); const [pending, setPending] = React.useState<string[]>([]);
+  const [query, setQuery] = React.useState('');
+  const [category, setCategory] = React.useState(ALL);
+  const [status, setStatus] = React.useState<QuickMenuStatusFilter>('all');
+  const [sort, setSort] = React.useState<QuickMenuSort>('order');
+  const [page, setPage] = React.useState(1);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
+  const [selected, setSelected] = React.useState<string[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [error, setError] = React.useState<string | null>(null);
+  const [notice, setNotice] = React.useState<string | null>(null);
+  const [pending, setPending] = React.useState<string[]>([]);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
-  const [editing, setEditing] = React.useState<Product | null>(null); const [draft, setDraft] = React.useState<QuickProductPayload>(EMPTY); const [editorOpen, setEditorOpen] = React.useState(false); const [deleteTarget, setDeleteTarget] = React.useState<Product | null>(null);
-  const busy = pending.length > 0;
-  const load = React.useCallback(async () => { setLoading(true); setError(null); try { setProducts(await fetchQuickProductsForAdmin()); setLastSyncedAt(new Date()); } catch (e) { setError(e instanceof Error ? e.message : 'โหลดรายการขายด่วนไม่สำเร็จ'); } finally { setLoading(false); } }, []);
+  const [editing, setEditing] = React.useState<Product | null>(null);
+  const [draft, setDraft] = React.useState<QuickProductPayload>(EMPTY);
+  const [editorOpen, setEditorOpen] = React.useState(false);
+  const [deleteTarget, setDeleteTarget] = React.useState<Product | null>(null);
+  const [reorderMode, setReorderMode] = React.useState(false);
+  const [savingOrder, setSavingOrder] = React.useState(false);
+  const [bulkBusy, setBulkBusy] = React.useState(false);
+  const [bulkDeleteOpen, setBulkDeleteOpen] = React.useState(false);
+
+  const busy = pending.length > 0 || savingOrder || bulkBusy;
+
+  const load = React.useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      setProducts(await fetchQuickProductsForAdmin());
+      setLastSyncedAt(new Date());
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'โหลดรายการขายด่วนไม่สำเร็จ');
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   React.useEffect(() => { void load(); }, [load]);
   React.useEffect(() => setPage(1), [query, category, status, sort, rowsPerPage]);
-  const categories = React.useMemo(() => [ALL, ...Array.from(new Set(products.map(p => p.category))).sort((a, b) => a.localeCompare(b, 'th'))], [products]);
-  const visible = React.useMemo(() => products.filter(p => `${p.name} ${p.code} ${p.category}`.toLowerCase().includes(query.trim().toLowerCase())).filter(p => category === ALL || p.category === category).filter(p => status === ALL || (status === 'active' ? p.active : !p.active)).sort((a, b) => sort === 'name' ? a.name.localeCompare(b.name, 'th') : sort === 'updated' ? (b.updatedAt || '').localeCompare(a.updatedAt || '') : (a.quickSaleSortOrder ?? 0) - (b.quickSaleSortOrder ?? 0)), [products, query, category, status, sort]);
-  const paged = visible.slice((page - 1) * rowsPerPage, page * rowsPerPage); const pageCount = Math.max(1, Math.ceil(visible.length / rowsPerPage));
-  const patchRow = async (product: Product, patch: Partial<QuickProductPayload>, message: string) => { if (pending.includes(product.id)) return; setPending(ids => [...ids, product.id]); setError(null); try { const updated = await updateQuickProduct(product.id, patch); setProducts(items => items.map(item => item.id === product.id ? updated : item)); setNotice(message); } catch (e) { setError(e instanceof Error ? e.message : 'อัปเดตรายการไม่สำเร็จ'); throw e; } finally { setPending(ids => ids.filter(id => id !== product.id)); } };
-  const openEditor = (product: Product | null) => { setEditing(product); setDraft(product ? toPayload(product) : EMPTY); setEditorOpen(true); };
-  const saveEditor = async (value: QuickProductPayload) => { const id = editing?.id ?? 'new'; setPending(ids => [...ids, id]); try { const saved = editing ? await updateQuickProduct(editing.id, value) : await createQuickProduct(value); setProducts(items => editing ? items.map(item => item.id === editing.id ? saved : item) : [...items, saved]); setEditorOpen(false); setNotice(editing ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มรายการขายด่วนแล้ว'); } finally { setPending(ids => ids.filter(item => item !== id)); } };
-  const remove = async () => { if (!deleteTarget) return; const target = deleteTarget; setPending(ids => [...ids, target.id]); try { await deleteQuickProduct(target.id); setProducts(items => items.filter(item => item.id !== target.id)); setDeleteTarget(null); setNotice('ลบรายการแล้ว'); } catch (e) { setError(e instanceof Error ? e.message : 'ลบรายการไม่สำเร็จ'); } finally { setPending(ids => ids.filter(id => id !== target.id)); } };
-  const allOnPage = paged.length > 0 && paged.every(p => selected.includes(p.id));
 
-  const activeCount = products.filter(p => p.active).length;
-  const inactiveCount = products.length - activeCount;
-  const activePercent = products.length ? Math.round((activeCount / products.length) * 100) : 0;
+  const categoryNames = React.useMemo(
+    () => Array.from(new Set(products.map(product => product.category))).sort((a, b) => a.localeCompare(b, 'th')),
+    [products]
+  );
+  const categoryTabs = React.useMemo<CategoryTab[]>(
+    () => [
+      { label: ALL, count: products.length },
+      ...categoryNames.map(name => ({ label: name, count: products.filter(product => product.category === name).length })),
+    ],
+    [products, categoryNames]
+  );
 
-  return <AdminPageContainer><Stack spacing={2.25} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 }, '& .MuiButton-root': { textTransform: 'none' } }}>
-    <AdminHeroHeader title="Quick Menu Settings" description="จัดการรายการสินค้า ราคาหน้าร้าน และลำดับการแสดงผลในหน้าขายด่วน" lastSynced={formatAdminLastSynced(lastSyncedAt)} thaiDate={formatAdminThaiDate(lastSyncedAt)} mb={0} actions={<><Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroOutlineButtonSx}>{loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}</Button><Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => openEditor(null)} sx={heroPrimaryButtonSx}>เพิ่มรายการใหม่</Button></>} />
-    {error && <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void load()}>ลองใหม่</Button>} onClose={() => setError(null)}>{error}</Alert>}
-    <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 2 }}>
-      {[{ label: 'รายการทั้งหมด', value: products.length, unit: 'รายการ', icon: <Inventory2OutlinedIcon />, color: '#075BEE', bg: '#075BEE' }, { label: 'กำลังใช้งาน', value: activeCount, unit: 'รายการ', detail: `${activePercent}%`, icon: <CheckCircleRoundedIcon />, color: '#20AA4A', bg: '#22B651' }, { label: 'ปิดใช้งาน', value: inactiveCount, unit: 'รายการ', detail: `${100 - activePercent}%`, icon: <PauseRoundedIcon />, color: '#FF9800', bg: '#FFA000' }, { label: 'หมวดหมู่ทั้งหมด', value: Math.max(0, categories.length - 1), unit: 'หมวดหมู่', icon: <CategoryRoundedIcon />, color: '#7139EA', bg: '#7139EA' }].map(item => <Card key={item.label} sx={{ ...uiCardSx, boxShadow: '0 7px 22px rgba(29,52,84,.06)', borderColor: '#DFE6EF' }}><CardContent sx={{ p: '22px !important', minHeight: 104, display: 'flex', alignItems: 'center', gap: 2 }}><Box sx={{ width: 50, height: 50, flexShrink: 0, borderRadius: 2.25, display: 'grid', placeItems: 'center', color: '#FFF', background: `linear-gradient(145deg, ${item.bg}, ${item.color})`, boxShadow: `0 7px 15px ${item.color}30` }}>{item.icon}</Box><Box flex={1}><Typography sx={{ fontSize: 13.5, color: '#34425C', fontWeight: 600 }}>{item.label}</Typography><Stack direction="row" alignItems="baseline" gap={1} sx={{ mt: .5 }}><Typography sx={{ fontSize: 27, fontWeight: 850, lineHeight: 1, color: '#111B33' }}>{item.value}</Typography><Typography sx={{ fontSize: 12.5, color: '#8490A5' }}>{item.unit}</Typography>{item.detail && <Typography sx={{ ml: 'auto', fontSize: 13, fontWeight: 700, color: item.color }}>{item.detail}</Typography>}</Stack></Box></CardContent></Card>)}
-    </Box>
-    <Card sx={{ ...uiCardSx, borderColor: '#DFE6EF', boxShadow: '0 8px 24px rgba(29,52,84,.055)' }}><CardContent sx={{ p: '20px !important' }}><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(300px, 1.25fr) repeat(3, minmax(170px, .55fr))' }, gap: 1.5 }}>
-      <TextField size="small" placeholder="ค้นหาชื่อสินค้า / รหัสสินค้า" value={query} onChange={e => setQuery(e.target.value)} InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }} />
-      <FormControl size="small"><InputLabel>หมวดหมู่</InputLabel><Select label="หมวดหมู่" value={category} onChange={e => setCategory(e.target.value)}>{categories.map(c => <MenuItem key={c} value={c}>{c}</MenuItem>)}</Select></FormControl>
-      <FormControl size="small"><InputLabel>สถานะ</InputLabel><Select label="สถานะ" value={status} onChange={e => setStatus(e.target.value)}><MenuItem value={ALL}>ทั้งหมด</MenuItem><MenuItem value="active">ใช้งาน</MenuItem><MenuItem value="inactive">ปิดใช้งาน</MenuItem></Select></FormControl>
-      <FormControl size="small"><InputLabel>เรียงลำดับ</InputLabel><Select label="เรียงลำดับ" value={sort} onChange={e => setSort(e.target.value as Sort)} IconComponent={UnfoldMoreRoundedIcon}><MenuItem value="order">ลำดับการแสดงผล</MenuItem><MenuItem value="name">ชื่อสินค้า</MenuItem><MenuItem value="updated">อัปเดตล่าสุด</MenuItem></Select></FormControl>
-    </Box></CardContent></Card>
-    <Stack direction="row" justifyContent="space-between" gap={0} sx={{ overflowX: 'auto', borderBottom: '1px solid #DDE5F0', minHeight: 52 }}>{categories.map(c => <Button key={c} onClick={() => setCategory(c)} sx={{ position: 'relative', flex: { lg: 1 }, flexShrink: 0, minWidth: 135, px: 2, color: category === c ? '#075BEE' : '#45536C', fontWeight: category === c ? 750 : 500, '&::after': category === c ? { content: '""', position: 'absolute', left: 0, right: 0, bottom: -1, height: 3, bgcolor: '#075BEE', borderRadius: '3px 3px 0 0' } : undefined }}>{c}</Button>)}</Stack>
-    {selected.length > 0 && <Alert severity="info" icon={false}><Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ sm: 'center' }} gap={1}><Typography fontWeight={700}>เลือกแล้ว {selected.length} รายการ</Typography><Button size="small" onClick={() => setSelected([])}>ยกเลิกการเลือก</Button></Stack></Alert>}
-    <Card sx={{ ...uiCardSx, overflow: 'hidden', borderColor: '#DDE5EF', boxShadow: '0 8px 26px rgba(29,52,84,.06)' }}>
-      <TableContainer sx={{ display: { xs: 'none', md: 'block' } }}><Table size="small" sx={tableShellSx}><TableHead><TableRow><TableCell padding="checkbox"><Checkbox checked={allOnPage} indeterminate={selected.length > 0 && !allOnPage} onChange={e => setSelected(e.target.checked ? Array.from(new Set([...selected, ...paged.map(p => p.id)])) : selected.filter(id => !paged.some(p => p.id === id)))} /></TableCell><TableCell sx={{ width: 38 }} /><TableCell>สินค้า</TableCell><TableCell>หมวดหมู่</TableCell><TableCell>ราคา</TableCell><TableCell align="center">ลำดับ</TableCell><TableCell>สถานะ</TableCell><TableCell>อัปเดตล่าสุด</TableCell><TableCell align="right">จัดการ</TableCell></TableRow></TableHead>
-      <TableBody>{loading ? Array.from({ length: 7 }, (_, i) => <TableRow key={i}><TableCell colSpan={9}><Skeleton height={38} /></TableCell></TableRow>) : paged.map(p => <TableRow key={p.id} hover sx={{ opacity: p.active ? 1 : .62 }}><TableCell padding="checkbox"><Checkbox checked={selected.includes(p.id)} onChange={e => setSelected(ids => e.target.checked ? [...ids, p.id] : ids.filter(id => id !== p.id))} /></TableCell><TableCell><DragIndicatorRoundedIcon color="disabled" fontSize="small" /></TableCell><TableCell><Stack direction="row" alignItems="center" gap={1}><Box sx={{ width: 36, height: 36, borderRadius: 1.5, bgcolor: p.tint || '#EEF2F6', display: 'grid', placeItems: 'center', fontSize: 20 }}>{p.emoji || '📄'}</Box><Box><Typography fontWeight={750} fontSize={14}>{p.name}</Typography><Typography variant="caption" color="text.secondary">{p.code}</Typography></Box></Stack></TableCell><TableCell><Chip size="small" label={p.category} variant="outlined" /></TableCell><TableCell><InlinePriceEditor value={p.variants[0]?.price ?? 0} disabled={pending.includes(p.id)} onSave={price => patchRow(p, { price }, 'อัปเดตราคาแล้ว')} /></TableCell><TableCell align="center"><TextField size="small" type="number" defaultValue={p.quickSaleSortOrder ?? 0} inputProps={{ min: 0, 'aria-label': `ลำดับ ${p.name}` }} onBlur={e => { const next = Math.max(0, Number(e.target.value) || 0); if (next !== (p.quickSaleSortOrder ?? 0)) void patchRow(p, { quickSaleSortOrder: next }, 'อัปเดตลำดับแล้ว'); }} sx={{ width: 66, '& input': { py: .65, textAlign: 'center' } }} /></TableCell><TableCell><Stack direction="row" alignItems="center"><Switch size="small" checked={p.active} disabled={pending.includes(p.id)} onChange={() => void patchRow(p, { active: !p.active }, p.active ? 'ปิดใช้งานแล้ว' : 'เปิดใช้งานแล้ว')} /><Typography variant="caption" fontWeight={700} color={p.active ? 'success.main' : 'text.secondary'}>{p.active ? 'ใช้งาน' : 'ปิด'}</Typography></Stack></TableCell><TableCell><Typography variant="caption">{formatDate(p.updatedAt)}</Typography></TableCell><TableCell align="right"><Tooltip title="แก้ไข"><IconButton size="small" onClick={() => openEditor(p)}><EditRoundedIcon fontSize="small" /></IconButton></Tooltip><Tooltip title="ลบ"><IconButton size="small" color="error" onClick={() => setDeleteTarget(p)}><DeleteOutlineRoundedIcon fontSize="small" /></IconButton></Tooltip></TableCell></TableRow>)}</TableBody></Table></TableContainer>
-      <Stack sx={{ display: { md: 'none' }, p: 1.25 }} spacing={1}>{loading ? Array.from({ length: 4 }, (_, i) => <Skeleton key={i} variant="rounded" height={190} />) : paged.map(p => <Card key={p.id} variant="outlined"><CardContent sx={{ p: '14px !important' }}><Stack direction="row" alignItems="flex-start" gap={1}><Box sx={{ width: 42, height: 42, borderRadius: 1.5, bgcolor: p.tint || '#EEF2F6', display: 'grid', placeItems: 'center', fontSize: 22 }}>{p.emoji || '📄'}</Box><Box flex={1} minWidth={0}><Typography fontWeight={800}>{p.name}</Typography><Typography variant="caption" color="text.secondary">{p.code} · {p.category}</Typography></Box><IconButton size="small" onClick={() => openEditor(p)}><EditRoundedIcon fontSize="small" /></IconButton></Stack><Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mt: 1.5 }}><InlinePriceEditor value={p.variants[0]?.price ?? 0} disabled={pending.includes(p.id)} onSave={price => patchRow(p, { price }, 'อัปเดตราคาแล้ว')} /><Switch checked={p.active} onChange={() => void patchRow(p, { active: !p.active }, 'อัปเดตสถานะแล้ว')} /></Stack><Typography variant="caption" color="text.secondary">ลำดับ {p.quickSaleSortOrder ?? 0} · {formatDate(p.updatedAt)}</Typography></CardContent></Card>)}</Stack>
-      {!loading && visible.length === 0 && <Box sx={{ py: 8, px: 2, textAlign: 'center' }}><Inventory2OutlinedIcon sx={{ fontSize: 48, color: 'text.disabled' }} /><Typography variant="h6" fontWeight={800}>{products.length === 0 ? 'ยังไม่มีรายการขายด่วน' : 'ไม่พบรายการที่ค้นหา'}</Typography><Typography color="text.secondary" sx={{ mb: 2 }}>{products.length === 0 ? 'เพิ่มสินค้าเพื่อเริ่มใช้งานเมนูขายด่วน' : 'ลองเปลี่ยนคำค้นหาหรือตัวกรอง'}</Typography>{products.length === 0 && <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => openEditor(null)}>เพิ่มรายการ</Button>}</Box>}
-      {!loading && visible.length > 0 && <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems="center" gap={1.5} sx={{ px: 2, py: 1.5, borderTop: '1px solid', borderColor: 'divider' }}><Stack direction="row" alignItems="center" gap={1}><Typography variant="body2">แสดงต่อหน้า</Typography><Select size="small" value={rowsPerPage} onChange={e => setRowsPerPage(Number(e.target.value))}>{pageSizes.map(n => <MenuItem key={n} value={n}>{n}</MenuItem>)}</Select><Typography variant="body2" color="text.secondary">{(page - 1) * rowsPerPage + 1}–{Math.min(page * rowsPerPage, visible.length)} จาก {visible.length} รายการ</Typography></Stack><Pagination page={page} count={pageCount} onChange={(_, value) => setPage(value)} color="primary" size="small" /></Stack>}
-    </Card>
-  </Stack>
-  <QuickSellerEditor open={editorOpen} initial={draft} editing={editing} busy={busy} onClose={() => setEditorOpen(false)} onSave={saveEditor} />
-  <Dialog open={Boolean(deleteTarget)} onClose={() => !busy && setDeleteTarget(null)} maxWidth="xs" fullWidth><DialogTitle>ยืนยันการลบรายการ</DialogTitle><DialogContent><Typography>ต้องการลบ “{deleteTarget?.name}” หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้</Typography></DialogContent><DialogActions><Button onClick={() => setDeleteTarget(null)} disabled={busy}>ยกเลิก</Button><Button variant="contained" color="error" onClick={() => void remove()} disabled={busy}>ลบรายการ</Button></DialogActions></Dialog>
-  <Snackbar open={Boolean(notice)} autoHideDuration={2600} onClose={() => setNotice(null)} message={`✓ ${notice ?? ''}`} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} />
-  </AdminPageContainer>;
+  const visible = React.useMemo(
+    () =>
+      products
+        .filter(product => `${product.name} ${product.code} ${product.category}`.toLowerCase().includes(query.trim().toLowerCase()))
+        .filter(product => category === ALL || product.category === category)
+        .filter(product => status === 'all' || (status === 'active' ? product.active : !product.active))
+        .sort((a, b) =>
+          sort === 'name'
+            ? a.name.localeCompare(b.name, 'th')
+            : sort === 'updated'
+              ? (b.updatedAt || '').localeCompare(a.updatedAt || '')
+              : (a.quickSaleSortOrder ?? 0) - (b.quickSaleSortOrder ?? 0)
+        ),
+    [products, query, category, status, sort]
+  );
+  const paged = visible.slice((page - 1) * rowsPerPage, page * rowsPerPage);
+  const pageCount = Math.max(1, Math.ceil(visible.length / rowsPerPage));
+
+  // In reorder mode the whole (category-filtered) list is shown so a drop target is never off-page.
+  const reorderRows = React.useMemo(
+    () => sortByDisplayOrder(products).filter(product => category === ALL || product.category === category),
+    [products, category]
+  );
+  const rows = reorderMode ? reorderRows : paged;
+
+  const patchRow = async (product: Product, patch: Partial<QuickProductPayload>, message: string) => {
+    if (pending.includes(product.id)) return;
+    setPending(ids => [...ids, product.id]);
+    setError(null);
+    try {
+      const updated = await updateQuickProduct(product.id, patch);
+      setProducts(items => items.map(item => (item.id === product.id ? updated : item)));
+      setNotice(message);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'อัปเดตรายการไม่สำเร็จ');
+      throw e;
+    } finally {
+      setPending(ids => ids.filter(id => id !== product.id));
+    }
+  };
+
+  const openEditor = (product: Product | null) => {
+    setEditing(product);
+    setDraft(product ? toPayload(product) : EMPTY);
+    setEditorOpen(true);
+  };
+
+  const saveEditor = async (value: QuickProductPayload) => {
+    const id = editing?.id ?? 'new';
+    setPending(ids => [...ids, id]);
+    setError(null);
+    try {
+      const saved = editing ? await updateQuickProduct(editing.id, value) : await createQuickProduct(value);
+      setProducts(items => (editing ? items.map(item => (item.id === editing.id ? saved : item)) : [...items, saved]));
+      setEditorOpen(false);
+      setNotice(editing ? 'บันทึกการแก้ไขแล้ว' : 'เพิ่มรายการขายด่วนแล้ว');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'บันทึกรายการไม่สำเร็จ');
+    } finally {
+      setPending(ids => ids.filter(item => item !== id));
+    }
+  };
+
+  const remove = async () => {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    setPending(ids => [...ids, target.id]);
+    try {
+      await deleteQuickProduct(target.id);
+      setProducts(items => items.filter(item => item.id !== target.id));
+      setSelected(ids => ids.filter(id => id !== target.id));
+      setDeleteTarget(null);
+      setNotice('ลบรายการแล้ว');
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'ลบรายการไม่สำเร็จ');
+    } finally {
+      setPending(ids => ids.filter(id => id !== target.id));
+    }
+  };
+
+  const toggleReorderMode = () => {
+    if (!reorderMode) {
+      setSort('order');
+      setQuery('');
+      setStatus('all');
+      setSelected([]);
+    }
+    setReorderMode(mode => !mode);
+  };
+
+  const applyReorder = async (result: ReturnType<typeof computeReorder>) => {
+    const { next, changes } = result;
+    if (!changes.length) return;
+    const snapshot = products;
+    setProducts(next);
+    setSavingOrder(true);
+    setError(null);
+    try {
+      const fresh = await reorderQuickProducts(changes);
+      if (fresh.length) setProducts(fresh);
+      setNotice('บันทึกลำดับแล้ว');
+    } catch (e) {
+      setProducts(snapshot);
+      setError(e instanceof Error ? e.message : 'บันทึกลำดับไม่สำเร็จ');
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+    if (!over || active.id === over.id || savingOrder) return;
+    const visibleIds = reorderRows.map(product => product.id);
+    void applyReorder(moveVisibleRow(sortByDisplayOrder(products), visibleIds, String(active.id), String(over.id)));
+  };
+
+  const handleMove = (id: string, direction: -1 | 1) => {
+    if (savingOrder) return;
+    const visibleIds = reorderRows.map(product => product.id);
+    const fromIndex = visibleIds.indexOf(id);
+    void applyReorder(computeReorder(sortByDisplayOrder(products), visibleIds, fromIndex, fromIndex + direction));
+  };
+
+  const bulkSetActive = async (active: boolean) => {
+    const targets = products.filter(product => selected.includes(product.id) && product.active !== active);
+    if (!targets.length) {
+      setSelected([]);
+      return;
+    }
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(targets.map(product => updateQuickProduct(product.id, { active })));
+    const updatedById = new Map<string, Product>();
+    results.forEach(result => {
+      if (result.status === 'fulfilled') updatedById.set(result.value.id, result.value);
+    });
+    setProducts(items => items.map(item => updatedById.get(item.id) ?? item));
+    const failed = results.length - updatedById.size;
+    if (failed > 0) setError(`${active ? 'เปิด' : 'ปิด'}ใช้งานไม่สำเร็จ ${failed} รายการ`);
+    setNotice(`${active ? 'เปิด' : 'ปิด'}ใช้งานแล้ว ${updatedById.size} รายการ`);
+    setSelected([]);
+    setBulkBusy(false);
+  };
+
+  const bulkDelete = async () => {
+    const targets = selected;
+    setBulkBusy(true);
+    setError(null);
+    const results = await Promise.allSettled(targets.map(id => deleteQuickProduct(id).then(() => id)));
+    const removedIds = new Set(results.filter((result): result is PromiseFulfilledResult<string> => result.status === 'fulfilled').map(result => result.value));
+    setProducts(items => items.filter(item => !removedIds.has(item.id)));
+    const failed = targets.length - removedIds.size;
+    if (failed > 0) setError(`ลบไม่สำเร็จ ${failed} รายการ`);
+    setNotice(`ลบแล้ว ${removedIds.size} รายการ`);
+    setSelected([]);
+    setBulkDeleteOpen(false);
+    setBulkBusy(false);
+  };
+
+  return (
+    <AdminPageContainer>
+      <Stack spacing={2.25} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 }, '& .MuiButton-root': { textTransform: 'none' } }}>
+        <AdminHeroHeader
+          title="Quick Menu Settings"
+          description="จัดการรายการสินค้า ราคาหน้าร้าน และลำดับการแสดงผลในหน้าขายด่วน"
+          lastSynced={formatAdminLastSynced(lastSyncedAt)}
+          thaiDate={formatAdminThaiDate(lastSyncedAt)}
+          mb={0}
+          actions={
+            <>
+              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroOutlineButtonSx}>
+                {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
+              </Button>
+              <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => openEditor(null)} sx={heroPrimaryButtonSx}>
+                เพิ่มรายการใหม่
+              </Button>
+            </>
+          }
+        />
+        {error && (
+          <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void load()}>ลองใหม่</Button>} onClose={() => setError(null)}>
+            {error}
+          </Alert>
+        )}
+        <QuickMenuStats total={products.length} activeCount={products.filter(product => product.active).length} categoryCount={categoryNames.length} />
+        <QuickMenuToolbar
+          query={query}
+          status={status}
+          sort={sort}
+          reorderMode={reorderMode}
+          busy={busy}
+          selectedCount={selected.length}
+          onQueryChange={setQuery}
+          onStatusChange={setStatus}
+          onSortChange={setSort}
+          onToggleReorderMode={toggleReorderMode}
+          onBulkSetActive={active => void bulkSetActive(active)}
+          onBulkDelete={() => setBulkDeleteOpen(true)}
+          onClearSelection={() => setSelected([])}
+        />
+        <QuickMenuTable
+          loading={loading}
+          reorderMode={reorderMode}
+          savingOrder={savingOrder}
+          rows={rows}
+          totalProducts={products.length}
+          visibleTotal={reorderMode ? reorderRows.length : visible.length}
+          categories={categoryTabs}
+          category={category}
+          selected={selected}
+          pending={pending}
+          page={page}
+          pageCount={pageCount}
+          rowsPerPage={rowsPerPage}
+          pageSizes={PAGE_SIZES}
+          onCategoryChange={setCategory}
+          onToggleSelectAll={checked =>
+            setSelected(ids => (checked ? Array.from(new Set([...ids, ...paged.map(product => product.id)])) : ids.filter(id => !paged.some(product => product.id === id))))
+          }
+          onToggleSelect={(id, checked) => setSelected(ids => (checked ? [...ids, id] : ids.filter(item => item !== id)))}
+          onSavePrice={(product, price) => patchRow(product, { price }, 'อัปเดตราคาแล้ว')}
+          onToggleActive={product => void patchRow(product, { active: !product.active }, product.active ? 'ปิดใช้งานแล้ว' : 'เปิดใช้งานแล้ว')}
+          onEdit={openEditor}
+          onDelete={setDeleteTarget}
+          onAdd={() => openEditor(null)}
+          onDragEnd={handleDragEnd}
+          onPageChange={setPage}
+          onRowsPerPageChange={setRowsPerPage}
+        />
+        <QuickMenuCardList
+          loading={loading}
+          reorderMode={reorderMode}
+          rows={rows}
+          totalProducts={products.length}
+          categories={categoryTabs}
+          category={category}
+          selected={selected}
+          pending={pending}
+          onCategoryChange={setCategory}
+          onToggleSelect={(id, checked) => setSelected(ids => (checked ? [...ids, id] : ids.filter(item => item !== id)))}
+          onSavePrice={(product, price) => patchRow(product, { price }, 'อัปเดตราคาแล้ว')}
+          onToggleActive={product => void patchRow(product, { active: !product.active }, product.active ? 'ปิดใช้งานแล้ว' : 'เปิดใช้งานแล้ว')}
+          onEdit={openEditor}
+          onDelete={setDeleteTarget}
+          onAdd={() => openEditor(null)}
+          onMove={handleMove}
+        />
+      </Stack>
+      <QuickSellerEditor open={editorOpen} initial={draft} editing={editing} busy={busy} onClose={() => setEditorOpen(false)} onSave={saveEditor} />
+      <Dialog open={Boolean(deleteTarget)} onClose={() => !busy && setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle>ยืนยันการลบรายการ</DialogTitle>
+        <DialogContent>
+          <Typography>ต้องการลบ “{deleteTarget?.name}” หรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setDeleteTarget(null)} disabled={busy}>ยกเลิก</Button>
+          <Button variant="contained" color="error" onClick={() => void remove()} disabled={busy}>ลบรายการ</Button>
+        </DialogActions>
+      </Dialog>
+      <Dialog open={bulkDeleteOpen} onClose={() => !busy && setBulkDeleteOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle>ยืนยันการลบ {selected.length} รายการ</DialogTitle>
+        <DialogContent>
+          <Typography>ต้องการลบรายการที่เลือกทั้งหมด {selected.length} รายการหรือไม่? การดำเนินการนี้ไม่สามารถย้อนกลับได้</Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBulkDeleteOpen(false)} disabled={busy}>ยกเลิก</Button>
+          <Button variant="contained" color="error" onClick={() => void bulkDelete()} disabled={busy}>ลบทั้งหมด</Button>
+        </DialogActions>
+      </Dialog>
+      <Snackbar open={Boolean(notice)} autoHideDuration={2600} onClose={() => setNotice(null)} message={`✓ ${notice ?? ''}`} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }} />
+    </AdminPageContainer>
+  );
 }

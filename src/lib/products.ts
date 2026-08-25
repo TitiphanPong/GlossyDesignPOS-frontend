@@ -158,3 +158,11 @@ export async function deleteQuickProduct(id: string): Promise<void> {
   await fetchApi(`/quick-products/${encodeURIComponent(id)}`, { method: 'DELETE' });
   invalidateProductCache();
 }
+
+export type QuickProductReorderItem = { id: string; quickSaleSortOrder: number };
+
+export async function reorderQuickProducts(items: QuickProductReorderItem[]): Promise<Product[]> {
+  const products = extractProductsFromResponse(await fetchApiJson<unknown>('/quick-products/reorder', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items }) }));
+  invalidateProductCache();
+  return products;
+}
