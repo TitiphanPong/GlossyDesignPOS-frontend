@@ -14,7 +14,7 @@ export default defineConfig([
   },
   {
     rules: {
-      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-explicit-any': 'error',
       // React 19's new compiler-oriented rules flag established modal hydration
       // and request-loading effects. Keep the pre-upgrade lint contract until
       // those flows can be refactored and regression-tested independently.

@@ -11,7 +11,6 @@ import {
   createAdminSession,
   getAdminAuthConfig,
   hasAdminAuthConfig,
-  resolveAdminGuardRedirect,
   sanitizeAdminRedirectPath,
   verifyAdminSession,
 } from './admin-auth';
@@ -121,11 +120,6 @@ test('sanitizeAdminRedirectPath only permits same-origin paths', () => {
   assert.equal(sanitizeAdminRedirectPath('/\\example.com'), '/home');
   assert.equal(sanitizeAdminRedirectPath('javascript:alert(1)'), '/home');
   assert.equal(sanitizeAdminRedirectPath(null), '/home');
-});
-
-test('resolveAdminGuardRedirect reflects authenticated state', () => {
-  assert.equal(resolveAdminGuardRedirect(true), null);
-  assert.equal(resolveAdminGuardRedirect(false), '/login');
 });
 
 test('clearAdminAuthSession removes the legacy localStorage key during migration', () => {

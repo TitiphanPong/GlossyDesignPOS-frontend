@@ -95,7 +95,7 @@ const findProductModalDefinition = (activeProduct: ActiveProduct | null) => {
 
 export const createCartItemKey = (productId: string) => `${productId}-${Date.now()}`;
 
-export const buildEditingProduct = (item: CartItem): ActiveProduct => ({
+const buildEditingProduct = (item: CartItem): ActiveProduct => ({
   id: item.key,
   name: item.name,
   category: item.category,

@@ -202,10 +202,6 @@ export async function verifyAdminSession(token: string | null | undefined, now =
   }
 }
 
-export function resolveAdminGuardRedirect(isAuthenticated: boolean): string | null {
-  return isAuthenticated ? null : ADMIN_GUARD_REDIRECT_PATH;
-}
-
 export function sanitizeAdminRedirectPath(value: string | null | undefined): string {
   if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) {
     return ADMIN_LOGIN_REDIRECT_PATH;
