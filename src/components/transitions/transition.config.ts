@@ -1,7 +1,7 @@
 export const transitionDuration = {
   press: 90,
-  hover: 100,
-  menu: 120,
+  hover: 160,
+  menu: 180,
   page: 160,
   modal: 200,
   drawer: 220,

@@ -5,6 +5,7 @@ import { Box, Badge, IconButton, Tooltip } from '@mui/material';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
 import { NotificationDrawer } from '@/components/notifications/NotificationDrawer';
 import { useNotifications } from '@/lib/useNotifications';
+import { sidebarTokens } from '@/components/navigation/sidebarTheme';
 
 export function GlobalNotificationHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -12,7 +13,7 @@ export function GlobalNotificationHeader() {
 
   return (
     <>
-      <Tooltip title="งานที่ต้องจัดการ">
+      <Tooltip title="งานที่ต้องจัดการ" enterDelay={250}>
         <Box
           sx={{
             display: { xs: 'none', md: 'flex' },
@@ -24,16 +25,19 @@ export function GlobalNotificationHeader() {
           }}>
           <IconButton
             onClick={() => setDrawerOpen(true)}
+            aria-label="เปิดการแจ้งเตือนงานที่ต้องจัดการ"
             sx={{
-              borderRadius: 2,
-              border: '1px solid #DFE8F5',
-              bgcolor: '#FFFFFF',
+              borderRadius: '12px',
+              border: `1px solid ${sidebarTokens.border}`,
+              bgcolor: sidebarTokens.backgroundElevated,
               width: 44,
               height: 44,
-              boxShadow: '0 10px 20px rgba(12, 56, 110, 0.08)',
+              color: sidebarTokens.textSoft,
+              boxShadow: '0 7px 18px rgba(37, 34, 28, 0.08)',
               '&:hover': {
-                bgcolor: '#F7FAFF',
+                bgcolor: sidebarTokens.hoverBackground,
               },
+              '&:focus-visible': { outline: `2px solid ${sidebarTokens.focusRing}`, outlineOffset: 2 },
             }}>
             <Badge
               badgeContent={count?.actionRequired ?? 0}
@@ -43,7 +47,7 @@ export function GlobalNotificationHeader() {
                 '& .MuiBadge-badge': {
                   right: -3,
                   top: 13,
-                  border: '2px solid white',
+                  border: `2px solid ${sidebarTokens.backgroundElevated}`,
                   padding: '0 4px',
                   fontSize: 12,
                   fontWeight: 700,
@@ -52,7 +56,7 @@ export function GlobalNotificationHeader() {
                   borderRadius: 10,
                 },
               }}>
-              <NotificationsRoundedIcon sx={{ color: '#2A4365' }} />
+              <NotificationsRoundedIcon aria-hidden="true" sx={{ color: sidebarTokens.textSoft }} />
             </Badge>
           </IconButton>
         </Box>
