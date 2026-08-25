@@ -112,9 +112,9 @@ export default function SidebarHeader({ collapsed, mobile, onToggleCollapsed, on
               onClick={onToggleCollapsed}
               aria-label={collapseLabel}
               sx={{
-                width: collapsed ? 40 : '100%',
+                width: '100%',
                 height: 40,
-                ml: collapsed ? 0.6 : 0,
+                ml: 0,
                 px: collapsed ? 0 : 1.2,
                 flexShrink: 0,
                 justifyContent: collapsed ? 'center' : 'flex-start',
