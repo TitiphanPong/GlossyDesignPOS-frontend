@@ -193,10 +193,7 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
 
   return {
     bookNo: documentType === 'tax-invoice' ? order.bookNo || '-' : '-',
-    invoiceNo:
-      documentType === 'tax-invoice'
-        ? order.invoiceSequence || order.invoiceNumber || order.orderNumber || order.orderId
-        : order.orderNumber || order.orderId,
+    invoiceNo: documentType === 'tax-invoice' ? order.invoiceSequence || order.invoiceNumber || order.orderNumber || order.orderId : order.orderNumber || order.orderId,
     copyTitle: getCopyTitle(documentType, order.taxInvoice),
     issuedDate,
     issuedTime,
