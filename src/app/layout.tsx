@@ -1,7 +1,6 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { kanit, prompt } from './home/fonts';
-import GlossyLocalizationProvider from '@/components/date-pickers/GlossyLocalizationProvider';
+import { prompt } from './home/fonts';
 
 export const metadata: Metadata = {
   title: 'Glossy Design | Premium Printing & Branding',
@@ -15,9 +14,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th">
-      <body className={`${prompt.variable} ${kanit.variable} ${prompt.className} antialiased`}>
-        <GlossyLocalizationProvider>{children}</GlossyLocalizationProvider>
-      </body>
+      <body className={`${prompt.variable} ${prompt.className} antialiased`}>{children}</body>
     </html>
   );
 }
