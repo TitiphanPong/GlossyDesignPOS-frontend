@@ -7,12 +7,4 @@ const promptSans = Prompt({
   weight: ['400', '500', '600', '700', '800'],
 });
 
-const promptHead = Prompt({
-  subsets: ['thai', 'latin'],
-  display: 'swap',
-  variable: '--font-head',
-  weight: ['400', '500', '600', '700', '800'],
-});
-
 export const prompt = promptSans;
-export const kanit = promptHead;
