@@ -1,13 +1,12 @@
 'use client';
 
 import * as React from 'react';
-import { Alert, Box, Button, Card, CardActionArea, CardContent, Chip, Divider, LinearProgress, Skeleton, Stack, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Alert, Box, Button, Card, CardActionArea, CardContent, Chip, Divider, LinearProgress, Skeleton, Stack, Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
-import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
-import AssignmentTurnedInRoundedIcon from '@mui/icons-material/AssignmentTurnedInRounded';
+import AccountBalanceRoundedIcon from '@mui/icons-material/AccountBalanceRounded';
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
-import LocalAtmRoundedIcon from '@mui/icons-material/LocalAtmRounded';
 import PaidRoundedIcon from '@mui/icons-material/PaidRounded';
 import PointOfSaleRoundedIcon from '@mui/icons-material/PointOfSaleRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
@@ -16,8 +15,8 @@ import TrendingUpRoundedIcon from '@mui/icons-material/TrendingUpRounded';
 import Link from 'next/link';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { isMissingApiBaseError } from '../../lib/api';
-import { ORDER_STATUS_LABELS, type OrderStatus } from '../../lib/contracts';
 import { fetchDashboardSummary, type DashboardProduct, type DashboardSummary } from '../../lib/dashboard';
+import { ORDER_STATUS_CONFIG } from '../../lib/order-status';
 import AdminPageContainer from './components/AdminPageContainer';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx } from './components/AdminHeroHeader';
 
@@ -26,17 +25,6 @@ const money = (value: number) => new Intl.NumberFormat('th-TH', { style: 'curren
 const integer = (value: number) => new Intl.NumberFormat('th-TH').format(value);
 const dateTime = (value: string) => new Intl.DateTimeFormat('th-TH', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'Asia/Bangkok' }).format(new Date(value));
 const percentChange = (current: number, previous: number) => (previous > 0 ? ((current - previous) / previous) * 100 : null);
-
-const statusMeta: Record<OrderStatus, { label: string; color: 'default' | 'warning' | 'info' | 'success' | 'error'; tone: string }> = {
-  pending: { label: 'รอเริ่มงาน', color: 'warning', tone: '#F59E0B' },
-  producing: { label: 'กำลังผลิต', color: 'info', tone: '#3B82F6' },
-  awaiting_payment: { label: 'รอชำระเงิน', color: 'warning', tone: '#F97316' },
-  ready_for_pickup: { label: 'พร้อมรับ', color: 'success', tone: '#10B981' },
-  delivered: { label: 'ส่งมอบแล้ว', color: 'success', tone: '#059669' },
-  cancelled: { label: 'ยกเลิก', color: 'error', tone: '#EF4444' },
-  partial: { label: 'ชำระบางส่วน', color: 'warning', tone: '#F97316' },
-  paid: { label: 'ชำระแล้ว', color: 'success', tone: '#10B981' },
-};
 
 function SectionTitle({ title, action }: Readonly<{ title: string; action?: React.ReactNode }>) {
   return (
@@ -65,6 +53,42 @@ function KpiCard({ label, value, helper, icon, color, href }: Readonly<{ label: 
             </Box>
           </Stack>
           <Typography sx={{ mt: 1.2, color: '#64748B', fontSize: 12 }}>{helper}</Typography>
+        </CardContent>
+      </CardActionArea>
+    </Card>
+  );
+}
+
+function CashTransferKpiCard({ cash, transfer, href }: Readonly<{ cash: number; transfer: number; href: string }>) {
+  return (
+    <Card sx={{ ...cardSx, height: '100%' }}>
+      <CardActionArea component={Link} href={href} sx={{ height: '100%' }}>
+        <CardContent sx={{ p: { xs: 1.6, md: 2.2 } }}>
+          <Stack direction="row" spacing={1.4} divider={<Divider orientation="vertical" flexItem sx={{ borderColor: '#E2E8F0' }} />}>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Stack direction="row" alignItems="center" spacing={0.75}>
+                <Box sx={{ width: 26, height: 26, borderRadius: 1.5, bgcolor: '#ECFDF5', color: '#059669', display: 'grid', placeItems: 'center' }}>
+                  <PaidRoundedIcon sx={{ fontSize: 15 }} />
+                </Box>
+                <Typography sx={{ color: '#64748B', fontSize: 12 }}>เงินสด</Typography>
+              </Stack>
+              <Typography noWrap sx={{ mt: 0.5, color: '#0F172A', fontSize: { xs: 18, md: 22 }, lineHeight: 1.15, fontWeight: 900 }}>
+                {money(cash)}
+              </Typography>
+            </Box>
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Stack direction="row" alignItems="center" spacing={0.75}>
+                <Box sx={{ width: 26, height: 26, borderRadius: 1.5, bgcolor: '#EFF6FF', color: '#2563EB', display: 'grid', placeItems: 'center' }}>
+                  <AccountBalanceRoundedIcon sx={{ fontSize: 15 }} />
+                </Box>
+                <Typography sx={{ color: '#64748B', fontSize: 12 }}>โอน / PromptPay</Typography>
+              </Stack>
+              <Typography noWrap sx={{ mt: 0.5, color: '#0F172A', fontSize: { xs: 18, md: 22 }, lineHeight: 1.15, fontWeight: 900 }}>
+                {money(transfer)}
+              </Typography>
+            </Box>
+          </Stack>
+          <Typography sx={{ mt: 1.2, color: '#64748B', fontSize: 12 }}>เงินที่รับเข้าจริงทุกประเภท</Typography>
         </CardContent>
       </CardActionArea>
     </Card>
@@ -105,75 +129,116 @@ function SalesTrend({ data, periodLabel }: Readonly<{ data: DashboardSummary['sa
   );
 }
 
-function OrderStatusCard({ summary }: Readonly<{ summary: DashboardSummary }>) {
-  const rows: OrderStatus[] = ['pending', 'producing', 'awaiting_payment', 'ready_for_pickup', 'delivered'];
-  const max = Math.max(...rows.map(key => summary.orderStatus[key] ?? 0), 1);
+type DashboardPeriod = 'today' | 'last7' | 'month' | 'custom';
+
+type DateRangeCardProps = Readonly<{
+  period: DashboardPeriod;
+  startDate: dayjs.Dayjs;
+  endDate: dayjs.Dayjs;
+  summary: DashboardSummary;
+  onPresetChange: (preset: Exclude<DashboardPeriod, 'custom'>) => void;
+  onStartDateChange: (value: dayjs.Dayjs) => void;
+  onEndDateChange: (value: dayjs.Dayjs) => void;
+}>;
+
+const DATE_RANGE_PRESETS: ReadonlyArray<{ value: Exclude<DashboardPeriod, 'custom'>; label: string }> = [
+  { value: 'today', label: 'วันนี้' },
+  { value: 'last7', label: 'ย้อนหลัง 7 วัน' },
+  { value: 'month', label: 'เดือนนี้' },
+];
+
+const STATUS_BREAKDOWN_ROWS = ['pending', 'producing', 'awaiting_payment', 'ready_for_pickup', 'delivered'] as const;
+
+function DateRangeCard({ period, startDate, endDate, summary, onPresetChange, onStartDateChange, onEndDateChange }: DateRangeCardProps) {
+  const dateFieldSx = {
+    '& .MuiOutlinedInput-root': {
+      height: 44,
+      borderRadius: 1.5,
+      bgcolor: '#FFFFFF',
+      '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
+      '&:hover fieldset': { borderColor: '#94A3B8' },
+      '&.Mui-focused fieldset': { borderColor: '#2563EB' },
+    },
+    '& .MuiInputBase-input': { fontSize: 13, py: 0 },
+  };
+
   return (
     <Card sx={{ ...cardSx, height: '100%' }}>
       <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
-        <SectionTitle title="สถานะงาน" />
-        <Stack spacing={1.7}>
-          {rows.map(key => {
-            const meta = statusMeta[key];
-            const count = summary.orderStatus[key] ?? 0;
-            return (
-              <Box component={Link} href={`/home/orders?status=${key}`} key={key} sx={{ textDecoration: 'none', color: 'inherit' }}>
-                <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.55 }}>
-                  <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{meta.label}</Typography>
-                  <Typography sx={{ fontSize: 13, fontWeight: 900 }}>{count}</Typography>
-                </Stack>
-                <LinearProgress
-                  variant="determinate"
-                  value={(count / max) * 100}
-                  sx={{ height: 6, borderRadius: 99, bgcolor: '#F1F5F9', '& .MuiLinearProgress-bar': { bgcolor: meta.tone, borderRadius: 99 } }}
-                />
-              </Box>
-            );
-          })}
+        <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 2 }}>
+          <Box sx={{ width: 34, height: 34, borderRadius: 1.5, display: 'grid', placeItems: 'center', bgcolor: '#EFF6FF', color: '#2563EB' }}>
+            <CalendarMonthRoundedIcon sx={{ fontSize: 19 }} />
+          </Box>
+          <Typography sx={{ color: '#0F172A', fontWeight: 700, fontSize: 15 }}>ช่วงวันที่</Typography>
         </Stack>
-        {!summary.capabilities.dueDates && (
-          <Alert severity="info" sx={{ mt: 2, fontSize: 12 }}>
-            ยังไม่มีวันกำหนดส่งในข้อมูลออเดอร์ จึงยังไม่แสดงงานเลยกำหนด
-          </Alert>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-function TasksCard({ summary }: Readonly<{ summary: DashboardSummary }>) {
-  return (
-    <Card sx={cardSx}>
-      <CardContent sx={{ p: { xs: 2, md: 2.5 } }}>
-        <SectionTitle
-          title="งานที่ต้องติดตาม"
-          action={
-            <Button component={Link} href="/home/orders" size="small" endIcon={<ArrowForwardRoundedIcon />}>
-              ดูทั้งหมด
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 0.5, p: 0.5, border: '1px solid #E2E8F0', borderRadius: 1.75, mb: 2 }}>
+          {DATE_RANGE_PRESETS.map(item => (
+            <Button
+              key={item.value}
+              variant="text"
+              onClick={() => onPresetChange(item.value)}
+              aria-pressed={period === item.value}
+              sx={{
+                minWidth: 0,
+                minHeight: 38,
+                px: 0.5,
+                borderRadius: 1.25,
+                textTransform: 'none',
+                color: period === item.value ? '#1D4ED8' : '#64748B',
+                bgcolor: period === item.value ? '#EFF6FF' : 'transparent',
+                fontSize: 12.5,
+                fontWeight: period === item.value ? 700 : 600,
+                '&:hover': { bgcolor: '#F8FAFC' },
+              }}>
+              {item.label}
             </Button>
-          }
-        />
-        {summary.tasks.length === 0 ? (
-          <Typography sx={{ color: '#64748B', py: 5, textAlign: 'center' }}>ยังไม่มีงานที่ต้องติดตาม</Typography>
-        ) : (
-          <Stack divider={<Divider flexItem />}>
-            {summary.tasks.map(task => (
-              <Box
-                component={Link}
-                href={`/home/orders?order=${encodeURIComponent(task.id)}`}
-                key={task.id}
-                sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr auto', md: '110px 1fr 1fr auto auto' }, gap: 1.2, alignItems: 'center', py: 1.4, color: 'inherit', textDecoration: 'none' }}>
-                <Typography sx={{ fontWeight: 850, fontSize: 13 }}>#{task.orderNumber}</Typography>
-                <Typography sx={{ display: { xs: 'none', md: 'block' }, fontSize: 13 }}>{task.customerName}</Typography>
-                <Typography sx={{ display: { xs: 'none', md: 'block' }, color: '#475569', fontSize: 13 }}>{task.job}</Typography>
-                <Chip label={statusMeta[task.status]?.label ?? ORDER_STATUS_LABELS[task.status]} color={statusMeta[task.status]?.color ?? 'default'} size="small" variant="outlined" />
-                <Typography sx={{ gridColumn: { xs: '1 / -1', md: 'auto' }, textAlign: { md: 'right' }, color: task.remainingPayment > 0 ? '#DC2626' : '#64748B', fontSize: 13, fontWeight: 800 }}>
-                  {task.remainingPayment > 0 ? `ค้าง ${money(task.remainingPayment)}` : 'ชำระครบ'}
-                </Typography>
-              </Box>
-            ))}
-          </Stack>
-        )}
+          ))}
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1fr) auto minmax(0, 1fr)' }, alignItems: 'end', gap: 0.75 }}>
+          <DatePicker
+            label="วันที่เริ่มต้น"
+            value={startDate}
+            maxDate={endDate}
+            format="DD/MM/YYYY"
+            onChange={value => value?.isValid() && onStartDateChange(value)}
+            slotProps={{ textField: { size: 'small', fullWidth: true, sx: dateFieldSx } }}
+          />
+          <Typography sx={{ display: { xs: 'none', sm: 'block' }, pb: 1.6, color: '#94A3B8', fontSize: 18 }}>→</Typography>
+          <DatePicker
+            label="วันที่สิ้นสุด"
+            value={endDate}
+            minDate={startDate}
+            maxDate={dayjs()}
+            format="DD/MM/YYYY"
+            onChange={value => value?.isValid() && onEndDateChange(value)}
+            slotProps={{ textField: { size: 'small', fullWidth: true, sx: dateFieldSx } }}
+          />
+        </Box>
+        {period === 'custom' ? <Typography sx={{ mt: 1, color: '#2563EB', fontSize: 12, fontWeight: 600 }}>กำหนดช่วงวันที่เอง</Typography> : null}
+        <Divider sx={{ my: 2 }} />
+        <Typography sx={{ mb: 1.2, color: '#94A3B8', fontSize: 11, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.04em' }}>สถานะงานทั้งหมด</Typography>
+        <Stack spacing={1.2}>
+          {(() => {
+            const max = Math.max(...STATUS_BREAKDOWN_ROWS.map(row => summary.orderStatus[row] ?? 0), 1);
+            return STATUS_BREAKDOWN_ROWS.map(key => {
+              const config = ORDER_STATUS_CONFIG[key];
+              const count = summary.orderStatus[key] ?? 0;
+              return (
+                <Box component={Link} href={`/home/orders?status=${key}`} key={key} sx={{ textDecoration: 'none', color: 'inherit' }}>
+                  <Stack direction="row" justifyContent="space-between" sx={{ mb: 0.4 }}>
+                    <Typography sx={{ fontSize: 12.5, fontWeight: 600, color: '#334155' }}>{config.shortLabel}</Typography>
+                    <Typography sx={{ fontSize: 12.5, fontWeight: 800, color: '#0F172A' }}>{count}</Typography>
+                  </Stack>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(count / max) * 100}
+                    sx={{ height: 5, borderRadius: 99, bgcolor: '#F1F5F9', '& .MuiLinearProgress-bar': { bgcolor: config.hex, borderRadius: 99 } }}
+                  />
+                </Box>
+              );
+            });
+          })()}
+        </Stack>
       </CardContent>
     </Card>
   );
@@ -399,10 +464,33 @@ export default function DashboardPage() {
   const [summary, setSummary] = React.useState<DashboardSummary | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [period, setPeriod] = React.useState<'today' | 'last7' | 'month' | 'custom'>('today');
+  const [period, setPeriod] = React.useState<DashboardPeriod>('today');
   const [month, setMonth] = React.useState(dayjs().format('YYYY-MM'));
   const [startDate, setStartDate] = React.useState(dayjs().subtract(6, 'day'));
   const [endDate, setEndDate] = React.useState(dayjs());
+  const handlePresetChange = (value: Exclude<DashboardPeriod, 'custom'>) => {
+    const today = dayjs();
+    setPeriod(value);
+    if (value === 'today') {
+      setStartDate(today);
+      setEndDate(today);
+    } else if (value === 'last7') {
+      setStartDate(today.subtract(6, 'day'));
+      setEndDate(today);
+    } else {
+      setMonth(today.format('YYYY-MM'));
+      setStartDate(today.startOf('month'));
+      setEndDate(today.endOf('month'));
+    }
+  };
+  const handleStartDateChange = (value: dayjs.Dayjs) => {
+    setStartDate(value);
+    setPeriod('custom');
+  };
+  const handleEndDateChange = (value: dayjs.Dayjs) => {
+    setEndDate(value);
+    setPeriod('custom');
+  };
   const load = React.useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -449,29 +537,12 @@ export default function DashboardPage() {
       href: period === 'month' ? `/home/orders?month=${month}` : '/home/orders',
     },
     {
-      label: `รับเงินจริง ${summary.period.label}`,
-      value: money(summary.periodSummary.collections),
-      helper: 'เงินที่รับเข้าจริงทุกประเภท',
-      icon: PaidRoundedIcon,
-      color: '#059669',
-      href: period === 'month' ? `/home/orders?month=${month}` : '/home/orders',
-    },
-    {
       label: `ออเดอร์ ${summary.period.label}`,
       value: integer(summary.periodSummary.orders),
       helper: `${summary.periodSummary.customers} ลูกค้า`,
       icon: ReceiptLongRoundedIcon,
       color: '#2563EB',
       href: period === 'month' ? `/home/orders?month=${month}` : '/home/orders',
-    },
-    { label: 'ยอดค้างชำระ', value: money(summary.outstandingAging.total), helper: 'จากออเดอร์ที่ยังชำระไม่ครบ', icon: LocalAtmRoundedIcon, color: '#DC2626', href: '/home/orders?payment=unpaid' },
-    {
-      label: 'งานกำลังดำเนินการ',
-      value: integer((summary.orderStatus.pending ?? 0) + (summary.orderStatus.producing ?? 0)),
-      helper: `${summary.orderStatus.ready_for_pickup ?? 0} งานพร้อมรับ`,
-      icon: AssignmentTurnedInRoundedIcon,
-      color: '#D97706',
-      href: '/home/orders?status=producing',
     },
     { label: 'ไฟล์ใหม่', value: integer(summary.uploads.newFiles), helper: `${summary.uploads.waitingReview} อัปโหลดรอตรวจสอบ`, icon: CloudUploadRoundedIcon, color: '#0891B2', href: '/home/storage' },
   ];
@@ -485,87 +556,9 @@ export default function DashboardPage() {
           lastSynced={formatAdminLastSynced(new Date(summary.generatedAt))}
           thaiDate={formatAdminThaiDate(new Date(summary.generatedAt))}
           actions={
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} alignItems={{ sm: 'center' }}>
-              <Box sx={{ width: { xs: '100%', sm: period === 'custom' ? 430 : 330 }, transition: 'width 160ms ease' }}>
-                <ToggleButtonGroup
-                  exclusive
-                  fullWidth
-                  size="small"
-                  value={period}
-                  onChange={(_, value: 'today' | 'last7' | 'month' | 'custom' | null) => {
-                    if (!value) return;
-                    const today = dayjs();
-                    setPeriod(value);
-                    if (value === 'today') {
-                      setStartDate(today);
-                      setEndDate(today);
-                    } else if (value === 'last7') {
-                      setStartDate(today.subtract(6, 'day'));
-                      setEndDate(today);
-                    } else {
-                      if (value === 'month') {
-                        setMonth(today.format('YYYY-MM'));
-                        setStartDate(today.startOf('month'));
-                        setEndDate(today.endOf('month'));
-                      }
-                    }
-                  }}
-                  sx={{
-                    p: 0.35,
-                    border: '1px solid #DCE6F4',
-                    borderRadius: 2,
-                    bgcolor: '#F8FAFD',
-                    '& .MuiToggleButtonGroup-grouped': {
-                      minHeight: 34,
-                      border: 0,
-                      borderRadius: '6px !important',
-                      color: '#64748B',
-                      fontSize: 12,
-                      fontWeight: 700,
-                      textTransform: 'none',
-                      whiteSpace: 'nowrap',
-                      '&.Mui-selected': { bgcolor: '#FFFFFF', color: '#215AE8', boxShadow: '0 1px 4px rgba(24, 63, 128, 0.12)' },
-                      '&.Mui-selected:hover': { bgcolor: '#FFFFFF' },
-                    },
-                  }}>
-                  <ToggleButton value="today">วันนี้</ToggleButton>
-                  <ToggleButton value="last7">ย้อนหลัง 7 วัน</ToggleButton>
-                  <ToggleButton value="month">เดือนนี้</ToggleButton>
-                  <ToggleButton value="custom">กำหนดเอง</ToggleButton>
-                </ToggleButtonGroup>
-                {period === 'custom' ? (
-                  <Stack direction="row" spacing={0.75} alignItems="center" sx={{ mt: 0.75 }}>
-                    <DatePicker
-                      label="เริ่มต้น"
-                      value={startDate}
-                      maxDate={endDate}
-                      onChange={value => {
-                        if (!value?.isValid()) return;
-                        setStartDate(value);
-                        setPeriod('custom');
-                      }}
-                      slotProps={{ textField: { size: 'small', sx: { flex: 1, '& .MuiOutlinedInput-root': { height: 38, fontSize: 12.5 } } } }}
-                    />
-                    <Typography sx={{ color: '#94A3B8', fontSize: 16 }}>→</Typography>
-                    <DatePicker
-                      label="สิ้นสุด"
-                      value={endDate}
-                      minDate={startDate}
-                      maxDate={dayjs()}
-                      onChange={value => {
-                        if (!value?.isValid()) return;
-                        setEndDate(value);
-                        setPeriod('custom');
-                      }}
-                      slotProps={{ textField: { size: 'small', sx: { flex: 1, '& .MuiOutlinedInput-root': { height: 38, fontSize: 12.5 } } } }}
-                    />
-                  </Stack>
-                ) : null}
-              </Box>
-              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroOutlineButtonSx}>
-                {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
-              </Button>
-            </Stack>
+            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroOutlineButtonSx}>
+              {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
+            </Button>
           }
         />
         {error && (
@@ -573,20 +566,27 @@ export default function DashboardPage() {
             {error}
           </Alert>
         )}
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(6, minmax(0, 1fr))' }, gap: 1.5, mb: 2.5 }}>
-          {kpis.map(item => (
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5, mb: 2.5 }}>
+          <KpiCard {...kpis[0]} />
+          <CashTransferKpiCard cash={summary.paymentSummary.cash} transfer={summary.paymentSummary.transfer} href={period === 'month' ? `/home/orders?month=${month}` : '/home/orders'} />
+          {kpis.slice(1).map(item => (
             <KpiCard key={item.label} {...item} />
           ))}
         </Box>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2fr) minmax(300px, 1fr)' }, gap: 2.5, mb: 2.5 }}>
           <SalesTrend data={summary.salesTrend} periodLabel={period === 'today' ? '7 วัน' : summary.period.label} />
-          <OrderStatusCard summary={summary} />
+          <DateRangeCard
+            period={period}
+            startDate={startDate}
+            endDate={endDate}
+            summary={summary}
+            onPresetChange={handlePresetChange}
+            onStartDateChange={handleStartDateChange}
+            onEndDateChange={handleEndDateChange}
+          />
         </Box>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2fr) minmax(300px, 1fr)' }, gap: 2.5, mb: 2.5 }}>
-          <TasksCard summary={summary} />
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(4, 1fr)' }, gap: 2.5, mb: 2.5 }}>
           <PaymentSummary summary={summary} />
-        </Box>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)', xl: 'repeat(3, 1fr)' }, gap: 2.5, mb: 2.5 }}>
           <TopProducts items={summary.topProducts} periodLabel={summary.period.label} />
           <QuickSeller summary={summary} />
           <UploadsCard summary={summary} />
