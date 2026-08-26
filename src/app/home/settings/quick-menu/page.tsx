@@ -257,8 +257,8 @@ export default function QuickMenuSettingsPage() {
     <AdminPageContainer>
       <Stack spacing={2.25} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 }, '& .MuiButton-root': { textTransform: 'none' } }}>
         <AdminHeroHeader
-          title="Quick Menu Settings"
-          description="จัดการรายการสินค้า ราคาหน้าร้าน และลำดับการแสดงผลในหน้าขายด่วน"
+          title="จัดการเมนู Quick Seller"
+          description="ตั้งค่าสินค้า ราคา สถานะ และลำดับการแสดงผลสำหรับหน้าขายด่วนจากจุดเดียว"
           lastSynced={formatAdminLastSynced(lastSyncedAt)}
           thaiDate={formatAdminThaiDate(lastSyncedAt)}
           mb={0}
@@ -273,6 +273,12 @@ export default function QuickMenuSettingsPage() {
             </>
           }
         />
+        <Alert
+          severity="info"
+          variant="outlined"
+          sx={{ borderRadius: 2.5, bgcolor: '#F8FBFF', borderColor: '#BFDBFE', color: '#334155' }}>
+          <strong>จัดเมนูให้ขายเร็วขึ้น:</strong> ใช้โหมดจัดลำดับเพื่อวางสินค้าที่ขายบ่อยไว้ด้านบน และปิดใช้งานรายการที่ไม่ต้องการให้แสดงโดยไม่จำเป็นต้องลบข้อมูล
+        </Alert>
         {error && (
           <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => void load()}>ลองใหม่</Button>} onClose={() => setError(null)}>
             {error}

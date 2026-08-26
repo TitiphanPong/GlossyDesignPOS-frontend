@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import { Box, Checkbox, Chip, IconButton, Stack, Switch, TableCell, TableRow, Tooltip, Typography } from '@mui/material';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';

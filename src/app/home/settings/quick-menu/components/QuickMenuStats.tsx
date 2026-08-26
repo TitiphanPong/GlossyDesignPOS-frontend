@@ -1,6 +1,5 @@
 'use client';
 
-import * as React from 'react';
 import { Box } from '@mui/material';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
