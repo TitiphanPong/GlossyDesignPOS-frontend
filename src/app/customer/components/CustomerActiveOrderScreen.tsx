@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { CalendarDays, CircleDollarSign, Palette, ReceiptText, Sparkles, TimerReset } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import generatePayload from 'promptpay-qr';
+import { normalizePromptPayAmount } from '../../../lib/promptpay';
 import type { PaymentSummaryResult } from '../../utils/computeTotal';
 import { getDisplayOrderNumber as getSharedDisplayOrderNumber } from '../../../lib/contracts';
 import { formatMoney, getCartKey, type CartItem, type Order } from './customerDisplayShared';
@@ -324,7 +325,7 @@ export function ActiveOrderScreen({
                     className={cn('relative rounded-[34px] border border-white bg-white shadow-[0_24px_60px_rgba(37,99,235,0.14)]', isFullscreen ? 'p-6 xl:p-7' : 'p-4 xl:p-5')}>
                     <div className="absolute inset-0 rounded-[34px] border border-blue-100" />
                     <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent" />
-                    <QRCodeCanvas value={generatePayload(promptpayId, { amount: Math.round(summary.amountToPay) })} size={qrSize}/>
+                    <QRCodeCanvas value={generatePayload(promptpayId, { amount: normalizePromptPayAmount(summary.amountToPay) })} size={qrSize}/>
                   </motion.div>
                 </div>
 
