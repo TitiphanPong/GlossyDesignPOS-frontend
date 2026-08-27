@@ -172,6 +172,10 @@ export function buildPendingOrderPayload(order: StoredPendingOrderDraft, status:
         const name = typeof item.name === 'string' ? item.name : 'Custom item';
         const rawUnitPrice = Number(item.unitPrice ?? 0);
         const unitPrice = Math.round((rawUnitPrice + Number.EPSILON) * 100) / 100;
+        const rawCatalogUnitPrice = typeof variant.price === 'number' && Number.isFinite(variant.price) ? variant.price : null;
+        const catalogUnitPrice = rawCatalogUnitPrice === null ? null : Math.round((rawCatalogUnitPrice + Number.EPSILON) * 100) / 100;
+        const hasCatalogIdentity = Boolean(productId || productCode || typeCode);
+        const usesAuthoritativeCatalogPrice = hasCatalogIdentity && catalogUnitPrice !== null && catalogUnitPrice === unitPrice;
 
         return {
           ...(productId ? { productId } : {}),
@@ -182,7 +186,7 @@ export function buildPendingOrderPayload(order: StoredPendingOrderDraft, status:
           ...(typeof variant.name === 'string' ? { variantName: variant.name } : {}),
           ...(!productId && !productCode && !typeCode ? { customName: name } : {}),
           quantity: Number(item.qty ?? item.quantity ?? 0),
-          priceOverride: { unitPrice, reason: 'configured_pos_quote' },
+          ...(usesAuthoritativeCatalogPrice ? {} : { priceOverride: { unitPrice, reason: 'configured_pos_quote' } }),
           ...Object.fromEntries(
             ['material', 'colorMode', 'type', 'typePremium', 'shape', 'size', 'setCount', 'inkjetType', 'sizeFlex', 'stickerPVCType', 'plotPlanType', 'sides', 'productNote', 'note', 'fullPayment']
               .filter(field => item[field] !== undefined)
