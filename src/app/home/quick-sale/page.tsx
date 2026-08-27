@@ -398,50 +398,99 @@ export default function QuickSalePage() {
   );
   return (
     <AdminPageContainer>
-      <AdminHeroHeader
-        title="Quick Sale"
-        description="ขายสินค้าหน้าร้านอย่างรวดเร็ว เลือกรายการ รับชำระ และออกเอกสารในขั้นตอนเดียว"
-        lastSynced={formatAdminLastSynced(lastSyncedAt)}
-        thaiDate={formatAdminThaiDate(lastSyncedAt)}
-        actions={
-          <Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void loadProducts()} sx={heroOutlineButtonSx}>
-            {loading ? 'กำลังโหลด...' : 'รีเฟรช'}
-          </Button>
-        }
-      />
+      {mobile ? (
+        <Paper
+          variant="outlined"
+          sx={{
+            mb: 1.5,
+            px: 1.5,
+            py: 1.35,
+            borderRadius: 3.25,
+            borderColor: '#E2E8F0',
+            boxShadow: '0 6px 18px rgba(15, 23, 42, 0.045)',
+            minWidth: 0,
+          }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1.25}>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography fontSize={22} fontWeight={900} color="#0F172A" lineHeight={1.1}>
+                Quick Sale
+              </Typography>
+              <Typography noWrap fontSize={12.5} color="#64748B" sx={{ mt: 0.45 }}>
+                เลือกรายการและรับชำระหน้าร้านได้ทันที
+              </Typography>
+            </Box>
+            <IconButton
+              aria-label="รีเฟรชสินค้า"
+              disabled={loading}
+              onClick={() => void loadProducts()}
+              sx={{ width: 42, height: 42, flexShrink: 0, border: '1px solid #DCE4EF', borderRadius: 2.5, bgcolor: '#FFFFFF' }}>
+              <RefreshRoundedIcon sx={{ fontSize: 20 }} />
+            </IconButton>
+          </Stack>
+        </Paper>
+      ) : (
+        <AdminHeroHeader
+          title="Quick Sale"
+          description="ขายสินค้าหน้าร้านอย่างรวดเร็ว เลือกรายการ รับชำระ และออกเอกสารในขั้นตอนเดียว"
+          lastSynced={formatAdminLastSynced(lastSyncedAt)}
+          thaiDate={formatAdminThaiDate(lastSyncedAt)}
+          actions={
+            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void loadProducts()} sx={heroOutlineButtonSx}>
+              {loading ? 'กำลังโหลด...' : 'รีเฟรช'}
+            </Button>
+          }
+        />
+      )}
       {error && (
         <Alert severity="error" onClose={() => setError(null)} sx={{ mb: 2 }}>
           {error}
         </Alert>
       )}
-      <Box sx={{ display: 'grid', gridTemplateColumns: compact ? '1fr' : 'minmax(0, 1.85fr) minmax(370px, 1fr)', gap: 2, alignItems: 'start' }}>
-        <Paper variant="outlined" sx={{ p: { xs: 1.75, md: 2.25 }, borderRadius: 4, minHeight: 600, borderColor: '#E2E8F0', boxShadow: '0 8px 24px rgba(15, 23, 42, 0.04)' }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.25} sx={{ mb: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: compact ? 'minmax(0, 1fr)' : 'minmax(0, 1.85fr) minmax(370px, 1fr)', gap: { xs: 1.25, md: 2 }, alignItems: 'start', width: '100%', minWidth: 0, maxWidth: '100%' }}>
+        <Paper
+          variant="outlined"
+          sx={{
+            p: { xs: 1.25, sm: 1.75, md: 2.25 },
+            borderRadius: { xs: 3.25, md: 4 },
+            minHeight: { xs: 'auto', md: 600 },
+            minWidth: 0,
+            maxWidth: '100%',
+            overflow: 'hidden',
+            borderColor: '#E2E8F0',
+            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.04)',
+          }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} gap={1} sx={{ mb: 1.25, minWidth: 0 }}>
             <TextField
               inputRef={searchRef}
               fullWidth
               value={query}
               onChange={event => setQuery(event.target.value)}
-              placeholder="ค้นหาสินค้า / สแกนบาร์โค้ด (F2)"
-              sx={{ '& .MuiOutlinedInput-root': { minHeight: 52, borderRadius: 2.5, bgcolor: '#FFFFFF', fontSize: 15 } }}
+              placeholder={mobile ? 'ค้นหาสินค้า' : 'ค้นหาสินค้า / สแกนบาร์โค้ด (F2)'}
+              sx={{ minWidth: 0, '& .MuiOutlinedInput-root': { minHeight: { xs: 48, sm: 52 }, borderRadius: 2.5, bgcolor: '#FFFFFF', fontSize: { xs: 14, sm: 15 } } }}
               InputProps={{
                 startAdornment: (
                   <InputAdornment position="start">
                     <SearchRoundedIcon sx={{ color: '#64748B' }} />
                   </InputAdornment>
                 ),
-                endAdornment: (
+                endAdornment: mobile ? undefined : (
                   <InputAdornment position="end">
                     <Chip size="small" label="F2" sx={{ borderRadius: 1.5, color: '#64748B' }} />
                   </InputAdornment>
                 ),
               }}
             />
-            <Button variant="outlined" startIcon={<AddRoundedIcon />} disabled={!allowPriceOverride} title={allowPriceOverride ? undefined : 'รายการกำหนดราคาเองต้องใช้สิทธิ์ผู้จัดการหรือผู้ดูแลระบบ'} onClick={() => setCustomOpen(true)} sx={{ minWidth: 132, minHeight: 52, borderRadius: 2.5, bgcolor: '#FFFFFF', fontWeight: 800 }}>
+            <Button
+              variant="outlined"
+              startIcon={<AddRoundedIcon />}
+              disabled={!allowPriceOverride}
+              title={allowPriceOverride ? undefined : 'รายการกำหนดราคาเองต้องใช้สิทธิ์ผู้จัดการหรือผู้ดูแลระบบ'}
+              onClick={() => setCustomOpen(true)}
+              sx={{ width: { xs: '100%', sm: 'auto' }, minWidth: { sm: 132 }, minHeight: { xs: 46, sm: 52 }, borderRadius: 2.5, bgcolor: '#FFFFFF', fontWeight: 800, flexShrink: 0 }}>
               รายการอื่น
             </Button>
           </Stack>
-          <Stack direction="row" gap={1} sx={{ overflowX: 'auto', pb: 2, scrollbarWidth: 'none' }}>
+          <Stack direction="row" gap={0.8} sx={{ overflowX: 'auto', overflowY: 'hidden', pb: { xs: 1.5, sm: 2 }, mx: { xs: -0.25, sm: 0 }, px: { xs: 0.25, sm: 0 }, scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch', '&::-webkit-scrollbar': { display: 'none' } }}>
             {categories.map(value => (
               <Chip
                 key={value}
@@ -454,14 +503,16 @@ export default function QuickSalePage() {
               />
             ))}
           </Stack>
-          <Stack direction="row" alignItems="center" gap={0.75} sx={{ mb: 1.25 }}>
-            <LocalFireDepartmentRoundedIcon sx={{ color: '#F97316', fontSize: 22 }} />
-            <Typography fontWeight={900} color="#172033">
+          <Stack direction="row" alignItems="center" gap={0.75} sx={{ mb: 1.1, minWidth: 0 }}>
+            <LocalFireDepartmentRoundedIcon sx={{ color: '#F97316', fontSize: { xs: 20, sm: 22 }, flexShrink: 0 }} />
+            <Typography fontSize={{ xs: 15, sm: 16 }} fontWeight={900} color="#172033">
               สินค้ายอดนิยม
             </Typography>
-            <Typography variant="body2" color="text.secondary">
-              (กดเพิ่มลงรายการทันที)
-            </Typography>
+            {!mobile ? (
+              <Typography variant="body2" color="text.secondary">
+                (กดเพิ่มลงรายการทันที)
+              </Typography>
+            ) : null}
           </Stack>
           {loading ? (
             <Typography sx={{ py: 8, textAlign: 'center' }}>กำลังโหลดสินค้า...</Typography>
@@ -471,7 +522,7 @@ export default function QuickSalePage() {
               <Typography color="text.secondary">ค้นหาสินค้าทั้งหมด หรือกำหนด quickSaleEnabled ใน Product</Typography>
             </Box>
           ) : (
-            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' }, gap: 1.25 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, 1fr))', xl: 'repeat(4, minmax(0, 1fr))' }, gap: { xs: 0.9, sm: 1.25 }, minWidth: 0, width: '100%' }}>
               {popularProducts.map(product => {
                 const variant = firstActiveVariant(product)!;
                 const visual = getProductVisual(product);
@@ -481,9 +532,10 @@ export default function QuickSalePage() {
                     variant="outlined"
                     onClick={() => addProduct(product)}
                     sx={{
-                      minHeight: 148,
-                      p: 1.75,
-                      borderRadius: 3,
+                      minHeight: { xs: 126, sm: 148 },
+                      minWidth: 0,
+                      p: { xs: 1.05, sm: 1.75 },
+                      borderRadius: { xs: 2.5, sm: 3 },
                       textAlign: 'center',
                       alignItems: 'center',
                       justifyContent: 'space-between',
@@ -497,22 +549,27 @@ export default function QuickSalePage() {
                     }}>
                     <Box
                       sx={{
-                        width: 54,
-                        height: 54,
-                        borderRadius: 2.5,
+                        width: { xs: 44, sm: 54 },
+                        height: { xs: 44, sm: 54 },
+                        borderRadius: { xs: 2.25, sm: 2.5 },
                         display: 'grid',
                         placeItems: 'center',
                         bgcolor: product.emoji ? product.tint || visual.background : visual.background,
                         color: visual.color,
-                        fontSize: 30,
+                        fontSize: { xs: 25, sm: 30 },
                       }}>
-                      {product.emoji || <visual.Icon sx={{ fontSize: 34 }} />}
+                      {product.emoji || <visual.Icon sx={{ fontSize: { xs: 28, sm: 34 } }} />}
                     </Box>
-                    <Box>
-                      <Typography color="#0F172A" fontSize={16} fontWeight={900} lineHeight={1.3}>
+                    <Box sx={{ minWidth: 0, width: '100%' }}>
+                      <Typography
+                        color="#0F172A"
+                        fontSize={{ xs: 14, sm: 16 }}
+                        fontWeight={900}
+                        lineHeight={1.28}
+                        sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', overflowWrap: 'anywhere' }}>
                         {product.name}
                       </Typography>
-                      <Typography color="#53657D" fontSize={13} fontWeight={600} sx={{ mt: 0.35 }}>
+                      <Typography color="#53657D" fontSize={{ xs: 11.5, sm: 13 }} fontWeight={600} sx={{ mt: 0.35, lineHeight: 1.25, overflowWrap: 'anywhere' }}>
                         {product.priceDisplayMode === 'STARTING_AT' ? 'เริ่มต้น ' : ''}฿{money.format(variant.price)}
                         {product.unitLabel ? ` / ${product.unitLabel}` : ''}
                         {!isDefaultVariantName(variant.name) ? ` · ${variant.name}` : ''}
@@ -528,7 +585,7 @@ export default function QuickSalePage() {
               <Typography fontWeight={900} color="#172033" sx={{ mb: 1.1 }}>
                 สินค้าทั้งหมด
               </Typography>
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1, minWidth: 0 }}>
                 {otherProducts.map(product => {
                   const variant = firstActiveVariant(product)!;
                   const visual = getProductVisual(product);
@@ -574,25 +631,69 @@ export default function QuickSalePage() {
           </Paper>
         )}
       </Box>
+      {compact ? <Box aria-hidden sx={{ height: mobile ? 'calc(78px + env(safe-area-inset-bottom))' : 88 }} /> : null}
       {compact && (
         <Paper
           sx={{
             position: 'fixed',
-            bottom: 0,
-            left: mobile ? 0 : 92,
-            right: 0,
             zIndex: 1000,
-            p: 1.5,
-            borderRadius: 0,
-            borderTop: '1px solid #DCE4EF',
-            boxShadow: '0 -10px 30px rgba(15, 23, 42, 0.1)',
+            ...(mobile
+              ? {
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  px: 1.25,
+                  pt: 1,
+                  pb: 'calc(8px + env(safe-area-inset-bottom))',
+                  borderRadius: 0,
+                  borderTop: '1px solid #DCE4EF',
+                }
+              : {
+                  right: 16,
+                  bottom: 16,
+                  width: 380,
+                  maxWidth: 'calc(100vw - 32px)',
+                  p: 1.25,
+                  borderRadius: 3.5,
+                  border: '1px solid #DCE4EF',
+                }),
+            boxShadow: '0 -8px 28px rgba(15, 23, 42, 0.12)',
           }}>
-          <Button fullWidth variant="contained" size="large" onClick={() => setCartOpen(true)} disabled={!items.length} sx={{ minHeight: 54 }}>
-            ดูรายการ ({items.length}) · ฿{money.format(totals.grandTotal)}
-          </Button>
+          <Stack direction="row" alignItems="center" gap={1} sx={{ minWidth: 0 }}>
+            <Box sx={{ minWidth: 0, flex: 1 }}>
+              <Typography noWrap fontSize={12} color="#64748B" fontWeight={700}>
+                {items.length} รายการในตะกร้า
+              </Typography>
+              <Typography noWrap fontSize={20} lineHeight={1.15} color={items.length ? '#1463E9' : '#94A3B8'} fontWeight={900} sx={{ fontVariantNumeric: 'tabular-nums' }}>
+                ฿{money.format(totals.grandTotal)}
+              </Typography>
+            </Box>
+            <Button
+              variant="contained"
+              onClick={() => setCartOpen(true)}
+              disabled={!items.length}
+              sx={{ minWidth: { xs: 120, sm: 140 }, minHeight: 50, flexShrink: 0, borderRadius: 2.75, fontWeight: 900 }}>
+              ดูตะกร้า
+            </Button>
+          </Stack>
         </Paper>
       )}
-      <Drawer anchor="right" open={cartOpen} onClose={() => setCartOpen(false)} PaperProps={{ sx: { width: { xs: '100%', sm: 430 } } }}>
+      <Drawer
+        anchor={mobile ? 'bottom' : 'right'}
+        open={cartOpen}
+        onClose={() => setCartOpen(false)}
+        PaperProps={{
+          sx: mobile
+            ? {
+                width: '100%',
+                height: '88dvh',
+                maxHeight: '88dvh',
+                borderTopLeftRadius: 20,
+                borderTopRightRadius: 20,
+                overflow: 'hidden',
+              }
+            : { width: 430 },
+        }}>
         {cart}
       </Drawer>
 

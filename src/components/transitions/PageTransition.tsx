@@ -12,6 +12,9 @@ export default function PageTransition({ routeKey, children }: Readonly<{ routeK
       sx={{
         flex: 1,
         minWidth: 0,
+        width: '100%',
+        maxWidth: '100%',
+        overflowX: 'clip',
         '@keyframes appPageEnter': {
           from: { opacity: 0, transform: 'translateY(4px)' },
           to: { opacity: 1, transform: 'translateY(0)' },

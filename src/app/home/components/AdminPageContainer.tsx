@@ -20,7 +20,10 @@ export default function AdminPageContainer({ title, subtitle, headerActions, chi
         px: { xs: 2, md: 3 },
         py: { xs: 3, md: 4 },
         pb: 6,
+        width: '100%',
+        minWidth: 0,
         maxWidth: adminSurface.pageMaxWidth,
+        boxSizing: 'border-box',
         mx: 'auto',
       }}>
       {title && (
