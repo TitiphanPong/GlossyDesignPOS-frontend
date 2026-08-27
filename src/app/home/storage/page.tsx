@@ -55,7 +55,7 @@ import StorageOverview, { type StorageStats } from './StorageOverview';
 import StorageToolbar from './StorageToolbar';
 import StorageTable from './StorageTable';
 
-const endpointCandidates = ['/uploads', '/upload'];
+const endpointCandidates = ['/uploads'];
 const EMPTY_STORAGE_STATS: StorageStats = {
   waiting: 0,
   pending: 0,
@@ -343,7 +343,7 @@ export default function StoragePage() {
         setRows([]);
         setTotalRows(0);
         setStats(EMPTY_STORAGE_STATS);
-        setErrorMessage('ไม่สามารถโหลดข้อมูลจาก API ได้ กรุณาตรวจสอบ endpoint /uploads หรือ /upload');
+        setErrorMessage('ไม่สามารถโหลดข้อมูลจาก API ได้ กรุณาตรวจสอบ endpoint /uploads');
       }
     } catch (error) {
       setRows([]);
@@ -352,7 +352,7 @@ export default function StoragePage() {
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
       } else {
-        setErrorMessage('ไม่สามารถโหลดข้อมูลจาก API ได้ กรุณาตรวจสอบ endpoint /uploads หรือ /upload');
+        setErrorMessage('ไม่สามารถโหลดข้อมูลจาก API ได้ กรุณาตรวจสอบ endpoint /uploads');
       }
     } finally {
       setLoading(false);
