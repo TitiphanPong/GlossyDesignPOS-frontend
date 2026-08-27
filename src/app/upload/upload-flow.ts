@@ -1,4 +1,4 @@
-import type { UploadPayload, UploadResponse, SignedUrlResponse } from '@/lib/upload-api';
+import type { UploadPayload, UploadResponse } from '@/lib/upload-api';
 
 export type UploadStatus = 'uploaded' | 'uploading' | 'waiting' | 'error';
 
@@ -114,28 +114,19 @@ export async function uploadPendingFiles<TFile extends File>({
   };
 }
 
-export async function openSignedUrlWithRetry({
-  id,
-  getSignedUrl,
+export function openUploadedSignedUrl({
+  signedUrl,
   openWindow,
-  maxAttempts = 2,
 }: Readonly<{
-  id: string;
-  getSignedUrl: (id: string) => Promise<SignedUrlResponse>;
+  signedUrl: string;
   openWindow: (signedUrl: string) => Window | null;
-  maxAttempts?: number;
-}>): Promise<void> {
-  let attempts = 0;
-
-  while (attempts < maxAttempts) {
-    const signed = await getSignedUrl(id);
-    const openedWindow = openWindow(signed.signedUrl);
-    if (openedWindow) {
-      return;
-    }
-
-    attempts += 1;
+}>): void {
+  if (!signedUrl) {
+    throw new Error('ไม่พบลิงก์สำหรับเปิดไฟล์ที่เพิ่งอัปโหลด');
   }
 
-  throw new Error('Unable to open file automatically. Please allow popups and try again.');
+  const openedWindow = openWindow(signedUrl);
+  if (!openedWindow) {
+    throw new Error('ไม่สามารถเปิดไฟล์อัตโนมัติได้ กรุณาอนุญาต popup แล้วลองอีกครั้ง');
+  }
 }

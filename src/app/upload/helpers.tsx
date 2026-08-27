@@ -28,6 +28,7 @@ export const ACCEPTED_EXTENSIONS = [
 ];
 
 export const MAX_FILE_SIZE_BYTES = 7_500_000;
+export const MAX_FILE_SIZE_LABEL = `${MAX_FILE_SIZE_BYTES / 1_000_000} MB`;
 export const QUICK_UPLOADER_EXTENSIONS = ['pdf', 'jpg', 'jpeg', 'png', 'ai', 'psd', 'zip'] as const;
 export const QUICK_UPLOADER_MIME_TYPES = new Set([
   'application/pdf',

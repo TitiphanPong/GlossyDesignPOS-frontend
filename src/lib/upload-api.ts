@@ -6,11 +6,8 @@ export interface UploadResponse {
   size: number;
   mimeType: string;
   createdAt: string;
-}
-
-export interface SignedUrlResponse {
   signedUrl: string;
-  expiresIn?: number;
+  expiresIn: number;
 }
 
 export interface UploadPayload {
@@ -49,13 +46,6 @@ export async function uploadFile(file: File, payload: UploadPayload, signal?: Ab
   return fetchApiJson<UploadResponse>('/uploads', {
     method: 'POST',
     body: formData,
-    signal,
-  });
-}
-
-export async function getSignedUrl(id: string, signal?: AbortSignal): Promise<SignedUrlResponse> {
-  return fetchApiJson<SignedUrlResponse>(`/uploads/${encodeURIComponent(id)}/signed-url`, {
-    method: 'GET',
     signal,
   });
 }
