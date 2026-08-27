@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import type { NormalizedInvoiceOrder } from '../../../lib/contracts';
 import { buildInvoiceDataFromOrder, InvoiceDocument, ReceiptTemplate, TaxInvoiceTemplate } from './[orderId]/InvoiceDocument';
@@ -45,6 +46,30 @@ test('receipt data uses the order number and does not synthesize VAT', () => {
   assert.equal(receiptData.totalAmount, sampleOrder.grandTotal);
   assert.equal(receiptData.issuedDate, '25/08/2569');
   assert.equal(receiptData.issuedTime, '17:00');
+});
+
+test('thermal delivery note hides company contact details and uses the requested document title', () => {
+  const receiptData = buildInvoiceDataFromOrder(sampleOrder, 'receipt');
+  const html = renderToStaticMarkup(
+    ReceiptTemplate({
+      invoiceData: {
+        ...receiptData,
+        company: {
+          ...receiptData.company,
+          address: 'SECRET ADDRESS',
+          phone: '081-555-2929',
+          taxId: '3160100252587',
+        },
+      },
+    })
+  );
+
+  assert.match(html, /ใบแจ้งราคาสินค้า \/ ใบส่งของ/);
+  assert.match(html, /INVOICE \/ DELIVERY NOTE/);
+  assert.doesNotMatch(html, /SECRET ADDRESS/);
+  assert.doesNotMatch(html, /081-555-2929/);
+  assert.doesNotMatch(html, /3160100252587/);
+  assert.equal(receiptData.copyTitle, 'ต้นฉบับ ใบแจ้งราคาสินค้า / ใบส่งของ');
 });
 
 test('tax invoice data uses its invoice number and receipt dispatch selects the thermal template', () => {

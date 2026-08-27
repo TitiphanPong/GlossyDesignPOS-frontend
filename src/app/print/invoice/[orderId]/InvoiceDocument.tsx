@@ -98,7 +98,7 @@ function getCopyTitle(documentType: InvoiceDocumentType, taxInvoice: 'yes' | 'no
   }
 
   if (resolvedType === 'receipt') {
-    return 'ต้นฉบับ ใบเสร็จรับเงิน';
+    return 'ต้นฉบับ ใบแจ้งราคาสินค้า / ใบส่งของ';
   }
 
   return 'ต้นฉบับ ใบเสร็จรับเงิน / ใบกำกับภาษี';
@@ -535,14 +535,12 @@ export function ReceiptTemplate({ invoiceData }: Readonly<{ invoiceData: Invoice
         <Stack spacing="1mm" alignItems="center" textAlign="center">
           <Typography sx={{ fontSize: '4.5mm', fontWeight: 800, lineHeight: 1.15 }}>{invoiceData.company.thaiName}</Typography>
           {invoiceData.company.englishName !== '-' ? <Typography sx={{ fontSize: '2.7mm', lineHeight: 1.2 }}>{invoiceData.company.englishName}</Typography> : null}
-          <Typography sx={{ fontSize: '2.5mm', lineHeight: 1.35, whiteSpace: 'pre-line' }}>{invoiceData.company.address}</Typography>
-          <Typography sx={{ fontSize: '2.5mm', lineHeight: 1.25 }}>โทร. {invoiceData.company.phone}</Typography>
-          <Typography sx={{ fontSize: '2.5mm', lineHeight: 1.25 }}>เลขประจำตัวผู้เสียภาษี {invoiceData.company.taxId}</Typography>
+
         </Stack>
 
         <Box sx={{ borderTop: '0.3mm dashed #111827', borderBottom: '0.3mm dashed #111827', py: '2.5mm', textAlign: 'center' }}>
-          <Typography sx={{ fontSize: '4.1mm', fontWeight: 800, lineHeight: 1.2 }}>ใบเสร็จรับเงิน</Typography>
-          <Typography sx={{ mt: '0.5mm', fontSize: '2.5mm', letterSpacing: '0.08em', lineHeight: 1.2 }}>RECEIPT</Typography>
+          <Typography sx={{ fontSize: '3.8mm', fontWeight: 800, lineHeight: 1.2 }}>ใบแจ้งราคาสินค้า / ใบส่งของ</Typography>
+          <Typography sx={{ mt: '0.5mm', fontSize: '2.35mm', letterSpacing: '0.06em', lineHeight: 1.2 }}>INVOICE / DELIVERY NOTE</Typography>
         </Box>
 
         <Stack spacing="1mm" sx={{ fontSize: '2.7mm' }}>

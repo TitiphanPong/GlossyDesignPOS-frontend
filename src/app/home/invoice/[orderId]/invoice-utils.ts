@@ -54,9 +54,9 @@ const DOCUMENT_META: Record<InvoiceDocumentType, InvoiceDocumentMeta> = {
     statusLabel: 'ออกเอกสารแล้ว',
   },
   receipt: {
-    titleTh: 'ใบเสร็จรับเงิน',
-    titleEn: 'Receipt',
-    statusLabel: 'รับชำระแล้ว',
+    titleTh: 'ใบแจ้งราคาสินค้า / ใบส่งของ',
+    titleEn: 'Invoice / Delivery Note',
+    statusLabel: 'ออกเอกสารแล้ว',
   },
 };
 
