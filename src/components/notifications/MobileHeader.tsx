@@ -17,7 +17,7 @@ type MobileHeaderProps = {
 
 export function MobileHeader({ onMenuOpen, menuOpen, menuId }: Readonly<MobileHeaderProps>) {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { notifications, count, isLoading, resolveNotification, dismissNotification } = useNotifications();
+  const { notifications, summary, count, isLoading } = useNotifications();
 
   return (
     <>
@@ -127,10 +127,8 @@ export function MobileHeader({ onMenuOpen, menuOpen, menuId }: Readonly<MobileHe
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         notifications={notifications}
+        summary={summary}
         isLoading={isLoading}
-        notificationCount={count ?? undefined}
-        onNotificationResolve={resolveNotification}
-        onNotificationDismiss={dismissNotification}
       />
     </>
   );

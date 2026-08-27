@@ -228,6 +228,14 @@ export default function StoragePage() {
 
   const [rowMenuAnchor, setRowMenuAnchor] = React.useState<null | HTMLElement>(null);
   const [rowMenuId, setRowMenuId] = React.useState<string | null>(null);
+  const focusedUploadRef = React.useRef<string | null>(null);
+
+  React.useEffect(() => {
+    const focusedUploadId = new URLSearchParams(window.location.search).get('focus')?.trim();
+    if (!focusedUploadId) return;
+    focusedUploadRef.current = focusedUploadId;
+    setSearch(focusedUploadId);
+  }, []);
 
   const fetchUploads = React.useCallback(async () => {
     setLoading(true);
@@ -394,6 +402,19 @@ export default function StoragePage() {
   }, [dateFilter, jobTypeFilter, rows, search, sortBy, statusFilter]);
 
   const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
+
+  React.useEffect(() => {
+    const focusedUploadId = focusedUploadRef.current;
+    if (!focusedUploadId) return;
+    const focusedRow = rows.find(row => row.sourceIds.includes(focusedUploadId));
+    if (!focusedRow) return;
+    setActiveRecord(focusedRow);
+    setDrawerStatus(toEditableStorageStatus(focusedRow.status));
+    setDrawerNotes(focusedRow.notes);
+    setDrawerOpen(true);
+    focusedUploadRef.current = null;
+  }, [rows]);
+
   const selectedIdSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
 
   const selectedRows = React.useMemo(() => {
