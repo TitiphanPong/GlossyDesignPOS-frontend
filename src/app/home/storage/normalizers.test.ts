@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { groupStorageRows, inferStatus, normalizeFiles, normalizeRecord } from './normalizers';
+import { formatJobTypeLabel, groupStorageRows, inferStatus, normalizeFiles, normalizeRecord } from './normalizers';
 
 test('inferStatus maps backend status variants into storage statuses', () => {
   assert.equal(inferStatus('completed'), 'completed');
@@ -10,6 +10,18 @@ test('inferStatus maps backend status variants into storage statuses', () => {
   assert.equal(inferStatus('working'), 'pending');
   assert.equal(inferStatus('unknown'), 'waiting');
   assert.equal(inferStatus(undefined), 'waiting');
+});
+
+test('formatJobTypeLabel presents backend job types in Thai', () => {
+  assert.equal(formatJobTypeLabel('Document Printing'), 'ปริ้นเอกสาร');
+  assert.equal(formatJobTypeLabel('Photocopy'), 'ถ่ายเอกสาร');
+  assert.equal(formatJobTypeLabel('Sticker'), 'สติกเกอร์');
+  assert.equal(formatJobTypeLabel('Business Card'), 'นามบัตร');
+  assert.equal(formatJobTypeLabel('Poster'), 'โปสเตอร์');
+  assert.equal(formatJobTypeLabel('Vinyl Banner'), 'ป้าย / ไวนิล');
+  assert.equal(formatJobTypeLabel('Packaging'), 'เข้าเล่ม');
+  assert.equal(formatJobTypeLabel('Other'), 'อื่นๆ');
+  assert.equal(formatJobTypeLabel('งานกำหนดเอง'), 'งานกำหนดเอง');
 });
 
 test('normalizeFiles supports string file arrays and object file metadata variants', () => {

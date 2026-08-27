@@ -49,12 +49,12 @@ function statusChip(status: StorageStatus) {
 
 function jobTypeChipSx(jobType: string) {
   const normalized = jobType.toLowerCase();
-  if (normalized.includes('document')) return { color: '#1D4ED8', bgcolor: '#DBEAFE', border: '1px solid #93C5FD' };
-  if (normalized.includes('sticker')) return { color: '#8A3FFC', bgcolor: '#F3E8FF', border: '1px solid #D9B8FF' };
-  if (normalized.includes('banner') || normalized.includes('vinyl')) return { color: '#9A3412', bgcolor: '#FFF1E8', border: '1px solid #F8C9B0' };
-  if (normalized.includes('business') || normalized.includes('namecard')) return { color: '#0F5B7A', bgcolor: '#E7F6FD', border: '1px solid #B8E4F7' };
-  if (normalized.includes('packaging') || normalized.includes('binding')) return { color: '#166534', bgcolor: '#ECFDF3', border: '1px solid #BBE7D0' };
-  if (normalized.includes('other')) return { color: '#B45309', bgcolor: '#FEF3C7', border: '1px solid #FCD34D' };
+  if (normalized.includes('document') || normalized.includes('เอกสาร')) return { color: '#1D4ED8', bgcolor: '#DBEAFE', border: '1px solid #93C5FD' };
+  if (normalized.includes('sticker') || normalized.includes('สติกเกอร์') || normalized.includes('สติ๊กเกอร์')) return { color: '#8A3FFC', bgcolor: '#F3E8FF', border: '1px solid #D9B8FF' };
+  if (normalized.includes('banner') || normalized.includes('vinyl') || normalized.includes('ไวนิล') || normalized.includes('ป้าย')) return { color: '#9A3412', bgcolor: '#FFF1E8', border: '1px solid #F8C9B0' };
+  if (normalized.includes('business') || normalized.includes('namecard') || normalized.includes('นามบัตร')) return { color: '#0F5B7A', bgcolor: '#E7F6FD', border: '1px solid #B8E4F7' };
+  if (normalized.includes('packaging') || normalized.includes('binding') || normalized.includes('เข้าเล่ม')) return { color: '#166534', bgcolor: '#ECFDF3', border: '1px solid #BBE7D0' };
+  if (normalized.includes('other') || normalized.includes('อื่น')) return { color: '#B45309', bgcolor: '#FEF3C7', border: '1px solid #FCD34D' };
   return { color: '#334155', bgcolor: '#EEF2FF', border: '1px solid #CFD8F6' };
 }
 

@@ -63,6 +63,23 @@ export type StorageRow = {
 const BATCH_MARKER_PATTERN = /\[\[batch:([a-z0-9-]+)\]\]/i;
 const STAGE_MARKER_PATTERN = /\[\[stage:(waiting-download|pending)\]\]/i;
 
+const JOB_TYPE_LABELS_TH: Record<string, string> = {
+  'document printing': 'ปริ้นเอกสาร',
+  photocopy: 'ถ่ายเอกสาร',
+  sticker: 'สติกเกอร์',
+  'business card': 'นามบัตร',
+  poster: 'โปสเตอร์',
+  'vinyl banner': 'ป้าย / ไวนิล',
+  packaging: 'เข้าเล่ม',
+  other: 'อื่นๆ',
+};
+
+export function formatJobTypeLabel(jobType?: string): string {
+  const value = String(jobType ?? '').trim();
+  if (!value) return 'งานพิมพ์ทั่วไป';
+  return JOB_TYPE_LABELS_TH[value.toLowerCase()] ?? value;
+}
+
 export function inferStatus(rawStatus?: string): StorageStatus {
   const status = (rawStatus ?? '').toLowerCase();
   if (status.includes('complete') || status.includes('done') || status.includes('success')) return 'completed';
@@ -165,7 +182,7 @@ export function normalizeRecord(raw: UploadApiRecord): StorageRow {
     customerName: String(raw.customerName ?? raw.customer ?? 'ไม่ระบุชื่อลูกค้า'),
     phone: String(raw.phone ?? raw.phoneNumber ?? '-'),
     lineId: String(raw.lineId ?? raw.line ?? '-'),
-    jobType: String(raw.jobType ?? raw.category ?? 'งานพิมพ์ทั่วไป'),
+    jobType: formatJobTypeLabel(raw.jobType ?? raw.category),
     files,
     status: resolveStorageStatus(raw.status, stage),
     notes: cleanNote || '-',
