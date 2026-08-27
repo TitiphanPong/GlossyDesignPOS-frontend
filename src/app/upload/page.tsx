@@ -19,9 +19,9 @@ import TableChartRounded from '@mui/icons-material/TableChartRounded';
 import ViewAgendaRounded from '@mui/icons-material/ViewAgendaRounded';
 import type { ReactElement } from 'react';
 import { useMemo, useRef, useState } from 'react';
-import { getSignedUrl, uploadFile, type UploadPayload } from '@/lib/upload-api';
-import { ACCEPTED_EXTENSIONS, buildAcceptAttribute, formatFileSize, getFileExtension, validateUploadFile } from './helpers';
-import { createUploadQueueItems, openSignedUrlWithRetry, uploadPendingFiles, type UploadQueueItem, type UploadStatus } from './upload-flow';
+import { uploadFile, type UploadPayload } from '@/lib/upload-api';
+import { ACCEPTED_EXTENSIONS, buildAcceptAttribute, formatFileSize, getFileExtension, MAX_FILE_SIZE_LABEL, validateUploadFile } from './helpers';
+import { createUploadQueueItems, openUploadedSignedUrl, uploadPendingFiles, type UploadQueueItem, type UploadStatus } from './upload-flow';
 
 type Step = 1 | 2 | 3;
 // Legacy upload flow kept 4 steps with a standalone customer-info phase:
@@ -110,7 +110,7 @@ function getValidationError(file: File): string | null {
   }
 
   if (!validation.valid && validation.reason === 'size') {
-    return `ไฟล์ ${file.name} มีขนาดเกิน 8MB`;
+    return `ไฟล์ ${file.name} มีขนาดเกิน ${MAX_FILE_SIZE_LABEL}`;
   }
 
   return null;
@@ -169,7 +169,12 @@ function UploadFileRow({ item, disableActions, onOpenFile, onRemove, statusPill 
           <p className="truncate text-sm font-medium text-slate-800">{item.file.name}</p>
           <p className="text-xs text-slate-500">{formatFileSize(item.file.size)}</p>
           {item.errorMessage ? <p className="mt-1 text-xs text-rose-600">{item.errorMessage}</p> : null}
-          {item.uploaded ? <p className="mt-1 text-xs text-emerald-700">Upload ID: {item.uploaded.id}</p> : null}
+          {item.uploaded ? (
+            <>
+              <p className="mt-1 text-xs text-emerald-700">Upload ID: {item.uploaded.id}</p>
+              <p className="mt-1 text-[11px] text-slate-400">ลิงก์เปิดไฟล์ใช้ได้ประมาณ {Math.ceil(item.uploaded.expiresIn / 60)} นาทีหลังอัปโหลด</p>
+            </>
+          ) : null}
         </div>
         <div className="flex flex-col items-end gap-2">
           {statusPill(item.status)}
@@ -269,7 +274,6 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
   const [uploadedFiles, setUploadedFiles] = useState<UploadFileItem[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
-  const [openingFileId, setOpeningFileId] = useState<string | null>(null);
   const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>(null);
 
   const [jobNote, setJobNote] = useState('');
@@ -279,7 +283,6 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
 
   const inputRef = useRef<HTMLInputElement | null>(null);
   const selectedJobLabel = useMemo(() => jobOptions.find(item => item.id === selectedJobType)?.label ?? '-', [selectedJobType]);
-  const envError = process.env.NEXT_PUBLIC_API_URL ? null : 'กรุณาตั้งค่า NEXT_PUBLIC_API_URL ก่อนใช้งานอัปโหลดไฟล์';
   const trimmedJobNote = jobNote.trim();
   const fieldErrors = useMemo(() => getUploadFieldErrors(trimmedJobNote), [trimmedJobNote]);
 
@@ -290,7 +293,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
   const currentStep = getCurrentStep(isUploading, uploadedCount, errorItems.length, totalFiles);
   const uploadProgress = totalFiles === 0 ? 0 : Math.round((uploadedCount / totalFiles) * 100);
   const showUploadProgress = isUploading || uploadedCount > 0;
-  const primaryActionDisabled = Boolean(envError) || isUploading || uploadedFiles.length === 0;
+  const primaryActionDisabled = isUploading || uploadedFiles.length === 0;
 
   const clearFeedback = () => {
     setFeedbackModal(null);
@@ -376,28 +379,24 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
     handleBrowseClick();
   };
 
-  const handleOpenFile = async (item: UploadFileItem) => {
-    if (!item.uploaded || openingFileId || envError) return;
+  const handleOpenFile = (item: UploadFileItem) => {
+    if (!item.uploaded) return;
 
     clearFeedback();
-    setOpeningFileId(item.id);
 
     try {
-      await openSignedUrlWithRetry({
-        id: item.uploaded.id,
-        getSignedUrl,
+      openUploadedSignedUrl({
+        signedUrl: item.uploaded.signedUrl,
         openWindow: signedUrl => window.open(signedUrl, '_blank', 'noopener,noreferrer'),
       });
     } catch (error) {
       const message = error instanceof Error ? error.message : 'ไม่สามารถเปิดไฟล์ได้';
       openErrorModal(message);
-    } finally {
-      setOpeningFileId(null);
     }
   };
 
   const handleUploadAll = async () => {
-    if (isUploading || envError) return;
+    if (isUploading) return;
 
     const batchId = createUploadBatchId();
     const legacyNote = buildLegacyUploadNote(trimmedJobNote, batchId);
@@ -470,7 +469,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
     inputRef.current?.click();
   };
 
-  const disableFileActions = isUploading || Boolean(envError) || Boolean(openingFileId);
+  const disableFileActions = isUploading;
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-indigo-50/40 px-4 py-5 pb-28 sm:px-6 sm:py-8 sm:pb-32 md:pb-8">
@@ -495,7 +494,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-[15px]">อัปโหลดงานพิมพ์ได้เร็วขึ้น เหมาะกับทั้งงานด่วน งานเอกสาร และไฟล์พร้อมพิมพ์</p>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">รองรับไฟล์สูงสุด 8MB</span>
+                <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">รองรับไฟล์สูงสุด {MAX_FILE_SIZE_LABEL}</span>
                 <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700">อัปโหลดได้หลายไฟล์</span>
               </div>
             </div>
@@ -620,7 +619,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                 <p className="text-base font-semibold text-slate-800">ลากไฟล์มาวางที่นี่</p>
                 <p className="mt-1 text-sm text-slate-500">หรือกดเลือกไฟล์จากอุปกรณ์ของคุณ</p>
                 <p className="mt-3 text-xs text-slate-500">รองรับไฟล์: {ACCEPTED_EXTENSIONS.map(extension => extension.toUpperCase()).join(', ')}</p>
-                <p className="text-xs text-slate-500">ขนาดไฟล์สูงสุด 8MB / ไฟล์</p>
+                <p className="text-xs text-slate-500">ขนาดไฟล์สูงสุด {MAX_FILE_SIZE_LABEL} / ไฟล์</p>
               </button>
 
               <div className="mt-4 space-y-2.5">
@@ -779,7 +778,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                         setFeedbackModal(null);
                         void handleUploadAll();
                       }}
-                      disabled={isUploading || Boolean(envError) || (waitingItems.length === 0 && errorItems.length === 0)}
+                      disabled={isUploading || (waitingItems.length === 0 && errorItems.length === 0)}
                       className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition enabled:hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50">
                       ลองอัปโหลดอีกครั้ง
                     </button>

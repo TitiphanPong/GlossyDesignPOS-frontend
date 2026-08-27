@@ -9,7 +9,7 @@ function normalizeApiBaseUrl(value: string): string {
 }
 
 export function hasApiBaseUrl(): boolean {
-  return typeof window !== 'undefined' || Boolean(process.env.NEXT_PUBLIC_API_URL?.trim());
+  return typeof window !== 'undefined' || Boolean(process.env.BACKEND_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim());
 }
 
 export function isMissingApiBaseError(error: unknown): boolean {
@@ -21,8 +21,8 @@ export function getApiBaseUrl(): string {
     return '/api/backend';
   }
 
-  const apiBase = process.env.NEXT_PUBLIC_API_URL;
-  if (!apiBase?.trim()) {
+  const apiBase = process.env.BACKEND_API_URL?.trim() || process.env.NEXT_PUBLIC_API_URL?.trim();
+  if (!apiBase) {
     throw new Error(MISSING_API_BASE_ERROR);
   }
   return normalizeApiBaseUrl(apiBase);

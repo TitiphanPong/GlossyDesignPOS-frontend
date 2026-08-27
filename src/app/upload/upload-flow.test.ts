@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { createUploadQueueItems, openSignedUrlWithRetry, uploadPendingFiles, type UploadQueueItem } from './upload-flow';
+import { createUploadQueueItems, openUploadedSignedUrl, uploadPendingFiles, type UploadQueueItem } from './upload-flow';
 
 function createFile(name: string, size: number, type = 'application/pdf'): File {
   return new File(['x'.repeat(Math.min(size, 8))], name, { type, lastModified: 1 });
@@ -30,7 +30,20 @@ test('uploadPendingFiles uploads waiting and error items, preserving partial fai
   const files = [
     { id: 'a', file: createFile('a.pdf', 100), status: 'waiting' },
     { id: 'b', file: createFile('b.pdf', 120), status: 'error', errorMessage: 'old error' },
-    { id: 'c', file: createFile('c.pdf', 140), status: 'uploaded', uploaded: { id: 'existing', originalName: 'c.pdf', size: 140, mimeType: 'application/pdf', createdAt: '2026-05-24T00:00:00.000Z' } },
+    {
+      id: 'c',
+      file: createFile('c.pdf', 140),
+      status: 'uploaded',
+      uploaded: {
+        id: 'existing',
+        originalName: 'c.pdf',
+        size: 140,
+        mimeType: 'application/pdf',
+        createdAt: '2026-05-24T00:00:00.000Z',
+        signedUrl: 'https://cdn.example.com/existing',
+        expiresIn: 900,
+      },
+    },
   ] satisfies UploadQueueItem[];
 
   const uploadCalls: string[] = [];
@@ -54,6 +67,8 @@ test('uploadPendingFiles uploads waiting and error items, preserving partial fai
         size: file.size,
         mimeType: file.type,
         createdAt: '2026-05-24T00:00:00.000Z',
+        signedUrl: `https://cdn.example.com/${file.name}`,
+        expiresIn: 900,
       };
     },
   });
@@ -69,36 +84,27 @@ test('uploadPendingFiles uploads waiting and error items, preserving partial fai
   assert.equal(result.items[2]?.uploaded?.id, 'existing');
 });
 
-test('openSignedUrlWithRetry retries popup opening once before succeeding', async () => {
+test('openUploadedSignedUrl opens the immediate public upload preview without another API request', () => {
   const openedUrls: string[] = [];
-  let openAttempts = 0;
-  let signedUrlCalls = 0;
 
-  await openSignedUrlWithRetry({
-    id: 'upload-123',
-    getSignedUrl: async id => {
-      signedUrlCalls += 1;
-      return { signedUrl: `https://cdn.example.com/${id}?attempt=${signedUrlCalls}` };
-    },
+  openUploadedSignedUrl({
+    signedUrl: 'https://cdn.example.com/immediate-preview',
     openWindow: signedUrl => {
       openedUrls.push(signedUrl);
-      openAttempts += 1;
-      return openAttempts === 1 ? null : ({} as Window);
+      return {} as Window;
     },
   });
 
-  assert.equal(signedUrlCalls, 2);
-  assert.deepEqual(openedUrls, ['https://cdn.example.com/upload-123?attempt=1', 'https://cdn.example.com/upload-123?attempt=2']);
+  assert.deepEqual(openedUrls, ['https://cdn.example.com/immediate-preview']);
 });
 
-test('openSignedUrlWithRetry throws after exhausting popup retries', async () => {
-  await assert.rejects(
+test('openUploadedSignedUrl reports popup blocking', () => {
+  assert.throws(
     () =>
-      openSignedUrlWithRetry({
-        id: 'upload-456',
-        getSignedUrl: async id => ({ signedUrl: `https://cdn.example.com/${id}` }),
+      openUploadedSignedUrl({
+        signedUrl: 'https://cdn.example.com/immediate-preview',
         openWindow: () => null,
       }),
-    /Unable to open file automatically/,
+    /popup/,
   );
 });
