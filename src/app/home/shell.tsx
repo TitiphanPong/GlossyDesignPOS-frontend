@@ -185,13 +185,16 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
         component="main"
         sx={{
           flex: 1,
-          overflow: isMobile && mobileMenuOpen ? 'hidden' : 'auto',
+          overflowY: isMobile && mobileMenuOpen ? 'hidden' : 'auto',
+          overflowX: 'hidden',
           bgcolor: 'background.default',
           height: '100%',
           minHeight: 0,
           display: 'flex',
           flexDirection: 'column',
           minWidth: 0,
+          width: '100%',
+          maxWidth: '100%',
           position: 'relative',
         }}>
         {isMobile ? <MobileHeader onMenuOpen={() => setMobileMenuOpen(true)} menuOpen={mobileMenuOpen} menuId={MOBILE_SIDEBAR_ID} /> : <GlobalNotificationHeader />}

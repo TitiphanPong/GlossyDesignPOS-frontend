@@ -261,8 +261,8 @@ export default function QuickSellerCart({ items, setItems, totals, discountValue
   };
 
   return (
-    <Stack sx={{ height: '100%', minHeight: 0, bgcolor: '#FFFFFF' }}>
-      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: 2.25, py: 1.65, flexShrink: 0 }}>
+    <Stack sx={{ height: '100%', minHeight: 0, minWidth: 0, width: '100%', bgcolor: '#FFFFFF' }}>
+      <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: { xs: 1.5, sm: 2.25 }, py: { xs: 1.35, sm: 1.65 }, flexShrink: 0, minWidth: 0 }}>
         <Box>
           <Typography fontSize={17} fontWeight={800} color="#0F172A">รายการขาย</Typography>
           <Typography variant="body2" color="text.secondary">{items.length} รายการ</Typography>
@@ -281,7 +281,7 @@ export default function QuickSellerCart({ items, setItems, totals, discountValue
       </Stack>
       <Divider />
 
-      <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', px: 2 }}>
+      <Box sx={{ flex: 1, minHeight: 0, minWidth: 0, overflowY: 'auto', overflowX: 'hidden', px: { xs: 1.25, sm: 2 } }}>
         {items.length === 0 ? (
           <Stack alignItems="center" justifyContent="center" textAlign="center" sx={{ minHeight: 260, color: 'text.secondary' }}>
             <Box sx={{ width: 52, height: 52, mb: 1.25, borderRadius: '50%', display: 'grid', placeItems: 'center', bgcolor: '#F1F5F9', color: '#94A3B8' }}>
@@ -304,7 +304,16 @@ export default function QuickSellerCart({ items, setItems, totals, discountValue
       </Box>
 
       <Divider />
-      <Stack gap={1.2} sx={{ p: 2, flexShrink: 0, bgcolor: '#FFFFFF', boxShadow: '0 -10px 26px rgba(15, 23, 42, 0.035)' }}>
+      <Stack
+        gap={1.2}
+        sx={{
+          px: { xs: 1.5, sm: 2 },
+          pt: { xs: 1.35, sm: 2 },
+          pb: { xs: 'calc(12px + env(safe-area-inset-bottom))', sm: 2 },
+          flexShrink: 0,
+          bgcolor: '#FFFFFF',
+          boxShadow: '0 -10px 26px rgba(15, 23, 42, 0.035)',
+        }}>
         <Stack direction="row" justifyContent="space-between">
           <Typography color="#64748B" fontSize={14}>ยอดรวม</Typography>
           <Typography fontWeight={700}>฿{money.format(totals.subtotal)}</Typography>
@@ -328,7 +337,7 @@ export default function QuickSellerCart({ items, setItems, totals, discountValue
           variant="contained"
           disabled={!items.length}
           onClick={onCheckout}
-          sx={{ minHeight: 62, borderRadius: 3, px: 2, bgcolor: '#1463E9', boxShadow: items.length ? '0 10px 24px rgba(20, 99, 233, 0.24)' : 'none', '&:hover': { bgcolor: '#0F56CF' } }}>
+          sx={{ minHeight: { xs: 56, sm: 62 }, borderRadius: 3, px: { xs: 1.5, sm: 2 }, bgcolor: '#1463E9', boxShadow: items.length ? '0 10px 24px rgba(20, 99, 233, 0.24)' : 'none', '&:hover': { bgcolor: '#0F56CF' } }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" width="100%">
             <Stack direction="row" alignItems="center" gap={1}>
               <LocalPrintshopRoundedIcon />
