@@ -59,7 +59,7 @@ import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder, type PaymentMethod } from '../../../lib/contracts';
-import { convertOrderToTaxInvoice, deleteOrder, downloadOrdersExport, type OrderListSummary, updateOrderCustomerInfo } from '../../../lib/orders';
+import { convertOrderToTaxInvoice, deleteOrder, downloadOrdersExport, fetchOrderById, type OrderListSummary, updateOrderCustomerInfo } from '../../../lib/orders';
 import type { ExportType, OrderRow, PaymentStatus, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import { parseOrderDrilldownFilters, type OutstandingPaymentFilter } from './orderDrilldownFilters';
@@ -244,6 +244,7 @@ export default function OrderManagementPage() {
   const [deletePassword, setDeletePassword] = React.useState('');
   const [deleteError, setDeleteError] = React.useState<string | null>(null);
   const loadRequestRef = React.useRef(0);
+  const focusedOrderRef = React.useRef<string | null>(null);
 
   const loadOrders = React.useCallback(async () => {
     const requestId = ++loadRequestRef.current;
@@ -305,6 +306,27 @@ export default function OrderManagementPage() {
     }
     setFiltersReady(true);
   }, [router]);
+
+  React.useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const focusedOrderId = params.get('focus')?.trim();
+    if (!focusedOrderId || focusedOrderRef.current === focusedOrderId) return;
+    focusedOrderRef.current = focusedOrderId;
+
+    void fetchOrderById(focusedOrderId)
+      .then(order => {
+        const focusedRow = mapApiOrderToRow(order);
+        setSelectedOrder(focusedRow);
+        setDrawerOpen(true);
+        if (params.get('action') === 'payment' && focusedRow.total > focusedRow.paidAmount) {
+          setPayRemainingTarget(focusedRow);
+        }
+      })
+      .catch(error => {
+        focusedOrderRef.current = null;
+        setLoadError(error instanceof Error && error.message ? error.message : 'ไม่สามารถเปิดรายการจากศูนย์งานได้');
+      });
+  }, []);
 
   React.useEffect(() => {
     if (filtersReady) void loadOrders();

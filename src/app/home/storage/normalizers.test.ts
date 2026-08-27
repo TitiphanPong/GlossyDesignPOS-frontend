@@ -164,6 +164,16 @@ test('groupStorageRows merges files from the same batch into one row', () => {
   assert.equal(grouped[0]?.files.length, 2);
 });
 
+test('normalizeRecord preserves public uploadId as a focusable source id', () => {
+  const record = normalizeRecord({
+    _id: 'mongo-id',
+    uploadId: 'upload-public-id',
+    files: [],
+  });
+
+  assert.deepEqual(record.sourceIds, ['mongo-id', 'upload-public-id']);
+});
+
 test('normalizeRecord falls back safely when backend fields are missing', () => {
   const record = normalizeRecord({
     uploadId: 'upload-456',

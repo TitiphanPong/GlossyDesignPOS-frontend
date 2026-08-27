@@ -176,7 +176,7 @@ export function normalizeRecord(raw: UploadApiRecord): StorageRow {
 
   return {
     id,
-    sourceIds: [id],
+    sourceIds: Array.from(new Set([id, raw.uploadId].filter((value): value is string => Boolean(value)))),
     batchId,
     uploadDate: createdAt,
     customerName: String(raw.customerName ?? raw.customer ?? 'ไม่ระบุชื่อลูกค้า'),

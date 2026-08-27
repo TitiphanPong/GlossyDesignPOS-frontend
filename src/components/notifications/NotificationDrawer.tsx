@@ -1,420 +1,198 @@
 'use client';
 
 import { useMemo, useState } from 'react';
-import { Drawer, Stack, Typography, Box, Chip, Button, IconButton, Tooltip, CircularProgress } from '@mui/material';
-import { alpha } from '@mui/material/styles';
-import CloseIcon from '@mui/icons-material/Close';
-import WarningAmberIcon from '@mui/icons-material/WarningAmber';
-import ErrorIcon from '@mui/icons-material/Error';
-import InfoIcon from '@mui/icons-material/Info';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import type { Notification, NotificationCategory } from '@/lib/useNotifications';
+import { Box, Button, Chip, CircularProgress, Drawer, IconButton, Stack, Typography } from '@mui/material';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
+import ErrorRoundedIcon from '@mui/icons-material/ErrorRounded';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
+import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
+import type { ActionCenterSummary, Notification } from '@/lib/useNotifications';
+import { getNotificationActionHref } from '@/lib/notification-actions';
 
-type SelectedCategory = 'all' | Extract<NotificationCategory, 'action_required' | 'today'>;
+type ActionCenterTab = 'all' | 'urgent' | 'files' | 'finance' | 'follow_up';
 
-const CATEGORY_TABS: ReadonlyArray<{ key: SelectedCategory; label: string }> = [
-  { key: 'action_required', label: 'ต้องจัดการ' },
-  { key: 'today', label: 'วันนี้' },
-  { key: 'all', label: 'ทั้งหมด' },
+const TABS: ReadonlyArray<{ key: ActionCenterTab; label: string }> = [
+  { key: 'all', label: 'ต้องทำ' },
+  { key: 'urgent', label: 'เร่งด่วน' },
+  { key: 'files', label: 'งาน / ไฟล์' },
+  { key: 'finance', label: 'การเงิน' },
+  { key: 'follow_up', label: 'ติดตาม' },
 ];
 
-type NotificationDrawerProps = {
-  open: boolean;
-  onClose: () => void;
-  notifications: Notification[];
-  isLoading?: boolean;
-  notificationCount?: {
-    active: number;
-    actionRequired: number;
-  };
-  onNotificationClick?: (notification: Notification) => void;
-  onNotificationResolve?: (notificationId: string) => Promise<void>;
-  onNotificationDismiss?: (notificationId: string) => Promise<void>;
-};
+const PRIORITY = {
+  critical: { accent: '#DC2626', soft: '#FEF2F2', label: 'เร่งด่วน' },
+  high: { accent: '#EA580C', soft: '#FFF7ED', label: 'สำคัญ' },
+  normal: { accent: '#2563EB', soft: '#EFF6FF', label: 'ปกติ' },
+  low: { accent: '#64748B', soft: '#F8FAFC', label: 'ติดตาม' },
+} as const;
 
-const PRIORITY_COLORS = {
-  critical: '#DC2626', // red-600
-  high: '#EA580C', // orange-600
-  normal: '#2563EB', // blue-600
-  low: '#7C3AED', // purple-600
-};
+const EMPTY_SUMMARY: ActionCenterSummary = { total: 0, critical: 0, outstandingAmount: 0, filesWaiting: 0 };
+const money = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
 
-const CATEGORY_LABELS = {
-  action_required: 'ต้องจัดการ',
-  today: 'วันนี้',
-  follow_up: 'ติดตาม',
-  system: 'ระบบ',
-};
-
-function getPriorityIcon(priority: string) {
-  switch (priority) {
-    case 'critical':
-      return <ErrorIcon sx={{ color: PRIORITY_COLORS.critical }} />;
-    case 'high':
-      return <WarningAmberIcon sx={{ color: PRIORITY_COLORS.high }} />;
-    case 'normal':
-      return <InfoIcon sx={{ color: PRIORITY_COLORS.normal }} />;
-    case 'low':
-      return <CheckCircleIcon sx={{ color: PRIORITY_COLORS.low }} />;
-    default:
-      return <InfoIcon />;
-  }
+function relativeTime(value: string) {
+  const time = new Date(value).getTime();
+  if (!Number.isFinite(time)) return '';
+  const minutes = Math.max(0, Math.floor((Date.now() - time) / 60_000));
+  if (minutes < 1) return 'เมื่อสักครู่';
+  if (minutes < 60) return `${minutes} นาทีที่แล้ว`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} ชั่วโมงที่แล้ว`;
+  return `${Math.floor(hours / 24)} วันที่แล้ว`;
 }
 
-function NotificationCard({
-  notification,
-  onAction,
-  onResolve,
-  onDismiss,
-}: Readonly<{
-  notification: Notification;
-  onAction?: (notification: Notification) => void;
-  onResolve?: () => Promise<void>;
-  onDismiss?: () => Promise<void>;
-}>) {
-  const [resolving, setResolving] = useState(false);
-  const [dismissing, setDismissing] = useState(false);
+function groupOf(notification: Notification): Exclude<ActionCenterTab, 'all' | 'urgent'> {
+  if (notification.entityType === 'payment' || notification.type.startsWith('payment_')) return 'finance';
+  if (notification.entityType === 'upload' || notification.type.startsWith('upload_')) return 'files';
+  return 'follow_up';
+}
 
-  const handleResolve = async () => {
-    try {
-      setResolving(true);
-      await onResolve?.();
-    } finally {
-      setResolving(false);
-    }
-  };
+function itemIcon(notification: Notification) {
+  if (notification.entityType === 'payment' || notification.type.startsWith('payment_')) return <PaymentsRoundedIcon />;
+  if (notification.entityType === 'upload' || notification.type.startsWith('upload_')) return <DescriptionRoundedIcon />;
+  if (notification.type.includes('pickup')) return <Inventory2RoundedIcon />;
+  if (notification.priority === 'critical') return <ErrorRoundedIcon />;
+  return <AccessTimeRoundedIcon />;
+}
 
-  const handleDismiss = async () => {
-    try {
-      setDismissing(true);
-      await onDismiss?.();
-    } finally {
-      setDismissing(false);
-    }
-  };
+function SummaryMetric({ icon, label, value, emphasis }: Readonly<{ icon: React.ReactNode; label: string; value: string; emphasis?: boolean }>) {
+  return (
+    <Box sx={{ minWidth: 0, flex: 1, p: 1.25, borderRadius: 2.75, border: '1px solid #E2E8F0', bgcolor: emphasis ? '#FFF7F7' : '#FFFFFF' }}>
+      <Stack direction="row" alignItems="center" gap={0.7} sx={{ color: emphasis ? '#DC2626' : '#64748B' }}>
+        {icon}
+        <Typography noWrap fontSize={11.5} fontWeight={800}>{label}</Typography>
+      </Stack>
+      <Typography noWrap sx={{ mt: 0.55, color: emphasis ? '#B91C1C' : '#0F172A', fontSize: 18, fontWeight: 900, fontVariantNumeric: 'tabular-nums' }}>{value}</Typography>
+    </Box>
+  );
+}
 
-  const priorityColor = PRIORITY_COLORS[notification.priority as keyof typeof PRIORITY_COLORS];
+function ActionCard({ notification, onOpen }: Readonly<{ notification: Notification; onOpen: (notification: Notification) => void }>) {
+  const priority = PRIORITY[notification.priority];
+  const href = getNotificationActionHref(notification);
+  const contextLabel = groupOf(notification) === 'finance' ? 'การเงิน' : groupOf(notification) === 'files' ? 'งาน / ไฟล์' : 'ติดตาม';
 
   return (
-    <Box
-      sx={{
-        p: 1.6,
-        mx: 1.5,
-        mb: 1.2,
-        border: '1px solid #E2E8F0',
-        borderRadius: 2.5,
-        bgcolor: '#FFFFFF',
-        boxShadow: '0 10px 22px rgba(15, 23, 42, 0.05)',
-        '&:hover': {
-          borderColor: alpha(priorityColor, 0.35),
-          boxShadow: '0 14px 28px rgba(15, 23, 42, 0.08)',
-        },
-        cursor: 'pointer',
-        transition: 'border-color 0.2s, box-shadow 0.2s, transform 0.2s',
-        borderLeft: `5px solid ${priorityColor}`,
-        opacity: notification.status === 'resolved' ? 0.6 : 1,
-      }}>
-      <Stack spacing={1.5}>
-        {/* Header with icon and title */}
-        <Stack direction="row" spacing={1.2} alignItems="flex-start">
-          <Box sx={{ pt: 0.5, flexShrink: 0 }}>{getPriorityIcon(notification.priority)}</Box>
-          <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-            <Typography
-              sx={{
-                fontWeight: 700,
-                fontSize: 14,
-                color: '#101828',
-                lineHeight: 1.3,
-              }}>
-              {notification.title}
-            </Typography>
-            {notification.message && (
-              <Typography
-                sx={{
-                  fontSize: 13,
-                  color: '#475467',
-                  lineHeight: 1.4,
-                  wordBreak: 'break-word',
-                }}>
-                {notification.message}
-              </Typography>
-            )}
-          </Stack>
+    <Box sx={{ mx: 1.5, mb: 1.1, p: 1.6, borderRadius: 3.25, border: '1px solid #E2E8F0', borderLeft: `4px solid ${priority.accent}`, bgcolor: '#FFFFFF', boxShadow: '0 10px 25px rgba(15, 23, 42, 0.045)' }}>
+      <Stack gap={1.25}>
+        <Stack direction="row" gap={1.15} alignItems="flex-start">
+          <Box sx={{ width: 40, height: 40, borderRadius: 2.5, flexShrink: 0, display: 'grid', placeItems: 'center', bgcolor: priority.soft, color: priority.accent }}>
+            {itemIcon(notification)}
+          </Box>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Stack direction="row" alignItems="center" gap={0.75} sx={{ mb: 0.35 }}>
+              <Chip label={contextLabel} size="small" sx={{ height: 22, fontSize: 11, fontWeight: 800, bgcolor: '#F1F5F9', color: '#475569' }} />
+              {notification.priority === 'critical' ? <Chip label="เร่งด่วน" size="small" sx={{ height: 22, fontSize: 11, fontWeight: 900, bgcolor: '#FEE2E2', color: '#B91C1C' }} /> : null}
+            </Stack>
+            <Typography sx={{ color: '#0F172A', fontSize: 14.5, fontWeight: 900, lineHeight: 1.3 }}>{notification.title}</Typography>
+            {notification.message ? <Typography sx={{ mt: 0.35, color: '#64748B', fontSize: 12.75, lineHeight: 1.45 }}>{notification.message}</Typography> : null}
+          </Box>
         </Stack>
 
-        {/* Context details */}
-        {!!(notification.orderCode || notification.customerName || notification.amount) && (
-          <Stack
-            spacing={0.75}
-            sx={{
-              p: 1.2,
-              bgcolor: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              borderRadius: 2,
-              fontSize: 13,
-              color: '#475467',
-            }}>
-            {notification.orderCode && (
-              <Box>
-                <strong>#{notification.orderCode}</strong>
-              </Box>
-            )}
-            {notification.customerName && <Box sx={{ fontSize: 12.5 }}>{notification.customerName}</Box>}
-            {!!notification.amount && <Box sx={{ fontSize: 12.5, fontWeight: 600, color: '#DC2626' }}>฿{notification.amount.toLocaleString('th-TH')}</Box>}
+        <Box sx={{ p: 1.1, borderRadius: 2.4, bgcolor: '#F8FAFC', border: '1px solid #EEF2F7' }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+            <Box sx={{ minWidth: 0 }}>
+              {notification.orderCode ? <Typography noWrap fontSize={12.5} fontWeight={900} color="#334155">#{notification.orderCode}</Typography> : null}
+              {notification.customerName ? <Typography noWrap fontSize={12} color="#64748B">{notification.customerName}</Typography> : null}
+              <Typography fontSize={11.5} color="#94A3B8">{relativeTime(notification.createdAt)}</Typography>
+            </Box>
+            {typeof notification.amount === 'number' && notification.amount > 0 ? (
+              <Typography noWrap fontSize={16} fontWeight={900} color="#DC2626" sx={{ fontVariantNumeric: 'tabular-nums' }}>฿{money.format(notification.amount)}</Typography>
+            ) : null}
           </Stack>
-        )}
+        </Box>
 
-        {/* Category badge */}
-        <Chip
-          label={CATEGORY_LABELS[notification.category as keyof typeof CATEGORY_LABELS]}
-          size="small"
-          sx={{
-            height: 24,
-            fontSize: 12,
-            fontWeight: 500,
-            width: 'fit-content',
-            bgcolor: alpha(priorityColor, 0.1),
-            color: priorityColor,
-          }}
-        />
-
-        {/* Actions */}
-        <Stack direction="row" spacing={1} sx={{ pt: 0.5 }}>
-          {notification.action && (
-            <Button
-              size="small"
-              variant="contained"
-              sx={{
-                bgcolor: '#2563EB',
-                color: 'white',
-                textTransform: 'none',
-                fontSize: 13,
-                fontWeight: 600,
-                borderRadius: 2,
-                px: 1.5,
-                py: 0.5,
-                '&:hover': { bgcolor: '#1D4ED8' },
-              }}
-              onClick={() => onAction?.(notification)}>
-              {notification.action.label}
-            </Button>
-          )}
-
-          {notification.status === 'active' && (
-            <>
-              <Tooltip title="เสร็จสิ้น">
-                <IconButton
-                  size="small"
-                  disabled={resolving}
-                  onClick={handleResolve}
-                  sx={{
-                    color: '#64748B',
-                    '&:hover': { bgcolor: alpha('#64748B', 0.1) },
-                  }}>
-                  {resolving ? <CircularProgress size={18} /> : <CheckCircleIcon sx={{ fontSize: 20 }} />}
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="ปิด">
-                <IconButton
-                  size="small"
-                  disabled={dismissing}
-                  onClick={handleDismiss}
-                  sx={{
-                    color: '#94A3B8',
-                    '&:hover': { bgcolor: alpha('#94A3B8', 0.1) },
-                  }}>
-                  {dismissing ? <CircularProgress size={18} /> : <CloseIcon sx={{ fontSize: 18 }} />}
-                </IconButton>
-              </Tooltip>
-            </>
-          )}
-        </Stack>
+        {href ? (
+          <Button fullWidth variant="contained" endIcon={<ArrowForwardRoundedIcon />} onClick={() => onOpen(notification)} sx={{ minHeight: 42, borderRadius: 2.5, fontWeight: 900, textTransform: 'none', boxShadow: 'none' }}>
+            {notification.action?.label || 'เปิดรายการ'}
+          </Button>
+        ) : null}
       </Stack>
     </Box>
   );
 }
 
-export function NotificationDrawer({
-  open,
-  onClose,
-  notifications,
-  isLoading,
-  notificationCount,
-  onNotificationClick,
-  onNotificationResolve,
-  onNotificationDismiss,
-}: Readonly<NotificationDrawerProps>) {
-  const [selectedCategory, setSelectedCategory] = useState<SelectedCategory>('action_required');
+type NotificationDrawerProps = {
+  open: boolean;
+  onClose: () => void;
+  notifications: Notification[];
+  summary?: ActionCenterSummary;
+  isLoading?: boolean;
+  onNotificationClick?: (notification: Notification) => void;
+};
 
-  const filteredNotifications = useMemo(() => {
-    if (selectedCategory === 'all') return notifications;
-    return notifications.filter(n => n.category === selectedCategory);
-  }, [notifications, selectedCategory]);
+export function NotificationDrawer({ open, onClose, notifications, summary = EMPTY_SUMMARY, isLoading, onNotificationClick }: Readonly<NotificationDrawerProps>) {
+  const [selectedTab, setSelectedTab] = useState<ActionCenterTab>('all');
 
-  const sortedNotifications = useMemo(() => {
-    return [...filteredNotifications].sort((a, b) => {
-      // Active before resolved
-      if (a.status !== b.status) {
-        return a.status === 'active' ? -1 : 1;
-      }
-      // By priority
-      const priorityOrder = { critical: 0, high: 1, normal: 2, low: 3 };
-      const aPriority = priorityOrder[a.priority as keyof typeof priorityOrder] ?? 2;
-      const bPriority = priorityOrder[b.priority as keyof typeof priorityOrder] ?? 2;
-      if (aPriority !== bPriority) return aPriority - bPriority;
-      // By date
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+  const visible = useMemo(() => {
+    const filtered = notifications.filter(notification => {
+      if (selectedTab === 'all') return true;
+      if (selectedTab === 'urgent') return notification.priority === 'critical';
+      return groupOf(notification) === selectedTab;
     });
-  }, [filteredNotifications]);
+    const order = { critical: 0, high: 1, normal: 2, low: 3 } as const;
+    return [...filtered].sort((a, b) => order[a.priority] - order[b.priority] || new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  }, [notifications, selectedTab]);
+
+  const openAction = (notification: Notification) => {
+    const href = getNotificationActionHref(notification);
+    onNotificationClick?.(notification);
+    if (!href) return;
+    onClose();
+    window.location.assign(href);
+  };
 
   return (
     <Drawer
       anchor="right"
       open={open}
       onClose={onClose}
-      slotProps={{
-        paper: {
-          sx: {
-            width: { xs: '100%', sm: 450 },
-            maxWidth: 450,
-            bgcolor: '#F6F8FC',
-            boxShadow: '-18px 0 44px rgba(15, 23, 42, 0.16)',
-          },
-        },
-      }}>
-      <Stack sx={{ height: '100%', display: 'flex', flexDirection: 'column' }} spacing={0}>
-        {/* Header */}
-        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" sx={{ px: 2.5, pt: 2.6, pb: 2.2, bgcolor: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
-          <Stack spacing={0.85}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <Typography sx={{ fontWeight: 850, fontSize: 20, color: '#0F172A', lineHeight: 1.1 }}>งานที่ต้องจัดการ</Typography>
-              <Box sx={{ px: 1, py: 0.25, borderRadius: '999px', bgcolor: '#EEF2FF', color: '#2563EB', fontSize: 12, fontWeight: 800 }}>{notificationCount?.actionRequired ?? 0}</Box>
-            </Stack>
-            <Typography sx={{ fontSize: 13, color: '#64748B' }}>ติดตามงานเร่งด่วนและการแจ้งเตือนหน้าร้าน</Typography>
+      slotProps={{ paper: { sx: { width: { xs: '100%', sm: 470 }, maxWidth: 470, bgcolor: '#F6F8FC', boxShadow: '-18px 0 48px rgba(15, 23, 42, 0.18)' } } }}>
+      <Stack sx={{ height: '100%', minWidth: 0 }}>
+        <Box sx={{ px: { xs: 2, sm: 2.4 }, pt: 2.2, pb: 1.6, bgcolor: '#FFFFFF', borderBottom: '1px solid #E2E8F0' }}>
+          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1.5}>
+            <Box sx={{ minWidth: 0 }}>
+              <Stack direction="row" alignItems="center" gap={0.8}>
+                <Typography fontSize={21} fontWeight={900} color="#0F172A">ศูนย์งาน</Typography>
+                <Chip label={summary.total} size="small" sx={{ height: 24, bgcolor: summary.total ? '#DBEAFE' : '#ECFDF5', color: summary.total ? '#1D4ED8' : '#047857', fontWeight: 900 }} />
+              </Stack>
+              <Typography sx={{ mt: 0.45, color: '#64748B', fontSize: 12.75 }}>สิ่งที่หน้าร้านต้องทำต่อ ไม่ใช่แค่รายการแจ้งเตือน</Typography>
+            </Box>
+            <IconButton aria-label="ปิดศูนย์งาน" onClick={onClose} sx={{ width: 38, height: 38, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}><CloseRoundedIcon /></IconButton>
           </Stack>
-          <IconButton onClick={onClose} size="small" sx={{ color: '#64748B', border: '1px solid #E2E8F0', bgcolor: '#FFFFFF', '&:hover': { bgcolor: '#F8FAFC' } }}>
-            <CloseIcon />
-          </IconButton>
-        </Stack>
 
-        {/* Category tabs */}
-        <Stack
-          direction="row"
-          spacing={0.5}
-          sx={{
-            m: 1.5,
-            p: 0.5,
-            border: '1px solid #E2E8F0',
-            borderRadius: 2.5,
-            bgcolor: '#FFFFFF',
-            overflowX: 'auto',
-            '&::-webkit-scrollbar': { height: 4 },
-            '&::-webkit-scrollbar-track': { bgcolor: 'transparent' },
-            '&::-webkit-scrollbar-thumb': { bgcolor: '#CBD5E1', borderRadius: 2 },
-          }}>
-          {CATEGORY_TABS.map(tab => (
-            <Button
-              key={tab.key}
-              variant={selectedCategory === tab.key ? 'contained' : 'outlined'}
-              size="small"
-              onClick={() => setSelectedCategory(tab.key)}
-              sx={{
-                flex: 1,
-                minWidth: 0,
-                textTransform: 'none',
-                fontSize: 13,
-                fontWeight: 750,
-                px: 1,
-                py: 0.75,
-                borderRadius: 2,
-                whiteSpace: 'nowrap',
-                boxShadow: 'none',
-                ...(selectedCategory === tab.key
-                  ? {
-                      bgcolor: '#0F172A',
-                      color: 'white',
-                      borderColor: '#0F172A',
-                    }
-                  : {
-                      borderColor: 'transparent',
-                      color: '#475569',
-                      bgcolor: 'transparent',
-                    }),
-              }}>
+          <Stack direction="row" gap={0.8} sx={{ mt: 1.6 }}>
+            <SummaryMetric icon={<ErrorRoundedIcon sx={{ fontSize: 16 }} />} label="เร่งด่วน" value={String(summary.critical)} emphasis={summary.critical > 0} />
+            <SummaryMetric icon={<PaymentsRoundedIcon sx={{ fontSize: 16 }} />} label="ยอดค้าง" value={`฿${money.format(summary.outstandingAmount)}`} />
+            <SummaryMetric icon={<DescriptionRoundedIcon sx={{ fontSize: 16 }} />} label="ไฟล์รอตรวจ" value={String(summary.filesWaiting)} />
+          </Stack>
+        </Box>
+
+        <Stack direction="row" gap={0.6} sx={{ px: 1.5, py: 1.2, overflowX: 'auto', bgcolor: '#F6F8FC', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>
+          {TABS.map(tab => (
+            <Button key={tab.key} size="small" variant={selectedTab === tab.key ? 'contained' : 'outlined'} onClick={() => setSelectedTab(tab.key)} sx={{ minWidth: 'max-content', minHeight: 36, px: 1.25, borderRadius: 2.25, textTransform: 'none', fontWeight: 800, boxShadow: 'none', ...(selectedTab === tab.key ? { bgcolor: '#0F172A', '&:hover': { bgcolor: '#1E293B' } } : { bgcolor: '#FFFFFF', borderColor: '#E2E8F0', color: '#475569' }) }}>
               {tab.label}
             </Button>
           ))}
         </Stack>
 
-        {/* Content */}
-        <RenderNotificationContent
-          isLoading={isLoading}
-          sortedNotifications={sortedNotifications}
-          onNotificationClick={onNotificationClick}
-          onNotificationResolve={onNotificationResolve}
-          onNotificationDismiss={onNotificationDismiss}
-        />
+        {isLoading ? (
+          <Stack flex={1} alignItems="center" justifyContent="center" gap={1.2}><CircularProgress size={28} /><Typography fontSize={13} color="#64748B">กำลังตรวจสอบงาน...</Typography></Stack>
+        ) : visible.length === 0 ? (
+          <Stack flex={1} alignItems="center" justifyContent="center" textAlign="center" gap={1.1} sx={{ px: 4 }}>
+            <Box sx={{ width: 58, height: 58, borderRadius: 3, display: 'grid', placeItems: 'center', bgcolor: '#ECFDF5', color: '#059669' }}><CheckCircleRoundedIcon sx={{ fontSize: 34 }} /></Box>
+            <Typography fontSize={17} fontWeight={900} color="#0F172A">ไม่มีงานในกลุ่มนี้</Typography>
+            <Typography fontSize={13} color="#64748B">งานจะหายจากศูนย์งานอัตโนมัติเมื่อสถานะจริงได้รับการจัดการแล้ว</Typography>
+          </Stack>
+        ) : (
+          <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto', overflowX: 'hidden', pt: 0.2, pb: 2 }}>
+            {visible.map(notification => <ActionCard key={notification._id} notification={notification} onOpen={openAction} />)}
+          </Box>
+        )}
       </Stack>
     </Drawer>
-  );
-}
-
-function RenderNotificationContent({
-  isLoading,
-  sortedNotifications,
-  onNotificationClick,
-  onNotificationResolve,
-  onNotificationDismiss,
-}: Readonly<{
-  isLoading?: boolean;
-  sortedNotifications: Notification[];
-  onNotificationClick?: (notification: Notification) => void;
-  onNotificationResolve?: (notificationId: string) => Promise<void>;
-  onNotificationDismiss?: (notificationId: string) => Promise<void>;
-}>) {
-  if (isLoading) {
-    return (
-      <Stack alignItems="center" justifyContent="center" spacing={1.4} sx={{ flex: 1, mx: 1.5, my: 2, border: '1px solid #E2E8F0', borderRadius: 3, bgcolor: '#FFFFFF' }}>
-        <CircularProgress size={28} sx={{ color: '#0F172A' }} />
-        <Typography sx={{ fontSize: 13, color: '#64748B' }}>กำลังโหลดรายการ...</Typography>
-      </Stack>
-    );
-  }
-
-  const isEmpty = sortedNotifications.length === 0;
-
-  if (isEmpty) {
-    return (
-      <Stack alignItems="center" justifyContent="center" spacing={1.4} sx={{ flex: 1, mx: 1.5, my: 2, px: 3, textAlign: 'center', border: '1px solid #E2E8F0', borderRadius: 3, bgcolor: '#FFFFFF' }}>
-        <Box sx={{ width: 54, height: 54, borderRadius: '18px', display: 'grid', placeItems: 'center', bgcolor: '#ECFDF5', color: '#059669' }}>
-          <CheckCircleIcon sx={{ fontSize: 34 }} />
-        </Box>
-        <Typography sx={{ fontWeight: 800, fontSize: 17, color: '#0F172A' }}>เรียบร้อยทั้งหมด</Typography>
-        <Typography sx={{ fontSize: 13.5, color: '#64748B', lineHeight: 1.45 }}>ตอนนี้ไม่มีงานที่ต้องจัดการ</Typography>
-      </Stack>
-    );
-  }
-
-  return (
-    <Stack sx={{ flex: 1, overflow: 'auto', minWidth: 0, pt: 0.2, pb: 1.5 }}>
-      {sortedNotifications.map(notification => (
-        <NotificationCard
-          key={notification._id}
-          notification={notification}
-          onAction={n => {
-            if (n.action?.href) {
-              window.location.href = n.action.href;
-            }
-            onNotificationClick?.(n);
-          }}
-          onResolve={async () => {
-            await onNotificationResolve?.(notification._id);
-          }}
-          onDismiss={async () => {
-            await onNotificationDismiss?.(notification._id);
-          }}
-        />
-      ))}
-    </Stack>
   );
 }
