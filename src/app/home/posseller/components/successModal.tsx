@@ -9,6 +9,7 @@ import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
 import { getDisplayOrderNumber, PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../../lib/contracts';
 import { isMissingApiBaseError } from '../../../../lib/api';
 import { createOrder } from '../../../../lib/orders';
+import { canOverridePrice, fetchCurrentAdminRole, type AdminRole } from '../../../../lib/admin-capabilities';
 import {
   buildPendingOrderPayload,
   getPendingOrderFinalStatus,
@@ -145,11 +146,19 @@ function getOrderNumberFallback(isSubmitting: boolean, submitError: string | nul
   return 'Pending confirmation';
 }
 
+function requiresPriceOverride(order: StoredPendingOrderDraft): boolean {
+  const payload = buildPendingOrderPayload(order, getPendingOrderFinalStatus(order));
+  return Array.isArray(payload.cart) && payload.cart.some(item => Boolean(item.priceOverride));
+}
+
 export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrder }: Readonly<Props>) {
   const [isPaid, setIsPaid] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderData, setOrderData] = useState<StoredPendingOrderDraft | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [sessionRole, setSessionRole] = useState<AdminRole | null>(null);
+  const pricingRequiresManager = orderData ? requiresPriceOverride(orderData) : false;
+  const pricingBlocked = pricingRequiresManager && !canOverridePrice(sessionRole);
   const remainingTotal = orderData?.remainingTotal ?? 0;
   const depositTotal = orderData?.depositTotal ?? 0;
   const grandTotal = orderData?.grandTotal ?? 0;
@@ -159,6 +168,8 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
     if (open) {
       setIsSubmitting(false);
       setSubmitError(null);
+      setSessionRole(null);
+      void fetchCurrentAdminRole().then(setSessionRole);
       const order = readPendingOrder();
 
       if (order) {
@@ -205,6 +216,11 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
         setOrderData(order);
         setIsPaid(true);
         onPaid();
+        return;
+      }
+
+      if (requiresPriceOverride(order) && !canOverridePrice(sessionRole)) {
+        setSubmitError('รายการนี้มีราคากำหนดเอง ต้องให้ผู้จัดการหรือผู้ดูแลระบบเป็นผู้ยืนยัน');
         return;
       }
 
@@ -307,6 +323,12 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           <Divider sx={{ my: 2, width: '80%' }} />
         </Box>
 
+        {pricingBlocked ? (
+          <Alert severity="warning" sx={{ mb: 2 }}>
+            {sessionRole === null ? 'กำลังตรวจสอบสิทธิ์การยืนยันราคากำหนดเอง' : 'รายการนี้มีราคากำหนดเอง ต้องให้ผู้จัดการหรือผู้ดูแลระบบเป็นผู้ยืนยัน'}
+          </Alert>
+        ) : null}
+
         {submitError ? (
           <Alert severity="error" sx={{ mb: 2 }}>
             {submitError}
@@ -325,7 +347,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
             color={getPrimaryActionColor(payment)}
             startIcon={isSubmitting ? <CircularProgress size={18} color="inherit" /> : <DoneAllIcon />}
             onClick={handleConfirm}
-            disabled={isSubmitting || !orderData}>
+            disabled={isSubmitting || !orderData || pricingBlocked}>
             {getPrimaryActionLabel(payment, isSubmitting)}
           </Button>
         )}

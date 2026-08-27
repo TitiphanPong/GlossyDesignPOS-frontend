@@ -62,6 +62,7 @@ type QuickSellerCartProps = Readonly<{
   setDiscountValue: (value: number) => void;
   setDiscountMode: (mode: DiscountMode) => void;
   onCheckout: () => void;
+  canOverridePrice: boolean;
 }>;
 
 const money = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -172,7 +173,7 @@ function PriceEditor({ item, onCommit }: Readonly<{ item: QuickSaleCartItem; onC
   );
 }
 
-function CartItemRow({ item, onUpdate, onRemove }: Readonly<{ item: QuickSaleCartItem; onUpdate: (values: Partial<QuickSaleCartItem>) => void; onRemove: () => void }>) {
+function CartItemRow({ item, onUpdate, onRemove, canOverridePrice }: Readonly<{ item: QuickSaleCartItem; onUpdate: (values: Partial<QuickSaleCartItem>) => void; onRemove: () => void; canOverridePrice: boolean }>) {
   const visual = getItemVisual(item);
   return (
     <Box sx={{ py: 1.5, borderBottom: '1px solid #E8EDF4', transition: 'background-color 160ms ease', '&:hover': { bgcolor: '#FAFCFF' } }}>
@@ -182,7 +183,15 @@ function CartItemRow({ item, onUpdate, onRemove }: Readonly<{ item: QuickSaleCar
         </Box>
         <Box sx={{ minWidth: 0, mt: 0.75 }}>
           <Typography noWrap fontWeight={700} color="#172033" lineHeight={1.3} title={item.productName}>{item.productName}</Typography>
-          <PriceEditor item={item} onCommit={unitPrice => onUpdate({ unitPrice })} />
+          {canOverridePrice ? (
+            <PriceEditor item={item} onCommit={unitPrice => onUpdate({ unitPrice })} />
+          ) : (
+            <Tooltip title="การแก้ไขราคาต้องใช้สิทธิ์ผู้จัดการหรือผู้ดูแลระบบ">
+              <Typography component="span" sx={{ display: 'inline-block', minHeight: 30, pt: 0.65, color: '#52657C', fontSize: 12.5, fontWeight: 600 }}>
+                <Box component="span" sx={{ fontWeight: 800, color: '#334155', fontVariantNumeric: 'tabular-nums' }}>฿{money.format(item.unitPrice)}</Box>&nbsp;/ หน่วย
+              </Typography>
+            </Tooltip>
+          )}
         </Box>
         <Tooltip title="ลบรายการ">
           <IconButton
@@ -246,7 +255,7 @@ function DiscountControl({ value, mode, appliedDiscount, onApplyMode, onApplyVal
   );
 }
 
-export default function QuickSellerCart({ items, setItems, totals, discountValue, discountMode, setDiscountValue, setDiscountMode, onCheckout }: QuickSellerCartProps) {
+export default function QuickSellerCart({ items, setItems, totals, discountValue, discountMode, setDiscountValue, setDiscountMode, onCheckout, canOverridePrice }: QuickSellerCartProps) {
   const updateItem = (key: string, values: Partial<QuickSaleCartItem>) => {
     setItems(previous => previous.map(item => (item.key === key ? { ...item, ...values } : item)));
   };
@@ -288,6 +297,7 @@ export default function QuickSellerCart({ items, setItems, totals, discountValue
               item={item}
               onUpdate={values => updateItem(item.key, values)}
               onRemove={() => setItems(previous => previous.filter(row => row.key !== item.key))}
+              canOverridePrice={canOverridePrice}
             />
           ))
         )}

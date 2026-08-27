@@ -34,7 +34,34 @@ type CustomerInfo = { customerName: string; phoneNumber: string; taxId: string; 
 const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
 
-const toActiveProduct = (product: Product): ActiveProduct => ({ id: product.id, name: product.name, category: product.category, code: product.code, typeCode: product.typeCode });
+const toActiveProduct = (product: Product): ActiveProduct => ({
+  id: product.id,
+  name: product.name,
+  category: product.category,
+  code: product.code,
+  typeCode: product.typeCode,
+  variants: product.variants,
+});
+function attachCatalogVariantPrice(item: CartItem, product: ActiveProduct): CartItem {
+  if (!item.variant) return item;
+
+  const activeVariants = (product.variants ?? []).filter(variant => variant.active);
+  const selectedName = item.variant.name.trim().toLowerCase();
+  const catalogVariant = activeVariants.find(variant => variant.name.trim().toLowerCase() === selectedName) ?? (activeVariants.length === 1 ? activeVariants[0] : undefined);
+  if (!catalogVariant) return item;
+
+  return {
+    ...item,
+    variant: {
+      ...item.variant,
+      id: catalogVariant.id,
+      _id: catalogVariant._id,
+      price: catalogVariant.price,
+      active: catalogVariant.active,
+    },
+  };
+}
+
 const sanitizeCustomerInfo = (customer: CustomerInfo): CustomerInfo => ({
   customerName: customer.customerName.trim(),
   phoneNumber: customer.phoneNumber.trim(),
@@ -222,12 +249,19 @@ export default function SellPage() {
     (item: CartItem) => {
       if (editingItem) {
         const editingKey = editingItem.key;
-        setCart(prev => prev.map(it => (it.key === editingKey ? { ...it, ...item, key: editingKey } : it)));
+        const sourceProduct = products.find(
+          product =>
+            product.id === editingItem.productId ||
+            (Boolean(editingItem.productCode) && product.code === editingItem.productCode)
+        );
+        const pricedItem = sourceProduct ? attachCatalogVariantPrice(item, toActiveProduct(sourceProduct)) : item;
+        setCart(prev => prev.map(it => (it.key === editingKey ? { ...it, ...pricedItem, key: editingKey } : it)));
       } else if (activeProduct) {
+        const pricedItem = attachCatalogVariantPrice(item, activeProduct);
         setCart(prev => [
           ...prev,
           {
-            ...item,
+            ...pricedItem,
             key: createCartItemKey(activeProduct.id),
             productId: activeProduct.id,
             productCode: activeProduct.code,
@@ -238,7 +272,7 @@ export default function SellPage() {
 
       closeModal();
     },
-    [activeProduct, closeModal, editingItem, setCart]
+    [activeProduct, closeModal, editingItem, products, setCart]
   );
 
   const ActiveProductModal = activeModal?.component ?? null;

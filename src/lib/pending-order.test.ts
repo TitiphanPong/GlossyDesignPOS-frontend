@@ -163,6 +163,45 @@ test('buildPendingOrderPayload emits only product identity, quantity and explici
   assert.equal('totalPrice' in firstItem, false);
 });
 
+test('buildPendingOrderPayload omits price override when the cart price matches the catalog variant', () => {
+  const payload = buildPendingOrderPayload(
+    {
+      clientDraftId: 'draft-catalog-001',
+      customerName: 'Alice',
+      payment: 'cash',
+      total: 7.5,
+      discount: 0,
+      status: 'pending',
+      depositTotal: 7.5,
+      remainingTotal: 0,
+      cart: [
+        {
+          name: 'A4 Print',
+          productId: 'product-a4',
+          qty: 3,
+          unitPrice: 2.5,
+          totalPrice: 7.5,
+          variant: {
+            id: 'variant-a4',
+            name: 'Default',
+            price: 2.5,
+            active: true,
+          },
+        },
+      ],
+      taxInvoice: 'no',
+      vatAmount: 0,
+      grandTotal: 7.5,
+    },
+    'paid'
+  );
+
+  const firstItem = (payload.cart as Array<Record<string, unknown>> | undefined)?.[0];
+  assert.ok(firstItem);
+  assert.equal(firstItem.variantId, 'variant-a4');
+  assert.equal(firstItem.priceOverride, undefined);
+});
+
 test('isPendingOrderSubmissionLocked only blocks fresh in-flight submissions', () => {
   const now = Date.now();
 

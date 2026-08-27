@@ -41,6 +41,7 @@ import ScannerRoundedIcon from '@mui/icons-material/ScannerRounded';
 import SellRoundedIcon from '@mui/icons-material/SellRounded';
 import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import { createOrder } from '@/lib/orders';
+import { canOverridePrice, fetchCurrentAdminRole, type AdminRole } from '@/lib/admin-capabilities';
 import { fetchQuickProducts } from '@/lib/products';
 import type { PaymentMethod, Product } from '@/lib/contracts';
 import { buildPendingOrderDraft, PENDING_ORDER_KEY, persistPendingOrderDraft, type StoredPendingOrderDraft } from '@/lib/pending-order';
@@ -114,6 +115,8 @@ export default function QuickSalePage() {
   const [entryMode, setEntryMode] = React.useState<'normal' | 'backdated'>('normal');
   const [saleDateTime, setSaleDateTime] = React.useState(`${localDateValue(now)}T${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`);
   const [backdatedReason, setBackdatedReason] = React.useState('');
+  const [sessionRole, setSessionRole] = React.useState<AdminRole | null>(null);
+  const allowPriceOverride = canOverridePrice(sessionRole);
 
   const clearQuickSaleCustomerDisplay = React.useCallback(() => {
     const draftId = checkoutDraftId;
@@ -156,6 +159,16 @@ export default function QuickSalePage() {
   React.useEffect(() => {
     void loadProducts();
   }, [loadProducts]);
+
+  React.useEffect(() => {
+    let active = true;
+    void fetchCurrentAdminRole().then(role => {
+      if (active) setSessionRole(role);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
   const subtotal = React.useMemo(() => roundMoney(items.reduce((sum, item) => sum + item.quantity * roundMoney(item.unitPrice), 0)), [items]);
   const totals = React.useMemo(() => calculateQuickSale(subtotal, discountValue, discountMode), [subtotal, discountValue, discountMode]);
   const vatAmount = React.useMemo(() => (taxInvoice === 'yes' ? calculateAddedVat(totals.grandTotal) : 0), [taxInvoice, totals.grandTotal]);
@@ -275,6 +288,10 @@ export default function QuickSalePage() {
   }, [addProduct, closeCheckout, items.length, openCheckout, visible]);
 
   const addCustom = () => {
+    if (!allowPriceOverride) {
+      setError('การเพิ่มรายการกำหนดราคาเองต้องใช้สิทธิ์ผู้จัดการหรือผู้ดูแลระบบ');
+      return;
+    }
     const price = Number(customPrice);
     if (!customName.trim() || !Number.isFinite(price) || price < 0) return;
     setItems(previous => [...previous, { key: `custom:${crypto.randomUUID()}`, productName: customName.trim(), category: 'อื่นๆ', quantity: Math.max(1, customQuantity), unitPrice: price }]);
@@ -295,6 +312,11 @@ export default function QuickSalePage() {
   };
   const submitSale = async () => {
     if (!items.length || (paymentMethod === 'cash' && receivedAmount < payableTotal)) return;
+    const hasPriceOverride = items.some(item => item.catalogUnitPrice === undefined || roundMoney(item.unitPrice) !== roundMoney(item.catalogUnitPrice));
+    if (hasPriceOverride && !allowPriceOverride) {
+      setError('รายการที่แก้ราคาเองต้องให้ผู้จัดการหรือผู้ดูแลระบบเป็นผู้ยืนยัน');
+      return;
+    }
     setSubmitting(true);
     setError(null);
     try {
@@ -371,6 +393,7 @@ export default function QuickSalePage() {
       setDiscountValue={setDiscountValue}
       setDiscountMode={setDiscountMode}
       onCheckout={openCheckout}
+      canOverridePrice={allowPriceOverride}
     />
   );
   return (
@@ -414,7 +437,7 @@ export default function QuickSalePage() {
                 ),
               }}
             />
-            <Button variant="outlined" startIcon={<AddRoundedIcon />} onClick={() => setCustomOpen(true)} sx={{ minWidth: 132, minHeight: 52, borderRadius: 2.5, bgcolor: '#FFFFFF', fontWeight: 800 }}>
+            <Button variant="outlined" startIcon={<AddRoundedIcon />} disabled={!allowPriceOverride} title={allowPriceOverride ? undefined : 'รายการกำหนดราคาเองต้องใช้สิทธิ์ผู้จัดการหรือผู้ดูแลระบบ'} onClick={() => setCustomOpen(true)} sx={{ minWidth: 132, minHeight: 52, borderRadius: 2.5, bgcolor: '#FFFFFF', fontWeight: 800 }}>
               รายการอื่น
             </Button>
           </Stack>

@@ -20,6 +20,7 @@ export type ActiveProduct = {
   name: string;
   category?: string;
   code?: string;
+  variants?: ProductVariant[];
   typeCode?: string;
 };
 
