@@ -131,12 +131,16 @@ test('payRemainingBalance accepts a wrapped updated order response', async () =>
   const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
   let capturedUrl = '';
   let capturedMethod = '';
+  let capturedHeaders: HeadersInit | undefined;
+  let capturedBody: string | undefined;
 
   process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
 
   const mockFetch: typeof fetch = async (input, init) => {
     capturedUrl = String(input);
     capturedMethod = init?.method ?? '';
+    capturedHeaders = init?.headers;
+    capturedBody = typeof init?.body === 'string' ? init.body : undefined;
 
     return new Response(
       JSON.stringify({
@@ -155,9 +159,15 @@ test('payRemainingBalance accepts a wrapped updated order response', async () =>
   globalThis.fetch = mockFetch;
 
   try {
-    const result = await payRemainingBalance('abc126', { amount: 120, method: 'promptpay' });
+    const result = await payRemainingBalance('abc126', {
+      amount: 120,
+      method: 'promptpay',
+      idempotencyKey: 'payment-attempt-001',
+    });
     assert.equal(capturedUrl, 'http://localhost:3001/orders/abc126/payments');
     assert.equal(capturedMethod, 'POST');
+    assert.equal(getHeaderValue(capturedHeaders, 'Idempotency-Key'), 'payment-attempt-001');
+    assert.equal(capturedBody, JSON.stringify({ amount: 120, method: 'promptpay' }));
     assert.equal(result.orderNumber, 'ORD-20260527-0004');
     assert.equal(result.status, 'paid');
     assert.equal(result._id, 'abc126');

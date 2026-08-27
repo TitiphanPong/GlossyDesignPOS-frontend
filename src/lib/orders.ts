@@ -99,6 +99,7 @@ export function extractOrdersFromResponse(value: unknown): NormalizedOrder[] | n
 type RemainingPaymentPayload = {
   amount: number;
   method: ApiOrder['payment'];
+  idempotencyKey?: string;
 };
 
 type UpdateCustomerInfoPayload = {
@@ -205,10 +206,15 @@ export async function createOrder(payload: CreateOrderRequest): Promise<Normaliz
 }
 
 export async function payRemainingBalance(orderId: string, payload: RemainingPaymentPayload): Promise<NormalizedOrder> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  const idempotencyKey = payload.idempotencyKey?.trim();
+  if (idempotencyKey) {
+    headers['Idempotency-Key'] = idempotencyKey;
+  }
   const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}/payments`, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload),
+    headers,
+    body: JSON.stringify({ amount: payload.amount, method: payload.method }),
   });
 
   const updatedOrder = extractOrderFromResponse(responseBody);

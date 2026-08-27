@@ -1,6 +1,6 @@
 # Glossy POS Frontend
 
-Glossy POS is a Next.js 15 + TypeScript frontend for a print-shop workflow. It includes:
+Glossy POS is a Next.js 16 + TypeScript frontend for a print-shop workflow. It includes:
 
 - admin dashboard
 - POS seller / checkout
@@ -14,7 +14,7 @@ This repository is frontend-only. The NestJS backend, MongoDB schemas, and persi
 
 ## Tech Stack
 
-- Next.js 15 App Router
+- Next.js 16 App Router
 - React 19
 - TypeScript
 - MUI for admin surfaces
@@ -26,7 +26,7 @@ This repository is frontend-only. The NestJS backend, MongoDB schemas, and persi
 1. Install dependencies:
 
 ```bash
-npm install
+npm ci
 ```
 
 2. Copy the example environment file:
@@ -56,19 +56,21 @@ Open `http://localhost:3000`.
 
 ## Environment Variables
 
-Required for normal frontend operation:
+Backend/API configuration:
+
+- `BACKEND_API_URL`
+  Preferred server-side backend base URL used by the same-origin `/api/backend` BFF and admin session route.
 
 - `NEXT_PUBLIC_API_URL`
-  Backend base URL used by shared API helpers.
+  Server-side fallback backend base URL for shared helpers and the BFF when `BACKEND_API_URL` is not set. Browser API calls use the same-origin `/api/backend` route.
 
 - `NEXT_PUBLIC_PROMPTPAY_ID`
   PromptPay target shown on the customer display.
 
-Required for current admin login/session flow:
+Required for the current frontend admin session:
 
-- `ADMIN_LOGIN_USERNAME`
-- `ADMIN_LOGIN_PASSWORD`
 - `ADMIN_SESSION_SECRET`
+  Signs the HTTP-only frontend session cookie. Login credentials are validated by backend `/auth/login`; they are not configured as frontend environment variables.
 
 Used by printable invoice views:
 
@@ -138,7 +140,7 @@ Used by printable invoice views:
 
 - Orders list comes from `GET /orders`
 - Single-order invoice fetch uses `GET /orders/:orderId`
-- Remaining-balance payment uses `PATCH /orders/:id/payments`
+- Remaining-balance payment uses `POST /orders/:id/payments` with a payment `Idempotency-Key` for retry safety
 - Frontend currently supports mixed backend response envelopes and cart field variants
 
 ### Storage
@@ -171,11 +173,11 @@ This frontend assumes a separate NestJS + MongoDB style backend with:
 - REST endpoints such as `/orders`, `/products`, and `/uploads`
 - Mongo-style order records containing `orderId`, `status`, `payment`, `cart`, and totals
 
-Important backend dependencies still pending:
+Important backend compatibility work still pending:
 
-- true idempotent `POST /orders` deduplication using `clientDraftId` / `Idempotency-Key`
-- standardized `/orders` response envelopes
-- long-term convergence on one canonical stored cart schema
+- bind `POST /orders` idempotency keys to the same authorized actor and canonical payload instead of key-only deduplication
+- standardize `/orders` response envelopes
+- decide the long-term canonical stored cart/catalog ownership model
 
 ## Routing Notes
 

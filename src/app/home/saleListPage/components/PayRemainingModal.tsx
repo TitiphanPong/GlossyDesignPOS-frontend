@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Alert, alpha, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
@@ -52,6 +52,7 @@ export default function PayRemainingModal({ open, orderId, remaining, onClose, o
   const [method, setMethod] = useState<PaymentMethod>('cash');
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const paymentAttemptKeysRef = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
     setAmountInput(remaining > 0 ? String(remaining) : '');
@@ -70,6 +71,15 @@ export default function PayRemainingModal({ open, orderId, remaining, onClose, o
       return;
     }
 
+    const amountMinor = Math.round((normalizedAmount + Number.EPSILON) * 100);
+    const remainingMinor = Math.round((remaining + Number.EPSILON) * 100);
+    const paymentFingerprint = `${orderId}:${remainingMinor}:${amountMinor}:${method}`;
+    let idempotencyKey = paymentAttemptKeysRef.current.get(paymentFingerprint);
+    if (!idempotencyKey) {
+      idempotencyKey = globalThis.crypto.randomUUID();
+      paymentAttemptKeysRef.current.set(paymentFingerprint, idempotencyKey);
+    }
+
     setLoading(true);
     setErrorMessage(null);
 
@@ -77,8 +87,10 @@ export default function PayRemainingModal({ open, orderId, remaining, onClose, o
       const updated = await payRemainingBalance(orderId, {
         amount: normalizedAmount,
         method,
+        idempotencyKey,
       });
       onSuccess(updated);
+      paymentAttemptKeysRef.current.delete(paymentFingerprint);
       onClose();
     } catch (error) {
       setErrorMessage(
