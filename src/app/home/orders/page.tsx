@@ -225,7 +225,7 @@ export default function OrderManagementPage() {
   const [filtersReady, setFiltersReady] = React.useState(false);
   const [sort, setSort] = React.useState<SortOrder>('newest');
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(8);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [totalRows, setTotalRows] = React.useState(0);
   const [stats, setStats] = React.useState<OrderListSummary>({ sales: 0, collections: 0, outstanding: 0, orders: 0, paidOrders: 0, cancelledOrders: 0 });
 
@@ -1191,7 +1191,7 @@ export default function OrderManagementPage() {
               setRowsPerPage(Number.parseInt(event.target.value, 10));
               setPage(0);
             }}
-            rowsPerPageOptions={[5, 8, 10, 20]}
+            rowsPerPageOptions={[10, 25, 50, 100]}
             labelRowsPerPage="จำนวนรายการต่อหน้า"
             labelDisplayedRows={labelDisplayedRows}
           />

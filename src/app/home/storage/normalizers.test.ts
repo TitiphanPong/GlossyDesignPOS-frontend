@@ -174,6 +174,21 @@ test('normalizeRecord preserves public uploadId as a focusable source id', () =>
   assert.deepEqual(record.sourceIds, ['mongo-id', 'upload-public-id']);
 });
 
+test('normalizeRecord trusts grouped server source ids and storage status', () => {
+  const record = normalizeRecord({
+    _id: 'representative-mongo-id',
+    uploadId: 'upload-1',
+    sourceIds: ['upload-1', 'upload-2'],
+    storageStatus: 'pending',
+    stage: 'waiting-download',
+    status: 'pending',
+    files: [],
+  });
+
+  assert.deepEqual(record.sourceIds, ['upload-1', 'upload-2']);
+  assert.equal(record.status, 'pending');
+});
+
 test('normalizeRecord falls back safely when backend fields are missing', () => {
   const record = normalizeRecord({
     uploadId: 'upload-456',

@@ -39,14 +39,11 @@ import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import axios from 'axios';
 import JobTimelineCard, { type JobTimelineCardItem } from '../components/JobTimelineCard';
 import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
-import { groupStorageRows, normalizeRecord, type StorageRow, type StorageStatus, type UploadApiRecord } from './normalizers';
+import { normalizeRecord, type StorageRow, type StorageStatus, type UploadApiRecord } from './normalizers';
 import {
   applyStorageRowPatch,
   buildPersistedNote,
-  compareStorageRows,
   getBulkMutationTargetIds,
-  matchesStorageDateFilter,
-  matchesStorageSearch,
   rowContainsAnySourceId,
   toEditableStorageStatus,
   toPersistedUploadStatus,
@@ -54,11 +51,35 @@ import {
   type SortType,
   type StorageRowPatch,
 } from './storageData';
-import StorageOverview from './StorageOverview';
+import StorageOverview, { type StorageStats } from './StorageOverview';
 import StorageToolbar from './StorageToolbar';
 import StorageTable from './StorageTable';
 
 const endpointCandidates = ['/uploads', '/upload'];
+const EMPTY_STORAGE_STATS: StorageStats = {
+  waiting: 0,
+  pending: 0,
+  completed: 0,
+  totalFiles: 0,
+  uploadedToday: 0,
+};
+const BANGKOK_OFFSET_MS = 7 * 60 * 60 * 1000;
+
+function summarizeLoadedRows(rows: readonly StorageRow[]): StorageStats {
+  const today = new Date(Date.now() + BANGKOK_OFFSET_MS).toISOString().slice(0, 10);
+  return rows.reduce<StorageStats>(
+    (summary, row) => {
+      summary[row.status] += 1;
+      summary.totalFiles += row.files.length;
+      const createdAt = new Date(row.uploadDate);
+      if (!Number.isNaN(createdAt.getTime()) && new Date(createdAt.getTime() + BANGKOK_OFFSET_MS).toISOString().slice(0, 10) === today) {
+        summary.uploadedToday += 1;
+      }
+      return summary;
+    },
+    { ...EMPTY_STORAGE_STATS }
+  );
+}
 
 function readErrorMessage(value: unknown): string | null {
   if (typeof value === 'string' && value.trim()) return value.trim();
@@ -215,8 +236,9 @@ export default function StoragePage() {
   const [dateFilter, setDateFilter] = React.useState('');
   const [sortBy, setSortBy] = React.useState<SortType>('newest');
   const [page, setPage] = React.useState(0);
-  const [rowsPerPage, setRowsPerPage] = React.useState(20);
+  const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [totalRows, setTotalRows] = React.useState(0);
+  const [stats, setStats] = React.useState<StorageStats>(EMPTY_STORAGE_STATS);
   const deferredSearch = React.useDeferredValue(search.trim());
 
   const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
@@ -253,26 +275,62 @@ export default function StoragePage() {
               page: page + 1,
               limit: rowsPerPage,
               ...(deferredSearch ? { q: deferredSearch } : {}),
+              ...(statusFilter !== 'all' ? { storageStatus: statusFilter } : {}),
+              ...(jobTypeFilter !== 'all' ? { jobType: jobTypeFilter } : {}),
+              ...(dateFilter ? { date: dateFilter } : {}),
+              sort: sortBy,
             },
           });
           const payload = response.data as unknown;
 
           let list: unknown[] = [];
-          let total = 0;
+          let total: number | null = null;
+          let responseStats: StorageStats | null = null;
           if (Array.isArray(payload)) {
             list = payload;
             total = payload.length;
           } else {
-            const paginatedPayload = payload as { data?: unknown[]; total?: unknown };
+            const paginatedPayload = payload as {
+              data?: unknown[];
+              total?: unknown;
+              summary?: Partial<StorageStats>;
+            };
             const nested = paginatedPayload?.data;
             if (Array.isArray(nested)) list = nested;
             if (typeof paginatedPayload.total === 'number') total = paginatedPayload.total;
+            const summary = paginatedPayload.summary;
+            if (
+              summary &&
+              typeof summary.waiting === 'number' &&
+              typeof summary.pending === 'number' &&
+              typeof summary.completed === 'number' &&
+              typeof summary.totalFiles === 'number' &&
+              typeof summary.uploadedToday === 'number'
+            ) {
+              responseStats = {
+                waiting: summary.waiting,
+                pending: summary.pending,
+                completed: summary.completed,
+                totalFiles: summary.totalFiles,
+                uploadedToday: summary.uploadedToday,
+              };
+            }
           }
 
-          const normalized = groupStorageRows(list.filter((item): item is UploadApiRecord => typeof item === 'object' && item !== null).map(normalizeRecord));
+          const normalized = list
+            .filter((item): item is UploadApiRecord => typeof item === 'object' && item !== null)
+            .map(normalizeRecord);
+          const resolvedTotal = total ?? normalized.length;
+          const maxPage = Math.max(0, Math.ceil(resolvedTotal / rowsPerPage) - 1);
+          if (page > maxPage) {
+            setPage(maxPage);
+            loaded = true;
+            break;
+          }
 
           setRows(normalized);
-          setTotalRows(total || list.length);
+          setTotalRows(resolvedTotal);
+          setStats(responseStats ?? summarizeLoadedRows(normalized));
           setLastSyncedAt(new Date());
           loaded = true;
           break;
@@ -284,11 +342,13 @@ export default function StoragePage() {
       if (!loaded) {
         setRows([]);
         setTotalRows(0);
+        setStats(EMPTY_STORAGE_STATS);
         setErrorMessage('ไม่สามารถโหลดข้อมูลจาก API ได้ กรุณาตรวจสอบ endpoint /uploads หรือ /upload');
       }
     } catch (error) {
       setRows([]);
       setTotalRows(0);
+      setStats(EMPTY_STORAGE_STATS);
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
       } else {
@@ -297,11 +357,11 @@ export default function StoragePage() {
     } finally {
       setLoading(false);
     }
-  }, [deferredSearch, page, rowsPerPage]);
+  }, [dateFilter, deferredSearch, jobTypeFilter, page, rowsPerPage, sortBy, statusFilter]);
 
   React.useEffect(() => {
     setPage(0);
-  }, [deferredSearch]);
+  }, [dateFilter, deferredSearch, jobTypeFilter, sortBy, statusFilter]);
 
   React.useEffect(() => {
     fetchUploads();
@@ -390,16 +450,7 @@ export default function StoragePage() {
     throw lastError ?? new Error('storage_request_failed');
   }, []);
 
-  const filteredRows = React.useMemo(() => {
-    const normalizedQuery = search.trim().toLowerCase();
-
-    return rows
-      .filter(row => matchesStorageSearch(row, normalizedQuery))
-      .filter(row => (statusFilter === 'all' ? true : row.status === statusFilter))
-      .filter(row => (jobTypeFilter === 'all' ? true : row.jobType === jobTypeFilter))
-      .filter(row => matchesStorageDateFilter(row.uploadDate, dateFilter))
-      .sort((a, b) => compareStorageRows(a, b, sortBy));
-  }, [dateFilter, jobTypeFilter, rows, search, sortBy, statusFilter]);
+  const filteredRows = rows;
 
   const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
 
@@ -420,30 +471,6 @@ export default function StoragePage() {
   const selectedRows = React.useMemo(() => {
     return filteredRows.filter(row => selectedIdSet.has(row.id));
   }, [filteredRows, selectedIdSet]);
-
-  const stats = React.useMemo(() => {
-    const today = new Date();
-    const todayText = today.toISOString().slice(0, 10);
-    let waiting = 0;
-    let pending = 0;
-    let completed = 0;
-    let totalFiles = 0;
-    let uploadedToday = 0;
-
-    rows.forEach(row => {
-      if (row.status === 'waiting') waiting += 1;
-      if (row.status === 'pending') pending += 1;
-      if (row.status === 'completed') completed += 1;
-      totalFiles += row.files.length;
-
-      const date = new Date(row.uploadDate);
-      if (!Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === todayText) {
-        uploadedToday += 1;
-      }
-    });
-
-    return { waiting, pending, completed, totalFiles, uploadedToday };
-  }, [rows]);
 
   const downloadUrl = React.useCallback((url: string, fileName: string) => {
     if (!url) return;
@@ -496,6 +523,7 @@ export default function StoragePage() {
       } else {
         setActionMessage({ severity: 'success', text: `อัปเดตสถานะ ${targetIds.length} รายการแล้ว` });
       }
+      await fetchUploads();
     } catch (error) {
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
@@ -506,7 +534,7 @@ export default function StoragePage() {
       trackPersistingIds(targetIds, false);
       setBulkUpdating(false);
     }
-  }, [applyRowPatch, persistUploadMutation, rowsById, selectedIds, trackPersistingIds]);
+  }, [applyRowPatch, fetchUploads, persistUploadMutation, rowsById, selectedIds, trackPersistingIds]);
 
   const handleBulkDelete = React.useCallback(async () => {
     if (selectedIds.length === 0) return;
@@ -534,6 +562,7 @@ export default function StoragePage() {
       } else {
         setActionMessage({ severity: 'success', text: `ลบ ${targetIds.length} รายการแล้ว` });
       }
+      await fetchUploads();
     } catch (error) {
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
@@ -544,7 +573,7 @@ export default function StoragePage() {
       trackPersistingIds(targetIds, false);
       setBulkDeleting(false);
     }
-  }, [persistUploadMutation, removeRows, rowsById, selectedIds, trackPersistingIds]);
+  }, [fetchUploads, persistUploadMutation, removeRows, rowsById, selectedIds, trackPersistingIds]);
 
   const allCurrentSelected = React.useMemo(() => filteredRows.length > 0 && filteredRows.every(row => selectedIdSet.has(row.id)), [filteredRows, selectedIdSet]);
 
@@ -609,6 +638,7 @@ export default function StoragePage() {
       );
       applyRowPatch(targetIds, { status: nextStatus, notes: drawerNotes });
       setActionMessage({ severity: 'success', text: 'บันทึกสถานะและหมายเหตุเรียบร้อยแล้ว' });
+      await fetchUploads();
     } catch (error) {
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
@@ -619,7 +649,7 @@ export default function StoragePage() {
       trackPersistingIds(targetIds, false);
       setDrawerSaving(false);
     }
-  }, [activeRecord, applyRowPatch, drawerNotes, drawerStatus, persistUploadMutation, trackPersistingIds]);
+  }, [activeRecord, applyRowPatch, drawerNotes, drawerStatus, fetchUploads, persistUploadMutation, trackPersistingIds]);
 
   const openRowMenu = (event: React.MouseEvent<HTMLButtonElement>, rowId: string) => {
     event.stopPropagation();
@@ -715,6 +745,7 @@ export default function StoragePage() {
                   await Promise.all(targetIds.map(rowId => persistUploadMutation(rowId, 'patch', { status: 'completed' })));
                   applyRowPatch(targetIds, { status: 'completed' });
                   setActionMessage({ severity: 'success', text: 'อัปเดตสถานะรายการแล้ว' });
+                  await fetchUploads();
                 } catch (error) {
                   if (isMissingApiBaseError(error)) {
                     setMissingApiBase(true);

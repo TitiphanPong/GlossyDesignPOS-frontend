@@ -20,6 +20,8 @@ export type UploadApiRecord = {
   _id?: string;
   id?: string;
   uploadId?: string;
+  sourceIds?: string[];
+  orderCode?: string;
   customerName?: string;
   customer?: string;
   phone?: string;
@@ -35,6 +37,7 @@ export type UploadApiRecord = {
   files?: Array<UploadApiFile | string>;
   createdAt?: string;
   status?: string;
+  storageStatus?: StorageStatus;
 };
 
 export type FileItem = {
@@ -176,7 +179,10 @@ export function normalizeRecord(raw: UploadApiRecord): StorageRow {
 
   return {
     id,
-    sourceIds: Array.from(new Set([id, raw.uploadId].filter((value): value is string => Boolean(value)))),
+    sourceIds:
+      Array.isArray(raw.sourceIds) && raw.sourceIds.length > 0
+        ? Array.from(new Set(raw.sourceIds.filter((value): value is string => Boolean(value))))
+        : Array.from(new Set([id, raw.uploadId].filter((value): value is string => Boolean(value)))),
     batchId,
     uploadDate: createdAt,
     customerName: String(raw.customerName ?? raw.customer ?? 'ไม่ระบุชื่อลูกค้า'),
@@ -184,7 +190,7 @@ export function normalizeRecord(raw: UploadApiRecord): StorageRow {
     lineId: String(raw.lineId ?? raw.line ?? '-'),
     jobType: formatJobTypeLabel(raw.jobType ?? raw.category),
     files,
-    status: resolveStorageStatus(raw.status, stage),
+    status: raw.storageStatus ?? resolveStorageStatus(raw.status, stage),
     notes: cleanNote || '-',
     activities: ['อัปโหลดไฟล์เข้าสู่ระบบคลังเอกสาร', 'เจ้าหน้าที่รับงานและตรวจไฟล์เบื้องต้น', 'รอคิวดาวน์โหลดเพื่อพิมพ์'],
   };

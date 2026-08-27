@@ -212,7 +212,7 @@ export default function StorageTable(props: Readonly<StorageTableProps>) {
         onPageChange={(_, nextPage) => onPageChange(nextPage)}
         rowsPerPage={rowsPerPage}
         onRowsPerPageChange={event => onRowsPerPageChange(Number(event.target.value))}
-        rowsPerPageOptions={[20, 50, 100]}
+        rowsPerPageOptions={[10, 25, 50, 100]}
         labelRowsPerPage="รายการต่อหน้า"
         labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
       />
