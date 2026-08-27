@@ -11,7 +11,8 @@ import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
 
 type PrintDocumentLayoutProps = Readonly<{
-  title: string;
+  titleTh: string;
+  titleEn: string;
   invoiceNumber: string;
   documentType: 'quotation' | 'tax-invoice' | 'receipt';
   onEditCustomer: () => void;
@@ -24,11 +25,13 @@ function HeaderButton({
   icon,
   onClick,
   variant,
+  mobileFullRow = false,
 }: Readonly<{
   label: string;
   icon?: React.ReactNode;
   onClick: () => void;
   variant: 'contained' | 'outlined';
+  mobileFullRow?: boolean;
 }>) {
   const isContained = variant === 'contained';
 
@@ -38,12 +41,13 @@ function HeaderButton({
       startIcon={icon}
       onClick={onClick}
       sx={{
-        minHeight: 44,
-        flex: { xs: 1, sm: 'initial' },
+        minHeight: { xs: 46, sm: 44 },
+        width: '100%',
         minWidth: 0,
-        px: { xs: 1, sm: 2 },
+        gridColumn: mobileFullRow ? { xs: '1 / -1', sm: 'auto' } : 'auto',
+        px: { xs: 1.25, sm: 2 },
         borderRadius: '12px',
-        fontSize: { xs: 13, sm: 14 },
+        fontSize: { xs: 12.5, sm: 14 },
         fontWeight: 700,
         letterSpacing: '-0.01em',
         whiteSpace: 'nowrap',
@@ -63,7 +67,7 @@ function HeaderButton({
   );
 }
 
-export function PrintDocumentLayout({ title, invoiceNumber, documentType, onEditCustomer, summary, printableDocument }: PrintDocumentLayoutProps) {
+export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentType, onEditCustomer, summary, printableDocument }: PrintDocumentLayoutProps) {
   const isReceipt = documentType === 'receipt';
   const documentStageRef = useRef<HTMLDivElement>(null);
 
@@ -102,6 +106,9 @@ export function PrintDocumentLayout({ title, invoiceNumber, documentType, onEdit
       className="print-page-root"
       sx={{
         minHeight: '100vh',
+        width: '100%',
+        maxWidth: '100vw',
+        overflowX: 'hidden',
         bgcolor: '#EEF2F7',
         backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(226,232,240,0.55))',
       }}>
@@ -110,14 +117,16 @@ export function PrintDocumentLayout({ title, invoiceNumber, documentType, onEdit
         direction={{ xs: 'column', sm: 'row' }}
         justifyContent="space-between"
         alignItems={{ xs: 'stretch', sm: 'center' }}
-        spacing={{ xs: 1.5, sm: 0 }}
+        spacing={{ xs: 1.25, sm: 0 }}
         sx={{
           position: 'sticky',
           top: 0,
           zIndex: 10,
+          width: '100%',
+          minWidth: 0,
           minHeight: { xs: 'auto', sm: '88px' },
-          px: { xs: 2, sm: '32px' },
-          py: { xs: 1.5, sm: '1.8rem' },
+          px: { xs: 1.5, sm: '32px' },
+          py: { xs: 1.25, sm: '1.8rem' },
           borderBottom: '1px solid #CBD5E1',
           bgcolor: 'rgba(255,255,255,0.94)',
           backdropFilter: 'blur(16px)',
@@ -132,7 +141,7 @@ export function PrintDocumentLayout({ title, invoiceNumber, documentType, onEdit
             bgcolor: '#2563EB',
           },
         }}>
-        <Stack direction="row" spacing={{ xs: 1.25, sm: 2 }} alignItems="center" sx={{ minWidth: 0 }}>
+        <Stack direction="row" spacing={{ xs: 1, sm: 2 }} alignItems="flex-start" sx={{ minWidth: 0, width: { xs: '100%', sm: 'auto' } }}>
           <ButtonBase
             component={Link}
             href="/home"
@@ -147,34 +156,59 @@ export function PrintDocumentLayout({ title, invoiceNumber, documentType, onEdit
             }}>
             <Box
               sx={{
-                width: { xs: 40, sm: 48 },
-                height: { xs: 40, sm: 48 },
-                borderRadius: '16px',
+                width: { xs: 38, sm: 48 },
+                height: { xs: 38, sm: 48 },
+                borderRadius: { xs: '12px', sm: '16px' },
                 border: '1px solid #E5E7EB',
                 bgcolor: '#FFFFFF',
                 display: 'grid',
                 placeItems: 'center',
-                boxShadow: '0 10px 22px rgba(15, 23, 42, 0.16)',
+                boxShadow: '0 10px 22px rgba(15, 23, 42, 0.12)',
               }}>
-              <Image src="/logo/logo.png" alt="Glossy Design logo" width={30} height={30} priority />
+              <Image src="/logo/logo.png" alt="Glossy Design logo" width={28} height={28} priority />
             </Box>
           </ButtonBase>
 
-          <Box sx={{ minWidth: 0 }}>
-            <Stack direction="row" spacing={1} alignItems="center">
-              <DescriptionRoundedIcon sx={{ display: { xs: 'none', sm: 'block' }, fontSize: 18, color: '#2563EB' }} />
-              <Typography sx={{ mt: { xs: 0, sm: 0.55 }, fontSize: { xs: 17, sm: 20 }, fontWeight: 800, color: '#0F172A', lineHeight: 1.1, letterSpacing: '-0.03em' }}>{title}</Typography>
+          <Box sx={{ minWidth: 0, flex: 1 }}>
+            <Stack direction="row" spacing={0.75} alignItems="flex-start" sx={{ minWidth: 0 }}>
+              <DescriptionRoundedIcon sx={{ display: { xs: 'none', sm: 'block' }, mt: 0.35, fontSize: 18, color: '#2563EB', flexShrink: 0 }} />
+              <Box sx={{ minWidth: 0 }}>
+                <Typography
+                  sx={{
+                    fontSize: { xs: 18, sm: 20, md: 22 },
+                    fontWeight: 800,
+                    color: '#0F172A',
+                    lineHeight: 1.18,
+                    letterSpacing: '-0.03em',
+                    overflowWrap: 'anywhere',
+                  }}>
+                  {titleTh}
+                </Typography>
+                <Typography
+                  sx={{
+                    mt: 0.2,
+                    fontSize: { xs: 12, sm: 13 },
+                    fontWeight: 600,
+                    color: '#64748B',
+                    lineHeight: 1.25,
+                    letterSpacing: '0.01em',
+                    overflowWrap: 'anywhere',
+                  }}>
+                  {titleEn}
+                </Typography>
+              </Box>
             </Stack>
             <Typography
               sx={{
-                mt: 0.55,
+                mt: 0.65,
                 display: 'inline-block',
+                maxWidth: '100%',
                 px: 1,
-                py: 0.25,
-                borderRadius: '6px',
+                py: 0.3,
+                borderRadius: '7px',
                 bgcolor: '#EFF6FF',
-                fontSize: { xs: 12, sm: 13 },
-                fontWeight: 700,
+                fontSize: { xs: 12.5, sm: 13 },
+                fontWeight: 800,
                 color: '#1D4ED8',
                 lineHeight: 1.2,
                 overflowWrap: 'anywhere',
@@ -184,19 +218,29 @@ export function PrintDocumentLayout({ title, invoiceNumber, documentType, onEdit
           </Box>
         </Stack>
 
-        <Stack direction="row" spacing={{ xs: 0.75, sm: 1.5 }} alignItems="center" sx={{ flexShrink: 0, width: { xs: '100%', sm: 'auto' } }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, auto))' },
+            gap: { xs: 0.9, sm: 1.5 },
+            flexShrink: 0,
+            width: { xs: '100%', sm: 'auto' },
+            justifyContent: { sm: 'end' },
+          }}>
           <HeaderButton label="แก้ไข" icon={<EditRoundedIcon />} onClick={onEditCustomer} variant="outlined" />
-          {isReceipt ? <HeaderButton label="ดาวน์โหลดใบเสร็จ" icon={<DownloadRoundedIcon />} onClick={() => void handleDownloadReceipt()} variant="outlined" /> : null}
+          {isReceipt ? <HeaderButton label="ดาวน์โหลด" icon={<DownloadRoundedIcon />} onClick={() => void handleDownloadReceipt()} variant="outlined" /> : null}
           {!isReceipt ? <HeaderButton label="ส่งออก PDF" icon={<PictureAsPdfRoundedIcon />} onClick={handlePrint} variant="outlined" /> : null}
-          <HeaderButton label="พิมพ์" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" />
-        </Stack>
+          <HeaderButton label="พิมพ์" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" mobileFullRow />
+        </Box>
       </Stack>
 
       <Box
         className="print-document-scroll"
         sx={{
-          px: { xs: 1, md: 3 },
-          py: { xs: 2.5, md: 4 },
+          width: '100%',
+          maxWidth: '100%',
+          px: { xs: 1, sm: 2, md: 3 },
+          py: { xs: 1.5, sm: 2.5, md: 4 },
           overflowX: { xs: 'hidden', sm: 'auto' },
           overflowY: 'visible',
         }}>
@@ -217,8 +261,9 @@ export function PrintDocumentLayout({ title, invoiceNumber, documentType, onEdit
           className="print-document-stage"
           ref={documentStageRef}
           sx={{
-            width: 'fit-content',
-            minWidth: '100%',
+            width: '100%',
+            minWidth: 0,
+            maxWidth: isReceipt ? { xs: 390, sm: 'none' } : 'none',
             mx: 'auto',
             display: 'flex',
             justifyContent: 'center',
@@ -227,9 +272,10 @@ export function PrintDocumentLayout({ title, invoiceNumber, documentType, onEdit
           <Box
             className="print-document-only print-paper"
             sx={{
-              width: isReceipt ? { xs: 'calc(100vw - 24px)', sm: '80mm' } : '285mm',
+              width: isReceipt ? { xs: '100%', sm: '80mm' } : '285mm',
               height: isReceipt ? 'auto' : '197mm',
-              maxWidth: 'none',
+              maxWidth: isReceipt ? '80mm' : 'none',
+              minWidth: 0,
               bgcolor: '#fff',
               boxShadow: '0 18px 45px rgba(15, 23, 42, 0.14)',
               zoom: isReceipt ? { xs: 1, md: 1.32 } : 1,

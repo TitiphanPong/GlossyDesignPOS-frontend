@@ -520,7 +520,8 @@ export function ReceiptTemplate({ invoiceData }: Readonly<{ invoiceData: Invoice
     <Box
       className="receipt-document-sheet"
       sx={{
-        width: '80mm',
+        width: '100%',
+        maxWidth: '80mm',
         minHeight: '110mm',
         boxSizing: 'border-box',
         px: '4mm',
