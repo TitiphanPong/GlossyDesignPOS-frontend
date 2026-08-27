@@ -23,7 +23,7 @@ const TEST_ENV: NodeJS.ProcessEnv = {
 test('admin auth constants expose the cookie-based contract', () => {
   assert.equal(ADMIN_AUTH_COOKIE_NAME, 'glossy_admin_session');
   assert.equal(ADMIN_AUTH_SESSION_VERSION, 3);
-  assert.equal(ADMIN_AUTH_SESSION_TTL_MS, 12 * 60 * 60 * 1000);
+  assert.equal(ADMIN_AUTH_SESSION_TTL_MS, 24 * 60 * 60 * 1000);
   assert.equal(ADMIN_LOGIN_REDIRECT_PATH, '/home');
   assert.equal(ADMIN_GUARD_REDIRECT_PATH, '/login');
 });

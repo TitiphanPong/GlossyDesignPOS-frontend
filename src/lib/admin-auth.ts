@@ -3,7 +3,9 @@ export const ADMIN_AUTH_COOKIE_NAME = 'glossy_admin_session';
 export const ADMIN_LOGIN_REDIRECT_PATH = '/home';
 export const ADMIN_GUARD_REDIRECT_PATH = '/login';
 export const ADMIN_AUTH_SESSION_VERSION = 3;
-export const ADMIN_AUTH_SESSION_TTL_MS = 12 * 60 * 60 * 1000;
+// Frontend cookie ceiling. Regular users still expire at the shorter backend
+// session expiry; the dedicated automation account may receive up to 24 hours.
+export const ADMIN_AUTH_SESSION_TTL_MS = 24 * 60 * 60 * 1000;
 
 export type AdminAuthSession = {
   username: string;
