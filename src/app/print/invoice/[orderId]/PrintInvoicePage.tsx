@@ -382,7 +382,8 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
   return (
     <>
       <PrintDocumentLayout
-        title={`${documentMeta.titleTh} / ${documentMeta.titleEn}`}
+        titleTh={documentMeta.titleTh}
+        titleEn={documentMeta.titleEn}
         invoiceNumber={`#${documentType === 'tax-invoice' ? order.invoiceNumber || order.orderNumber || order.orderId : order.orderNumber || order.orderId}`}
         documentType={documentType}
         onEditCustomer={handleOpenDrawer}
