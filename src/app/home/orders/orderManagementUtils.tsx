@@ -117,6 +117,8 @@ export type FetchOrderRowsParams = {
   period?: 'today';
   saleFrom?: string;
   saleTo?: string;
+  status?: PaymentStatus;
+  payment?: 'unpaid';
   paymentMethod?: PaymentMethod;
   taxInvoice?: 'yes' | 'no';
   sort?: 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';

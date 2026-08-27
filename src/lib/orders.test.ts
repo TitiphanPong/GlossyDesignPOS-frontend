@@ -267,8 +267,8 @@ test('fetchOrdersPage forwards server-side month and sort and preserves full-res
   };
 
   try {
-    const result = await fetchOrdersPage({ page: 1, limit: 8, saleMonth: '2026-08', sort: 'amount_desc' });
-    assert.equal(capturedUrl, 'http://localhost:3001/orders?page=1&limit=8&saleMonth=2026-08&sort=amount_desc');
+    const result = await fetchOrdersPage({ page: 1, limit: 8, saleMonth: '2026-08', status: 'partial', payment: 'unpaid', sort: 'amount_desc' });
+    assert.equal(capturedUrl, 'http://localhost:3001/orders?page=1&limit=8&saleMonth=2026-08&status=partial&payment=unpaid&sort=amount_desc');
     assert.equal(result.total, 28);
     assert.equal(result.summary.sales, 62000);
     assert.equal(result.summary.cancelledOrders, 1);

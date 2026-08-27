@@ -129,6 +129,8 @@ export type FetchOrdersParams = {
   period?: 'today';
   saleFrom?: string;
   saleTo?: string;
+  status?: ApiOrder['status'];
+  payment?: 'unpaid';
   paymentMethod?: ApiOrder['payment'];
   taxInvoice?: 'yes' | 'no';
   sort?: OrderListSort;
@@ -166,6 +168,12 @@ function buildOrdersPath(params: FetchOrdersParams = {}): string {
   }
   if (params.saleTo) {
     query.set('saleTo', params.saleTo);
+  }
+  if (params.status) {
+    query.set('status', params.status);
+  }
+  if (params.payment) {
+    query.set('payment', params.payment);
   }
   if (params.paymentMethod) {
     query.set('paymentMethod', params.paymentMethod);
@@ -276,7 +284,7 @@ export async function fetchOrdersPage(params: FetchOrdersParams = {}): Promise<F
 }
 
 export async function downloadOrdersExport(
-  params: Pick<FetchOrdersParams, 'search' | 'saleMonth' | 'period' | 'saleFrom' | 'saleTo' | 'paymentMethod' | 'taxInvoice' | 'sort'>,
+  params: Pick<FetchOrdersParams, 'search' | 'saleMonth' | 'period' | 'saleFrom' | 'saleTo' | 'status' | 'payment' | 'paymentMethod' | 'taxInvoice' | 'sort'>,
   format: 'xlsx' | 'pdf'
 ): Promise<void> {
   const query = new URLSearchParams({ format });
@@ -285,6 +293,8 @@ export async function downloadOrdersExport(
   if (params.period) query.set('period', params.period);
   if (params.saleFrom) query.set('saleFrom', params.saleFrom);
   if (params.saleTo) query.set('saleTo', params.saleTo);
+  if (params.status) query.set('status', params.status);
+  if (params.payment) query.set('payment', params.payment);
   if (params.paymentMethod) query.set('paymentMethod', params.paymentMethod);
   if (params.taxInvoice) query.set('taxInvoice', params.taxInvoice);
   if (params.sort) query.set('sort', params.sort);
