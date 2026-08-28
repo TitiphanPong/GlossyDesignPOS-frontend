@@ -8,6 +8,7 @@
     "build": "next build --webpack",
     "start": "next start",
     "test": "node --import tsx --test src/**/*.test.ts",
+    "test:e2e:browser": "playwright test",
     "lint": "eslint . --max-warnings=0",
     "check:utf8": "node scripts/check-utf8.cjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\"",
@@ -41,6 +42,7 @@
     "swiper": "^14.1.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.62.1",
     "@tailwindcss/postcss": "^4.3.3",
     "@types/node": "^20.19.11",
     "@types/react": "^19.2.18",

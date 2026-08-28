@@ -1,0 +1,51 @@
+import { defineConfig, devices } from '@playwright/test';
+
+const appUrl = 'http://127.0.0.1:3101';
+const backendUrl = 'http://127.0.0.1:4010';
+
+export default defineConfig({
+  testDir: './e2e',
+  fullyParallel: false,
+  forbidOnly: Boolean(process.env.CI),
+  retries: 0,
+  workers: 1,
+  reporter: [['list']],
+  timeout: 30_000,
+  expect: { timeout: 8_000 },
+  use: {
+    baseURL: appUrl,
+    trace: 'retain-on-failure',
+    screenshot: 'only-on-failure',
+    video: 'off',
+  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+  ],
+  webServer: [
+    {
+      command: 'node e2e/mock-backend.cjs',
+      url: `${backendUrl}/health`,
+      reuseExistingServer: false,
+      timeout: 30_000,
+      env: {
+        ...process.env,
+        E2E_MOCK_BACKEND_PORT: '4010',
+      },
+    },
+    {
+      command: 'npm run dev -- --hostname 127.0.0.1 --port 3101',
+      url: `${appUrl}/login`,
+      reuseExistingServer: false,
+      timeout: 60_000,
+      env: {
+        ...process.env,
+        BACKEND_API_URL: backendUrl,
+        NEXT_PUBLIC_API_URL: backendUrl,
+        ADMIN_SESSION_SECRET: 'local-e2e-session-secret-do-not-use-in-production',
+      },
+    },
+  ],
+});
