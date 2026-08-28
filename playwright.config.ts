@@ -45,6 +45,8 @@ export default defineConfig({
         BACKEND_API_URL: backendUrl,
         NEXT_PUBLIC_API_URL: backendUrl,
         ADMIN_SESSION_SECRET: 'local-e2e-session-secret-do-not-use-in-production',
+        NEXT_PUBLIC_PROMPTPAY_ID: '0812345678',
+        NEXT_PUBLIC_PROMPTPAY_DISPLAY_NAME: 'Glossy E2E',
       },
     },
   ],

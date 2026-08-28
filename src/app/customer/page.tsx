@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './customer.css';
 import { computeOrderPaymentSummary } from '../utils/computeTotal';
 import { normalizeCustomerDisplayPaymentMethod, normalizeOrderStatus } from '../../lib/contracts';
+import { getPromptPayProfileFromEnv } from '../../lib/promptpay';
 import { isPendingOrderSettled, PENDING_ORDER_KEY, persistPendingOrderDraft, shouldDisplayPendingOrder, subscribePendingOrderDraft } from '../../lib/pending-order';
 import { ActiveOrderScreen } from './components/CustomerActiveOrderScreen';
 import { IdleScreen, PaidScreen } from './components/CustomerDisplayShell';
@@ -122,7 +123,7 @@ function readStoredOrder(): Order | null {
 export default function CustomerScreen() {
   const [order, setOrder] = useState<Order | null>(null);
   const [dismissedOrderKey, setDismissedOrderKey] = useState<string | null>(null);
-  const promptpayId = process.env.NEXT_PUBLIC_PROMPTPAY_ID?.trim() ?? '';
+  const promptpayProfile = getPromptPayProfileFromEnv();
 
   useEffect(() => {
     const handleStorage = () => {
@@ -172,7 +173,7 @@ export default function CustomerScreen() {
   if (isPaid) return <PaidScreen />;
   if (isDismissed) return <IdleScreen />;
   if (!summary) return <IdleScreen />;
-  if (!promptpayId) {
+  if (!promptpayProfile) {
     return (
       <main className="grid min-h-screen place-items-center bg-slate-950 px-6 text-center text-white">
         <div className="max-w-xl rounded-3xl border border-amber-400/30 bg-slate-900 p-8 shadow-2xl">
@@ -187,7 +188,7 @@ export default function CustomerScreen() {
     <ActiveOrderScreen
       order={order}
       summary={summary}
-      promptpayId={promptpayId}
+      promptpayProfile={promptpayProfile}
       onClose={() => {
         if (!activeOrderKey) return;
         setDismissedOrderKey(activeOrderKey);

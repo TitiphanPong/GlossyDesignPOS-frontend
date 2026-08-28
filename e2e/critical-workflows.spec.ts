@@ -45,11 +45,37 @@ test('completes a cashier quick-sale checkout against controlled test data', asy
 
   const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
   await expect(paymentDialog).toBeVisible();
+  await paymentDialog.getByRole('button', { name: /โอนเงิน \/ PromptPay/ }).click();
+  await expect(paymentDialog.getByText('Glossy E2E', { exact: true })).toBeVisible();
+  await expect(paymentDialog.getByText('PromptPay ••••5678', { exact: true })).toBeVisible();
+  await paymentDialog.getByRole('button', { name: /เงินสด/ }).click();
   await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
   await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
 
   await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
   await expect(page.getByText('ORD-E2E-0001', { exact: true })).toBeVisible();
+});
+
+test('shows the same configured PromptPay profile on the customer display', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.setItem(
+      'pendingOrder',
+      JSON.stringify({
+        orderNumber: 'ORD-E2E-PROMPTPAY',
+        customerName: 'E2E Customer',
+        total: 100,
+        grandTotal: 100,
+        remainingTotal: 100,
+        payment: 'promptpay',
+        status: 'awaiting_payment',
+        cart: [{ name: 'E2E Print', qty: 1, totalPrice: 100, fullPayment: true }],
+      }),
+    );
+  });
+
+  await page.goto('/customer');
+  await expect(page.getByText('Glossy E2E', { exact: true })).toBeVisible();
+  await expect(page.getByText('PromptPay ••••5678', { exact: true })).toBeVisible();
 });
 
 test('keeps anonymous upload public and sends a multipart file through the BFF', async ({ page }) => {

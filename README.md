@@ -65,7 +65,10 @@ Backend/API configuration:
   Server-side fallback backend base URL for shared helpers and the BFF when `BACKEND_API_URL` is not set. Browser API calls use the same-origin `/api/backend` route.
 
 - `NEXT_PUBLIC_PROMPTPAY_ID`
-  PromptPay target shown on the customer display.
+  PromptPay QR target used by every customer-facing payment surface.
+
+- `NEXT_PUBLIC_PROMPTPAY_DISPLAY_NAME`
+  Public business/payee name displayed beside the QR. Both values are required together; if either is missing, PromptPay UI fails closed and no QR is generated. The visible identifier is derived from `NEXT_PUBLIC_PROMPTPAY_ID`, so it cannot drift from the QR destination.
 
 Required for the current frontend admin session:
 

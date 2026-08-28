@@ -5,16 +5,10 @@ import { motion } from 'framer-motion';
 import { CalendarDays, CircleDollarSign, Palette, ReceiptText, Sparkles, TimerReset } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
 import generatePayload from 'promptpay-qr';
-import { normalizePromptPayAmount } from '../../../lib/promptpay';
+import { normalizePromptPayAmount, type PromptPayProfile } from '../../../lib/promptpay';
 import type { PaymentSummaryResult } from '../../utils/computeTotal';
 import { getDisplayOrderNumber as getSharedDisplayOrderNumber } from '../../../lib/contracts';
 import { formatMoney, getCartKey, type CartItem, type Order } from './customerDisplayShared';
-
-const bankDetails = {
-  name: 'พร้อมเพย์ (PromptPay)',
-  accountName: 'เพ็ญพิชชาย์ ผ่องสุวรรณ',
-  accountNumber: '099-469-4635',
-};
 
 function cn(...parts: Array<string | false | null | undefined>) {
   return parts.filter(Boolean).join(' ');
@@ -123,11 +117,11 @@ function ProductAvatar({ item }: Readonly<{ item: CartItem }>) {
 export function ActiveOrderScreen({
   order,
   summary,
-  promptpayId,
+  promptpayProfile,
 }: Readonly<{
   order: Order;
   summary: PaymentSummaryResult;
-  promptpayId: string;
+  promptpayProfile: PromptPayProfile;
   onClose: () => void;
 }>) {
   const [qrRefreshIn, setQrRefreshIn] = useState(45);
@@ -325,16 +319,16 @@ export function ActiveOrderScreen({
                     className={cn('relative rounded-[34px] border border-white bg-white shadow-[0_24px_60px_rgba(37,99,235,0.14)]', isFullscreen ? 'p-6 xl:p-7' : 'p-4 xl:p-5')}>
                     <div className="absolute inset-0 rounded-[34px] border border-blue-100" />
                     <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent" />
-                    <QRCodeCanvas value={generatePayload(promptpayId, { amount: normalizePromptPayAmount(summary.amountToPay) })} size={qrSize}/>
+                    <QRCodeCanvas value={generatePayload(promptpayProfile.target, { amount: normalizePromptPayAmount(summary.amountToPay) })} size={qrSize}/>
                   </motion.div>
                 </div>
 
                 <div className="mt-3 grid shrink-0 gap-3 md:grid-cols-[0.95fr_1.05fr]">
                   <div className="rounded-[24px] border border-slate-200/80 bg-white/88 p-4 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
                     <div className="text-[11px] font-semibold tracking-[0.16em] text-slate-400 uppercase">บัญชีรับโอน</div>
-                    <div className="mt-3 text-lg font-semibold text-slate-900">{bankDetails.name}</div>
-                    <div className="mt-1 text-sm text-slate-500">{bankDetails.accountName}</div>
-                    <div className="mt-2 text-base font-semibold text-slate-700">{bankDetails.accountNumber}</div>
+                    <div className="mt-3 text-lg font-semibold text-slate-900">พร้อมเพย์ (PromptPay)</div>
+                    <div className="mt-1 text-sm text-slate-500">{promptpayProfile.displayName}</div>
+                    <div className="mt-2 text-base font-semibold text-slate-700">{promptpayProfile.displayIdentifier}</div>
                   </div>
                   <div className="rounded-[24px] border border-blue-100 bg-gradient-to-br from-[#eef5ff] to-white p-4 shadow-[0_10px_28px_rgba(37,99,235,0.06)]">
                     <div className="text-[11px] font-semibold tracking-[0.16em] text-slate-400 uppercase">ยอดที่ต้องชำระ</div>

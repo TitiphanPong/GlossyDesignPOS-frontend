@@ -20,6 +20,7 @@ import dayjs from 'dayjs';
 import { QRCodeCanvas } from 'qrcode.react';
 import generatePayload from 'promptpay-qr';
 import type { PaymentMethod } from '@/lib/contracts';
+import { getPromptPayProfileFromEnv } from '@/lib/promptpay';
 import { calculateChange } from '../quickSale';
 
 type QuickSalePaymentDialogProps = Readonly<{
@@ -130,8 +131,8 @@ export default function QuickSalePaymentDialog({
   const changeAmount = calculateChange(receivedAmount, grandTotal);
   const missingAmount = Math.max(0, grandTotal - receivedAmount);
   const hasEnoughCash = receivedAmount >= grandTotal;
-  const canConfirm = paymentMethod === 'promptpay' || hasEnoughCash;
-  const promptpayId = process.env.NEXT_PUBLIC_PROMPTPAY_ID?.trim();
+  const promptpayProfile = getPromptPayProfileFromEnv();
+  const canConfirm = paymentMethod === 'promptpay' ? Boolean(promptpayProfile) : hasEnoughCash;
 
   return (
     <Dialog
@@ -474,14 +475,18 @@ export default function QuickSalePaymentDialog({
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1.75 }}>
                   ให้ลูกค้าสแกน QR Code เพื่อชำระเงิน
                 </Typography>
-                {promptpayId ? (
-                  <Box sx={{ width: 'fit-content', maxWidth: '100%', mx: 'auto', p: 1.5, borderRadius: 3, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
-                    <QRCodeCanvas value={generatePayload(promptpayId, { amount: grandTotal })} size={190} style={{ display: 'block', width: 'min(190px, 56vw)', height: 'auto' }} />
-                  </Box>
+                {promptpayProfile ? (
+                  <Stack alignItems="center" gap={1}>
+                    <Box sx={{ width: 'fit-content', maxWidth: '100%', mx: 'auto', p: 1.5, borderRadius: 3, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
+                      <QRCodeCanvas value={generatePayload(promptpayProfile.target, { amount: grandTotal })} size={190} style={{ display: 'block', width: 'min(190px, 56vw)', height: 'auto' }} />
+                    </Box>
+                    <Typography variant="body2" fontWeight={800}>{promptpayProfile.displayName}</Typography>
+                    <Typography variant="caption" color="text.secondary">{promptpayProfile.displayIdentifier}</Typography>
+                  </Stack>
                 ) : (
-                  <Stack alignItems="center" gap={1} sx={{ py: 2, color: 'text.secondary' }}>
+                  <Stack alignItems="center" gap={1} sx={{ py: 2, color: 'warning.dark' }}>
                     <QrCode2RoundedIcon sx={{ fontSize: 54, opacity: 0.35 }} />
-                    <Typography variant="body2">ยังไม่ได้ตั้งค่า PromptPay สำหรับแสดง QR ในหน้าต่างนี้</Typography>
+                    <Typography variant="body2" fontWeight={700}>การตั้งค่า PromptPay ไม่ครบ กรุณาตรวจสอบก่อนรับชำระ</Typography>
                   </Stack>
                 )}
                 <Typography color="primary.main" fontWeight={900} sx={{ ...amountSx, mt: 1.5, fontSize: 28 }}>
