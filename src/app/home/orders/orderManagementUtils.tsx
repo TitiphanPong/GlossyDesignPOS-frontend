@@ -10,7 +10,7 @@ import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import type { JobTimelineCardItem } from '../components/JobTimelineCard';
 import { statusChipSx } from '../components/adminUi';
 import { fetchApi } from '../../../lib/api';
-import { getDisplayOrderNumber, type NormalizedOrder, type PaymentMethod, type ProductionWorkflowStatus } from '../../../lib/contracts';
+import { getDisplayOrderNumber, PRODUCTION_WORKFLOW_STATUS_VALUES, type NormalizedOrder, type PaymentMethod, type ProductionWorkflowStatus } from '../../../lib/contracts';
 import { fetchOrdersPage, type OrderListSummary } from '../../../lib/orders';
 import { getOrderStatusConfig, ORDER_STATUS_CONFIG } from '../../../lib/order-status';
 import type { OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } from './orderManagementTypes';
@@ -25,6 +25,10 @@ export const FILTER_STATUS_LABELS: Record<'all' | PaymentStatus, string> = {
   all: 'ทั้งหมด',
   ...STATUS_LABELS_TH,
 };
+export const FILTER_WORKFLOW_STATUS_LABELS: Record<'all' | ProductionWorkflowStatus, string> = {
+  all: 'ทั้งหมด',
+  ...Object.fromEntries(PRODUCTION_WORKFLOW_STATUS_VALUES.map(status => [status, ORDER_STATUS_CONFIG[status].label])),
+} as Record<'all' | ProductionWorkflowStatus, string>;
 export const PAYMENT_METHOD_LABELS_TH: Record<PaymentMethod, string> = {
   cash: 'เงินสด',
   promptpay: 'พร้อมเพย์',
@@ -119,6 +123,7 @@ export type FetchOrderRowsParams = {
   saleFrom?: string;
   saleTo?: string;
   status?: PaymentStatus;
+  workflowStatus?: ProductionWorkflowStatus;
   payment?: 'unpaid';
   paymentMethod?: PaymentMethod;
   taxInvoice?: 'yes' | 'no';

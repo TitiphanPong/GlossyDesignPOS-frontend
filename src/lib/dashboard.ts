@@ -1,5 +1,5 @@
 import { fetchApiJson } from './api';
-import type { OrderStatus } from './contracts';
+import type { OrderStatus, ProductionWorkflowStatus } from './contracts';
 
 export type DashboardProduct = { name: string; quantity: number; revenue: number };
 export type DashboardTask = { id: string; orderNumber: string; customerName: string; job: string; status: OrderStatus; remainingPayment: number; updatedAt?: string };
@@ -13,6 +13,13 @@ export type DashboardSummary = {
   today: { sales: number; received: number; orders: number; customers: number; outstanding: number; urgentJobs: number; yesterdaySales: number; yesterdayOrders: number };
   paymentSummary: { received: number; cash: number; transfer: number; fullPayment: number; deposits: number; oldOutstandingPaid: number };
   orderStatus: Record<OrderStatus, number>;
+  operations: {
+    workflow: Record<'pending' | 'producing' | 'ready_for_pickup', number>;
+    outstanding: { orders: number; amount: number };
+    filesWaiting: number;
+    lowStock: number;
+    unclassifiedWorkflow: number;
+  };
   salesTrend: Array<{ date: string; revenue: number; orders: number }>;
   topProducts: DashboardProduct[];
   quickSeller: { orders: number; revenue: number; items: DashboardProduct[] };
@@ -22,6 +29,26 @@ export type DashboardSummary = {
   recentActivity: DashboardActivity[];
   capabilities: { dueDates: boolean; urgentFlag: boolean; uploadOrderLink: boolean };
 };
+
+export function buildDashboardOrdersHref(options: {
+  period: DashboardSummary['period']['mode'];
+  month?: string;
+  startDate: string;
+  endDate: string;
+  workflowStatus?: ProductionWorkflowStatus;
+  payment?: 'unpaid';
+}): string {
+  const query = new URLSearchParams();
+  if (options.period === 'today') query.set('period', 'today');
+  if (options.period === 'month' && options.month) query.set('month', options.month);
+  if (options.period === 'last7' || options.period === 'custom') {
+    query.set('startDate', options.startDate);
+    query.set('endDate', options.endDate);
+  }
+  if (options.workflowStatus) query.set('workflowStatus', options.workflowStatus);
+  if (options.payment) query.set('payment', options.payment);
+  return `/home/orders?${query.toString()}`;
+}
 
 export function fetchDashboardSummary(params: { period?: 'today' | 'last7' | 'month' | 'custom'; month?: string; startDate?: string; endDate?: string } = {}): Promise<DashboardSummary> {
   const query = new URLSearchParams();

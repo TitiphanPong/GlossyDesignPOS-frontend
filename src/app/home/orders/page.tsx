@@ -60,11 +60,11 @@ import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder, type PaymentMethod, type ProductionWorkflowStatus } from '../../../lib/contracts';
 import { convertOrderToTaxInvoice, deleteOrder, downloadOrdersExport, fetchOrderById, type OrderListSummary, updateOrderCustomerInfo } from '../../../lib/orders';
-import type { ExportType, OrderRow, PaymentStatus, SortOrder } from './orderManagementTypes';
+import type { ExportType, OrderRow, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import { parseOrderDrilldownFilters, type OutstandingPaymentFilter } from './orderDrilldownFilters';
 import {
-  FILTER_STATUS_LABELS,
+  FILTER_WORKFLOW_STATUS_LABELS,
   ORDER_TABLE_PAYMENT_LABEL,
   ORDER_TABLE_STATUS_UI,
   PAYMENT_METHOD_LABELS_TH,
@@ -218,7 +218,7 @@ export default function OrderManagementPage() {
   const [datePreset, setDatePreset] = React.useState<DatePreset>('all');
   const [startDate, setStartDate] = React.useState<dayjs.Dayjs | null>(null);
   const [endDate, setEndDate] = React.useState<dayjs.Dayjs | null>(null);
-  const [statusFilter, setStatusFilter] = React.useState<'all' | PaymentStatus>('all');
+  const [workflowStatusFilter, setWorkflowStatusFilter] = React.useState<'all' | ProductionWorkflowStatus>('all');
   const [outstandingPaymentFilter, setOutstandingPaymentFilter] = React.useState<OutstandingPaymentFilter>('all');
   const [paymentMethodFilter, setPaymentMethodFilter] = React.useState<'all' | PaymentMethod>('all');
   const [taxInvoiceFilter, setTaxInvoiceFilter] = React.useState<TaxInvoiceFilter>('all');
@@ -261,7 +261,7 @@ export default function OrderManagementPage() {
         period: datePreset === 'today' ? 'today' : undefined,
         saleFrom: datePreset !== 'all' && datePreset !== 'today' && datePreset !== 'month' && startDate ? bangkokDateParam(startDate) : undefined,
         saleTo: datePreset !== 'all' && datePreset !== 'today' && datePreset !== 'month' && endDate ? bangkokDateParam(endDate, true) : undefined,
-        status: statusFilter === 'all' ? undefined : statusFilter,
+        workflowStatus: workflowStatusFilter === 'all' ? undefined : workflowStatusFilter,
         payment: outstandingPaymentFilter === 'unpaid' ? 'unpaid' : undefined,
         paymentMethod: paymentMethodFilter === 'all' ? undefined : paymentMethodFilter,
         taxInvoice: taxInvoiceFilter === 'all' ? undefined : taxInvoiceFilter,
@@ -285,19 +285,28 @@ export default function OrderManagementPage() {
     } finally {
       if (requestId === loadRequestRef.current) setIsLoading(false);
     }
-  }, [datePreset, endDate, monthFilter, outstandingPaymentFilter, page, paymentMethodFilter, rowsPerPage, search, sort, startDate, statusFilter, taxInvoiceFilter]);
+  }, [datePreset, endDate, monthFilter, outstandingPaymentFilter, page, paymentMethodFilter, rowsPerPage, search, sort, startDate, taxInvoiceFilter, workflowStatusFilter]);
 
   React.useEffect(() => {
     const parsed = parseOrderDrilldownFilters(window.location.search);
-    setStatusFilter(parsed.status);
+    setWorkflowStatusFilter(parsed.workflowStatus);
     setOutstandingPaymentFilter(parsed.payment);
 
-    if (parsed.month) {
+    if (parsed.period === 'today') {
+      const today = dayjs();
+      setDatePreset('today');
+      setStartDate(today);
+      setEndDate(today);
+    } else if (parsed.month) {
       setMonthFilter(parsed.month);
       setDatePreset('month');
       const requestedDate = dayjs(`${parsed.month}-01`);
       setStartDate(requestedDate);
       setEndDate(requestedDate.endOf('month'));
+    } else if (parsed.startDate && parsed.endDate) {
+      setDatePreset('custom');
+      setStartDate(dayjs(parsed.startDate));
+      setEndDate(dayjs(parsed.endDate));
     }
 
     const currentSearch = new URLSearchParams(window.location.search).toString();
@@ -335,19 +344,28 @@ export default function OrderManagementPage() {
   React.useEffect(() => {
     if (!filtersReady) return;
     const params = new URLSearchParams(window.location.search);
-    if (statusFilter === 'all') params.delete('status');
-    else params.set('status', statusFilter);
+    params.delete('status');
+    if (workflowStatusFilter === 'all') params.delete('workflowStatus');
+    else params.set('workflowStatus', workflowStatusFilter);
     if (outstandingPaymentFilter === 'unpaid') params.set('payment', 'unpaid');
     else params.delete('payment');
+    params.delete('period');
+    params.delete('month');
+    params.delete('startDate');
+    params.delete('endDate');
+    if (datePreset === 'today') params.set('period', 'today');
     if (datePreset === 'month' && monthFilter !== 'all') params.set('month', monthFilter);
-    else params.delete('month');
+    if (datePreset !== 'all' && datePreset !== 'today' && datePreset !== 'month' && startDate && endDate) {
+      params.set('startDate', startDate.format('YYYY-MM-DD'));
+      params.set('endDate', endDate.format('YYYY-MM-DD'));
+    }
 
     const nextSearch = params.toString();
     const currentSearch = new URLSearchParams(window.location.search).toString();
     if (nextSearch !== currentSearch) {
       router.replace(`${window.location.pathname}${nextSearch ? `?${nextSearch}` : ''}`);
     }
-  }, [datePreset, filtersReady, monthFilter, outstandingPaymentFilter, router, statusFilter]);
+  }, [datePreset, endDate, filtersReady, monthFilter, outstandingPaymentFilter, router, startDate, workflowStatusFilter]);
 
   const rowsById = React.useMemo(() => new Map(rows.map(row => [row.id, row])), [rows]);
 
@@ -355,7 +373,7 @@ export default function OrderManagementPage() {
 
   React.useEffect(() => {
     setPage(0);
-  }, [search, monthFilter, datePreset, startDate, endDate, statusFilter, outstandingPaymentFilter, paymentMethodFilter, taxInvoiceFilter, sort]);
+  }, [search, monthFilter, datePreset, startDate, endDate, workflowStatusFilter, outstandingPaymentFilter, paymentMethodFilter, taxInvoiceFilter, sort]);
 
   const rowMenuTarget = React.useMemo(() => (menuOrderId ? (rowsById.get(menuOrderId) ?? null) : null), [menuOrderId, rowsById]);
 
@@ -519,7 +537,7 @@ export default function OrderManagementPage() {
             period: datePreset === 'today' ? 'today' : undefined,
             saleFrom: datePreset !== 'all' && datePreset !== 'today' && datePreset !== 'month' && startDate ? bangkokDateParam(startDate) : undefined,
             saleTo: datePreset !== 'all' && datePreset !== 'today' && datePreset !== 'month' && endDate ? bangkokDateParam(endDate, true) : undefined,
-            status: statusFilter === 'all' ? undefined : statusFilter,
+            workflowStatus: workflowStatusFilter === 'all' ? undefined : workflowStatusFilter,
             payment: outstandingPaymentFilter === 'unpaid' ? 'unpaid' : undefined,
             paymentMethod: paymentMethodFilter === 'all' ? undefined : paymentMethodFilter,
             taxInvoice: taxInvoiceFilter === 'all' ? undefined : taxInvoiceFilter,
@@ -533,7 +551,7 @@ export default function OrderManagementPage() {
         setExporting(null);
       }
     },
-    [datePreset, endDate, monthFilter, outstandingPaymentFilter, paymentMethodFilter, search, sort, startDate, statusFilter, taxInvoiceFilter]
+    [datePreset, endDate, monthFilter, outstandingPaymentFilter, paymentMethodFilter, search, sort, startDate, taxInvoiceFilter, workflowStatusFilter]
   );
 
   const labelDisplayedRows = React.useCallback(({ from, to, count }: { from: number; to: number; count: number }) => {
@@ -544,7 +562,7 @@ export default function OrderManagementPage() {
   const hasActiveFilters =
     Boolean(search.trim()) ||
     datePreset !== 'all' ||
-    statusFilter !== 'all' ||
+    workflowStatusFilter !== 'all' ||
     outstandingPaymentFilter !== 'all' ||
     paymentMethodFilter !== 'all' ||
     taxInvoiceFilter !== 'all' ||
@@ -555,7 +573,7 @@ export default function OrderManagementPage() {
     setDatePreset('all');
     setStartDate(null);
     setEndDate(null);
-    setStatusFilter('all');
+    setWorkflowStatusFilter('all');
     setOutstandingPaymentFilter('all');
     setPaymentMethodFilter('all');
     setTaxInvoiceFilter('all');
@@ -591,12 +609,7 @@ export default function OrderManagementPage() {
                   sx={heroOutlineButtonSx}>
                   {isLoading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
                 </Button>
-                <Button
-                  onClick={event => setExportAnchor(event.currentTarget)}
-                  startIcon={<FileDownloadRoundedIcon />}
-                  variant="outlined"
-                  disabled={Boolean(exporting)}
-                  sx={heroOutlineButtonSx}>
+                <Button onClick={event => setExportAnchor(event.currentTarget)} startIcon={<FileDownloadRoundedIcon />} variant="outlined" disabled={Boolean(exporting)} sx={heroOutlineButtonSx}>
                   {exporting ? 'กำลังสร้างรายงาน...' : 'ส่งออกรายงาน'}
                 </Button>
                 <Button component={Link} href="/home/posseller" startIcon={<AddShoppingCartRoundedIcon />} variant="contained" sx={heroPrimaryButtonSx}>
@@ -746,12 +759,12 @@ export default function OrderManagementPage() {
                   }}>
                   <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 190 } }}>
                     <Typography sx={{ mb: 0.4, color: '#475569', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>สถานะงาน</Typography>
-                    <Select<'all' | PaymentStatus>
+                    <Select<'all' | ProductionWorkflowStatus>
                       labelId="status-filter"
-                      value={statusFilter}
+                      value={workflowStatusFilter}
                       label="สถานะงาน"
                       inputProps={{ 'aria-label': 'สถานะงาน' }}
-                      onChange={event => setStatusFilter(event.target.value as 'all' | PaymentStatus)}
+                      onChange={event => setWorkflowStatusFilter(event.target.value as 'all' | ProductionWorkflowStatus)}
                       sx={{
                         borderRadius: 2,
                         height: 48,
@@ -760,7 +773,7 @@ export default function OrderManagementPage() {
                         '&:hover fieldset': { borderColor: '#94A3B8' },
                         '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: 1 },
                       }}>
-                      {Object.entries(FILTER_STATUS_LABELS).map(([value, label]) => (
+                      {Object.entries(FILTER_WORKFLOW_STATUS_LABELS).map(([value, label]) => (
                         <MenuItem key={value} value={value}>
                           {label}
                         </MenuItem>
@@ -871,21 +884,16 @@ export default function OrderManagementPage() {
                       sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }}
                     />
                   ) : null}
-                  {statusFilter !== 'all' ? (
+                  {workflowStatusFilter !== 'all' ? (
                     <Chip
                       size="small"
-                      label={`สถานะ: ${FILTER_STATUS_LABELS[statusFilter]}`}
-                      onDelete={() => setStatusFilter('all')}
+                      label={`สถานะงาน: ${FILTER_WORKFLOW_STATUS_LABELS[workflowStatusFilter]}`}
+                      onDelete={() => setWorkflowStatusFilter('all')}
                       sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }}
                     />
                   ) : null}
                   {outstandingPaymentFilter === 'unpaid' ? (
-                    <Chip
-                      size="small"
-                      label="ยอดชำระ: มียอดค้าง"
-                      onDelete={() => setOutstandingPaymentFilter('all')}
-                      sx={{ bgcolor: '#FFF7ED', color: '#C2410C', borderRadius: 1.5 }}
-                    />
+                    <Chip size="small" label="ยอดชำระ: มียอดค้าง" onDelete={() => setOutstandingPaymentFilter('all')} sx={{ bgcolor: '#FFF7ED', color: '#C2410C', borderRadius: 1.5 }} />
                   ) : null}
                   {paymentMethodFilter !== 'all' ? (
                     <Chip
