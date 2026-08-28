@@ -3,7 +3,7 @@ import { fetchApiJson } from './api';
 
 export type NotificationPriority = 'critical' | 'high' | 'normal' | 'low';
 export type NotificationCategory = 'action_required' | 'today' | 'follow_up' | 'system';
-export type NotificationActionKind = 'collect_payment' | 'open_order' | 'review_upload' | 'pickup_follow_up' | string;
+export type NotificationActionKind = 'collect_payment' | 'open_order' | 'review_upload' | 'pickup_follow_up' | 'open_stock' | string;
 
 export type ActionCenterSummary = {
   total: number;
@@ -26,7 +26,7 @@ export type Notification = {
   amount?: number;
   dueDate?: string;
   relatedUploadId?: string;
-  entityType?: 'order' | 'upload' | 'payment';
+  entityType?: 'order' | 'upload' | 'payment' | 'stock';
   entityId?: string;
   action?: {
     label: string;

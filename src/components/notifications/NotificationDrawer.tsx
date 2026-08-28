@@ -53,7 +53,7 @@ function groupOf(notification: Notification): Exclude<ActionCenterTab, 'all' | '
 function itemIcon(notification: Notification) {
   if (notification.entityType === 'payment' || notification.type.startsWith('payment_')) return <PaymentsRoundedIcon />;
   if (notification.entityType === 'upload' || notification.type.startsWith('upload_')) return <DescriptionRoundedIcon />;
-  if (notification.type.includes('pickup')) return <Inventory2RoundedIcon />;
+  if (notification.entityType === 'stock' || notification.type === 'low_stock' || notification.type.includes('pickup')) return <Inventory2RoundedIcon />;
   if (notification.priority === 'critical') return <ErrorRoundedIcon />;
   return <AccessTimeRoundedIcon />;
 }
@@ -73,7 +73,7 @@ function SummaryMetric({ icon, label, value, emphasis }: Readonly<{ icon: React.
 function ActionCard({ notification, onOpen }: Readonly<{ notification: Notification; onOpen: (notification: Notification) => void }>) {
   const priority = PRIORITY[notification.priority];
   const href = getNotificationActionHref(notification);
-  const contextLabel = groupOf(notification) === 'finance' ? 'การเงิน' : groupOf(notification) === 'files' ? 'งาน / ไฟล์' : 'ติดตาม';
+  const contextLabel = notification.entityType === 'stock' || notification.type === 'low_stock' ? 'สต็อก' : groupOf(notification) === 'finance' ? 'การเงิน' : groupOf(notification) === 'files' ? 'งาน / ไฟล์' : 'ติดตาม';
 
   return (
     <Box sx={{ mx: 1.5, mb: 1.1, p: 1.6, borderRadius: 3.25, border: '1px solid #E2E8F0', borderLeft: `4px solid ${priority.accent}`, bgcolor: '#FFFFFF', boxShadow: '0 10px 25px rgba(15, 23, 42, 0.045)' }}>

@@ -16,6 +16,7 @@ export function getNotificationActionHref(notification: Notification): string | 
   const actionKind = notification.action?.action;
   const orderId = notification.orderId ?? (notification.entityType === 'order' || notification.entityType === 'payment' ? notification.entityId : undefined);
   const uploadId = notification.relatedUploadId ?? (notification.entityType === 'upload' ? notification.entityId : undefined);
+  const stockItemId = notification.entityType === 'stock' ? notification.entityId : undefined;
 
   if ((actionKind === 'collect_payment' || actionKind === 'pay') && orderId) {
     return `/home/orders?focus=${encode(orderId)}&action=payment`;
@@ -25,6 +26,9 @@ export function getNotificationActionHref(notification: Notification): string | 
   }
   if ((actionKind === 'review_upload' || notification.type.startsWith('upload_')) && uploadId) {
     return `/home/storage?focus=${encode(uploadId)}`;
+  }
+  if ((actionKind === 'open_stock' || notification.type === 'low_stock') && stockItemId) {
+    return `/home/stock?focus=${encode(stockItemId)}`;
   }
   if (notification.action?.href) {
     return normalizeLegacyHref(notification.action.href);
