@@ -421,7 +421,14 @@ export default function DashboardPage() {
   const salesDeltaText = salesDelta === null ? `ยังไม่มีฐานเปรียบเทียบ${comparisonLabel}` : `${salesDelta >= 0 ? '+' : ''}${salesDelta.toFixed(1)}% จาก${comparisonLabel}`;
   const periodOrdersHref = buildDashboardOrdersHref({ period, month, startDate: startDate.format('YYYY-MM-DD'), endDate: endDate.format('YYYY-MM-DD') });
   const actionCards: MetricCardProps[] = [
-    { label: 'รอเริ่มงาน', value: integer(operations.workflow.pending), helper: 'เปิดรายการที่ต้องเริ่มทำ', icon: ScheduleRoundedIcon, color: '#D97706', href: '/home/orders?workflowStatus=pending' },
+    {
+      label: 'รอเริ่มงาน',
+      value: integer(operations.workflow.pending),
+      helper: operations.unclassifiedWorkflow > 0 ? `${integer(operations.unclassifiedWorkflow)} รายการยังไม่ระบุขั้นตอน` : 'เปิดรายการที่ต้องเริ่มทำ',
+      icon: ScheduleRoundedIcon,
+      color: '#D97706',
+      href: '/home/orders?workflowStatus=pending',
+    },
     {
       label: 'กำลังผลิต',
       value: integer(operations.workflow.producing),
@@ -488,6 +495,11 @@ export default function DashboardPage() {
             <ActionCard key={item.label} {...item} />
           ))}
         </Box>
+        {operations.unclassifiedWorkflow > 0 ? (
+          <Alert severity="warning" sx={{ mt: -1.5, mb: 3 }}>
+            มี {integer(operations.unclassifiedWorkflow)} ออเดอร์จากข้อมูลเดิมที่ยังไม่ระบุขั้นตอนงาน ระบบจึงรวมไว้ใน “รอเริ่มงาน” เพื่อไม่ให้รายการตกหล่น
+          </Alert>
+        ) : null}
         <PeriodFilterCard
           period={period}
           startDate={startDate}

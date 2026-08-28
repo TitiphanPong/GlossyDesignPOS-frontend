@@ -18,6 +18,7 @@ export type DashboardSummary = {
     outstanding: { orders: number; amount: number };
     filesWaiting: number;
     lowStock: number;
+    unclassifiedWorkflow: number;
   };
   salesTrend: Array<{ date: string; revenue: number; orders: number }>;
   topProducts: DashboardProduct[];
