@@ -16,7 +16,15 @@ test('public tracking uses one exact verifier endpoint without legacy fallbacks'
       orderNumber: 'GD-000123',
       phoneSuffix: '5678',
     });
-    return new Response(JSON.stringify({ orderNumber: 'GD-000123', status: 'producing' }), { status: 200, headers: { 'Content-Type': 'application/json' } });
+    return new Response(JSON.stringify({
+      orderNumber: 'GD-000123',
+      currentMilestone: 'in_progress',
+      milestones: [
+        { milestone: 'received', reachedAt: '2026-08-27T00:00:00.000Z' },
+        { milestone: 'in_progress', reachedAt: '2026-08-27T01:00:00.000Z' },
+      ],
+      updatedAt: '2026-08-27T01:00:00.000Z',
+    }), { status: 200, headers: { 'Content-Type': 'application/json' } });
   }) as typeof fetch;
 
   try {

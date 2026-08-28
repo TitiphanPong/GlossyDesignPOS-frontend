@@ -5,9 +5,12 @@ import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, InputAdo
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import { getOrderStatusConfig } from '@/lib/order-status';
 import { isMissingApiBaseError } from '@/lib/api';
-import { PublicTrackingResult, trackOrder } from '@/lib/tracking';
+import {
+  PUBLIC_TRACKING_MILESTONE_COPY,
+  PublicTrackingResult,
+  trackOrder,
+} from '@/lib/tracking';
 
 function formatDate(value?: string): string {
   if (!value) return '-';
@@ -47,8 +50,18 @@ export default function TrackPage() {
     }
   };
 
-  const statusConfig = result ? getOrderStatusConfig(result.status) : null;
-  const StatusIcon = statusConfig?.icon;
+  const milestoneCopy = result
+    ? PUBLIC_TRACKING_MILESTONE_COPY[result.currentMilestone]
+    : null;
+  const milestoneColor = result?.currentMilestone === 'cancelled'
+    ? 'error'
+    : result?.currentMilestone === 'completed'
+      ? 'success'
+      : result?.currentMilestone === 'ready'
+        ? 'secondary'
+        : result?.currentMilestone === 'in_progress'
+          ? 'primary'
+          : 'info';
 
   return (
     <main
@@ -137,19 +150,19 @@ export default function TrackPage() {
           </Alert>
         ) : null}
 
-        {result && statusConfig && StatusIcon ? (
+        {result && milestoneCopy ? (
           <Card sx={{ mt: 2, borderRadius: 4, border: '1px solid #E5EAF3', boxShadow: '0 18px 45px rgba(15,23,42,0.08)' }}>
             <CardContent sx={{ p: { xs: 2.5, sm: 3 } }}>
               <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={2}>
                 <Box>
                   <Typography sx={{ color: '#64748B', fontSize: 12, fontWeight: 700 }}>เลขที่ออเดอร์</Typography>
                   <Typography sx={{ mt: 0.5, fontSize: 24, fontWeight: 800 }}>{result.orderNumber}</Typography>
-                  <Typography sx={{ mt: 1, color: '#64748B', fontSize: 13 }}>อัปเดตล่าสุด {formatDate(result.updatedAt ?? result.createdAt)}</Typography>
+                  <Typography sx={{ mt: 1, color: '#64748B', fontSize: 13 }}>อัปเดตล่าสุด {formatDate(result.updatedAt ?? result.milestones.at(-1)?.reachedAt)}</Typography>
                 </Box>
-                <Chip icon={<StatusIcon fontSize="small" />} label={statusConfig.label} color={statusConfig.color} sx={{ fontWeight: 700 }} />
+                <Chip label={milestoneCopy.label} color={milestoneColor} sx={{ fontWeight: 700 }} />
               </Stack>
-              <Box sx={{ mt: 3, p: 2, borderRadius: 2.5, bgcolor: statusConfig.bg }}>
-                <Typography sx={{ color: statusConfig.hex, fontWeight: 700 }}>{statusConfig.description}</Typography>
+              <Box sx={{ mt: 3, p: 2, borderRadius: 2.5, bgcolor: '#F8FAFC' }}>
+                <Typography sx={{ color: '#334155', fontWeight: 700 }}>{milestoneCopy.description}</Typography>
               </Box>
             </CardContent>
           </Card>
