@@ -1,6 +1,6 @@
 'use client';
 
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
@@ -8,7 +8,9 @@ import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
+import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
+import { buildReceiptFileName, isShareCancelled, prefersReceiptShare } from '@/lib/receipt-download';
 
 type PrintDocumentLayoutProps = Readonly<{
   titleTh: string;
@@ -70,6 +72,11 @@ function HeaderButton({
 export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentType, onEditCustomer, summary, printableDocument }: PrintDocumentLayoutProps) {
   const isReceipt = documentType === 'receipt';
   const documentStageRef = useRef<HTMLDivElement>(null);
+  const [useMobileShare, setUseMobileShare] = useState(false);
+
+  useEffect(() => {
+    setUseMobileShare(prefersReceiptShare(globalThis.navigator));
+  }, []);
 
   const handlePrint = async () => {
     if (typeof document !== 'undefined' && 'fonts' in document) {
@@ -81,9 +88,7 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
 
   const handleDownloadReceipt = async () => {
     const receiptElement = documentStageRef.current?.querySelector<HTMLElement>('.receipt-document-sheet');
-    if (!receiptElement) {
-      return;
-    }
+    if (!receiptElement) return;
 
     if (typeof document !== 'undefined' && 'fonts' in document) {
       await document.fonts.ready;
@@ -95,10 +100,48 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
       scale: 2,
       useCORS: true,
     });
+    const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) return;
+
+    const fileName = buildReceiptFileName(invoiceNumber);
+    const file = new File([blob], fileName, { type: 'image/png' });
+    const navigatorWithShare = globalThis.navigator;
+
+    if (
+      useMobileShare &&
+      typeof navigatorWithShare.share === 'function' &&
+      typeof navigatorWithShare.canShare === 'function' &&
+      navigatorWithShare.canShare({ files: [file] })
+    ) {
+      try {
+        await navigatorWithShare.share({
+          files: [file],
+          title: 'ใบเสร็จ Glossy Design',
+        });
+        return;
+      } catch (error) {
+        if (isShareCancelled(error)) return;
+      }
+    }
+
+    const objectUrl = URL.createObjectURL(blob);
+    if (useMobileShare) {
+      const openedWindow = globalThis.open(objectUrl, '_blank', 'noopener,noreferrer');
+      if (openedWindow) {
+        globalThis.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
+      } else {
+        globalThis.location.assign(objectUrl);
+      }
+      return;
+    }
+
     const downloadLink = document.createElement('a');
-    downloadLink.href = canvas.toDataURL('image/png');
-    downloadLink.download = `receipt-${invoiceNumber.replace(/^#/, '')}.png`;
+    downloadLink.href = objectUrl;
+    downloadLink.download = fileName;
+    document.body.appendChild(downloadLink);
     downloadLink.click();
+    downloadLink.remove();
+    globalThis.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
   };
 
   return (
@@ -228,7 +271,14 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
             justifyContent: { sm: 'end' },
           }}>
           <HeaderButton label="แก้ไข" icon={<EditRoundedIcon />} onClick={onEditCustomer} variant="outlined" />
-          {isReceipt ? <HeaderButton label="ดาวน์โหลด" icon={<DownloadRoundedIcon />} onClick={() => void handleDownloadReceipt()} variant="outlined" /> : null}
+          {isReceipt ? (
+            <HeaderButton
+              label={useMobileShare ? 'บันทึก / แชร์' : 'ดาวน์โหลด'}
+              icon={useMobileShare ? <IosShareRoundedIcon /> : <DownloadRoundedIcon />}
+              onClick={() => void handleDownloadReceipt()}
+              variant="outlined"
+            />
+          ) : null}
           {!isReceipt ? <HeaderButton label="ส่งออก PDF" icon={<PictureAsPdfRoundedIcon />} onClick={handlePrint} variant="outlined" /> : null}
           <HeaderButton label="พิมพ์" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" mobileFullRow />
         </Box>
