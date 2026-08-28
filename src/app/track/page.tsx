@@ -1,27 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import {
-  Alert,
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  CircularProgress,
-  Divider,
-  InputAdornment,
-  Stack,
-  TextField,
-  Typography,
-} from '@mui/material';
+import { Alert, Box, Button, Card, CardContent, Chip, CircularProgress, Divider, InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import AccessTimeRoundedIcon from '@mui/icons-material/AccessTimeRounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import PhoneIphoneRoundedIcon from '@mui/icons-material/PhoneIphoneRounded';
 import RadioButtonCheckedRoundedIcon from '@mui/icons-material/RadioButtonCheckedRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import GlossyBrandMark from '@/components/navigation/GlossyBrandMark';
 import { isMissingApiBaseError } from '@/lib/api';
 import {
   buildPublicTrackingTimeline,
@@ -97,11 +86,7 @@ export default function TrackPage() {
     try {
       setResult(await trackOrder(orderNumber, phoneSuffix));
     } catch (searchError) {
-      setError(
-        isMissingApiBaseError(searchError)
-          ? 'ระบบยังไม่ได้ตั้งค่า API สำหรับติดตามออเดอร์'
-          : 'ไม่พบออเดอร์หรือข้อมูลยืนยันไม่ตรงกัน กรุณาตรวจสอบแล้วลองอีกครั้ง',
-      );
+      setError(isMissingApiBaseError(searchError) ? 'ระบบยังไม่ได้ตั้งค่า API สำหรับติดตามออเดอร์' : 'ไม่พบออเดอร์หรือข้อมูลยืนยันไม่ตรงกัน กรุณาตรวจสอบแล้วลองอีกครั้ง');
     } finally {
       setLoading(false);
     }
@@ -109,78 +94,209 @@ export default function TrackPage() {
 
   const milestoneCopy = result ? PUBLIC_TRACKING_MILESTONE_COPY[result.currentMilestone] : null;
   const timeline = result ? buildPublicTrackingTimeline(result) : [];
-  const milestoneColor = result?.currentMilestone === 'cancelled'
-    ? 'error'
-    : result?.currentMilestone === 'completed'
-      ? 'success'
-      : result?.currentMilestone === 'ready'
-        ? 'secondary'
-        : result?.currentMilestone === 'in_progress'
-          ? 'primary'
-          : 'info';
+  const milestoneColor =
+    result?.currentMilestone === 'cancelled'
+      ? 'error'
+      : result?.currentMilestone === 'completed'
+        ? 'success'
+        : result?.currentMilestone === 'ready'
+          ? 'secondary'
+          : result?.currentMilestone === 'in_progress'
+            ? 'primary'
+            : 'info';
 
   return (
     <main
       style={{
         minHeight: '100dvh',
-        background: 'linear-gradient(180deg, #F8FAFC 0%, #EEF4FF 100%)',
-        padding: '24px 14px 48px',
+        background: 'linear-gradient(180deg, #F7F9FC 0%, #EEF3FA 100%)',
+        padding: 'max(12px, env(safe-area-inset-top)) 12px max(40px, env(safe-area-inset-bottom))',
       }}>
-      <Box sx={{ maxWidth: 860, mx: 'auto' }}>
-        <Card sx={{ borderRadius: 4, border: '1px solid #E5EAF3', boxShadow: '0 20px 50px rgba(15,23,42,0.08)' }}>
-          <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
-            <Stack direction="row" spacing={1.5} alignItems="center" sx={{ mb: 1 }}>
-              <Box sx={{ width: 46, height: 46, borderRadius: 2.5, display: 'grid', placeItems: 'center', bgcolor: '#EAF1FF', color: '#1D4ED8' }}>
-                <ReceiptLongRoundedIcon />
-              </Box>
+      <Box sx={{ maxWidth: 760, mx: 'auto' }}>
+        <Card
+          sx={{
+            overflow: 'hidden',
+            borderRadius: { xs: 3, sm: 4 },
+            border: '1px solid #DCE4F0',
+            boxShadow: '0 20px 55px rgba(15, 35, 70, 0.10)',
+          }}>
+          <Box
+            sx={{
+              position: 'relative',
+              overflow: 'hidden',
+              px: { xs: 2.25, sm: 4 },
+              pt: { xs: 2.25, sm: 3.5 },
+              pb: { xs: 2.5, sm: 3.75 },
+              color: '#FFFFFF',
+              background: 'linear-gradient(135deg, #0B3478 0%, #145FD7 100%)',
+              '&::after': {
+                position: 'absolute',
+                right: -58,
+                bottom: -82,
+                width: 190,
+                height: 190,
+                border: '34px solid rgba(255,255,255,0.07)',
+                borderRadius: '50%',
+                content: '""',
+              },
+            }}>
+            <Stack direction="row" alignItems="center" spacing={1} sx={{ position: 'relative', zIndex: 1, mb: 2.25 }}>
+              <GlossyBrandMark size={42} priority />
               <Box>
-                <Typography component="h1" sx={{ fontSize: { xs: 25, sm: 32 }, fontWeight: 800 }}>
-                  ติดตามออเดอร์
-                </Typography>
-                <Typography sx={{ color: '#64748B', fontSize: 14 }}>ดูความคืบหน้าของงานตั้งแต่รับออเดอร์จนถึงส่งมอบ</Typography>
+                <Typography sx={{ fontSize: 14, fontWeight: 800, lineHeight: 1.2 }}>Glossy Design</Typography>
+                <Typography sx={{ mt: 0.25, color: 'rgba(255,255,255,0.72)', fontSize: 11.5 }}>ORDER TRACKING</Typography>
               </Box>
             </Stack>
 
-            <Alert icon={<LockOutlinedIcon />} severity="info" sx={{ my: 3, borderRadius: 2.5 }}>
-              {secureAccessUsed
-                ? 'เปิดสถานะงานจาก QR ที่ออกให้สำหรับออเดอร์นี้แล้ว หากต้องการค้นหารายการอื่นสามารถกรอกข้อมูลด้านล่างได้'
-                : 'หากเปิดจาก QR ที่ร้านออกให้ ระบบจะตรวจสอบออเดอร์ให้อัตโนมัติ หรือค้นหาเองด้วยเลขที่ออเดอร์และเลขท้ายโทรศัพท์ 4 หลัก'}
-            </Alert>
+            <Box sx={{ position: 'relative', zIndex: 1, maxWidth: 560 }}>
+              <Typography component="h1" sx={{ fontSize: { xs: 28, sm: 36 }, fontWeight: 900, letterSpacing: '-0.035em', lineHeight: 1.15 }}>
+                เช็กสถานะงานของคุณ
+              </Typography>
+              <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.82)', fontSize: { xs: 14, sm: 15.5 }, lineHeight: 1.65 }}>ดูความคืบหน้าล่าสุด ตั้งแต่ร้านรับออเดอร์จนพร้อมรับงาน</Typography>
+            </Box>
+          </Box>
+
+          <CardContent sx={{ p: { xs: 2.25, sm: 4 } }}>
+            <Box
+              sx={{
+                display: 'grid',
+                gridTemplateColumns: 'auto minmax(0, 1fr)',
+                gap: 1.25,
+                alignItems: 'start',
+                mb: { xs: 3, sm: 3.5 },
+                p: { xs: 1.5, sm: 1.75 },
+                border: '1px solid #D7E6FA',
+                borderRadius: 2.5,
+                bgcolor: '#F3F8FF',
+              }}>
+              <Box sx={{ width: 36, height: 36, display: 'grid', placeItems: 'center', borderRadius: 2, bgcolor: '#DCEBFF', color: '#145FD7' }}>
+                <LockOutlinedIcon sx={{ fontSize: 20 }} />
+              </Box>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography sx={{ color: '#163A68', fontSize: 14, fontWeight: 800, lineHeight: 1.45 }}>{secureAccessUsed ? 'เปิดสถานะจาก QR เรียบร้อยแล้ว' : 'สแกน QR จากใบเสร็จมาใช่ไหม?'}</Typography>
+                <Typography sx={{ mt: 0.35, color: '#526B8A', fontSize: 13, lineHeight: 1.6 }}>
+                  {secureAccessUsed
+                    ? 'สถานะของออเดอร์นี้แสดงอยู่ด้านล่าง หากต้องการเช็กออเดอร์อื่นให้กรอกข้อมูลใหม่ได้เลย'
+                    : 'ระบบจะแสดงสถานะให้อัตโนมัติ หรือค้นหาเองด้วยเลขออเดอร์และเบอร์โทร 4 ตัวท้าย'}
+                </Typography>
+              </Box>
+            </Box>
 
             <Stack
-              spacing={2}
+              spacing={2.5}
               component="form"
               onSubmit={event => {
                 event.preventDefault();
                 void handleSearch();
               }}>
-              <TextField
-                label="เลขที่ออเดอร์"
-                value={orderNumber}
-                onChange={event => setOrderNumber(event.target.value)}
-                placeholder="เช่น GD-000123"
-                autoComplete="off"
+              <Box>
+                <Typography component="label" htmlFor="tracking-order-number" sx={{ display: 'block', color: '#172033', fontSize: 15, fontWeight: 800 }}>
+                  เลขออเดอร์
+                </Typography>
+                <Typography sx={{ mt: 0.35, mb: 1, color: '#66758A', fontSize: 12.5, lineHeight: 1.5 }}>ดูได้จากใบเสร็จหรือข้อความที่ได้รับจากร้าน</Typography>
+                <TextField
+                  id="tracking-order-number"
+                  fullWidth
+                  value={orderNumber}
+                  onChange={event => setOrderNumber(event.target.value)}
+                  placeholder="เช่น GD-2026-000242"
+                  autoComplete="off"
+                  disabled={loading}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <ReceiptLongRoundedIcon sx={{ color: '#64748B' }} />
+                        </InputAdornment>
+                      ),
+                    },
+                    htmlInput: { enterKeyHint: 'next' },
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      minHeight: 56,
+                      borderRadius: 2.5,
+                      bgcolor: '#FFFFFF',
+                      '& fieldset': { borderColor: '#CBD5E1' },
+                      '&:hover fieldset': { borderColor: '#7C91AD' },
+                      '&.Mui-focused': { boxShadow: '0 0 0 4px rgba(20, 95, 215, 0.12)' },
+                      '&.Mui-focused fieldset': { borderColor: '#145FD7', borderWidth: 1.5 },
+                    },
+                    '& input': { py: 1.6, fontSize: 16, fontWeight: 650 },
+                  }}
+                />
+              </Box>
+
+              <Box>
+                <Typography component="label" htmlFor="tracking-phone-suffix" sx={{ display: 'block', color: '#172033', fontSize: 15, fontWeight: 800 }}>
+                  เบอร์โทร 4 ตัวท้าย
+                </Typography>
+                <Typography sx={{ mt: 0.35, mb: 1, color: '#66758A', fontSize: 12.5, lineHeight: 1.5 }}>ใช้เบอร์เดียวกับที่แจ้งไว้ตอนสั่งงาน</Typography>
+                <TextField
+                  id="tracking-phone-suffix"
+                  fullWidth
+                  value={phoneSuffix}
+                  onChange={event => setPhoneSuffix(event.target.value.replace(/\D/g, '').slice(0, 4))}
+                  placeholder="0000"
+                  autoComplete="off"
+                  inputMode="numeric"
+                  disabled={loading}
+                  slotProps={{
+                    input: {
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <PhoneIphoneRoundedIcon sx={{ color: '#64748B' }} />
+                        </InputAdornment>
+                      ),
+                    },
+                    htmlInput: { maxLength: 4, enterKeyHint: 'search' },
+                  }}
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      minHeight: 56,
+                      borderRadius: 2.5,
+                      bgcolor: '#FFFFFF',
+                      '& fieldset': { borderColor: '#CBD5E1' },
+                      '&:hover fieldset': { borderColor: '#7C91AD' },
+                      '&.Mui-focused': { boxShadow: '0 0 0 4px rgba(20, 95, 215, 0.12)' },
+                      '&.Mui-focused fieldset': { borderColor: '#145FD7', borderWidth: 1.5 },
+                    },
+                    '& input': { py: 1.6, fontSize: 18, fontWeight: 800, letterSpacing: '0.18em' },
+                  }}
+                />
+              </Box>
+
+              <Button
+                type="submit"
                 disabled={loading}
-                slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon /></InputAdornment> } }}
-              />
-              <TextField
-                label="เลขท้ายโทรศัพท์ 4 หลัก"
-                value={phoneSuffix}
-                onChange={event => setPhoneSuffix(event.target.value.replace(/\D/g, '').slice(0, 4))}
-                placeholder="เช่น 5678"
-                autoComplete="off"
-                inputMode="numeric"
-                disabled={loading}
-                slotProps={{ htmlInput: { maxLength: 4 } }}
-              />
-              <Button type="submit" disabled={loading} variant="contained" sx={{ minHeight: 52, borderRadius: 2.4, fontWeight: 700 }}>
-                {loading ? <CircularProgress size={22} color="inherit" /> : 'ตรวจสอบสถานะ'}
+                variant="contained"
+                endIcon={loading ? undefined : <ArrowForwardRoundedIcon />}
+                sx={{
+                  minHeight: 56,
+                  borderRadius: 2.5,
+                  bgcolor: '#145FD7',
+                  fontSize: 16,
+                  fontWeight: 800,
+                  textTransform: 'none',
+                  boxShadow: '0 10px 24px rgba(20, 95, 215, 0.24)',
+                  '&:hover': { bgcolor: '#0F4FB8', boxShadow: '0 12px 28px rgba(20, 95, 215, 0.30)' },
+                }}>
+                {loading ? <CircularProgress size={23} color="inherit" /> : 'ดูสถานะงาน'}
               </Button>
+
+              <Stack direction="row" justifyContent="center" alignItems="center" spacing={0.75} sx={{ color: '#6B7A90' }}>
+                <LockOutlinedIcon sx={{ fontSize: 15 }} />
+                <Typography sx={{ fontSize: 11.5, lineHeight: 1.5, textAlign: 'center' }}>ข้อมูลนี้ใช้เพื่อตรวจสอบออเดอร์ของคุณเท่านั้น</Typography>
+              </Stack>
             </Stack>
           </CardContent>
         </Card>
 
-        {error ? <Alert severity="warning" sx={{ mt: 2, borderRadius: 3 }}>{error}</Alert> : null}
+        {error ? (
+          <Alert severity="warning" sx={{ mt: 2, borderRadius: 3 }}>
+            {error}
+          </Alert>
+        ) : null}
 
         {result && milestoneCopy ? (
           <Card sx={{ mt: 2, borderRadius: 4, border: '1px solid #E5EAF3', boxShadow: '0 18px 45px rgba(15,23,42,0.08)' }}>
@@ -222,9 +338,7 @@ export default function TrackPage() {
                       </Stack>
                       <Box sx={{ pb: isLast ? 0 : 2.5, flex: 1, minWidth: 0 }}>
                         <Stack direction={{ xs: 'column', sm: 'row' }} spacing={{ xs: 0.25, sm: 1 }} justifyContent="space-between">
-                          <Typography sx={{ fontWeight: isCurrent ? 800 : 700, color: item.state === 'upcoming' ? 'text.secondary' : 'text.primary' }}>
-                            {copy.label}
-                          </Typography>
+                          <Typography sx={{ fontWeight: isCurrent ? 800 : 700, color: item.state === 'upcoming' ? 'text.secondary' : 'text.primary' }}>{copy.label}</Typography>
                           <Typography sx={{ fontSize: 12, color: 'text.secondary', flexShrink: 0 }}>
                             {item.reachedAt ? formatDate(item.reachedAt) : item.state === 'upcoming' ? 'ขั้นตอนถัดไป' : ''}
                           </Typography>
