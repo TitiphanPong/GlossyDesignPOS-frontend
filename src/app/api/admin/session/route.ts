@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { ADMIN_AUTH_COOKIE_NAME, ADMIN_AUTH_SESSION_TTL_MS, createAdminSession, getAdminAuthConfig, verifyAdminSession } from '@/lib/admin-auth';
+import { parseBackendCurrentAdminIdentity } from '@/lib/admin-session-identity';
 
 type LoginRequestBody = {
   username?: string;
@@ -31,7 +32,7 @@ function clearSessionCookie(response: NextResponse) {
 }
 
 export async function GET(request: Request) {
-const config = getAdminAuthConfig();
+  const config = getAdminAuthConfig();
   const token = request.headers.get('cookie')?.match(new RegExp(`${ADMIN_AUTH_COOKIE_NAME}=([^;]+)`))?.[1] ?? null;
   const session = await verifyAdminSession(token);
 
@@ -44,13 +45,33 @@ const config = getAdminAuthConfig();
       });
 
       if (backendResponse.ok) {
-        return NextResponse.json({
+        const identity = parseBackendCurrentAdminIdentity(await backendResponse.json());
+        if (!identity) {
+          return NextResponse.json({ message: 'Authentication service returned an invalid identity.' }, { status: 503 });
+        }
+
+        const refreshedToken = await createAdminSession(identity.username, Date.now(), process.env, {
+          accessToken: session.accessToken,
+          expiresAt: new Date(session.expiresAt).toISOString(),
+          role: identity.role,
+        });
+        const response = NextResponse.json({
           authenticated: true,
           configured: Boolean(config),
           expiresAt: session.expiresAt,
-          username: session.username,
-          role: session.role,
+          username: identity.username,
+          role: identity.role,
         });
+        response.cookies.set({
+          name: ADMIN_AUTH_COOKIE_NAME,
+          value: refreshedToken,
+          httpOnly: true,
+          sameSite: 'lax',
+          secure: process.env.NODE_ENV === 'production',
+          path: '/',
+          maxAge: Math.max(0, Math.floor((session.expiresAt - Date.now()) / 1000)),
+        });
+        return response;
       }
 
       if (backendResponse.status !== 401) {
