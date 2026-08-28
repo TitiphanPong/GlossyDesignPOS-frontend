@@ -1,7 +1,9 @@
 'use client';
 
 import { Box, Stack, Typography } from '@mui/material';
+import { QRCodeSVG } from 'qrcode.react';
 import { formatCustomerAddress, type NormalizedInvoiceOrder, type PaymentMethod } from '../../../../lib/contracts';
+import { buildOrderTrackingUrl } from '../../../../lib/order-tracking-url';
 import { convertAmountToThaiText, formatCurrency, resolveInvoiceDocumentType, type InvoiceDocumentType } from '../../../home/invoice/[orderId]/invoice-utils';
 
 export type InvoiceItem = {
@@ -53,11 +55,13 @@ export type InvoiceData = {
 type InvoiceDocumentProps = {
   documentType: InvoiceDocumentType;
   order: NormalizedInvoiceOrder;
+  trackingOrigin?: string | null;
 };
 
 type TaxInvoiceTemplateProps = {
   invoiceData: InvoiceData;
   minItemRows?: number;
+  trackingUrl?: string | null;
 };
 
 type InvoiceCopyProps = TaxInvoiceTemplateProps & {
@@ -238,6 +242,23 @@ function CheckboxField({ label, checked }: Readonly<{ label: string; checked: bo
   );
 }
 
+function TrackingQr({ trackingUrl, compact = false }: Readonly<{ trackingUrl?: string | null; compact?: boolean }>) {
+  if (!trackingUrl) {
+    return null;
+  }
+
+  const size = compact ? '12mm' : '24mm';
+
+  return (
+    <Stack alignItems="center" spacing={compact ? '0.4mm' : '1mm'} sx={{ flexShrink: 0, textAlign: 'center' }}>
+      <Box sx={{ width: size, height: size, display: 'grid', placeItems: 'center', bgcolor: '#fff' }}>
+        <QRCodeSVG value={trackingUrl} size={compact ? 45 : 91} level="M" marginSize={0} title="Order tracking QR" />
+      </Box>
+      <Typography sx={{ fontSize: compact ? '1.7mm' : '2.35mm', fontWeight: 700, lineHeight: 1.15 }}>ติดตามสถานะงาน</Typography>
+    </Stack>
+  );
+}
+
 function InfoLine({
   label,
   value,
@@ -267,7 +288,7 @@ function InfoLine({
   );
 }
 
-export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyIndex }: Readonly<InvoiceCopyProps>) {
+export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyIndex, trackingUrl }: Readonly<InvoiceCopyProps>) {
   const emptyRowCount = Math.max(minItemRows - invoiceData.items.length, 0);
   const rows = [
     ...invoiceData.items.map((item, itemIndex) => ({
@@ -470,16 +491,17 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
           </Box>
         </Box>
 
-        <Box sx={{ mt: '1.2mm', px: '1.5mm', py: '0.8mm', borderTop: DOTTED_BORDER, display: 'grid', gridTemplateColumns: 'auto 1fr', columnGap: '3mm', alignItems: 'center' }}>
+        <Box sx={{ mt: '1.2mm', px: '1.5mm', py: '0.8mm', borderTop: DOTTED_BORDER, display: 'grid', gridTemplateColumns: trackingUrl ? 'auto 1fr auto' : 'auto 1fr', columnGap: '3mm', alignItems: 'center' }}>
           <Typography sx={{ fontSize: '3.2mm', fontWeight: 700, lineHeight: 1.2, whiteSpace: 'nowrap' }}>วันที่ / Date : {invoiceData.dateLine}</Typography>
           <Typography sx={{ minWidth: 0, fontSize: '2.3mm', lineHeight: 1.2, textAlign: 'right' }}>{invoiceData.notes}</Typography>
+          <TrackingQr trackingUrl={trackingUrl} compact />
         </Box>
       </Box>
     </Box>
   );
 }
 
-export function TaxInvoiceTemplate({ invoiceData, minItemRows = MIN_ITEM_ROWS }: Readonly<TaxInvoiceTemplateProps>) {
+export function TaxInvoiceTemplate({ invoiceData, minItemRows = MIN_ITEM_ROWS, trackingUrl }: Readonly<TaxInvoiceTemplateProps>) {
   return (
     <Box
       className="invoice-document-sheet"
@@ -507,13 +529,13 @@ export function TaxInvoiceTemplate({ invoiceData, minItemRows = MIN_ITEM_ROWS }:
           WebkitPrintColorAdjust: 'exact',
         },
       }}>
-      <InvoiceCopy invoiceData={invoiceData} minItemRows={minItemRows} copyIndex={0} />
-      <InvoiceCopy invoiceData={invoiceData} minItemRows={minItemRows} copyIndex={1} />
+      <InvoiceCopy invoiceData={invoiceData} minItemRows={minItemRows} copyIndex={0} trackingUrl={trackingUrl} />
+      <InvoiceCopy invoiceData={invoiceData} minItemRows={minItemRows} copyIndex={1} trackingUrl={trackingUrl} />
     </Box>
   );
 }
 
-export function ReceiptTemplate({ invoiceData }: Readonly<{ invoiceData: InvoiceData }>) {
+export function ReceiptTemplate({ invoiceData, trackingUrl }: Readonly<{ invoiceData: InvoiceData; trackingUrl?: string | null }>) {
   const hasVat = invoiceData.vat > 0;
 
   return (
@@ -603,6 +625,7 @@ export function ReceiptTemplate({ invoiceData }: Readonly<{ invoiceData: Invoice
 
         <Stack spacing="1.5mm" alignItems="center" sx={{ borderTop: '0.3mm dashed #111827', pt: '3mm', textAlign: 'center' }}>
           {invoiceData.notes ? <Typography sx={{ fontSize: '2.35mm', lineHeight: 1.35 }}>{invoiceData.notes}</Typography> : null}
+          <TrackingQr trackingUrl={trackingUrl} />
           <Typography sx={{ fontSize: '2.8mm', fontWeight: 700, lineHeight: 1.3 }}>ขอบคุณที่ใช้บริการ</Typography>
         </Stack>
       </Stack>
@@ -610,12 +633,13 @@ export function ReceiptTemplate({ invoiceData }: Readonly<{ invoiceData: Invoice
   );
 }
 
-export function InvoiceDocument({ documentType, order }: Readonly<InvoiceDocumentProps>) {
+export function InvoiceDocument({ documentType, order, trackingOrigin }: Readonly<InvoiceDocumentProps>) {
   const invoiceData = buildInvoiceDataFromOrder(order, documentType);
+  const trackingUrl = buildOrderTrackingUrl(order.orderNumber || order.orderId, trackingOrigin);
 
   if (documentType === 'receipt') {
-    return <ReceiptTemplate invoiceData={invoiceData} />;
+    return <ReceiptTemplate invoiceData={invoiceData} trackingUrl={trackingUrl} />;
   }
 
-  return <TaxInvoiceTemplate invoiceData={invoiceData} />;
+  return <TaxInvoiceTemplate invoiceData={invoiceData} trackingUrl={trackingUrl} />;
 }
