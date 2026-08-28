@@ -27,6 +27,7 @@ import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
@@ -645,10 +646,7 @@ function DrawerActionBar({
   onEdit,
   onSaveCustomer,
   onOpenPayRemaining,
-  onConvertToTaxInvoice,
-  onOpenTaxInvoiceConfirm,
-  onCancelOrder,
-  onPrintDocument,
+  onClose,
 }: Readonly<{
   order: OrderRow;
   isEditing: boolean;
@@ -656,10 +654,7 @@ function DrawerActionBar({
   onEdit: () => void;
   onSaveCustomer: () => void;
   onOpenPayRemaining: (order: OrderRow) => void;
-  onConvertToTaxInvoice: (order: OrderRow) => Promise<void>;
-  onOpenTaxInvoiceConfirm: () => void;
-  onCancelOrder: (id: string) => void;
-  onPrintDocument: (order: OrderRow, mode: 'receipt' | 'invoice') => void;
+  onClose: () => void;
 }>) {
   const isUpdating = updatingOrderId === order.id;
 
@@ -698,24 +693,20 @@ function DrawerActionBar({
         </Button>
         <Button
           variant="outlined"
-          startIcon={<ReceiptRoundedIcon />}
+          startIcon={<CloseRoundedIcon />}
           disabled={isUpdating}
-          onClick={async () => {
-            if (order.taxInvoice === 'yes') {
-              await onConvertToTaxInvoice(order);
-              onPrintDocument(order, 'invoice');
-            } else onOpenTaxInvoiceConfirm();
-          }}
-          sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
-          {order.taxInvoice === 'yes' ? 'เปิดใบกำกับภาษี' : 'เปลี่ยนเป็นใบกำกับภาษี'}
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<CancelRoundedIcon />}
-          disabled={isUpdating}
-          onClick={() => onCancelOrder(order.id)}
-          sx={{ ...commonButtonSx, flex: '1 1 auto', width: { xs: '100%', sm: 'auto' }, textTransform: 'none' }}>
-          ยกเลิกงาน
+          onClick={onClose}
+          sx={{
+            ...commonButtonSx,
+            flex: '1 1 auto',
+            width: { xs: '100%', sm: 'auto' },
+            textTransform: 'none',
+            borderColor: '#CBD5E1',
+            color: '#334155',
+            bgcolor: '#FFFFFF',
+            '&:hover': { borderColor: '#94A3B8', bgcolor: '#F8FAFC' },
+          }}>
+          ปิดรายละเอียด
         </Button>
       </Stack>
     </Box>
@@ -785,8 +776,6 @@ export function OrderDetailDrawer({
   onOpenPayRemaining,
   onConvertToTaxInvoice,
   onAdvanceWorkflow,
-  onCancelOrder,
-  onPrintDocument,
 }: Readonly<OrderDetailDrawerProps>) {
   const [isEditing, setIsEditing] = React.useState(false);
   const [editError, setEditError] = React.useState<string | null>(null);
@@ -1103,10 +1092,7 @@ export function OrderDetailDrawer({
             onEdit={() => setIsEditing(true)}
             onSaveCustomer={() => void saveCustomer()}
             onOpenPayRemaining={onOpenPayRemaining}
-            onConvertToTaxInvoice={onConvertToTaxInvoice}
-            onOpenTaxInvoiceConfirm={() => setTaxInvoiceConfirmOpen(true)}
-            onCancelOrder={onCancelOrder}
-            onPrintDocument={onPrintDocument}
+            onClose={onClose}
           />
         </Stack>
       ) : null}
