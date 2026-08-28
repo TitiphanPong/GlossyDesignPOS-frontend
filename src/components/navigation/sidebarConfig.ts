@@ -1,6 +1,7 @@
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import DashboardCustomizeRoundedIcon from '@mui/icons-material/DashboardCustomizeRounded';
 import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
+import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
@@ -56,6 +57,12 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
         label: 'คลังไฟล์ลูกค้า',
         href: '/home/storage',
         icon: FolderCopyRoundedIcon,
+      },
+      {
+        id: 'stock',
+        label: 'สต็อกวัสดุ',
+        href: '/home/stock',
+        icon: Inventory2RoundedIcon,
       },
     ],
   },
