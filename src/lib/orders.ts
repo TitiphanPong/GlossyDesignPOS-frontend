@@ -1,5 +1,5 @@
 import { fetchApi, fetchApiJson } from './api';
-import { normalizeApiOrder, type ApiOrder, type CreateOrderRequest, type NormalizedOrder } from './contracts';
+import { normalizeApiOrder, type ApiOrder, type CreateOrderRequest, type NormalizedOrder, type ProductionWorkflowStatus } from './contracts';
 
 type ApiOrderLike = Partial<ApiOrder> & {
   id?: string;
@@ -130,6 +130,7 @@ export type FetchOrdersParams = {
   saleFrom?: string;
   saleTo?: string;
   status?: ApiOrder['status'];
+  workflowStatus?: ProductionWorkflowStatus;
   payment?: 'unpaid';
   paymentMethod?: ApiOrder['payment'];
   taxInvoice?: 'yes' | 'no';
@@ -171,6 +172,9 @@ function buildOrdersPath(params: FetchOrdersParams = {}): string {
   }
   if (params.status) {
     query.set('status', params.status);
+  }
+  if (params.workflowStatus) {
+    query.set('workflowStatus', params.workflowStatus);
   }
   if (params.payment) {
     query.set('payment', params.payment);
@@ -300,7 +304,7 @@ export async function fetchOrdersPage(params: FetchOrdersParams = {}): Promise<F
 }
 
 export async function downloadOrdersExport(
-  params: Pick<FetchOrdersParams, 'search' | 'saleMonth' | 'period' | 'saleFrom' | 'saleTo' | 'status' | 'payment' | 'paymentMethod' | 'taxInvoice' | 'sort'>,
+  params: Pick<FetchOrdersParams, 'search' | 'saleMonth' | 'period' | 'saleFrom' | 'saleTo' | 'status' | 'workflowStatus' | 'payment' | 'paymentMethod' | 'taxInvoice' | 'sort'>,
   format: 'xlsx' | 'pdf'
 ): Promise<void> {
   const query = new URLSearchParams({ format });
@@ -310,6 +314,7 @@ export async function downloadOrdersExport(
   if (params.saleFrom) query.set('saleFrom', params.saleFrom);
   if (params.saleTo) query.set('saleTo', params.saleTo);
   if (params.status) query.set('status', params.status);
+  if (params.workflowStatus) query.set('workflowStatus', params.workflowStatus);
   if (params.payment) query.set('payment', params.payment);
   if (params.paymentMethod) query.set('paymentMethod', params.paymentMethod);
   if (params.taxInvoice) query.set('taxInvoice', params.taxInvoice);
