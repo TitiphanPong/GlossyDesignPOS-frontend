@@ -246,12 +246,17 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
   const [savingCustomer, setSavingCustomer] = useState(false);
   const [drawerError, setDrawerError] = useState<string | null>(null);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
+  const [trackingOrigin, setTrackingOrigin] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<CustomerFormValues>({
     customerName: '',
     taxId: '',
     address: '',
     itemNames: [],
   });
+
+  useEffect(() => {
+    setTrackingOrigin(globalThis.location?.origin ?? null);
+  }, []);
 
   useEffect(() => {
     let mounted = true;
@@ -387,7 +392,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
         invoiceNumber={`#${documentType === 'tax-invoice' ? order.invoiceNumber || order.orderNumber || order.orderId : order.orderNumber || order.orderId}`}
         documentType={documentType}
         onEditCustomer={handleOpenDrawer}
-        printableDocument={<InvoiceDocument documentType={documentType} order={order} />}
+        printableDocument={<InvoiceDocument documentType={documentType} order={order} trackingOrigin={trackingOrigin} />}
       />
 
       <CustomerEditDrawer
