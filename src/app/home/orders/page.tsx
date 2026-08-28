@@ -769,27 +769,6 @@ export default function OrderManagementPage() {
                   </FormControl>
 
                   <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 190 } }}>
-                    <Typography sx={{ mb: 0.4, color: '#475569', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>สถานะยอดชำระ</Typography>
-                    <Select<OutstandingPaymentFilter>
-                      labelId="outstanding-payment-filter"
-                      value={outstandingPaymentFilter}
-                      label="สถานะยอดชำระ"
-                      inputProps={{ 'aria-label': 'สถานะยอดชำระ' }}
-                      onChange={event => setOutstandingPaymentFilter(event.target.value as OutstandingPaymentFilter)}
-                      sx={{
-                        borderRadius: 2,
-                        height: 48,
-                        bgcolor: '#FFFFFF',
-                        '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
-                        '&:hover fieldset': { borderColor: '#94A3B8' },
-                        '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: 1 },
-                      }}>
-                      <MenuItem value="all">ทั้งหมด</MenuItem>
-                      <MenuItem value="unpaid">มียอดค้างชำระ</MenuItem>
-                    </Select>
-                  </FormControl>
-
-                  <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 190 } }}>
                     <Typography sx={{ mb: 0.4, color: '#475569', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>วิธีชำระเงิน</Typography>
                     <Select<'all' | PaymentMethod>
                       labelId="payment-method-filter"
