@@ -1,0 +1,15 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import { isPublicBackendRequest } from './publicAccess';
+
+test('public backend allowlist includes secure customer tracking token POST', () => {
+  assert.equal(isPublicBackendRequest('POST', ['tracking', 'token']), true);
+  assert.equal(isPublicBackendRequest('POST', ['tracking', 'lookup']), true);
+});
+
+test('public backend allowlist does not expose tracking token through other methods or routes', () => {
+  assert.equal(isPublicBackendRequest('GET', ['tracking', 'token']), false);
+  assert.equal(isPublicBackendRequest('PATCH', ['tracking', 'token']), false);
+  assert.equal(isPublicBackendRequest('POST', ['orders']), false);
+  assert.equal(isPublicBackendRequest('POST', ['orders', 'GD-1', 'tracking-access']), false);
+});
