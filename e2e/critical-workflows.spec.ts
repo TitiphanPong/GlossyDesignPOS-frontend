@@ -10,6 +10,27 @@ async function loginAsCashier(page: Page, target = '/home/quick-sale') {
   await expect(page).toHaveURL(url => `${url.pathname}${url.search}` === target);
 }
 
+test('fails closed without leaking login credentials before hydration', async ({ browser, baseURL }) => {
+  const context = await browser.newContext({ javaScriptEnabled: false });
+  const page = await context.newPage();
+  const requestedUrls: string[] = [];
+  page.on('request', request => requestedUrls.push(request.url()));
+
+  await page.goto(`${baseURL}/login?redirectTo=/home/quick-sale`);
+  await page.getByLabel('ชื่อผู้ใช้').fill('pre-hydration-user');
+  await page.locator('#login-password').fill('pre-hydration-secret');
+
+  await page.locator('form').evaluate((form: HTMLFormElement) => form.submit());
+  await page.waitForTimeout(500);
+
+  expect(new URL(page.url()).pathname).toBe('/login');
+  expect(page.url()).not.toContain('pre-hydration-user');
+  expect(page.url()).not.toContain('pre-hydration-secret');
+  expect(requestedUrls.every(url => !url.includes('pre-hydration-user') && !url.includes('pre-hydration-secret'))).toBe(true);
+
+  await context.close();
+});
+
 test('protects cashier routes and restores the requested route after login', async ({ page }) => {
   await loginAsCashier(page);
   await expect(page.getByText('Quick Sale', { exact: true }).first()).toBeVisible();

@@ -50,7 +50,6 @@ export default function LoginForm({
           <PersonOutline aria-hidden="true" className={styles.fieldIcon} />
           <input
             id="login-username"
-            name="username"
             type="text"
             placeholder="กรอกชื่อผู้ใช้ของคุณ"
             value={username}
@@ -71,7 +70,6 @@ export default function LoginForm({
           <LockOutlined aria-hidden="true" className={styles.fieldIcon} />
           <input
             id="login-password"
-            name="password"
             type={showPassword ? 'text' : 'password'}
             placeholder="กรอกรหัสผ่านของคุณ"
             value={password}
