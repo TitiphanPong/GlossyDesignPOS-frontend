@@ -213,6 +213,22 @@ export async function createOrder(payload: CreateOrderRequest): Promise<Normaliz
   return createdOrder;
 }
 
+export async function getOrderTrackingAccess(orderId: string): Promise<{ token: string }> {
+  const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}/tracking-access`, {
+    method: 'POST',
+  });
+  if (!isRecord(responseBody)) {
+    throw new Error('Backend did not return tracking access');
+  }
+
+  const token = typeof responseBody.token === 'string' ? responseBody.token.trim() : '';
+  if (!/^[A-Za-z0-9_-]{43}$/.test(token)) {
+    throw new Error('Backend returned invalid tracking access');
+  }
+
+  return { token };
+}
+
 export async function payRemainingBalance(orderId: string, payload: RemainingPaymentPayload): Promise<NormalizedOrder> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   const idempotencyKey = payload.idempotencyKey?.trim();

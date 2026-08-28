@@ -10,7 +10,7 @@ import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import type { JobTimelineCardItem } from '../components/JobTimelineCard';
 import { statusChipSx } from '../components/adminUi';
 import { fetchApi } from '../../../lib/api';
-import { getDisplayOrderNumber, type NormalizedOrder, type PaymentMethod } from '../../../lib/contracts';
+import { getDisplayOrderNumber, type NormalizedOrder, type PaymentMethod, type ProductionWorkflowStatus } from '../../../lib/contracts';
 import { fetchOrdersPage, type OrderListSummary } from '../../../lib/orders';
 import { getOrderStatusConfig, ORDER_STATUS_CONFIG } from '../../../lib/order-status';
 import type { OrderRow, OrderTypeFilter, PaymentStatus, SortOrder } from './orderManagementTypes';
@@ -98,6 +98,7 @@ export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
     createdAt,
     month: dayjs(saleDate).format('YYYY-MM'),
     status,
+    workflowStatus: order.workflowStatus,
     subtotal: order.subtotal,
     discount: order.discount,
     vat: order.vatAmount,
@@ -140,7 +141,7 @@ export async function fetchOrderRows(params: FetchOrderRowsParams): Promise<Fetc
   };
 }
 
-export async function updateOrderStatus(orderId: string, status: PaymentStatus): Promise<void> {
+export async function updateOrderStatus(orderId: string, status: ProductionWorkflowStatus): Promise<void> {
   const endpoints = [`/orders/${orderId}/status`, `/orders/${orderId}`];
   let lastError: Error | null = null;
 
@@ -267,18 +268,20 @@ export function buildOrderPaymentTimelineSubtitle(order: OrderRow): string {
 
 export function buildOrderTimelineItems(order: OrderRow): JobTimelineCardItem[] {
   let activeStage: 'created' | 'payment' | 'production' = 'payment';
-  if (order.status === 'pending') {
-    activeStage = 'created';
-  } else if (order.status === 'producing' || order.status === 'ready_for_pickup' || order.status === 'delivered') {
+  if (order.workflowStatus !== 'pending') {
     activeStage = 'production';
+  } else if (order.status === 'pending') {
+    activeStage = 'created';
   }
-  let productionSubtitle = 'รอเข้าสู่กระบวนการผลิต';
 
-  if (order.status === 'paid' || order.status === 'partial') {
-    productionSubtitle = 'พร้อมส่งต่อเข้ากระบวนการผลิต';
-  } else if (order.status === 'cancelled') {
-    productionSubtitle = 'หยุดการดำเนินการตามสถานะรายการงาน';
-  }
+  const productionSubtitleByStatus: Record<ProductionWorkflowStatus, string> = {
+    pending: 'รอเริ่มดำเนินการผลิต',
+    producing: 'กำลังผลิตหรือจัดเตรียมงาน',
+    ready_for_pickup: 'งานเสร็จแล้วและพร้อมให้ลูกค้ารับ',
+    delivered: 'ส่งมอบงานให้ลูกค้าเรียบร้อยแล้ว',
+    cancelled: 'หยุดการดำเนินการตามสถานะรายการงาน',
+  };
+  const productionSubtitle = productionSubtitleByStatus[order.workflowStatus];
 
   const steps: Array<{ id: string; title: string; subtitle: string; icon: React.ReactNode; active: boolean }> = [
     {

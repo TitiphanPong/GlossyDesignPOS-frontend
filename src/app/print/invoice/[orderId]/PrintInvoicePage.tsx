@@ -8,7 +8,7 @@ import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import { isMissingApiBaseError } from '../../../../lib/api';
 import { createInvoiceOrderFromNormalizedOrder, type CustomerInfo, type NormalizedInvoiceOrder } from '../../../../lib/contracts';
-import { fetchOrderById, updateOrderCustomerInfo } from '../../../../lib/orders';
+import { fetchOrderById, getOrderTrackingAccess, updateOrderCustomerInfo } from '../../../../lib/orders';
 import { getMissingCompanyConfigFields, InvoiceDocument } from './InvoiceDocument';
 import { PrintDocumentLayout } from './PrintDocumentLayout';
 import { getInvoiceDocumentMeta, resolveInvoiceDocumentType } from '../../../home/invoice/[orderId]/invoice-utils';
@@ -247,6 +247,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
   const [drawerError, setDrawerError] = useState<string | null>(null);
   const [snackbarMessage, setSnackbarMessage] = useState<string | null>(null);
   const [trackingOrigin, setTrackingOrigin] = useState<string | null>(null);
+  const [trackingToken, setTrackingToken] = useState<string | null>(null);
   const [formValues, setFormValues] = useState<CustomerFormValues>({
     customerName: '',
     taxId: '',
@@ -277,6 +278,13 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
           )
         );
         setLoadError(null);
+        void getOrderTrackingAccess(data._id)
+          .then(access => {
+            if (mounted) setTrackingToken(access.token);
+          })
+          .catch(() => {
+            if (mounted) setTrackingToken(null);
+          });
       } catch (error) {
         if (!mounted) {
           return;
@@ -392,7 +400,7 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
         invoiceNumber={`#${documentType === 'tax-invoice' ? order.invoiceNumber || order.orderNumber || order.orderId : order.orderNumber || order.orderId}`}
         documentType={documentType}
         onEditCustomer={handleOpenDrawer}
-        printableDocument={<InvoiceDocument documentType={documentType} order={order} trackingOrigin={trackingOrigin} />}
+        printableDocument={<InvoiceDocument documentType={documentType} order={order} trackingOrigin={trackingOrigin} trackingToken={trackingToken} />}
       />
 
       <CustomerEditDrawer

@@ -6,9 +6,11 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ReplayIcon from '@mui/icons-material/Replay';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
 import HourglassEmptyIcon from '@mui/icons-material/HourglassEmpty';
+import { QRCodeSVG } from 'qrcode.react';
 import { getDisplayOrderNumber, PAYMENT_METHOD_LABELS, PaymentMethod } from '../../../../lib/contracts';
 import { isMissingApiBaseError } from '../../../../lib/api';
-import { createOrder } from '../../../../lib/orders';
+import { createOrder, getOrderTrackingAccess } from '../../../../lib/orders';
+import { buildSecureOrderTrackingUrl } from '../../../../lib/order-tracking-url';
 import { canOverridePrice, fetchCurrentAdminRole, type AdminRole } from '../../../../lib/admin-capabilities';
 import {
   buildPendingOrderPayload,
@@ -239,6 +241,22 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
       setOrderData(submittedOrder);
       setIsPaid(true);
       onPaid();
+
+      void getOrderTrackingAccess(createdOrder._id)
+        .then(access => {
+          const trackingUrl = buildSecureOrderTrackingUrl(access.token, globalThis.location?.origin);
+          if (!trackingUrl) return;
+
+          setOrderData(current => {
+            if (!current || current.clientDraftId !== submittedOrder.clientDraftId) return current;
+            const withTracking = { ...current, trackingUrl };
+            persistPendingOrderDraft(withTracking);
+            return withTracking;
+          });
+        })
+        .catch(() => {
+          // Tracking QR is best-effort and must never invalidate a completed sale.
+        });
     } catch (error) {
       console.error(error);
       const message = getConfirmErrorMessage(error);
@@ -317,6 +335,16 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
               {getDisplayOrderNumber(orderData ?? {}, getOrderNumberFallback(isSubmitting, submitError))}
             </Box>
           </Typography>
+
+          {isPaid && orderData?.trackingUrl ? (
+            <Box sx={{ mt: 2, mx: 'auto', width: 'fit-content', p: 1.5, borderRadius: 3, border: '1px solid #DCE7F7', bgcolor: '#F8FBFF' }}>
+              <Box sx={{ width: 150, height: 150, mx: 'auto', p: 0.75, borderRadius: 2.5, bgcolor: '#FFFFFF', display: 'grid', placeItems: 'center' }}>
+                <QRCodeSVG value={orderData.trackingUrl} size={136} level="M" title="Order tracking QR" />
+              </Box>
+              <Typography sx={{ mt: 1, fontSize: 14, fontWeight: 800, color: '#172033' }}>สแกนเพื่อติดตามสถานะงาน</Typography>
+              <Typography sx={{ mt: 0.25, fontSize: 12, color: '#64748B' }}>ลูกค้าหน้าร้านสามารถเก็บ QR นี้ไว้ติดตามงานได้</Typography>
+            </Box>
+          ) : null}
         </Box>
 
         <Box sx={{ display: 'flex', justifyContent: 'center' }}>

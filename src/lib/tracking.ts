@@ -66,6 +66,12 @@ export function getOrderPrefillFromSearch(search: string): string {
   return order?.trim().slice(0, 64) ?? '';
 }
 
+export function getTrackingTokenFromSearch(search: string): string {
+  const normalizedSearch = search.startsWith('?') ? search.slice(1) : search;
+  const token = new URLSearchParams(normalizedSearch).get('t')?.trim() ?? '';
+  return /^[A-Za-z0-9_-]{43}$/.test(token) ? token : '';
+}
+
 export function buildPublicTrackingTimeline(result: PublicTrackingResult): PublicTrackingTimelineItem[] {
   const reachedAtByMilestone = new Map(
     result.milestones.map(entry => [entry.milestone, entry.reachedAt] as const),
@@ -106,6 +112,20 @@ export async function trackOrder(orderNumber: string, phoneSuffix: string): Prom
       orderNumber: orderNumber.trim(),
       phoneSuffix: phoneSuffix.trim(),
     }),
+    cache: 'no-store',
+  });
+}
+
+export async function trackOrderByToken(token: string): Promise<PublicTrackingResult> {
+  const normalizedToken = token.trim();
+  if (!/^[A-Za-z0-9_-]{43}$/.test(normalizedToken)) {
+    throw new Error('invalid_tracking_token');
+  }
+
+  return fetchApiJson<PublicTrackingResult>('/tracking/token', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ token: normalizedToken }),
     cache: 'no-store',
   });
 }

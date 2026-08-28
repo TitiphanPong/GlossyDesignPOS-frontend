@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 
-import type { OrderStatus, OrderType, PaymentMethod } from '../../../lib/contracts';
+import type { OrderStatus, OrderType, PaymentMethod, ProductionWorkflowStatus } from '../../../lib/contracts';
 
 export type PaymentStatus = OrderStatus;
 export type SortOrder = 'newest' | 'oldest' | 'high' | 'low';
@@ -40,6 +40,7 @@ export type OrderRow = {
   createdAt: string;
   month: string;
   status: PaymentStatus;
+  workflowStatus: ProductionWorkflowStatus;
   subtotal: number;
   discount: number;
   vat: number;
@@ -86,6 +87,7 @@ export type OrderDetailDrawerProps = {
   onSaveCustomer: (order: OrderRow, customer: Pick<OrderRow, 'customerName' | 'phoneNumber' | 'taxId' | 'address'>) => Promise<void>;
   onOpenPayRemaining: (order: OrderRow) => void;
   onConvertToTaxInvoice: (order: OrderRow) => Promise<void>;
+  onAdvanceWorkflow: (order: OrderRow, status: ProductionWorkflowStatus) => Promise<void>;
   onCancelOrder: (id: string) => void;
   onPrintDocument: (order: OrderRow, mode: 'receipt' | 'invoice') => void;
 };

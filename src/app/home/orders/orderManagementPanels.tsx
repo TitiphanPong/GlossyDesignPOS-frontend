@@ -37,10 +37,13 @@ import BadgeRoundedIcon from '@mui/icons-material/BadgeRounded';
 import ContactPageRoundedIcon from '@mui/icons-material/ContactPageRounded';
 import LocationOnRoundedIcon from '@mui/icons-material/LocationOnRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
+import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import dayjs from 'dayjs';
 
 import JobTimelineCard from '../components/JobTimelineCard';
 import { commonButtonSx, statusChipSx } from '../components/adminUi';
+import type { ProductionWorkflowStatus } from '../../../lib/contracts';
 import type { ExportMenuProps, OrderDetailDrawerProps, OrderRow, RowActionsMenuProps, StatCardProps } from './orderManagementTypes';
 import { buildOrderTimelineItems, formatMoney, PAYMENT_METHOD_LABELS_TH, statusChip } from './orderManagementUtils';
 
@@ -505,6 +508,136 @@ function PaymentSummaryCard({ order }: Readonly<{ order: OrderRow }>) {
   );
 }
 
+const ORDER_WORKFLOW_STEPS: Array<{ status: Exclude<ProductionWorkflowStatus, 'cancelled'>; label: string }> = [
+  { status: 'pending', label: 'รับออเดอร์' },
+  { status: 'producing', label: 'กำลังดำเนินการ' },
+  { status: 'ready_for_pickup', label: 'พร้อมรับงาน' },
+  { status: 'delivered', label: 'ส่งมอบแล้ว' },
+];
+
+const NEXT_WORKFLOW_ACTION: Partial<
+  Record<ProductionWorkflowStatus, { status: ProductionWorkflowStatus; label: string; description: string }>
+> = {
+  pending: {
+    status: 'producing',
+    label: 'เริ่มดำเนินการ',
+    description: 'แจ้งลูกค้าว่างานเข้าสู่ขั้นตอนการผลิตหรือจัดเตรียมแล้ว',
+  },
+  producing: {
+    status: 'ready_for_pickup',
+    label: 'งานพร้อมรับ',
+    description: 'ยืนยันว่างานเสร็จและพร้อมให้ลูกค้ารับหรือดำเนินการส่งมอบ',
+  },
+  ready_for_pickup: {
+    status: 'delivered',
+    label: 'ส่งมอบงานแล้ว',
+    description: 'ปิดขั้นตอนการผลิตหลังลูกค้าได้รับงานเรียบร้อยแล้ว',
+  },
+};
+
+function WorkflowProgressCard({
+  order,
+  isUpdating,
+  onAdvance,
+}: Readonly<{
+  order: OrderRow;
+  isUpdating: boolean;
+  onAdvance: (order: OrderRow, status: ProductionWorkflowStatus) => Promise<void>;
+}>) {
+  if (order.workflowStatus === 'cancelled') {
+    return (
+      <Card sx={{ borderRadius: 3.8, border: '1px solid #F2C7C3', boxShadow: 'none', bgcolor: '#FFF8F7' }}>
+        <CardContent>
+          <Stack direction="row" spacing={1.25} alignItems="center">
+            <Avatar sx={{ width: 34, height: 34, bgcolor: alpha('#D73A49', 0.12), color: '#B42318' }}>
+              <CancelRoundedIcon sx={{ fontSize: 19 }} />
+            </Avatar>
+            <Box>
+              <Typography sx={{ fontWeight: 800, color: '#B42318' }}>งานถูกยกเลิก</Typography>
+              <Typography sx={{ mt: 0.25, color: '#7A4B47', fontSize: 13 }}>Tracking ลูกค้าจะแสดงว่างานนี้หยุดดำเนินการแล้ว</Typography>
+            </Box>
+          </Stack>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const currentIndex = ORDER_WORKFLOW_STEPS.findIndex(step => step.status === order.workflowStatus);
+  const nextAction = NEXT_WORKFLOW_ACTION[order.workflowStatus];
+
+  return (
+    <Card sx={{ borderRadius: 3.8, border: '1px solid #DCE7F7', boxShadow: 'none', background: 'linear-gradient(145deg, #F8FBFF 0%, #FFFFFF 72%)' }}>
+      <CardContent>
+        <Stack spacing={2}>
+          <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1}>
+            <Stack direction="row" spacing={1} alignItems="center">
+              <Avatar sx={{ width: 34, height: 34, bgcolor: alpha('#2563EB', 0.12), color: '#1D4ED8' }}>
+                <CheckCircleRoundedIcon sx={{ fontSize: 19 }} />
+              </Avatar>
+              <Box>
+                <Typography sx={{ fontWeight: 800 }}>สถานะงานสำหรับลูกค้า</Typography>
+                <Typography sx={{ mt: 0.2, color: '#64748B', fontSize: 12.5 }}>อัปเดตตรงนี้แล้ว Order Tracking จะเปลี่ยนตาม</Typography>
+              </Box>
+            </Stack>
+            <Chip
+              size="small"
+              label={ORDER_WORKFLOW_STEPS[Math.max(currentIndex, 0)]?.label ?? 'รับออเดอร์'}
+              sx={{ bgcolor: '#EAF2FF', color: '#1D4ED8', fontWeight: 800 }}
+            />
+          </Stack>
+
+          <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, minmax(0, 1fr))', gap: 0.75 }}>
+            {ORDER_WORKFLOW_STEPS.map((step, index) => {
+              const completed = index < currentIndex;
+              const current = index === currentIndex;
+              return (
+                <Box key={step.status} sx={{ minWidth: 0 }}>
+                  <Box
+                    sx={{
+                      height: 5,
+                      mb: 0.7,
+                      borderRadius: 99,
+                      bgcolor: completed ? '#22A447' : current ? '#2563EB' : '#E2E8F0',
+                    }}
+                  />
+                  <Typography
+                    sx={{
+                      fontSize: 10.5,
+                      lineHeight: 1.25,
+                      fontWeight: current || completed ? 800 : 600,
+                      color: current ? '#1D4ED8' : completed ? '#18794E' : '#94A3B8',
+                    }}>
+                    {step.label}
+                  </Typography>
+                </Box>
+              );
+            })}
+          </Box>
+
+          {nextAction ? (
+            <Box sx={{ p: 1.5, borderRadius: 2.75, bgcolor: '#F8FAFC', border: '1px solid #E2E8F0' }}>
+              <Typography sx={{ color: '#64748B', fontSize: 12.5, lineHeight: 1.55 }}>{nextAction.description}</Typography>
+              <Button
+                fullWidth
+                variant="contained"
+                endIcon={<ArrowForwardRoundedIcon />}
+                disabled={isUpdating}
+                onClick={() => void onAdvance(order, nextAction.status)}
+                sx={{ mt: 1.25, minHeight: 44, borderRadius: 2.5, fontWeight: 800, textTransform: 'none' }}>
+                {isUpdating ? 'กำลังอัปเดต...' : nextAction.label}
+              </Button>
+            </Box>
+          ) : (
+            <Alert severity="success" sx={{ borderRadius: 2.5 }}>
+              ส่งมอบงานเรียบร้อยแล้ว ไม่มีขั้นตอนงานถัดไป
+            </Alert>
+          )}
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
 function DrawerActionBar({
   order,
   isEditing,
@@ -651,6 +784,7 @@ export function OrderDetailDrawer({
   onSaveCustomer,
   onOpenPayRemaining,
   onConvertToTaxInvoice,
+  onAdvanceWorkflow,
   onCancelOrder,
   onPrintDocument,
 }: Readonly<OrderDetailDrawerProps>) {
@@ -951,6 +1085,11 @@ export function OrderDetailDrawer({
               <CustomerCard order={selectedOrder} isEditing={isEditing} draft={customerDraft} editError={editError} onDraftChange={setCustomerDraft} />
               <ProductsCard order={selectedOrder} />
               <PaymentSummaryCard order={selectedOrder} />
+              <WorkflowProgressCard
+                order={selectedOrder}
+                isUpdating={updatingOrderId === selectedOrder.id}
+                onAdvance={onAdvanceWorkflow}
+              />
 
               <JobTimelineCard items={buildOrderTimelineItems(selectedOrder)} />
             </Stack>

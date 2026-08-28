@@ -40,7 +40,9 @@ import PhotoRoundedIcon from '@mui/icons-material/PhotoRounded';
 import ScannerRoundedIcon from '@mui/icons-material/ScannerRounded';
 import SellRoundedIcon from '@mui/icons-material/SellRounded';
 import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
-import { createOrder } from '@/lib/orders';
+import { QRCodeSVG } from 'qrcode.react';
+import { createOrder, getOrderTrackingAccess } from '@/lib/orders';
+import { buildSecureOrderTrackingUrl } from '@/lib/order-tracking-url';
 import { canOverridePrice, fetchCurrentAdminRole, type AdminRole } from '@/lib/admin-capabilities';
 import { fetchQuickProducts } from '@/lib/products';
 import type { PaymentMethod, Product } from '@/lib/contracts';
@@ -53,7 +55,7 @@ import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
 import { calculateAddedVat, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, type DiscountMode } from './quickSale';
 
 type QuickItem = QuickSaleCartItem;
-type CompletedSale = { orderId: string; orderNumber: string; grandTotal: number; changeAmount: number };
+type CompletedSale = { orderId: string; orderNumber: string; grandTotal: number; changeAmount: number; trackingUrl?: string };
 
 const money = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 const touchButton = { minWidth: 44, minHeight: 44, borderRadius: 2.5 } as const;
@@ -356,21 +358,49 @@ export default function QuickSalePage() {
         grandTotal: result.grandTotal,
         changeAmount: result.changeAmount,
       });
-      if (customerDisplayDraft) {
-        persistPendingOrderDraft({
-          ...customerDisplayDraft,
-          orderId: result.orderId,
-          orderNumber: result.orderNumber,
-          status: result.status,
-          total: result.subtotal,
-          discount: result.discount,
-          vatAmount: result.vatAmount,
-          grandTotal: result.grandTotal,
-          depositTotal: result.paidAmount,
-          remainingTotal: result.remainingTotal,
-          orderSyncStatus: 'submitted',
-        });
+      const submittedDisplayOrder = customerDisplayDraft
+        ? {
+            ...customerDisplayDraft,
+            orderId: result.orderId,
+            orderNumber: result.orderNumber,
+            status: result.status,
+            total: result.subtotal,
+            discount: result.discount,
+            vatAmount: result.vatAmount,
+            grandTotal: result.grandTotal,
+            depositTotal: result.paidAmount,
+            remainingTotal: result.remainingTotal,
+            orderSyncStatus: 'submitted' as const,
+          }
+        : null;
+      if (submittedDisplayOrder) {
+        persistPendingOrderDraft(submittedDisplayOrder);
       }
+
+      void getOrderTrackingAccess(result._id)
+        .then(access => {
+          const trackingUrl = buildSecureOrderTrackingUrl(access.token, globalThis.location?.origin);
+          if (!trackingUrl) return;
+
+          setCompleted(current =>
+            current?.orderId === result.orderId ? { ...current, trackingUrl } : current
+          );
+
+          if (!submittedDisplayOrder || globalThis.window === undefined) return;
+          const stored = globalThis.localStorage.getItem(PENDING_ORDER_KEY);
+          if (!stored) return;
+          try {
+            const current = JSON.parse(stored) as StoredPendingOrderDraft;
+            if (current.clientDraftId === submittedDisplayOrder.clientDraftId) {
+              persistPendingOrderDraft({ ...current, trackingUrl });
+            }
+          } catch {
+            // Tracking QR is best-effort and must never invalidate a completed sale.
+          }
+        })
+        .catch(() => {
+          // A completed sale remains valid even when tracking access cannot be prepared.
+        });
       setCheckoutDraftId(null);
       setCheckoutOpen(false);
       setCartOpen(false);
@@ -880,6 +910,16 @@ export default function QuickSalePage() {
                 </Typography>
               </Stack>
             </Stack>
+
+            {completed?.trackingUrl ? (
+              <Box sx={{ mb: 2.5, p: 2, borderRadius: 3, border: '1px solid #DCE7F7', bgcolor: '#F8FBFF', textAlign: 'center' }}>
+                <Box sx={{ width: 154, height: 154, mx: 'auto', p: 1, borderRadius: 2.5, bgcolor: '#FFFFFF', display: 'grid', placeItems: 'center' }}>
+                  <QRCodeSVG value={completed.trackingUrl} size={138} level="M" title="Order tracking QR" />
+                </Box>
+                <Typography sx={{ mt: 1.25, fontSize: 15, fontWeight: 900, color: '#172033' }}>สแกนเพื่อติดตามสถานะงาน</Typography>
+                <Typography sx={{ mt: 0.4, fontSize: 12.5, color: '#64748B' }}>เหมาะสำหรับลูกค้าหน้าร้าน ไม่ต้องใช้เบอร์โทรศัพท์</Typography>
+              </Box>
+            ) : null}
 
             <Stack gap={1.25}>
               <Button

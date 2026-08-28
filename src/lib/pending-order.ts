@@ -6,6 +6,7 @@ export const PENDING_ORDER_SUBMIT_LOCK_TTL_MS = 60 * 1000;
 export type StoredPendingOrderDraft = PendingOrderDraft & {
   orderId?: string;
   orderNumber?: string;
+  trackingUrl?: string;
   clientDraftId?: string;
   payment?: PaymentMethod;
   discount?: number;

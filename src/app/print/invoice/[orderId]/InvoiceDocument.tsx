@@ -3,7 +3,7 @@
 import { Box, Stack, Typography } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
 import { formatCustomerAddress, type NormalizedInvoiceOrder, type PaymentMethod } from '../../../../lib/contracts';
-import { buildOrderTrackingUrl } from '../../../../lib/order-tracking-url';
+import { buildSecureOrderTrackingUrl } from '../../../../lib/order-tracking-url';
 import { convertAmountToThaiText, formatCurrency, resolveInvoiceDocumentType, type InvoiceDocumentType } from '../../../home/invoice/[orderId]/invoice-utils';
 
 export type InvoiceItem = {
@@ -56,6 +56,7 @@ type InvoiceDocumentProps = {
   documentType: InvoiceDocumentType;
   order: NormalizedInvoiceOrder;
   trackingOrigin?: string | null;
+  trackingToken?: string | null;
 };
 
 type TaxInvoiceTemplateProps = {
@@ -633,9 +634,9 @@ export function ReceiptTemplate({ invoiceData, trackingUrl }: Readonly<{ invoice
   );
 }
 
-export function InvoiceDocument({ documentType, order, trackingOrigin }: Readonly<InvoiceDocumentProps>) {
+export function InvoiceDocument({ documentType, order, trackingOrigin, trackingToken }: Readonly<InvoiceDocumentProps>) {
   const invoiceData = buildInvoiceDataFromOrder(order, documentType);
-  const trackingUrl = buildOrderTrackingUrl(order.orderNumber || order.orderId, trackingOrigin);
+  const trackingUrl = trackingToken ? buildSecureOrderTrackingUrl(trackingToken, trackingOrigin) : null;
 
   if (documentType === 'receipt') {
     return <ReceiptTemplate invoiceData={invoiceData} trackingUrl={trackingUrl} />;

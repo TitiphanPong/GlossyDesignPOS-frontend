@@ -8,6 +8,8 @@ export type LegacyPaymentOrderStatus = 'paid' | 'partial';
 
 export type OrderStatus = WorkflowOrderStatus | LegacyPaymentOrderStatus;
 
+export type ProductionWorkflowStatus = 'pending' | 'producing' | 'ready_for_pickup' | 'delivered' | 'cancelled';
+
 export type OrderType = 'NORMAL' | 'QUICK_SALE';
 export type OrderEntryMode = 'normal' | 'backdated';
 
@@ -54,6 +56,8 @@ export const WORKFLOW_ORDER_STATUS_VALUES = ['pending', 'producing', 'awaiting_p
 
 export const LEGACY_PAYMENT_ORDER_STATUS_VALUES = ['paid', 'partial'] as const;
 
+export const PRODUCTION_WORKFLOW_STATUS_VALUES = ['pending', 'producing', 'ready_for_pickup', 'delivered', 'cancelled'] as const;
+
 export const ORDER_STATUS_VALUES = [...WORKFLOW_ORDER_STATUS_VALUES, ...LEGACY_PAYMENT_ORDER_STATUS_VALUES] as const;
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
@@ -88,6 +92,10 @@ export function isCustomerDisplayPaymentMethod(value: unknown): value is Custome
 
 export function isOrderStatus(value: unknown): value is OrderStatus {
   return typeof value === 'string' && ORDER_STATUS_VALUES.includes(value as OrderStatus);
+}
+
+export function isProductionWorkflowStatus(value: unknown): value is ProductionWorkflowStatus {
+  return typeof value === 'string' && PRODUCTION_WORKFLOW_STATUS_VALUES.includes(value as ProductionWorkflowStatus);
 }
 
 export function normalizeCustomerDisplayPaymentMethod(value: unknown, fallback: CustomerDisplayPaymentMethod = 'cash'): CustomerDisplayPaymentMethod {
@@ -214,6 +222,13 @@ export type ApiOrder = {
   discount?: number;
   payment: PaymentMethod;
   status: OrderStatus;
+  workflowStatus?: ProductionWorkflowStatus;
+  statusHistory?: Array<{
+    status: OrderStatus;
+    note?: string;
+    changedAt: string;
+    changedBy?: string;
+  }>;
   createdAt: string;
   updatedAt?: string;
   issueDate?: string;
@@ -337,6 +352,13 @@ export type NormalizedOrder = {
   payment: PaymentMethod;
   paymentMethod: PaymentMethod;
   status: OrderStatus;
+  workflowStatus: ProductionWorkflowStatus;
+  statusHistory: Array<{
+    status: OrderStatus;
+    note?: string;
+    changedAt: string;
+    changedBy?: string;
+  }>;
   createdAt: string;
   updatedAt?: string;
   issueDate: string;
@@ -471,6 +493,40 @@ export function normalizeApiOrderAmounts(
   };
 }
 
+function normalizeStatusHistory(value: unknown): NormalizedOrder['statusHistory'] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap(entry => {
+    if (!entry || typeof entry !== 'object') return [];
+    const candidate = entry as Record<string, unknown>;
+    if (!isOrderStatus(candidate.status)) return [];
+    const changedAt = readNonEmptyString(candidate.changedAt);
+    if (!changedAt) return [];
+
+    return [{
+      status: candidate.status,
+      note: readNonEmptyString(candidate.note) ?? undefined,
+      changedAt,
+      changedBy: readNonEmptyString(candidate.changedBy) ?? undefined,
+    }];
+  });
+}
+
+function resolveProductionWorkflowStatus(
+  explicitStatus: unknown,
+  statusHistory: NormalizedOrder['statusHistory'],
+  fallbackStatus: OrderStatus,
+): ProductionWorkflowStatus {
+  if (isProductionWorkflowStatus(explicitStatus)) return explicitStatus;
+
+  for (let index = statusHistory.length - 1; index >= 0; index -= 1) {
+    const historicalStatus = statusHistory[index]?.status;
+    if (isProductionWorkflowStatus(historicalStatus)) return historicalStatus;
+  }
+
+  return isProductionWorkflowStatus(fallbackStatus) ? fallbackStatus : 'pending';
+}
+
 export function normalizeApiOrder(
   order: Partial<ApiOrder> & {
     id?: string;
@@ -496,6 +552,9 @@ export function normalizeApiOrder(
     postalCode: readNonEmptyString(order.postalCode) ?? undefined,
     shippingAddress: readNonEmptyString(order.shippingAddress) ?? undefined,
   };
+  const status = normalizeOrderStatus(order.status, 'pending');
+  const statusHistory = normalizeStatusHistory(order.statusHistory);
+  const workflowStatus = resolveProductionWorkflowStatus(order.workflowStatus, statusHistory, status);
 
   return {
     _id: readNonEmptyString(order._id) ?? readNonEmptyString(order.id) ?? readNonEmptyString(order.orderId) ?? '-',
@@ -521,7 +580,9 @@ export function normalizeApiOrder(
     salesChannel: readNonEmptyString(order.salesChannel) ?? '-',
     payment: paymentMethod,
     paymentMethod,
-    status: normalizeOrderStatus(order.status, 'pending'),
+    status,
+    workflowStatus,
+    statusHistory,
     createdAt: readInvoiceString(order, 'createdAt', 'updatedAt', 'issueDate') ?? '',
     updatedAt: readNonEmptyString(order.updatedAt) ?? undefined,
     issueDate: readInvoiceString(order, 'issueDate', 'updatedAt', 'createdAt') ?? '',

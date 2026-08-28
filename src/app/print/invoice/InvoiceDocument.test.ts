@@ -83,14 +83,16 @@ test('tax invoice data uses its invoice number and receipt dispatch selects the 
   assert.equal(taxInvoiceDocument.type, TaxInvoiceTemplate);
 });
 
-test('customer documents render an order-only tracking QR when a public origin is available', () => {
-  const receiptHtml = renderToStaticMarkup(InvoiceDocument({ documentType: 'receipt', order: sampleOrder, trackingOrigin: 'https://pos.example.com' }));
-  const taxInvoiceHtml = renderToStaticMarkup(InvoiceDocument({ documentType: 'tax-invoice', order: sampleOrder, trackingOrigin: 'https://pos.example.com' }));
+test('customer documents render a secure tracking QR when staff-issued access is available', () => {
+  const trackingToken = 'E'.repeat(43);
+  const receiptHtml = renderToStaticMarkup(InvoiceDocument({ documentType: 'receipt', order: sampleOrder, trackingOrigin: 'https://pos.example.com', trackingToken }));
+  const taxInvoiceHtml = renderToStaticMarkup(InvoiceDocument({ documentType: 'tax-invoice', order: sampleOrder, trackingOrigin: 'https://pos.example.com', trackingToken }));
 
   assert.match(receiptHtml, /Order tracking QR/);
   assert.match(receiptHtml, /ติดตามสถานะงาน/);
   assert.match(taxInvoiceHtml, /Order tracking QR/);
   assert.doesNotMatch(receiptHtml, /0812345678/);
+  assert.doesNotMatch(receiptHtml, /order=ORD-2026-00123/);
 });
 
 test('customer documents remain printable when tracking QR generation is unavailable', () => {

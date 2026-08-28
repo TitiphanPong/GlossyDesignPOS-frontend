@@ -58,7 +58,7 @@ import { commonButtonSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
-import { type NormalizedOrder, type PaymentMethod } from '../../../lib/contracts';
+import { type NormalizedOrder, type PaymentMethod, type ProductionWorkflowStatus } from '../../../lib/contracts';
 import { convertOrderToTaxInvoice, deleteOrder, downloadOrdersExport, fetchOrderById, type OrderListSummary, updateOrderCustomerInfo } from '../../../lib/orders';
 import type { ExportType, OrderRow, PaymentStatus, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
@@ -385,6 +385,23 @@ export default function OrderManagementPage() {
       if (targetPath) router.push(targetPath);
     },
     [router]
+  );
+
+  const advanceWorkflow = React.useCallback(
+    async (order: OrderRow, status: ProductionWorkflowStatus) => {
+      setUpdatingOrderId(order.id);
+      setLoadError(null);
+      try {
+        await updateOrderStatus(order.id, status);
+        await loadOrders();
+      } catch (error) {
+        setLoadError(error instanceof Error && error.message ? error.message : 'อัปเดตสถานะงานไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        throw error;
+      } finally {
+        setUpdatingOrderId(null);
+      }
+    },
+    [loadOrders]
   );
 
   const cancelOrder = React.useCallback(
@@ -1236,6 +1253,7 @@ export default function OrderManagementPage() {
           setPayRemainingTarget(order);
         }}
         onConvertToTaxInvoice={convertToTaxInvoice}
+        onAdvanceWorkflow={advanceWorkflow}
         onCancelOrder={targetId => {
           const target = rowsById.get(targetId);
           if (target) setCancelTarget(target);

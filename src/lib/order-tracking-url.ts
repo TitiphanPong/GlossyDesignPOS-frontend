@@ -8,9 +8,8 @@ export function buildOrderTrackingPath(orderNumber: string): string | null {
   return `/track?${params.toString()}`;
 }
 
-export function buildOrderTrackingUrl(orderNumber: string, origin: string | null | undefined): string | null {
-  const trackingPath = buildOrderTrackingPath(orderNumber);
-  if (!trackingPath || !origin?.trim()) {
+function buildAbsoluteTrackingUrl(path: string | null, origin: string | null | undefined): string | null {
+  if (!path || !origin?.trim()) {
     return null;
   }
 
@@ -20,8 +19,26 @@ export function buildOrderTrackingUrl(orderNumber: string, origin: string | null
       return null;
     }
 
-    return new URL(trackingPath, baseUrl.origin).toString();
+    return new URL(path, baseUrl.origin).toString();
   } catch {
     return null;
   }
+}
+
+export function buildOrderTrackingUrl(orderNumber: string, origin: string | null | undefined): string | null {
+  return buildAbsoluteTrackingUrl(buildOrderTrackingPath(orderNumber), origin);
+}
+
+export function buildSecureOrderTrackingPath(token: string): string | null {
+  const normalizedToken = token.trim();
+  if (!/^[A-Za-z0-9_-]{43}$/.test(normalizedToken)) {
+    return null;
+  }
+
+  const params = new URLSearchParams({ t: normalizedToken });
+  return `/track?${params.toString()}`;
+}
+
+export function buildSecureOrderTrackingUrl(token: string, origin: string | null | undefined): string | null {
+  return buildAbsoluteTrackingUrl(buildSecureOrderTrackingPath(token), origin);
 }

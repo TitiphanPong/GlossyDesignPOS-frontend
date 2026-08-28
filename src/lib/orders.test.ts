@@ -8,6 +8,7 @@ import {
   fetchOrderById,
   fetchOrders,
   fetchOrdersPage,
+  getOrderTrackingAccess,
   payRemainingBalance,
   sortOrdersByNewest,
   updateOrderCustomerInfo,
@@ -120,6 +121,51 @@ test('createOrder falls back to orderId when backend omits orderNumber', async (
     assert.equal(result.orderId, 'legacy-003');
     assert.equal(result.orderNumber, 'legacy-003');
     assert.equal(result._id, 'abc125');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('getOrderTrackingAccess requests a protected per-order tracking capability', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  const token = 'D'.repeat(43);
+  let capturedUrl = '';
+  let capturedMethod = '';
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+  globalThis.fetch = async (input, init) => {
+    capturedUrl = String(input);
+    capturedMethod = init?.method ?? '';
+    return new Response(JSON.stringify({ token }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+  };
+
+  try {
+    assert.deepEqual(await getOrderTrackingAccess('abc126'), { token });
+    assert.equal(capturedUrl, 'http://localhost:3001/orders/abc126/tracking-access');
+    assert.equal(capturedMethod, 'POST');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('getOrderTrackingAccess rejects malformed capability responses', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+  globalThis.fetch = async () =>
+    new Response(JSON.stringify({ token: 'too-short' }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    });
+
+  try {
+    await assert.rejects(() => getOrderTrackingAccess('abc126'), /invalid tracking access/);
   } finally {
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;

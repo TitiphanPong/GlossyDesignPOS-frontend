@@ -26,9 +26,11 @@ import { isMissingApiBaseError } from '@/lib/api';
 import {
   buildPublicTrackingTimeline,
   getOrderPrefillFromSearch,
+  getTrackingTokenFromSearch,
   PUBLIC_TRACKING_MILESTONE_COPY,
   PublicTrackingResult,
   trackOrder,
+  trackOrderByToken,
 } from '@/lib/tracking';
 
 function formatDate(value?: string): string {
@@ -50,10 +52,37 @@ export default function TrackPage() {
   const [result, setResult] = useState<PublicTrackingResult | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [secureAccessUsed, setSecureAccessUsed] = useState(false);
 
   useEffect(() => {
-    const prefilledOrder = getOrderPrefillFromSearch(window.location.search);
+    const search = window.location.search;
+    const trackingToken = getTrackingTokenFromSearch(search);
+    const prefilledOrder = getOrderPrefillFromSearch(search);
     if (prefilledOrder) setOrderNumber(prefilledOrder);
+    if (!trackingToken) return;
+
+    let active = true;
+    setLoading(true);
+    setError(null);
+    void trackOrderByToken(trackingToken)
+      .then(trackingResult => {
+        if (!active) return;
+        setResult(trackingResult);
+        setOrderNumber(trackingResult.orderNumber);
+        setSecureAccessUsed(true);
+      })
+      .catch(() => {
+        if (!active) return;
+        setSecureAccessUsed(false);
+        setError('ลิงก์ติดตามนี้ไม่สามารถใช้งานได้ กรุณากรอกเลขที่ออเดอร์และเลขท้ายโทรศัพท์ 4 หลัก หรือแจ้งพนักงาน');
+      })
+      .finally(() => {
+        if (active) setLoading(false);
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   const handleSearch = async () => {
@@ -113,7 +142,9 @@ export default function TrackPage() {
             </Stack>
 
             <Alert icon={<LockOutlinedIcon />} severity="info" sx={{ my: 3, borderRadius: 2.5 }}>
-              ลิงก์สามารถใส่เลขที่ออเดอร์ไว้ล่วงหน้าได้ แต่ยังต้องยืนยันด้วยเลขท้ายโทรศัพท์ 4 หลักทุกครั้ง
+              {secureAccessUsed
+                ? 'เปิดสถานะงานจาก QR ที่ออกให้สำหรับออเดอร์นี้แล้ว หากต้องการค้นหารายการอื่นสามารถกรอกข้อมูลด้านล่างได้'
+                : 'หากเปิดจาก QR ที่ร้านออกให้ ระบบจะตรวจสอบออเดอร์ให้อัตโนมัติ หรือค้นหาเองด้วยเลขที่ออเดอร์และเลขท้ายโทรศัพท์ 4 หลัก'}
             </Alert>
 
             <Stack
