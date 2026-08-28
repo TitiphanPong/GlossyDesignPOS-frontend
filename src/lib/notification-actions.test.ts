@@ -33,6 +33,20 @@ test('review upload deep-links to focused storage record', () => {
   );
 });
 
+test('low stock deep-links to the focused stock item', () => {
+  assert.equal(
+    getNotificationActionHref(
+      item({
+        type: 'low_stock',
+        entityType: 'stock',
+        entityId: 'stock item/1',
+        action: { label: 'เปิดสต็อก', action: 'open_stock' },
+      })
+    ),
+    '/home/stock?focus=stock%20item%2F1'
+  );
+});
+
 test('legacy order detail href is normalized to the current orders route', () => {
   assert.equal(
     getNotificationActionHref(item({ action: { label: 'ดูงาน', href: '/home/orders/order-99' } })),

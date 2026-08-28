@@ -42,6 +42,7 @@ export default function StockPage() {
   const [quantity, setQuantity] = React.useState('');
   const [reason, setReason] = React.useState('');
   const [saving, setSaving] = React.useState(false);
+  const [focusedItemId, setFocusedItemId] = React.useState<string | null>(null);
 
   const privileged = role === 'manager' || role === 'admin';
 
@@ -64,6 +65,19 @@ export default function StockPage() {
     const handle = window.setTimeout(() => void load(), 250);
     return () => window.clearTimeout(handle);
   }, [load]);
+
+  React.useEffect(() => {
+    const focus = new URLSearchParams(window.location.search).get('focus');
+    setFocusedItemId(focus);
+  }, []);
+
+  React.useEffect(() => {
+    if (!focusedItemId || loading) return;
+    document.getElementById(`stock-item-${focusedItemId}`)?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  }, [focusedItemId, loading, items]);
 
   const createItem = async (form: FormData) => {
     setSaving(true);
@@ -156,7 +170,17 @@ export default function StockPage() {
 
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2,minmax(0,1fr))', xl: 'repeat(3,minmax(0,1fr))' }, gap: 2 }}>
           {items.map(item => (
-            <Card key={item._id} variant="outlined" sx={{ borderRadius: 3, opacity: item.active ? 1 : 0.65 }}>
+            <Card
+              key={item._id}
+              id={`stock-item-${item._id}`}
+              variant="outlined"
+              sx={{
+                borderRadius: 3,
+                opacity: item.active ? 1 : 0.65,
+                borderColor: focusedItemId === item._id ? 'warning.main' : undefined,
+                boxShadow: focusedItemId === item._id ? '0 0 0 3px rgba(237, 108, 2, 0.12)' : undefined,
+              }}
+            >
               <CardContent>
                 <Stack spacing={1.5}>
                   <Stack direction="row" justifyContent="space-between" gap={1}>
