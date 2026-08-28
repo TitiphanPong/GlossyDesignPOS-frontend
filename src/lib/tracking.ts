@@ -19,6 +19,14 @@ export type PublicTrackingResult = {
   updatedAt?: string;
 };
 
+export type PublicTrackingTimelineState = 'completed' | 'current' | 'upcoming' | 'cancelled';
+
+export type PublicTrackingTimelineItem = {
+  milestone: PublicTrackingMilestone;
+  state: PublicTrackingTimelineState;
+  reachedAt?: string;
+};
+
 export const PUBLIC_TRACKING_MILESTONE_COPY: Record<
   PublicTrackingMilestone,
   { label: string; description: string }
@@ -44,6 +52,51 @@ export const PUBLIC_TRACKING_MILESTONE_COPY: Record<
     description: 'ออเดอร์นี้ถูกยกเลิกและหยุดดำเนินการแล้ว',
   },
 };
+
+export const PUBLIC_TRACKING_FLOW: Exclude<PublicTrackingMilestone, 'cancelled'>[] = [
+  'received',
+  'in_progress',
+  'ready',
+  'completed',
+];
+
+export function getOrderPrefillFromSearch(search: string): string {
+  const normalizedSearch = search.startsWith('?') ? search.slice(1) : search;
+  const order = new URLSearchParams(normalizedSearch).get('order');
+  return order?.trim().slice(0, 64) ?? '';
+}
+
+export function buildPublicTrackingTimeline(result: PublicTrackingResult): PublicTrackingTimelineItem[] {
+  const reachedAtByMilestone = new Map(
+    result.milestones.map(entry => [entry.milestone, entry.reachedAt] as const),
+  );
+
+  if (result.currentMilestone === 'cancelled') {
+    const reachedFlow = PUBLIC_TRACKING_FLOW.filter(milestone => reachedAtByMilestone.has(milestone)).map(
+      milestone => ({
+        milestone,
+        reachedAt: reachedAtByMilestone.get(milestone),
+        state: 'completed' as const,
+      }),
+    );
+
+    return [
+      ...reachedFlow,
+      {
+        milestone: 'cancelled',
+        reachedAt: reachedAtByMilestone.get('cancelled') ?? result.updatedAt,
+        state: 'cancelled',
+      },
+    ];
+  }
+
+  const currentIndex = PUBLIC_TRACKING_FLOW.indexOf(result.currentMilestone);
+  return PUBLIC_TRACKING_FLOW.map((milestone, index) => ({
+    milestone,
+    reachedAt: reachedAtByMilestone.get(milestone),
+    state: index < currentIndex ? 'completed' : index === currentIndex ? 'current' : 'upcoming',
+  }));
+}
 
 export async function trackOrder(orderNumber: string, phoneSuffix: string): Promise<PublicTrackingResult> {
   return fetchApiJson<PublicTrackingResult>('/tracking/lookup', {
