@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createActionCenterPoller, type ActionCenterPoller } from './action-center-polling';
 import { fetchApiJson } from './api';
 
 export type NotificationPriority = 'critical' | 'high' | 'normal' | 'low';
@@ -57,20 +58,31 @@ export function useNotifications() {
   const [summary, setSummary] = useState<ActionCenterSummary>(EMPTY_SUMMARY);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const pollerRef = useRef<ActionCenterPoller | null>(null);
 
-  const fetchActionCenter = useCallback(async () => {
+  const fetchActionCenter = useCallback(async (signal?: AbortSignal) => {
     try {
       setError(null);
-      const data = await fetchApiJson<ActionCenterResponse>('/notifications/action-center');
+      const data = await fetchApiJson<ActionCenterResponse>('/notifications/action-center', { signal });
+      if (signal?.aborted) return;
       setNotifications(Array.isArray(data.items) ? data.items : []);
       setSummary(data.summary ?? EMPTY_SUMMARY);
     } catch (err) {
+      if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) return;
       setError(err instanceof Error ? err.message : 'Unknown error');
       console.error('Failed to fetch action center:', err);
     } finally {
-      setIsLoading(false);
+      if (!signal?.aborted) setIsLoading(false);
     }
   }, []);
+
+  const refetchActionCenter = useCallback(async () => {
+    if (pollerRef.current) {
+      await pollerRef.current.refetch();
+      return;
+    }
+    await fetchActionCenter();
+  }, [fetchActionCenter]);
 
   const resolveNotification = useCallback(
     async (notificationId: string): Promise<void> => {
@@ -79,9 +91,9 @@ export function useNotifications() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
-      await fetchActionCenter();
+      await refetchActionCenter();
     },
-    [fetchActionCenter]
+    [refetchActionCenter]
   );
 
   const dismissNotification = useCallback(
@@ -91,9 +103,9 @@ export function useNotifications() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({}),
       });
-      await fetchActionCenter();
+      await refetchActionCenter();
     },
-    [fetchActionCenter]
+    [refetchActionCenter]
   );
 
   const markAsRead = useCallback(async (notificationId: string): Promise<void> => {
@@ -111,13 +123,18 @@ export function useNotifications() {
 
   useEffect(() => {
     setIsLoading(true);
-    void fetchActionCenter();
+    const poller = createActionCenterPoller({
+      fetchActionCenter: signal => fetchActionCenter(signal),
+      documentTarget: document,
+      windowTarget: window,
+    });
+    pollerRef.current = poller;
+    poller.start();
 
-    const pollingInterval = setInterval(() => {
-      void fetchActionCenter();
-    }, 30_000);
-
-    return () => clearInterval(pollingInterval);
+    return () => {
+      pollerRef.current = null;
+      poller.stop();
+    };
   }, [fetchActionCenter]);
 
   const count = useMemo(() => {
@@ -143,7 +160,7 @@ export function useNotifications() {
     count,
     isLoading,
     error,
-    refetch: fetchActionCenter,
+    refetch: refetchActionCenter,
     resolveNotification,
     dismissNotification,
     markAsRead,
