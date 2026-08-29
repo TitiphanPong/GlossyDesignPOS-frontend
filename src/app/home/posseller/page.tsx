@@ -8,7 +8,6 @@ import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
 import PaymentsRoundedIcon from '@mui/icons-material/PaymentsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
-import TvRoundedIcon from '@mui/icons-material/TvRounded';
 
 import { CheckoutSidebar } from './components/CheckoutSidebar';
 import { ProductList } from './components/ProductList';
@@ -19,7 +18,7 @@ import SuccessModal from './components/successModal';
 import CustomerInfoModal from './components/customerInfoModal';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
-import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
+import AdminHeroHeader, { heroOutlineButtonSx } from '../components/AdminHeroHeader';
 import { MissingApiConfigState } from '../components/dashboardUi';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { buildPendingOrderDraft, PENDING_ORDER_KEY, persistPendingOrderDraft } from '../../../lib/pending-order';
@@ -28,6 +27,7 @@ import { ActiveProduct, CartItem } from './types/cart';
 import Link from 'next/link';
 import { fetchProducts } from '@/lib/products';
 import type { Product } from '@/lib/contracts';
+import CustomerDisplayPairingButton from '@/components/customer-display/CustomerDisplayPairingButton';
 
 type CustomerInfo = { customerId?: string; customerName: string; phoneNumber: string; taxId: string; address: string; note: string };
 
@@ -294,9 +294,7 @@ export default function SellPage() {
             <Button component={Link} href="/home/orders" startIcon={<ReceiptLongRoundedIcon />} variant="outlined" sx={heroOutlineButtonSx}>
               ดูรายการงาน
             </Button>
-            <Button component={Link} href="/customer" startIcon={<TvRoundedIcon />} variant="contained" sx={heroPrimaryButtonSx}>
-              หน้าจอลูกค้า
-            </Button>
+            <CustomerDisplayPairingButton />
           </>
         }
       />

@@ -9,6 +9,13 @@ test('public backend allowlist includes only the canonical anonymous POST contra
   assert.equal(isPublicBackendRequest('POST', ['tracking', 'lookup']), true);
 });
 
+test('public backend allowlist exposes only read-only customer display token routes', () => {
+  assert.equal(isPublicBackendRequest('GET', ['customer-display', 'state']), true);
+  assert.equal(isPublicBackendRequest('GET', ['customer-display', 'events']), true);
+  assert.equal(isPublicBackendRequest('POST', ['customer-display', 'sessions']), false);
+  assert.equal(isPublicBackendRequest('PATCH', ['customer-display', 'sessions', 'abc', 'state']), false);
+});
+
 test('public backend allowlist does not expose tracking token through other methods or routes', () => {
   assert.equal(isPublicBackendRequest('GET', ['tracking', 'token']), false);
   assert.equal(isPublicBackendRequest('PATCH', ['tracking', 'token']), false);

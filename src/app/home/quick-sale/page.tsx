@@ -55,6 +55,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import QuickSellerCart, { type QuickSaleCartItem } from './components/QuickSellerCart';
 import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
+import CustomerDisplayPairingButton from '@/components/customer-display/CustomerDisplayPairingButton';
 import { calculateAddedVat, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, validateQuickSaleBackdate, type DiscountMode } from './quickSale';
 
 type QuickItem = QuickSaleCartItem;
@@ -483,9 +484,12 @@ export default function QuickSalePage() {
           lastSynced={formatAdminLastSynced(lastSyncedAt)}
           thaiDate={formatAdminThaiDate(lastSyncedAt)}
           actions={
-            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void loadProducts()} sx={heroOutlineButtonSx}>
-              {loading ? 'กำลังโหลด...' : 'รีเฟรช'}
-            </Button>
+            <>
+              <CustomerDisplayPairingButton />
+              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void loadProducts()} sx={heroOutlineButtonSx}>
+                {loading ? 'กำลังโหลด...' : 'รีเฟรช'}
+              </Button>
+            </>
           }
         />
       )}

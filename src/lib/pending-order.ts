@@ -1,4 +1,5 @@
 import type { CreateOrderRequest, OrderDiscountInput, PaymentMethod, PendingOrderDraft } from './contracts';
+import { publishCustomerDisplayStateIfPaired } from './customer-display-sync';
 
 export type PendingOrderSyncStatus = 'pending' | 'submitting' | 'submitted';
 export const PENDING_ORDER_SUBMIT_LOCK_TTL_MS = 60 * 1000;
@@ -101,6 +102,9 @@ export function persistPendingOrderDraft(order: StoredPendingOrderDraft | null):
   channel?.postMessage({ key: PENDING_ORDER_KEY, order });
   channel?.close();
   globalThis.dispatchEvent(new Event('storage'));
+  void publishCustomerDisplayStateIfPaired(order).catch(() => {
+    // Remote customer display sync is best-effort and must never block checkout.
+  });
 }
 
 export function subscribePendingOrderDraft(onChange: () => void): () => void {

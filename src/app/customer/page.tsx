@@ -5,6 +5,7 @@ import './customer.css';
 import { computeOrderPaymentSummary } from '../utils/computeTotal';
 import { normalizeCustomerDisplayPaymentMethod, normalizeOrderStatus } from '../../lib/contracts';
 import { getPaymentQrProfileFromEnv } from '../../lib/promptpay';
+import { subscribeCustomerDisplayRemote } from '../../lib/customer-display-sync';
 import { isPendingOrderSettled, PENDING_ORDER_KEY, persistPendingOrderDraft, shouldDisplayPendingOrder, subscribePendingOrderDraft } from '../../lib/pending-order';
 import { ActiveOrderScreen } from './components/CustomerActiveOrderScreen';
 import { IdleScreen, PaidScreen } from './components/CustomerDisplayShell';
@@ -49,7 +50,7 @@ function normalizeCartItem(value: unknown): CartItem | null {
   const name = readOptionalString(item.name);
   if (!name) return null;
 
-  const variantName = readVariantName(item.variant);
+  const variantName = readVariantName(item.variant) ?? readOptionalString(item.variantName);
 
   return {
     name,
@@ -123,9 +124,24 @@ function readStoredOrder(): Order | null {
 export default function CustomerScreen() {
   const [order, setOrder] = useState<Order | null>(null);
   const [dismissedOrderKey, setDismissedOrderKey] = useState<string | null>(null);
+  const [remoteToken, setRemoteToken] = useState<string | null>(null);
   const paymentQrProfile = getPaymentQrProfileFromEnv();
 
   useEffect(() => {
+    const token = new URLSearchParams(globalThis.location?.search ?? '').get('display');
+    if (token) {
+      setRemoteToken(token);
+      return subscribeCustomerDisplayRemote(
+        token,
+        payload => {
+          setOrder(normalizeStoredOrder(payload.state));
+        },
+        connected => {
+          if (!connected) setOrder(null);
+        }
+      );
+    }
+
     const handleStorage = () => {
       setOrder(readStoredOrder());
     };
@@ -146,12 +162,14 @@ export default function CustomerScreen() {
     if (!fullyPaid) return;
 
     const timeoutId = setTimeout(() => {
-      persistPendingOrderDraft(null);
+      if (!remoteToken) {
+        persistPendingOrderDraft(null);
+      }
       setOrder(null);
     }, 6000);
 
     return () => clearTimeout(timeoutId);
-  }, [order]);
+  }, [order, remoteToken]);
 
   useEffect(() => {
     if (!order) {
