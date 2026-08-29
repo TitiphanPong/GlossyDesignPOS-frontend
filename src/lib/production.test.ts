@@ -1,0 +1,35 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { nextProductionStage, productionJobsPath } from './production';
+
+test('nextProductionStage follows the server-owned forward-only production sequence', () => {
+  assert.equal(nextProductionStage('file_check'), 'queued');
+  assert.equal(nextProductionStage('queued'), 'producing');
+  assert.equal(nextProductionStage('producing'), 'quality_check');
+  assert.equal(nextProductionStage('quality_check'), 'ready');
+  assert.equal(nextProductionStage('ready'), 'delivered');
+  assert.equal(nextProductionStage('delivered'), null);
+});
+
+test('productionJobsPath serializes operational filters without payment fields', () => {
+  const path = productionJobsPath({
+    stage: 'producing',
+    priority: 'rush',
+    due: 'overdue',
+    assigneeUserId: 'staff-1',
+    jobType: ' นามบัตร ',
+    q: ' ORD-42 ',
+    limit: 100,
+  });
+  const url = new URL(path, 'http://local.test');
+
+  assert.equal(url.pathname, '/production/jobs');
+  assert.equal(url.searchParams.get('stage'), 'producing');
+  assert.equal(url.searchParams.get('priority'), 'rush');
+  assert.equal(url.searchParams.get('due'), 'overdue');
+  assert.equal(url.searchParams.get('assigneeUserId'), 'staff-1');
+  assert.equal(url.searchParams.get('jobType'), 'นามบัตร');
+  assert.equal(url.searchParams.get('q'), 'ORD-42');
+  assert.equal(url.searchParams.has('payment'), false);
+  assert.equal(url.searchParams.has('total'), false);
+});

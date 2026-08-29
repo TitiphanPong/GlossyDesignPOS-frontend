@@ -5,11 +5,11 @@ import { parseBackendCurrentAdminIdentity } from './admin-session-identity';
 test('uses the current backend role instead of stale frontend session metadata', () => {
   assert.deepEqual(
     parseBackendCurrentAdminIdentity({ user: { id: 'user-1', username: 'cashier', role: 'staff' } }),
-    { username: 'cashier', role: 'staff' }
+    { id: 'user-1', username: 'cashier', role: 'staff' }
   );
   assert.deepEqual(
     parseBackendCurrentAdminIdentity({ user: { id: 'user-1', username: 'cashier', role: 'admin' } }),
-    { username: 'cashier', role: 'admin' }
+    { id: 'user-1', username: 'cashier', role: 'admin' }
   );
 });
 

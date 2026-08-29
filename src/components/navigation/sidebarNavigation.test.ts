@@ -13,6 +13,11 @@ test('quick seller is the primary action and point of sale stays in the sales gr
   assert.equal(salesGroup?.items[0]?.href, '/home/posseller');
 });
 
+test('production is the first operations destination before storage and stock', () => {
+  const operationsGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'operations');
+  assert.deepEqual(operationsGroup?.items.map(item => item.href), ['/home/production', '/home/storage', '/home/stock']);
+});
+
 test('route matching supports child routes without prefix collisions', () => {
   assert.equal(isRouteActive('/home/orders', '/home/orders'), true);
   assert.equal(isRouteActive('/home/orders/123', '/home/orders'), true);

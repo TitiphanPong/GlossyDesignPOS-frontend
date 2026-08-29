@@ -59,6 +59,7 @@ export async function GET(request: Request) {
           authenticated: true,
           configured: Boolean(config),
           expiresAt: session.expiresAt,
+          id: identity.id,
           username: identity.username,
           role: identity.role,
         });

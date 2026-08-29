@@ -5,6 +5,32 @@ const port = Number(process.env.E2E_MOCK_BACKEND_PORT || 4010);
 const accessToken = 'e2e-access-token';
 const orderId = 'order-e2e-1';
 const orderNumber = 'ORD-E2E-0001';
+const staffUserId = '64b0000000000000000000aa';
+const productionJobId = '64b0000000000000000000bb';
+let productionStage = 'file_check';
+let productionStageHistory = [{ stage: 'file_check', changedAt: new Date().toISOString(), changedBy: staffUserId }];
+
+function productionJob() {
+  return {
+    id: productionJobId,
+    jobNumber: 'PJ-20260829-E2E00001',
+    orderId,
+    orderNumber,
+    workSummary: 'พิมพ์นามบัตร E2E 100 ใบ',
+    jobType: 'นามบัตร',
+    dueAt: '2026-08-30T10:00:00.000Z',
+    dueAtBangkok: '2026-08-30 17:00:00',
+    priority: 'normal',
+    isRush: false,
+    isOverdue: false,
+    assignee: { id: staffUserId, username: 'cashier' },
+    internalNote: 'ตรวจ bleed ก่อนผลิต',
+    linkedUploadIds: ['GL-20260829-E2E00001'],
+    stage: productionStage,
+    customerMilestone: productionStage === 'ready' || productionStage === 'delivered' ? (productionStage === 'ready' ? 'ready' : 'completed') : productionStage === 'producing' || productionStage === 'quality_check' ? 'in_progress' : 'received',
+    stageHistory: productionStageHistory,
+  };
+}
 
 function json(response, status, body) {
   response.writeHead(status, {
@@ -58,7 +84,7 @@ const server = http.createServer(async (request, response) => {
 
   if (request.method === 'GET' && url.pathname === '/auth/me') {
     return authorized(request)
-      ? json(response, 200, { user: { username: 'cashier', role: 'staff' } })
+      ? json(response, 200, { user: { id: staffUserId, username: 'cashier', role: 'staff' } })
       : json(response, 401, { message: 'unauthorized' });
   }
 
@@ -105,6 +131,39 @@ const server = http.createServer(async (request, response) => {
       summary: { total: 0, critical: 0, outstandingAmount: 0, filesWaiting: 0 },
       items: [],
     });
+  }
+
+  if (request.method === 'GET' && url.pathname === '/production/jobs/assignees') {
+    return json(response, 200, [{ id: staffUserId, username: 'cashier' }]);
+  }
+
+  if (request.method === 'GET' && url.pathname === '/production/jobs') {
+    const job = productionJob();
+    const requestedStage = url.searchParams.get('stage');
+    const visible = !requestedStage || requestedStage === job.stage;
+    return json(response, 200, { items: visible ? [job] : [], page: 1, limit: 100, total: visible ? 1 : 0, totalPages: 1 });
+  }
+
+  if (request.method === 'GET' && url.pathname === `/production/jobs/${productionJobId}`) {
+    return json(response, 200, productionJob());
+  }
+
+  if (request.method === 'PATCH' && url.pathname === `/production/jobs/${productionJobId}/stage`) {
+    const body = await readJson(request);
+    const stages = ['file_check', 'queued', 'producing', 'quality_check', 'ready', 'delivered'];
+    const expected = stages[stages.indexOf(productionStage) + 1];
+    if (body.stage !== productionStage && body.stage !== expected) {
+      return json(response, 409, { message: `Production job cannot transition from ${productionStage} to ${body.stage}.` });
+    }
+    if (body.stage !== productionStage) {
+      productionStage = body.stage;
+      productionStageHistory = [...productionStageHistory, { stage: productionStage, changedAt: new Date().toISOString(), changedBy: staffUserId }];
+    }
+    return json(response, 200, productionJob());
+  }
+
+  if (request.method === 'PATCH' && url.pathname === `/production/jobs/${productionJobId}`) {
+    return json(response, 200, productionJob());
   }
 
   if (request.method === 'POST' && url.pathname === '/orders') {

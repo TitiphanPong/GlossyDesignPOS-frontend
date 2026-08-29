@@ -78,6 +78,27 @@ test('shows the same configured PromptPay profile on the customer display', asyn
   await expect(page.getByText('PromptPay ••••5678', { exact: true })).toBeVisible();
 });
 
+test('advances a normal production job through legal stages to ready', async ({ page }) => {
+  await loginAsCashier(page, '/home/production');
+
+  await expect(page.getByText('Production Board', { exact: true })).toBeVisible();
+  await expect(page.getByText('PJ-20260829-E2E00001', { exact: true })).toBeVisible();
+  await expect(page.getByText('พิมพ์นามบัตร E2E 100 ใบ', { exact: true })).toBeVisible();
+
+  await page.getByRole('button', { name: 'ไปขั้น คิว' }).click();
+  await expect(page.getByRole('button', { name: 'ไปขั้น ผลิต' })).toBeVisible();
+  await page.getByRole('button', { name: 'ไปขั้น ผลิต' }).click();
+  await expect(page.getByRole('button', { name: 'ไปขั้น QC' })).toBeVisible();
+  await page.getByRole('button', { name: 'ไปขั้น QC' }).click();
+  await expect(page.getByRole('button', { name: 'ไปขั้น พร้อม' })).toBeVisible();
+  await page.getByRole('button', { name: 'ไปขั้น พร้อม' }).click();
+
+  await expect(page.getByText('พร้อมส่งมอบ', { exact: true }).first()).toBeVisible();
+  await page.getByText('PJ-20260829-E2E00001', { exact: true }).click();
+  await expect(page.getByText('Job Ticket', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'เปิด Order หลัก' })).toBeVisible();
+});
+
 test('keeps anonymous upload public and sends a multipart file through the BFF', async ({ page }) => {
   await page.goto('/upload');
 

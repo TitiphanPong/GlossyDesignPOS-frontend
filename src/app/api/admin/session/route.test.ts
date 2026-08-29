@@ -38,6 +38,7 @@ test('session GET reflects a backend demotion immediately and refreshes cookie m
     authenticated: true,
     configured: true,
     expiresAt: (await verifyAdminSession(staleToken, Date.now(), process.env))?.expiresAt,
+    id: 'user-1',
     username: 'cashier',
     role: 'staff',
   });
