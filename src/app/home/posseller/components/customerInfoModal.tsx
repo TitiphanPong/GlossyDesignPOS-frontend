@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { alpha, Autocomplete, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
 import { fetchCustomers, type CustomerProfile } from '@/lib/customers';
+import { buildCustomerFieldSx as buildFieldSx } from '@/components/customers/customerFormUi';
 
 type Props = {
   open: boolean;
@@ -37,34 +38,6 @@ function normalizeTaxIdDigits(taxId: string): string {
 
 function stripLineOASuffix(customerName: string): string {
   return customerName.endsWith(LINE_OA_SUFFIX) ? customerName.slice(0, -LINE_OA_SUFFIX.length) : customerName;
-}
-
-function buildFieldSx(multiline = false) {
-  return {
-    '& .MuiOutlinedInput-root': {
-      borderRadius: 3,
-      alignItems: multiline ? 'flex-start' : 'center',
-      backgroundColor: '#FFFFFF',
-      transition: 'box-shadow 0.2s ease, border-color 0.2s ease',
-      '& fieldset': {
-        borderColor: '#D7E3F4',
-      },
-      '&:hover fieldset': {
-        borderColor: '#AFC3E6',
-      },
-      '&.Mui-focused': {
-        boxShadow: '0 0 0 4px rgba(43, 98, 238, 0.10)',
-      },
-    },
-    '& .MuiInputLabel-root': {
-      color: '#5B6B82',
-      fontWeight: 600,
-    },
-    '& .MuiFormHelperText-root': {
-      marginLeft: 0.25,
-      marginTop: 0.85,
-    },
-  };
 }
 
 export default function CustomerInfoModal({ open, taxInvoice, onClose, onSubmit, customer }: Readonly<Props>) { // NOSONAR: form state and validation are intentionally colocated.
