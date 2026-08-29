@@ -2,7 +2,9 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import { isPublicBackendRequest } from './publicAccess';
 
-test('public backend allowlist includes secure customer tracking token POST', () => {
+test('public backend allowlist includes only the canonical anonymous POST contracts', () => {
+  assert.equal(isPublicBackendRequest('POST', ['uploads']), true);
+  assert.equal(isPublicBackendRequest('POST', ['upload']), false);
   assert.equal(isPublicBackendRequest('POST', ['tracking', 'token']), true);
   assert.equal(isPublicBackendRequest('POST', ['tracking', 'lookup']), true);
 });
