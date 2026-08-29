@@ -23,6 +23,12 @@ test('production is the first operations destination before storage and stock', 
   assert.deepEqual(operationsGroup?.items.map(item => item.href), ['/home/production', '/home/storage', '/home/stock']);
 });
 
+test('system health is available to authenticated staff in management', () => {
+  const staffGroups = filterSidebarGroups(SIDEBAR_MENU_GROUPS, 'staff');
+  const managementGroup = staffGroups.find(group => group.id === 'management');
+  assert.deepEqual(managementGroup?.items.map(item => item.href), ['/home/system-health']);
+});
+
 test('route matching supports child routes without prefix collisions', () => {
   assert.equal(isRouteActive('/home/orders', '/home/orders'), true);
   assert.equal(isRouteActive('/home/orders/123', '/home/orders'), true);

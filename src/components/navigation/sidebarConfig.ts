@@ -1,6 +1,7 @@
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import DashboardCustomizeRoundedIcon from '@mui/icons-material/DashboardCustomizeRounded';
 import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
+import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded';
 import PrecisionManufacturingRoundedIcon from '@mui/icons-material/PrecisionManufacturingRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded';
@@ -84,6 +85,12 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
     id: 'management',
     label: 'MANAGEMENT',
     items: [
+      {
+        id: 'system-health',
+        label: 'สถานะระบบ',
+        href: '/home/system-health',
+        icon: HealthAndSafetyRoundedIcon,
+      },
       {
         id: 'quick-menu-settings',
         label: 'จัดการเมนูขายด่วน',
