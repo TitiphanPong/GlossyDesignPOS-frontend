@@ -4,8 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { motion } from 'framer-motion';
 import { CalendarDays, CircleDollarSign, Palette, ReceiptText, Sparkles, TimerReset } from 'lucide-react';
 import { QRCodeCanvas } from 'qrcode.react';
-import generatePayload from 'promptpay-qr';
-import { normalizePromptPayAmount, type PromptPayProfile } from '../../../lib/promptpay';
+import { buildPaymentQrPayload, paymentQrRequiresManualAmount, type PaymentQrProfile } from '../../../lib/promptpay';
 import type { PaymentSummaryResult } from '../../utils/computeTotal';
 import { getDisplayOrderNumber as getSharedDisplayOrderNumber } from '../../../lib/contracts';
 import { formatMoney, getCartKey, type CartItem, type Order } from './customerDisplayShared';
@@ -117,11 +116,11 @@ function ProductAvatar({ item }: Readonly<{ item: CartItem }>) {
 export function ActiveOrderScreen({
   order,
   summary,
-  promptpayProfile,
+  paymentQrProfile,
 }: Readonly<{
   order: Order;
   summary: PaymentSummaryResult;
-  promptpayProfile: PromptPayProfile;
+  paymentQrProfile: PaymentQrProfile;
   onClose: () => void;
 }>) {
   const [qrRefreshIn, setQrRefreshIn] = useState(45);
@@ -148,6 +147,7 @@ export function ActiveOrderScreen({
   const orderNumber = useMemo(() => getDisplayOrderNumber(order), [order]);
   const totalLines = order.cart.length;
   const qrSize = isFullscreen ? 300 : 350;
+  const requiresManualAmount = paymentQrRequiresManualAmount(paymentQrProfile);
 
   return (
     <div className="relative h-[100dvh] overflow-hidden bg-[linear-gradient(180deg,#ffffff_0%,#f7fbff_52%,#eef5ff_100%)] text-slate-900">
@@ -297,8 +297,8 @@ export function ActiveOrderScreen({
                 <p className="mt-3 text-sm leading-5 text-slate-500">{getPaymentInstruction(order)}</p>
               </div>
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50/88 px-3 py-1.5 text-[11px] font-semibold tracking-[0.08em] text-blue-700">
-                <TimerReset className="h-3.5 w-3.5" />
-                รีเฟรชใน {qrRefreshIn} วินาที
+                {requiresManualAmount ? null : <TimerReset className="h-3.5 w-3.5" />}
+                {requiresManualAmount ? 'QR ร้านค้าแบบคงที่' : `รีเฟรชใน ${qrRefreshIn} วินาที`}
               </div>
             </div>
 
@@ -312,23 +312,24 @@ export function ActiveOrderScreen({
                 <div className="relative mt-3 flex min-h-0 flex-1 items-center justify-center py-1 xl:py-2">
                   <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(37,99,235,0.20),transparent_65%)] blur-2xl xl:h-72 xl:w-72" />
                   <motion.div
-                    key={qrRefreshIn > 43 ? 'refresh' : 'steady'}
+                    key={requiresManualAmount ? 'merchant-static' : qrRefreshIn > 43 ? 'refresh' : 'steady'}
                     initial={{ opacity: 0.9, scale: 0.98 }}
                     animate={{ opacity: 1, scale: 1 }}
                     transition={{ duration: 0.3 }}
                     className={cn('relative rounded-[34px] border border-white bg-white shadow-[0_24px_60px_rgba(37,99,235,0.14)]', isFullscreen ? 'p-6 xl:p-7' : 'p-4 xl:p-5')}>
                     <div className="absolute inset-0 rounded-[34px] border border-blue-100" />
                     <div className="absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-blue-200 to-transparent" />
-                    <QRCodeCanvas value={generatePayload(promptpayProfile.target, { amount: normalizePromptPayAmount(summary.amountToPay) })} size={qrSize}/>
+                    <QRCodeCanvas value={buildPaymentQrPayload(paymentQrProfile, summary.amountToPay)} size={qrSize}/>
                   </motion.div>
                 </div>
 
                 <div className="mt-3 grid shrink-0 gap-3 md:grid-cols-[0.95fr_1.05fr]">
                   <div className="rounded-[24px] border border-slate-200/80 bg-white/88 p-4 shadow-[0_10px_28px_rgba(15,23,42,0.04)]">
                     <div className="text-[11px] font-semibold tracking-[0.16em] text-slate-400 uppercase">บัญชีรับโอน</div>
-                    <div className="mt-3 text-lg font-semibold text-slate-900">พร้อมเพย์ (PromptPay)</div>
-                    <div className="mt-1 text-sm text-slate-500">{promptpayProfile.displayName}</div>
-                    <div className="mt-2 text-base font-semibold text-slate-700">{promptpayProfile.displayIdentifier}</div>
+                    <div className="mt-3 text-lg font-semibold text-slate-900">{paymentQrProfile.kind === 'merchant-static' ? 'QR ร้านค้า' : 'พร้อมเพย์ (PromptPay)'}</div>
+                    <div className="mt-1 text-sm text-slate-500">{paymentQrProfile.displayName}</div>
+                    <div className="mt-2 text-base font-semibold text-slate-700">{paymentQrProfile.displayIdentifier}</div>
+                    {requiresManualAmount ? <div className="mt-2 text-sm font-semibold text-amber-700">กรอกยอด ฿{formatMoney(summary.amountToPay)} ในแอปธนาคารก่อนยืนยัน</div> : null}
                   </div>
                   <div className="rounded-[24px] border border-blue-100 bg-gradient-to-br from-[#eef5ff] to-white p-4 shadow-[0_10px_28px_rgba(37,99,235,0.06)]">
                     <div className="text-[11px] font-semibold tracking-[0.16em] text-slate-400 uppercase">ยอดที่ต้องชำระ</div>

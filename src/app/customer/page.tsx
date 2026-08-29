@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from 'react';
 import './customer.css';
 import { computeOrderPaymentSummary } from '../utils/computeTotal';
 import { normalizeCustomerDisplayPaymentMethod, normalizeOrderStatus } from '../../lib/contracts';
-import { getPromptPayProfileFromEnv } from '../../lib/promptpay';
+import { getPaymentQrProfileFromEnv } from '../../lib/promptpay';
 import { isPendingOrderSettled, PENDING_ORDER_KEY, persistPendingOrderDraft, shouldDisplayPendingOrder, subscribePendingOrderDraft } from '../../lib/pending-order';
 import { ActiveOrderScreen } from './components/CustomerActiveOrderScreen';
 import { IdleScreen, PaidScreen } from './components/CustomerDisplayShell';
@@ -123,7 +123,7 @@ function readStoredOrder(): Order | null {
 export default function CustomerScreen() {
   const [order, setOrder] = useState<Order | null>(null);
   const [dismissedOrderKey, setDismissedOrderKey] = useState<string | null>(null);
-  const promptpayProfile = getPromptPayProfileFromEnv();
+  const paymentQrProfile = getPaymentQrProfileFromEnv();
 
   useEffect(() => {
     const handleStorage = () => {
@@ -173,12 +173,12 @@ export default function CustomerScreen() {
   if (isPaid) return <PaidScreen />;
   if (isDismissed) return <IdleScreen />;
   if (!summary) return <IdleScreen />;
-  if (!promptpayProfile) {
+  if (!paymentQrProfile) {
     return (
       <main className="grid min-h-screen place-items-center bg-slate-950 px-6 text-center text-white">
         <div className="max-w-xl rounded-3xl border border-amber-400/30 bg-slate-900 p-8 shadow-2xl">
           <h1 className="text-2xl font-semibold">ยังไม่สามารถแสดง QR รับชำระเงินได้</h1>
-          <p className="mt-3 text-slate-300">กรุณาแจ้งพนักงานตรวจสอบการตั้งค่า PromptPay ก่อนชำระเงิน ระบบจะไม่สร้าง QR จากหมายเลขสำรอง</p>
+          <p className="mt-3 text-slate-300">กรุณาแจ้งพนักงานตรวจสอบการตั้งค่า QR รับชำระเงินก่อนดำเนินการต่อ ระบบจะไม่สร้าง QR จากข้อมูลสำรองที่ไม่ผ่านการตรวจสอบ</p>
         </div>
       </main>
     );
@@ -188,7 +188,7 @@ export default function CustomerScreen() {
     <ActiveOrderScreen
       order={order}
       summary={summary}
-      promptpayProfile={promptpayProfile}
+      paymentQrProfile={paymentQrProfile}
       onClose={() => {
         if (!activeOrderKey) return;
         setDismissedOrderKey(activeOrderKey);

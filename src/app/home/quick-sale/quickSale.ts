@@ -23,11 +23,11 @@ export function calculateChange(received: number, grandTotal: number): number {
 export function canConfirmQuickSalePayment(input: Readonly<{
   paymentMethod: 'cash' | 'promptpay';
   hasEnoughCash: boolean;
-  hasPromptPayProfile: boolean;
+  hasPaymentQrProfile: boolean;
   manualTransferVerified: boolean;
 }>): boolean {
   if (input.paymentMethod === 'cash') return input.hasEnoughCash;
-  return input.hasPromptPayProfile || input.manualTransferVerified;
+  return input.hasPaymentQrProfile || input.manualTransferVerified;
 }
 
 export function calculateAddedVat(taxableAmount: number): number {

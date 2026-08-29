@@ -18,11 +18,10 @@ import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import { DateTimePicker } from '@mui/x-date-pickers/DateTimePicker';
 import dayjs from 'dayjs';
 import { QRCodeCanvas } from 'qrcode.react';
-import generatePayload from 'promptpay-qr';
 import type { PaymentMethod } from '@/lib/contracts';
 import type { CustomerProfile } from '@/lib/customers';
 import CustomerPicker from '@/components/customers/CustomerPicker';
-import { getPromptPayProfileFromEnv } from '@/lib/promptpay';
+import { buildPaymentQrPayload, getPaymentQrProfileFromEnv, paymentQrRequiresManualAmount } from '@/lib/promptpay';
 import { calculateChange, canConfirmQuickSalePayment } from '../quickSale';
 
 type QuickSalePaymentDialogProps = Readonly<{
@@ -140,15 +139,16 @@ export default function QuickSalePaymentDialog({
   const changeAmount = calculateChange(receivedAmount, grandTotal);
   const missingAmount = Math.max(0, grandTotal - receivedAmount);
   const hasEnoughCash = receivedAmount >= grandTotal;
-  const promptpayProfile = getPromptPayProfileFromEnv();
-  const hasPromptPayProfile = Boolean(promptpayProfile);
-  const canConfirm = canConfirmQuickSalePayment({ paymentMethod, hasEnoughCash, hasPromptPayProfile, manualTransferVerified });
+  const paymentQrProfile = getPaymentQrProfileFromEnv();
+  const hasPaymentQrProfile = Boolean(paymentQrProfile);
+  const requiresManualAmount = paymentQrProfile ? paymentQrRequiresManualAmount(paymentQrProfile) : false;
+  const canConfirm = canConfirmQuickSalePayment({ paymentMethod, hasEnoughCash, hasPaymentQrProfile, manualTransferVerified });
 
   React.useEffect(() => {
-    if (!open || paymentMethod !== 'promptpay' || hasPromptPayProfile) {
+    if (!open || paymentMethod !== 'promptpay' || hasPaymentQrProfile) {
       setManualTransferVerified(false);
     }
-  }, [hasPromptPayProfile, open, paymentMethod]);
+  }, [hasPaymentQrProfile, open, paymentMethod]);
 
   return (
     <Dialog
@@ -499,13 +499,18 @@ export default function QuickSalePaymentDialog({
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1.75 }}>
                   ให้ลูกค้าสแกน QR Code เพื่อชำระเงิน
                 </Typography>
-                {promptpayProfile ? (
+                {paymentQrProfile ? (
                   <Stack alignItems="center" gap={1}>
                     <Box sx={{ width: 'fit-content', maxWidth: '100%', mx: 'auto', p: 1.5, borderRadius: 3, bgcolor: 'background.paper', border: '1px solid', borderColor: 'divider' }}>
-                      <QRCodeCanvas value={generatePayload(promptpayProfile.target, { amount: grandTotal })} size={190} style={{ display: 'block', width: 'min(190px, 56vw)', height: 'auto' }} />
+                      <QRCodeCanvas value={buildPaymentQrPayload(paymentQrProfile, grandTotal)} size={190} style={{ display: 'block', width: 'min(190px, 56vw)', height: 'auto' }} />
                     </Box>
-                    <Typography variant="body2" fontWeight={800}>{promptpayProfile.displayName}</Typography>
-                    <Typography variant="caption" color="text.secondary">{promptpayProfile.displayIdentifier}</Typography>
+                    <Typography variant="body2" fontWeight={800}>{paymentQrProfile.displayName}</Typography>
+                    <Typography variant="caption" color="text.secondary">{paymentQrProfile.displayIdentifier}</Typography>
+                    {requiresManualAmount ? (
+                      <Typography variant="caption" color="warning.dark" fontWeight={800} sx={{ maxWidth: 360 }}>
+                        QR ร้านค้าเป็นแบบไม่ล็อกยอด กรุณากรอก ฿{money.format(grandTotal)} ในแอปธนาคาร
+                      </Typography>
+                    ) : null}
                   </Stack>
                 ) : (
                   <Stack alignItems="center" gap={1} sx={{ py: 2, color: 'warning.dark' }}>
@@ -526,7 +531,7 @@ export default function QuickSalePaymentDialog({
                   กรุณาตรวจสอบยอดเงินเข้าก่อนยืนยันการขาย
                 </Typography>
               </Stack>
-              {!promptpayProfile ? (
+              {!paymentQrProfile ? (
                 <FormControlLabel
                   control={
                     <Checkbox

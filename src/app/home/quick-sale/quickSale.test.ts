@@ -75,11 +75,11 @@ test('quick sale keeps receipt total unchanged and adds VAT for a tax invoice', 
 });
 
 test('manual transfer fallback requires staff verification when PromptPay profile is unavailable', () => {
-  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'promptpay', hasEnoughCash: false, hasPromptPayProfile: true, manualTransferVerified: false }), true);
-  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'promptpay', hasEnoughCash: false, hasPromptPayProfile: false, manualTransferVerified: false }), false);
-  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'promptpay', hasEnoughCash: false, hasPromptPayProfile: false, manualTransferVerified: true }), true);
-  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'cash', hasEnoughCash: false, hasPromptPayProfile: false, manualTransferVerified: true }), false);
-  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'cash', hasEnoughCash: true, hasPromptPayProfile: false, manualTransferVerified: false }), true);
+  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'promptpay', hasEnoughCash: false, hasPaymentQrProfile: true, manualTransferVerified: false }), true);
+  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'promptpay', hasEnoughCash: false, hasPaymentQrProfile: false, manualTransferVerified: false }), false);
+  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'promptpay', hasEnoughCash: false, hasPaymentQrProfile: false, manualTransferVerified: true }), true);
+  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'cash', hasEnoughCash: false, hasPaymentQrProfile: false, manualTransferVerified: true }), false);
+  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'cash', hasEnoughCash: true, hasPaymentQrProfile: false, manualTransferVerified: false }), true);
 });
 
 test('default variants are recognized case-insensitively', () => {
