@@ -246,7 +246,10 @@ function DrawerHeader({ order }: Readonly<{ order: OrderRow }>) {
             {order.orderNumber} | {order.customerName}
           </Typography>
         </Box>
-        {statusChip(order.status)}
+        <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+          {order.isBackdated ? <Chip size="small" label="รายการย้อนหลัง" color="warning" sx={{ fontWeight: 800 }} /> : null}
+          {statusChip(order.status)}
+        </Stack>
       </Stack>
     </Box>
   );
@@ -287,8 +290,14 @@ function OrderInfoCard({ order, isEditing }: Readonly<{ order: OrderRow; isEditi
             <strong>เลขที่งาน :</strong> {order.orderNumber}
           </Typography>
           <Typography sx={{ color: '#334155' }}>
-            <strong>วันที่รับงาน :</strong> {dayjs(order.date).format('DD/MM/YYYY HH:mm')}
+            <strong>{order.isBackdated ? 'วันที่ขายย้อนหลัง' : 'วันที่รับงาน'} :</strong> {dayjs(order.date).format('DD/MM/YYYY HH:mm')}
           </Typography>
+          {order.isBackdated ? (
+            <Alert severity="warning" variant="outlined" sx={{ borderRadius: 2.5 }}>
+              <Typography variant="body2" fontWeight={800}>รายการย้อนหลัง</Typography>
+              <Typography variant="caption">เหตุผล: {order.backdatedReason || '-'}</Typography>
+            </Alert>
+          ) : null}
           <Button
             component={Link}
             href={`/home/storage?order=${encodeURIComponent(order.id)}`}

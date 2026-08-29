@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { calculateAddedVat, calculateChange, calculatePayableTotal, calculateQuickSale, canConfirmQuickSalePayment, isDefaultVariantName } from './quickSale';
+import { calculateAddedVat, calculateChange, calculatePayableTotal, calculateQuickSale, canConfirmQuickSalePayment, isDefaultVariantName, validateQuickSaleBackdate } from './quickSale';
 import { computeTotals } from '../../utils/computeTotal';
 
 test('quick sale calculates amount and percentage discounts safely', () => {
@@ -80,6 +80,61 @@ test('manual transfer fallback requires staff verification when PromptPay profil
   assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'promptpay', hasEnoughCash: false, hasPaymentQrProfile: false, manualTransferVerified: true }), true);
   assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'cash', hasEnoughCash: false, hasPaymentQrProfile: false, manualTransferVerified: true }), false);
   assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'cash', hasEnoughCash: true, hasPaymentQrProfile: false, manualTransferVerified: false }), true);
+});
+
+test('quick sale enforces the 30-day Bangkok backdate window and required reason', () => {
+  const now = new Date('2026-08-29T14:00:00.000Z');
+
+  assert.deepEqual(
+    validateQuickSaleBackdate({
+      entryMode: 'backdated',
+      saleDate: new Date('2026-07-30T16:30:00.000Z'),
+      backdatedReason: 'รายการตกหล่น',
+      now,
+    }),
+    { valid: true }
+  );
+  assert.equal(
+    validateQuickSaleBackdate({
+      entryMode: 'backdated',
+      saleDate: new Date('2026-07-29T16:30:00.000Z'),
+      backdatedReason: 'รายการตกหล่น',
+      now,
+    }).valid,
+    false
+  );
+  assert.equal(
+    validateQuickSaleBackdate({
+      entryMode: 'backdated',
+      saleDate: new Date('2026-08-20T10:00:00.000Z'),
+      backdatedReason: '   ',
+      now,
+    }).message,
+    'กรุณาระบุเหตุผลที่ลงรายการย้อนหลัง'
+  );
+});
+
+test('quick sale backdate validation uses Bangkok calendar boundaries', () => {
+  const now = new Date('2026-08-29T17:05:00.000Z');
+
+  assert.equal(
+    validateQuickSaleBackdate({
+      entryMode: 'backdated',
+      saleDate: new Date('2026-07-30T16:59:59.000Z'),
+      backdatedReason: 'รายการตกหล่น',
+      now,
+    }).valid,
+    false
+  );
+  assert.equal(
+    validateQuickSaleBackdate({
+      entryMode: 'backdated',
+      saleDate: new Date('2026-07-31T00:00:00.000Z'),
+      backdatedReason: 'รายการตกหล่น',
+      now,
+    }).valid,
+    true
+  );
 });
 
 test('default variants are recognized case-insensitively', () => {

@@ -22,7 +22,7 @@ import type { PaymentMethod } from '@/lib/contracts';
 import type { CustomerProfile } from '@/lib/customers';
 import CustomerPicker from '@/components/customers/CustomerPicker';
 import { buildPaymentQrPayload, getPaymentQrProfileFromEnv, paymentQrRequiresManualAmount } from '@/lib/promptpay';
-import { calculateChange, canConfirmQuickSalePayment } from '../quickSale';
+import { calculateChange, canConfirmQuickSalePayment, validateQuickSaleBackdate } from '../quickSale';
 
 type QuickSalePaymentDialogProps = Readonly<{
   open: boolean;
@@ -142,7 +142,14 @@ export default function QuickSalePaymentDialog({
   const paymentQrProfile = getPaymentQrProfileFromEnv();
   const hasPaymentQrProfile = Boolean(paymentQrProfile);
   const requiresManualAmount = paymentQrProfile ? paymentQrRequiresManualAmount(paymentQrProfile) : false;
-  const canConfirm = canConfirmQuickSalePayment({ paymentMethod, hasEnoughCash, hasPaymentQrProfile, manualTransferVerified });
+  const backdateValidation = validateQuickSaleBackdate({
+    entryMode,
+    saleDate: dayjs(saleDateTime).toDate(),
+    backdatedReason,
+  });
+  const canConfirm =
+    backdateValidation.valid &&
+    canConfirmQuickSalePayment({ paymentMethod, hasEnoughCash, hasPaymentQrProfile, manualTransferVerified });
 
   React.useEffect(() => {
     if (!open || paymentMethod !== 'promptpay' || hasPaymentQrProfile) {
@@ -341,6 +348,7 @@ export default function QuickSalePaymentDialog({
                   format="DD/MM/YYYY HH:mm"
                   ampm={false}
                   disableFuture
+                  minDateTime={dayjs().subtract(30, 'day').startOf('day')}
                   maxDateTime={dayjs()}
                   slotProps={{
                     actionBar: { actions: ['today', 'cancel', 'accept'] },
@@ -356,6 +364,7 @@ export default function QuickSalePaymentDialog({
                   }}
                 />
                 <TextField
+                  required
                   fullWidth
                   multiline
                   minRows={2.5}
@@ -370,6 +379,11 @@ export default function QuickSalePaymentDialog({
                     '& .MuiFormHelperText-root': { mx: 0.5, textAlign: 'right' },
                   }}
                 />
+                {!backdateValidation.valid ? (
+                  <Alert severity="error" variant="outlined" sx={{ borderRadius: 2.5 }}>
+                    {backdateValidation.message}
+                  </Alert>
+                ) : null}
               </Stack>
             ) : null}
           </Box>

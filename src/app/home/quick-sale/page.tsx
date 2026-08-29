@@ -55,7 +55,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import QuickSellerCart, { type QuickSaleCartItem } from './components/QuickSellerCart';
 import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
-import { calculateAddedVat, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, type DiscountMode } from './quickSale';
+import { calculateAddedVat, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, validateQuickSaleBackdate, type DiscountMode } from './quickSale';
 
 type QuickItem = QuickSaleCartItem;
 type CompletedSale = { orderId: string; orderNumber: string; grandTotal: number; changeAmount: number; trackingUrl?: string };
@@ -319,6 +319,15 @@ export default function QuickSalePage() {
   };
   const submitSale = async () => {
     if (!items.length || (paymentMethod === 'cash' && receivedAmount < payableTotal)) return;
+    const backdateValidation = validateQuickSaleBackdate({
+      entryMode,
+      saleDate: new Date(`${saleDateTime}:00`),
+      backdatedReason,
+    });
+    if (!backdateValidation.valid) {
+      setError(backdateValidation.message ?? 'ข้อมูลรายการย้อนหลังไม่ถูกต้อง');
+      return;
+    }
     const hasPriceOverride = items.some(item => item.catalogUnitPrice === undefined || roundMoney(item.unitPrice) !== roundMoney(item.catalogUnitPrice));
     if (hasPriceOverride && !allowPriceOverride) {
       setError('รายการที่แก้ราคาเองต้องให้ผู้จัดการหรือผู้ดูแลระบบเป็นผู้ยืนยัน');
