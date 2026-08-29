@@ -20,6 +20,8 @@ import dayjs from 'dayjs';
 import { QRCodeCanvas } from 'qrcode.react';
 import generatePayload from 'promptpay-qr';
 import type { PaymentMethod } from '@/lib/contracts';
+import type { CustomerProfile } from '@/lib/customers';
+import CustomerPicker from '@/components/customers/CustomerPicker';
 import { getPromptPayProfileFromEnv } from '@/lib/promptpay';
 import { calculateChange } from '../quickSale';
 
@@ -35,6 +37,9 @@ type QuickSalePaymentDialogProps = Readonly<{
   entryMode: 'normal' | 'backdated';
   saleDateTime: string;
   backdatedReason: string;
+  selectedCustomer: CustomerProfile | null;
+  onCustomerChange: (customer: CustomerProfile | null) => void;
+  onCreateCustomer: () => void;
   onClose: () => void;
   onPaymentMethodChange: (method: PaymentMethod) => void;
   onTaxInvoiceChange: (value: 'yes' | 'no') => void;
@@ -119,6 +124,9 @@ export default function QuickSalePaymentDialog({
   entryMode,
   saleDateTime,
   backdatedReason,
+  selectedCustomer,
+  onCustomerChange,
+  onCreateCustomer,
   onClose,
   onPaymentMethodChange,
   onTaxInvoiceChange,
@@ -224,6 +232,14 @@ export default function QuickSalePaymentDialog({
               เปิดหน้าจอลูกค้า
             </Button>
           </Box>
+
+          <CustomerPicker
+            active={open}
+            value={selectedCustomer}
+            taxInvoice={taxInvoice}
+            onChange={onCustomerChange}
+            onCreateCustomer={onCreateCustomer}
+          />
 
           <Box sx={{ p: { xs: 1.5, sm: 1.75 }, border: '1px solid #E5EAF2', borderRadius: 3.5, bgcolor: '#FBFCFE' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} sx={{ mb: 1.25 }}>

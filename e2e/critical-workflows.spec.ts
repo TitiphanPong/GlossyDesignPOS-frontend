@@ -56,6 +56,81 @@ test('completes a cashier quick-sale checkout against controlled test data', asy
   await expect(page.getByText('ORD-E2E-0001', { exact: true })).toBeVisible();
 });
 
+test('links an existing customer to quick sale and mirrors the same snapshot to customer display', async ({ page }) => {
+  await loginAsCashier(page);
+
+  await page.getByRole('button', { name: /E2E A4 Print/ }).click();
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  const customerSearch = paymentDialog.getByLabel('ค้นหาลูกค้าเดิม');
+  await customerSearch.fill('บริษัท E2E');
+  await page.getByRole('option', { name: /บริษัท E2E จำกัด/ }).click();
+  await expect(paymentDialog.getByText('บริษัท E2E จำกัด', { exact: true }).first()).toBeVisible();
+
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const raw = localStorage.getItem('pendingOrder');
+        return raw ? (JSON.parse(raw) as { customerId?: string }).customerId : undefined;
+      })
+    )
+    .toBe('64b0000000000000000000cc');
+
+  const pendingSnapshot = await page.evaluate(() => JSON.parse(localStorage.getItem('pendingOrder') || '{}'));
+  expect(pendingSnapshot).toMatchObject({
+    customerId: '64b0000000000000000000cc',
+    customerName: 'บริษัท E2E จำกัด',
+    phoneNumber: '0812345678',
+    taxId: '0105555555555',
+    address: '99 ถนนสุขุมวิท กรุงเทพฯ',
+  });
+
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    customerId: '64b0000000000000000000cc',
+    customerName: 'บริษัท E2E จำกัด',
+    phoneNumber: '0812345678',
+    taxId: '0105555555555',
+    address: '99 ถนนสุขุมวิท กรุงเทพฯ',
+  });
+});
+
+test('creates a customer from quick sale and auto-selects the new profile', async ({ page }) => {
+  await loginAsCashier(page);
+
+  await page.getByRole('button', { name: /E2E A4 Print/ }).click();
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await paymentDialog.getByRole('button', { name: 'เพิ่มลูกค้าใหม่' }).click();
+
+  const createDialog = page.getByRole('dialog').filter({ hasText: 'บันทึกโปรไฟล์สำหรับใช้ซ้ำตอนขายครั้งถัดไป' });
+  await expect(createDialog).toBeVisible();
+  await createDialog.getByLabel('ชื่อลูกค้า').fill('ลูกค้าใหม่ E2E');
+  await createDialog.getByLabel('เบอร์โทรศัพท์').fill('0899999999');
+  await createDialog.getByLabel('เลขประจำตัวผู้เสียภาษี').fill('0105666666666');
+  await createDialog.getByLabel('ที่อยู่').fill('88 ถนนพระราม 9 กรุงเทพฯ');
+  await createDialog.getByRole('button', { name: 'บันทึกลูกค้า' }).click();
+
+  await expect(createDialog).toBeHidden();
+  await expect(paymentDialog.getByText('ลูกค้าใหม่ E2E', { exact: true }).first()).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => {
+        const raw = localStorage.getItem('pendingOrder');
+        return raw ? (JSON.parse(raw) as { customerId?: string }).customerId : undefined;
+      })
+    )
+    .toBe('64b0000000000000000000dd');
+});
+
 test('shows the same configured PromptPay profile on the customer display', async ({ page }) => {
   await page.addInitScript(() => {
     localStorage.setItem(

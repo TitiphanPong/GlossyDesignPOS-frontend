@@ -46,12 +46,15 @@ import { buildSecureOrderTrackingUrl } from '@/lib/order-tracking-url';
 import { canOverridePrice, fetchCurrentAdminRole, type AdminRole } from '@/lib/admin-capabilities';
 import { fetchQuickProducts } from '@/lib/products';
 import type { PaymentMethod, Product } from '@/lib/contracts';
+import type { CustomerProfile } from '@/lib/customers';
+import { buildOrderCustomerSnapshot } from '@/lib/customer-order';
 import { buildPendingOrderDraft, PENDING_ORDER_KEY, persistPendingOrderDraft, type StoredPendingOrderDraft } from '@/lib/pending-order';
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx } from '../components/AdminHeroHeader';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import QuickSellerCart, { type QuickSaleCartItem } from './components/QuickSellerCart';
 import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
+import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
 import { calculateAddedVat, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, type DiscountMode } from './quickSale';
 
 type QuickItem = QuickSaleCartItem;
@@ -109,6 +112,8 @@ export default function QuickSalePage() {
   const [cartOpen, setCartOpen] = React.useState(false);
   const [paymentMethod, setPaymentMethod] = React.useState<PaymentMethod>('cash');
   const [taxInvoice, setTaxInvoice] = React.useState<'yes' | 'no'>('no');
+  const [selectedCustomer, setSelectedCustomer] = React.useState<CustomerProfile | null>(null);
+  const [customerCreateOpen, setCustomerCreateOpen] = React.useState(false);
   const [receivedAmount, setReceivedAmount] = React.useState(0);
   const [submitting, setSubmitting] = React.useState(false);
   const [completed, setCompleted] = React.useState<CompletedSale | null>(null);
@@ -143,6 +148,7 @@ export default function QuickSalePage() {
   const closeCheckout = React.useCallback(() => {
     clearQuickSaleCustomerDisplay();
     setCheckoutDraftId(null);
+    setCustomerCreateOpen(false);
     setCheckoutOpen(false);
   }, [clearQuickSaleCustomerDisplay]);
 
@@ -175,17 +181,14 @@ export default function QuickSalePage() {
   const totals = React.useMemo(() => calculateQuickSale(subtotal, discountValue, discountMode), [subtotal, discountValue, discountMode]);
   const vatAmount = React.useMemo(() => (taxInvoice === 'yes' ? calculateAddedVat(totals.grandTotal) : 0), [taxInvoice, totals.grandTotal]);
   const payableTotal = React.useMemo(() => calculatePayableTotal(totals.grandTotal, taxInvoice), [taxInvoice, totals.grandTotal]);
+  const checkoutCustomer = React.useMemo(() => buildOrderCustomerSnapshot(selectedCustomer), [selectedCustomer]);
   const customerDisplayDraft = React.useMemo(() => {
     const draftId = checkoutDraftId;
     if (!draftId || !items.length) return null;
 
     return buildPendingOrderDraft({
       draftId,
-      customer: {
-        customerName: 'ลูกค้าหน้าร้าน',
-        phoneNumber: '',
-        note: '',
-      },
+      customer: checkoutCustomer,
       payment: paymentMethod,
       discount: { type: discountMode, value: discountValue },
       taxInvoice,
@@ -209,7 +212,7 @@ export default function QuickSalePage() {
         grandTotal: payableTotal,
       },
     });
-  }, [checkoutDraftId, discountMode, discountValue, items, paymentMethod, payableTotal, taxInvoice, totals, vatAmount]);
+  }, [checkoutCustomer, checkoutDraftId, discountMode, discountValue, items, paymentMethod, payableTotal, taxInvoice, totals, vatAmount]);
 
   React.useEffect(() => {
     if (!checkoutOpen) return;
@@ -309,6 +312,8 @@ export default function QuickSalePage() {
     setReceivedAmount(0);
     setPaymentMethod('cash');
     setTaxInvoice('no');
+    setSelectedCustomer(null);
+    setCustomerCreateOpen(false);
     setEntryMode('normal');
     setBackdatedReason('');
   };
@@ -328,9 +333,7 @@ export default function QuickSalePage() {
         orderType: 'QUICK_SALE',
         ...(entryMode === 'backdated' ? { entryMode, saleDate: new Date(`${saleDateTime}:00`).toISOString(), backdatedReason } : {}),
         salesChannel: 'quick_sale',
-        customerName: 'ลูกค้าหน้าร้าน',
-        phoneNumber: '',
-        note: '',
+        ...checkoutCustomer,
         cart: items.map(item => ({
           ...(item.productId ? { productId: item.productId } : {}),
           ...(item.productCode ? { productCode: item.productCode } : {}),
@@ -407,7 +410,13 @@ export default function QuickSalePage() {
       setItems([]);
       setDiscountValue(0);
     } catch (caught) {
-      setError(caught instanceof Error ? caught.message : 'บันทึกการขายไม่สำเร็จ');
+      const message = caught instanceof Error ? caught.message : 'บันทึกการขายไม่สำเร็จ';
+      if (/selected customer does not exist or is inactive/i.test(message)) {
+        setSelectedCustomer(null);
+        setError('ลูกค้าที่เลือกไม่พร้อมใช้งานแล้ว กรุณาเลือกใหม่หรือใช้ลูกค้าหน้าร้าน');
+      } else {
+        setError(message);
+      }
     } finally {
       setSubmitting(false);
     }
@@ -849,6 +858,9 @@ export default function QuickSalePage() {
         entryMode={entryMode}
         saleDateTime={saleDateTime}
         backdatedReason={backdatedReason}
+        selectedCustomer={selectedCustomer}
+        onCustomerChange={setSelectedCustomer}
+        onCreateCustomer={() => setCustomerCreateOpen(true)}
         onClose={closeCheckout}
         onPaymentMethodChange={setPaymentMethod}
         onTaxInvoiceChange={setTaxInvoice}
@@ -857,6 +869,15 @@ export default function QuickSalePage() {
         onEntryModeChange={setEntryMode}
         onSaleDateTimeChange={setSaleDateTime}
         onBackdatedReasonChange={setBackdatedReason}
+      />
+
+      <CustomerCreateDialog
+        open={customerCreateOpen}
+        onClose={() => setCustomerCreateOpen(false)}
+        onCreated={customer => {
+          setSelectedCustomer(customer);
+          setCustomerCreateOpen(false);
+        }}
       />
 
       <Dialog

@@ -7,6 +7,21 @@ const orderId = 'order-e2e-1';
 const orderNumber = 'ORD-E2E-0001';
 const staffUserId = '64b0000000000000000000aa';
 const productionJobId = '64b0000000000000000000bb';
+const existingCustomerId = '64b0000000000000000000cc';
+const createdCustomerId = '64b0000000000000000000dd';
+const customers = [
+  {
+    _id: existingCustomerId,
+    customerCode: 'CUS-E2E-EXISTING',
+    displayName: 'บริษัท E2E จำกัด',
+    phoneNumber: '0812345678',
+    email: 'customer@example.com',
+    taxId: '0105555555555',
+    address: '99 ถนนสุขุมวิท กรุงเทพฯ',
+    active: true,
+  },
+];
+let lastOrderCreatePayload = null;
 let productionStage = 'file_check';
 let productionStageHistory = [{ stage: 'file_check', changedAt: new Date().toISOString(), changedBy: staffUserId }];
 
@@ -108,6 +123,36 @@ const server = http.createServer(async (request, response) => {
     return json(response, 401, { message: 'unauthorized' });
   }
 
+  if (request.method === 'GET' && url.pathname === '/customers') {
+    const search = (url.searchParams.get('search') || '').trim().toLowerCase();
+    const visibleCustomers = search
+      ? customers.filter(customer => `${customer.customerCode} ${customer.displayName} ${customer.phoneNumber || ''} ${customer.email || ''} ${customer.taxId || ''}`.toLowerCase().includes(search))
+      : customers;
+    return json(response, 200, { data: visibleCustomers.slice(0, Number(url.searchParams.get('limit') || 20)), page: 1, limit: Number(url.searchParams.get('limit') || 20), total: visibleCustomers.length });
+  }
+
+  if (request.method === 'POST' && url.pathname === '/customers') {
+    const body = await readJson(request);
+    const created = {
+      _id: createdCustomerId,
+      customerCode: 'CUS-E2E-CREATED',
+      displayName: body.displayName,
+      phoneNumber: body.phoneNumber,
+      email: body.email,
+      taxId: body.taxId,
+      address: body.address,
+      active: true,
+    };
+    const existingIndex = customers.findIndex(customer => customer._id === createdCustomerId);
+    if (existingIndex >= 0) customers[existingIndex] = created;
+    else customers.unshift(created);
+    return json(response, 201, created);
+  }
+
+  if (request.method === 'GET' && url.pathname === '/e2e/last-order') {
+    return json(response, 200, lastOrderCreatePayload || {});
+  }
+
   if (request.method === 'GET' && url.pathname === '/quick-products') {
     return json(response, 200, [
       {
@@ -167,6 +212,8 @@ const server = http.createServer(async (request, response) => {
   }
 
   if (request.method === 'POST' && url.pathname === '/orders') {
+    const body = await readJson(request);
+    lastOrderCreatePayload = body;
     const now = new Date().toISOString();
     return json(response, 201, {
       _id: orderId,
@@ -175,8 +222,11 @@ const server = http.createServer(async (request, response) => {
       orderType: 'QUICK_SALE',
       saleDate: now,
       entryMode: 'normal',
-      customerName: 'ลูกค้าหน้าร้าน',
-      phoneNumber: '',
+      customerName: body.customerName || 'ลูกค้าหน้าร้าน',
+      phoneNumber: body.phoneNumber || '',
+      ...(body.customerId ? { customerId: body.customerId } : {}),
+      ...(body.taxId ? { taxId: body.taxId } : {}),
+      ...(body.address ? { address: body.address } : {}),
       payment: 'cash',
       status: 'paid',
       workflowStatus: 'pending',
