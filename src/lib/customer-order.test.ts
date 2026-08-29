@@ -32,3 +32,15 @@ test('selected customer checkout keeps customerId and immutable order snapshot f
     }
   );
 });
+
+test('selected customer checkout uses the first multi-phone value as the order snapshot', () => {
+  const snapshot = buildOrderCustomerSnapshot({
+    _id: '64b0000000000000000000dd',
+    customerCode: 'CUS-MULTI',
+    displayName: 'Multi phone customer',
+    phoneNumbers: ['02-7385801', '02-31660369'],
+    active: true,
+  });
+
+  assert.equal(snapshot.phoneNumber, '02-7385801');
+});

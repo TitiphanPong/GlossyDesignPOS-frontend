@@ -1,4 +1,4 @@
-import type { CustomerProfile } from './customers';
+import { getPrimaryCustomerPhoneNumber, type CustomerProfile } from './customers';
 
 export type OrderCustomerSnapshot = {
   customerId?: string;
@@ -21,7 +21,7 @@ export function buildOrderCustomerSnapshot(customer: CustomerProfile | null): Or
   return {
     customerId: customer._id,
     customerName: customer.displayName.trim() || 'ลูกค้าหน้าร้าน',
-    phoneNumber: customer.phoneNumber?.trim() ?? '',
+    phoneNumber: getPrimaryCustomerPhoneNumber(customer),
     taxId: customer.taxId?.trim() || undefined,
     address: customer.address?.trim() || undefined,
     note: '',

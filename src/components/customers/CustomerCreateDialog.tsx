@@ -14,12 +14,12 @@ import {
   TextField,
   Typography,
 } from '@mui/material';
-import { createCustomer, type CustomerProfile } from '@/lib/customers';
+import { createCustomer, parseCustomerPhoneInput, type CustomerProfile } from '@/lib/customers';
 import { buildCustomerFieldSx, customerDialogPaperSx } from './customerFormUi';
 
 type CustomerForm = {
   displayName: string;
-  phoneNumber: string;
+  phoneNumbers: string;
   email: string;
   taxId: string;
   address: string;
@@ -27,7 +27,7 @@ type CustomerForm = {
 
 const EMPTY_FORM: CustomerForm = {
   displayName: '',
-  phoneNumber: '',
+  phoneNumbers: '',
   email: '',
   taxId: '',
   address: '',
@@ -53,12 +53,17 @@ export default function CustomerCreateDialog({ open, onClose, onCreated }: Custo
 
   const submitCustomer = async () => {
     if (!form.displayName.trim()) return;
+    const phoneNumbers = parseCustomerPhoneInput(form.phoneNumbers);
+    if (phoneNumbers.some(phone => phone.length > 20)) {
+      setError('เบอร์โทรศัพท์แต่ละเบอร์ต้องยาวไม่เกิน 20 ตัวอักษร');
+      return;
+    }
     setSaving(true);
     setError(null);
     try {
       const created = await createCustomer({
         displayName: form.displayName.trim(),
-        phoneNumber: form.phoneNumber.trim() || undefined,
+        phoneNumbers: phoneNumbers.length > 0 ? phoneNumbers : undefined,
         email: form.email.trim() || undefined,
         taxId: form.taxId.trim() || undefined,
         address: form.address.trim() || undefined,
@@ -117,8 +122,11 @@ export default function CustomerCreateDialog({ open, onClose, onCreated }: Custo
               <TextField
                 fullWidth
                 label="เบอร์โทรศัพท์"
-                value={form.phoneNumber}
-                onChange={event => setForm(previous => ({ ...previous, phoneNumber: event.target.value }))}
+                value={form.phoneNumbers}
+                onChange={event => setForm(previous => ({ ...previous, phoneNumbers: event.target.value }))}
+                helperText="ใส่หลายเบอร์ได้ โดยคั่นด้วยจุลภาคหรือขึ้นบรรทัดใหม่"
+                multiline
+                minRows={2}
                 slotProps={{ htmlInput: { inputMode: 'tel' } }}
                 sx={buildCustomerFieldSx()}
               />

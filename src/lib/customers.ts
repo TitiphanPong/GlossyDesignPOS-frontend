@@ -5,6 +5,7 @@ export type CustomerProfile = {
   customerCode: string;
   displayName: string;
   phoneNumber?: string;
+  phoneNumbers?: string[];
   email?: string;
   taxId?: string;
   companyName?: string;
@@ -18,6 +19,34 @@ export type CustomerProfile = {
   shippingAddress?: string;
   active: boolean;
 };
+
+export function getCustomerPhoneNumbers(
+  customer: Pick<CustomerProfile, 'phoneNumber' | 'phoneNumbers'>,
+): string[] {
+  return [...(customer.phoneNumbers ?? []), customer.phoneNumber]
+    .filter((value): value is string => typeof value === 'string')
+    .map(value => value.trim())
+    .filter((value, index, values) => value && values.indexOf(value) === index);
+}
+
+export function getPrimaryCustomerPhoneNumber(
+  customer: Pick<CustomerProfile, 'phoneNumber' | 'phoneNumbers'>,
+): string {
+  return getCustomerPhoneNumbers(customer)[0] ?? '';
+}
+
+export function formatCustomerPhoneNumbers(
+  customer: Pick<CustomerProfile, 'phoneNumber' | 'phoneNumbers'>,
+): string {
+  return getCustomerPhoneNumbers(customer).join(', ');
+}
+
+export function parseCustomerPhoneInput(value: string): string[] {
+  return value
+    .split(/[,;\r\n]+/)
+    .map(phone => phone.trim().replace(/\s+/g, ' '))
+    .filter((phone, index, phones) => phone && phones.indexOf(phone) === index);
+}
 
 export type CustomerDetail = {
   customer: CustomerProfile;

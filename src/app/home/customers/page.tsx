@@ -7,7 +7,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import { Alert, Box, Button, Card, CardActionArea, CardContent, Divider, Drawer, InputAdornment, Stack, TextField, Typography } from '@mui/material';
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
-import { fetchCustomerDetail, fetchCustomers, type CustomerDetail, type CustomerProfile } from '@/lib/customers';
+import { fetchCustomerDetail, fetchCustomers, formatCustomerPhoneNumbers, type CustomerDetail, type CustomerProfile } from '@/lib/customers';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
 
 
@@ -86,7 +86,7 @@ export default function CustomersPage() {
                 <Typography fontWeight={850} fontSize={17} noWrap>{customer.displayName}</Typography>
                 <Typography color="text.secondary" fontSize={12.5}>{customer.customerCode}</Typography>
                 <Stack spacing={0.45} sx={{ mt: 1.5 }}>
-                  <Typography fontSize={13.5}>{customer.phoneNumber || 'ไม่มีเบอร์โทร'}</Typography>
+                  <Typography fontSize={13.5}>{formatCustomerPhoneNumbers(customer) || 'ไม่มีเบอร์โทร'}</Typography>
                   {customer.email ? <Typography fontSize={13.5} noWrap>{customer.email}</Typography> : null}
                   {customer.taxId ? <Typography fontSize={12.5} color="text.secondary">Tax ID {customer.taxId}</Typography> : null}
                 </Stack>

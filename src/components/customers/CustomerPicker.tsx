@@ -19,7 +19,7 @@ import {
   Typography,
   alpha,
 } from '@mui/material';
-import { fetchCustomers, type CustomerProfile } from '@/lib/customers';
+import { fetchCustomers, formatCustomerPhoneNumbers, type CustomerProfile } from '@/lib/customers';
 import { buildCustomerFieldSx } from './customerFormUi';
 
 type CustomerPickerProps = Readonly<{
@@ -31,7 +31,7 @@ type CustomerPickerProps = Readonly<{
 }>;
 
 function customerSecondaryText(customer: CustomerProfile): string {
-  const parts = [customer.customerCode, customer.phoneNumber].filter(Boolean);
+  const parts = [customer.customerCode, formatCustomerPhoneNumbers(customer)].filter(Boolean);
   return parts.join(' · ');
 }
 
