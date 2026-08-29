@@ -51,7 +51,7 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
       },
       {
         id: 'customers',
-        label: 'ลูกค้า',
+        label: 'ฐานลูกค้า',
         href: '/home/customers',
         icon: PeopleAltRoundedIcon,
       },

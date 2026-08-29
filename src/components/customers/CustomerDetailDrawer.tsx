@@ -9,12 +9,12 @@ import {
   Button,
   Chip,
   Divider,
-  Drawer,
   IconButton,
   Skeleton,
   Stack,
   Typography,
 } from '@mui/material';
+import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
 import { getCustomerPhoneNumbers, type CustomerDetail } from '@/lib/customers';
 
 const money = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 });
@@ -98,7 +98,7 @@ function Field({ label, value }: Readonly<{ label: string; value?: React.ReactNo
 
 function DetailSkeleton() {
   return (
-    <Stack spacing={2.2} sx={{ p: { xs: 2, sm: 2.6 } }}>
+    <Stack spacing={2.2}>
       <Skeleton variant="rounded" height={72} />
       <Skeleton variant="rounded" height={86} />
       <Skeleton variant="rounded" height={160} />
@@ -121,46 +121,33 @@ export default function CustomerDetailDrawer({ open, detail, loading, onClose, o
   const taxBranch = detail ? branchLabel(detail.customer.branchType, detail.customer.branchNo) : null;
 
   return (
-    <Drawer
-      anchor="right"
+    <GlossyDetailDrawer
       open={open}
       onClose={onClose}
-      slotProps={{ paper: { sx: { width: { xs: '100%', sm: 620 }, maxWidth: '100%', bgcolor: '#FBFCFE' } } }}>
-      <Stack sx={{ height: '100dvh', minHeight: 0 }}>
-        <Box sx={{ px: { xs: 2, sm: 2.6 }, py: 2, borderBottom: '1px solid #E5EAF2', bgcolor: '#FFFFFF' }}>
-          <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1.5}>
-            <Box sx={{ minWidth: 0, flex: 1 }}>
-              <Typography sx={{ fontSize: { xs: 21, sm: 24 }, fontWeight: 900, color: '#101828', lineHeight: 1.15 }} noWrap>
-                {detail?.customer.displayName ?? 'ข้อมูลลูกค้า'}
-              </Typography>
-              <Stack direction="row" gap={0.75} alignItems="center" flexWrap="wrap" useFlexGap sx={{ mt: 0.8 }}>
-                {detail ? <Typography sx={{ color: '#64748B', fontSize: 12.5, fontWeight: 700 }}>{detail.customer.customerCode}</Typography> : <Skeleton width={110} />}
-                {detail ? (
-                  <Chip
-                    size="small"
-                    label={detail.customer.active ? 'Active' : 'Inactive'}
-                    sx={{ height: 23, bgcolor: detail.customer.active ? '#ECFDF3' : '#F2F4F7', color: detail.customer.active ? '#027A48' : '#667085', fontWeight: 800, fontSize: 11 }}
-                  />
-                ) : null}
-              </Stack>
-            </Box>
-            <Stack direction="row" spacing={0.5}>
-              {detail ? (
-                <Button variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => onEdit(detail.customer)} sx={{ minHeight: 40, borderRadius: 2.5, textTransform: 'none', fontWeight: 800 }}>
-                  แก้ไข
-                </Button>
-              ) : null}
-              <IconButton aria-label="ปิดรายละเอียดลูกค้า" onClick={onClose} sx={{ minWidth: 40, minHeight: 40 }}>
-                <CloseRoundedIcon />
-              </IconButton>
-            </Stack>
-          </Stack>
-        </Box>
-
-        <Box sx={{ flex: 1, minHeight: 0, overflowY: 'auto' }}>
-          {loading && !detail ? <DetailSkeleton /> : null}
+      title={detail?.customer.displayName ?? 'ข้อมูลลูกค้า'}
+      subtitle={detail ? detail.customer.customerCode : <Skeleton width={110} />}
+      headerActions={(
+        <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
           {detail ? (
-            <Stack spacing={2.4} divider={<Divider flexItem />} sx={{ p: { xs: 2, sm: 2.6 } }}>
+            <Chip
+              size="small"
+              label={detail.customer.active ? 'Active' : 'Inactive'}
+              sx={{ height: 23, bgcolor: detail.customer.active ? '#ECFDF3' : '#F2F4F7', color: detail.customer.active ? '#027A48' : '#667085', fontWeight: 800, fontSize: 11 }}
+            />
+          ) : null}
+          {detail ? (
+            <Button variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => onEdit(detail.customer)} sx={{ minHeight: 40, borderRadius: 2.5, textTransform: 'none', fontWeight: 800 }}>
+              แก้ไข
+            </Button>
+          ) : null}
+          <IconButton aria-label="ปิดรายละเอียดลูกค้า" onClick={onClose} sx={{ minWidth: 40, minHeight: 40 }}>
+            <CloseRoundedIcon />
+          </IconButton>
+        </Stack>
+      )}>
+      {loading && !detail ? <DetailSkeleton /> : null}
+      {detail ? (
+        <Stack spacing={2.4} divider={<Divider flexItem />}>
               <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', border: '1px solid #E5EAF2', borderRadius: 3, bgcolor: '#FFFFFF', overflow: 'hidden' }}>
                 <Box sx={{ px: 1.7, py: 1.45, borderRight: '1px solid #E5EAF2' }}>
                   <Typography sx={{ fontSize: 11.5, color: '#7A8A9E', fontWeight: 700 }}>ออเดอร์ทั้งหมด</Typography>
@@ -284,10 +271,8 @@ export default function CustomerDetailDrawer({ open, detail, loading, onClose, o
                   {detail.linkedUploads.length === 0 ? <Typography sx={{ py: 1.5, color: '#7A8A9E', fontSize: 13 }}>ยังไม่มีไฟล์ที่เชื่อมกับลูกค้ารายนี้</Typography> : null}
                 </Stack>
               </Section>
-            </Stack>
-          ) : null}
-        </Box>
-      </Stack>
-    </Drawer>
+        </Stack>
+      ) : null}
+    </GlossyDetailDrawer>
   );
 }

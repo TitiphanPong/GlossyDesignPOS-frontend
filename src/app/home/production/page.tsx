@@ -21,7 +21,6 @@ import {
   Chip,
   CircularProgress,
   Divider,
-  Drawer,
   InputAdornment,
   MenuItem,
   Stack,
@@ -42,6 +41,7 @@ import {
 import Link from 'next/link';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
+import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
 import {
   PRODUCTION_STAGES,
   PRODUCTION_STAGE_META,
@@ -204,8 +204,6 @@ function JobTicketDrawer({
   onClose: () => void;
   onChanged: (job: ProductionJob) => void;
 }>) {
-  const theme = useTheme();
-  const mobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [note, setNote] = React.useState('');
   const [savingNote, setSavingNote] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -240,25 +238,33 @@ function JobTicketDrawer({
   };
 
   return (
-    <Drawer
-      anchor={mobile ? 'bottom' : 'right'}
+    <GlossyDetailDrawer
       open
       onClose={onClose}
-      slotProps={{ paper: { sx: { width: mobile ? '100%' : 520, maxWidth: '100%', height: mobile ? '92dvh' : '100dvh', borderRadius: mobile ? '20px 20px 0 0' : 0 } } }}
-    >
-      <Stack sx={{ height: '100%' }}>
-        <Box sx={{ p: 2.5, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Stack direction="row" justifyContent="space-between" gap={2} alignItems="flex-start">
-            <Box sx={{ minWidth: 0 }}>
-              <Typography variant="h6" fontWeight={900}>Job Ticket</Typography>
-              <Typography color="text.secondary">{job.jobNumber} · Order {job.orderNumber}</Typography>
-            </Box>
-            <Chip color={stageTone[job.stage]} label={PRODUCTION_STAGE_META[job.stage].label} />
+      title="Job Ticket"
+      subtitle={`${job.jobNumber} · Order ${job.orderNumber}`}
+      headerActions={<Chip color={stageTone[job.stage]} label={PRODUCTION_STAGE_META[job.stage].label} />}
+      footer={(
+        <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            <Button component={Link} href={`/home/orders?focus=${encodeURIComponent(job.orderId)}`} variant="outlined" startIcon={<DescriptionRoundedIcon />} fullWidth>
+              เปิด Order หลัก
+            </Button>
+            {next ? (
+              <Button
+                variant="contained"
+                fullWidth
+                endIcon={<ArrowForwardRoundedIcon />}
+                disabled={busy}
+                onClick={async () => onChanged(await advanceProductionJob(job.id, next))}
+              >
+                ไปขั้น {PRODUCTION_STAGE_META[next].shortLabel}
+              </Button>
+            ) : null}
           </Stack>
         </Box>
-
-        <Box sx={{ flex: 1, overflowY: 'auto', p: 2.5 }}>
-          <Stack spacing={2}>
+      )}>
+      <Stack spacing={2}>
             {error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : null}
             <Card variant="outlined" sx={{ borderRadius: 3 }}>
               <CardContent>
@@ -353,29 +359,8 @@ function JobTicketDrawer({
                 <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>ยังไม่มีรายการวัสดุที่เชื่อมกับ Job Ticket นี้</Typography>
               </CardContent>
             </Card>
-          </Stack>
-        </Box>
-
-        <Box sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider', bgcolor: 'background.paper' }}>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-            <Button component={Link} href={`/home/orders?focus=${encodeURIComponent(job.orderId)}`} variant="outlined" startIcon={<DescriptionRoundedIcon />} fullWidth>
-              เปิด Order หลัก
-            </Button>
-            {next ? (
-              <Button
-                variant="contained"
-                fullWidth
-                endIcon={<ArrowForwardRoundedIcon />}
-                disabled={busy}
-                onClick={async () => onChanged(await advanceProductionJob(job.id, next))}
-              >
-                ไปขั้น {PRODUCTION_STAGE_META[next].shortLabel}
-              </Button>
-            ) : null}
-          </Stack>
-        </Box>
       </Stack>
-    </Drawer>
+    </GlossyDetailDrawer>
   );
 }
 

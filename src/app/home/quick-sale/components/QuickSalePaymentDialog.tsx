@@ -236,7 +236,7 @@ export default function QuickSalePaymentDialog({
             )}
             <Button
               component="a"
-              href="/customer"
+              href="/customer-display"
               target="_blank"
               rel="noopener noreferrer"
               size="small"

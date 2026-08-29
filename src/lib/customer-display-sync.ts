@@ -109,7 +109,7 @@ export async function ensureCustomerDisplaySession(): Promise<CustomerDisplaySes
 
 export function getCustomerDisplayPairingUrl(session: CustomerDisplaySession, origin = globalThis.location?.origin): string | null {
   if (!origin) return null;
-  const url = new URL('/customer', origin);
+  const url = new URL('/customer-display', origin);
   url.searchParams.set('display', session.displayToken);
   return url.toString();
 }

@@ -10,7 +10,6 @@ import {
   Card,
   CardContent,
   Divider,
-  Drawer,
   FormControl,
   IconButton,
   InputAdornment,
@@ -38,6 +37,7 @@ import SyncRoundedIcon from '@mui/icons-material/SyncRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import axios from 'axios';
 import JobTimelineCard, { type JobTimelineCardItem } from '../components/JobTimelineCard';
+import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
 import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
 import { normalizeRecord, type StorageRow, type StorageStatus, type UploadApiRecord } from './normalizers';
 import {
@@ -860,48 +860,14 @@ export default function StoragePage() {
         </MenuItem>
       </Menu>
 
-      <Drawer
-        anchor={isMobile ? 'bottom' : 'right'}
+      <GlossyDetailDrawer
+        mobile={isMobile}
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
-        slotProps={{
-          paper: {
-            sx: {
-              width: isMobile ? '100%' : { sm: 420, md: 480, lg: 560 },
-              maxHeight: isMobile ? '94vh' : '100vh',
-              height: isMobile ? 'min(94vh, 860px)' : '100%',
-              borderTopLeftRadius: isMobile ? 18 : 22,
-              borderTopRightRadius: isMobile ? 18 : 0,
-              borderBottomLeftRadius: isMobile ? 0 : 22,
-              borderBottomRightRadius: 0,
-              background: 'linear-gradient(180deg, #FBFDFF 0%, #FFFFFF 100%)',
-              overflow: 'hidden',
-            },
-          },
-        }}>
+        title="รายละเอียดงานพิมพ์"
+        subtitle={activeRecord ? `ลูกค้า : ${activeRecord.customerName}` : undefined}>
         {activeRecord ? (
-          <Stack sx={{ height: '100%' }}>
-            <Box
-              sx={{
-                px: { xs: 2, sm: 2.5, md: 3 },
-                py: { xs: 1.8, sm: 2.2 },
-                borderBottom: '1px solid #E8EFF8',
-                bgcolor: 'rgba(255, 255, 255, 0.94)',
-                backdropFilter: 'blur(10px)',
-              }}>
-              <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>รายละเอียดงานพิมพ์</Typography>
-              <Typography sx={{ mt: 0.5, color: '#64748B' }}>ลูกค้า : {activeRecord.customerName}</Typography>
-            </Box>
-
-            <Box
-              sx={{
-                px: { xs: 2, sm: 2.5, md: 3 },
-                py: { xs: 2, sm: 2.3 },
-                overflowY: 'auto',
-                overflowX: 'hidden',
-                flex: 1,
-              }}>
-              <Stack spacing={isCompactDrawer ? 1.35 : 1.6}>
+          <Stack spacing={isCompactDrawer ? 1.35 : 1.6}>
                 {/* <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                   <CardContent>
                     <Stack spacing={1.3}>
@@ -1207,8 +1173,6 @@ export default function StoragePage() {
                 </Card>
 
                 <JobTimelineCard items={buildStorageTimelineItems(activeRecord)} subtitle="ลำดับการรับงานและอัปเดตความคืบหน้าของไฟล์งาน" />
-              </Stack>
-            </Box>
 
             <Divider />
             <Box
@@ -1270,7 +1234,7 @@ export default function StoragePage() {
             </Box>
           </Stack>
         ) : null}
-      </Drawer>
+      </GlossyDetailDrawer>
     </Box>
   );
 }

@@ -13,7 +13,6 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
-  Drawer,
   InputAdornment,
   Menu,
   MenuItem,
@@ -45,6 +44,7 @@ import Link from 'next/link';
 
 import JobTimelineCard from '../components/JobTimelineCard';
 import { commonButtonSx, statusChipSx } from '../components/adminUi';
+import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
 import type { ProductionWorkflowStatus } from '../../../lib/contracts';
 import type { ExportMenuProps, OrderDetailDrawerProps, OrderRow, RowActionsMenuProps, StatCardProps } from './orderManagementTypes';
 import { buildOrderTimelineItems, formatMoney, PAYMENT_METHOD_LABELS_TH, statusChip } from './orderManagementUtils';
@@ -192,20 +192,6 @@ export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClo
   );
 }
 
-function getOrderDetailDrawerPaperSx(isMobile: boolean) {
-  return {
-    width: isMobile ? '100%' : { sm: 420, md: 480, lg: 560 },
-    maxHeight: isMobile ? '94vh' : '100vh',
-    height: isMobile ? 'min(94vh, 860px)' : '100%',
-    borderTopLeftRadius: isMobile ? 18 : 22,
-    borderTopRightRadius: isMobile ? 18 : 0,
-    borderBottomLeftRadius: isMobile ? 0 : 22,
-    borderBottomRightRadius: 0,
-    background: 'linear-gradient(180deg, #FBFDFF 0%, #FFFFFF 100%)',
-    overflow: 'hidden',
-  };
-}
-
 type CustomerDraft = Pick<OrderRow, 'customerName' | 'phoneNumber' | 'taxId' | 'address'>;
 
 const customerFieldSx = {
@@ -227,32 +213,6 @@ function createCustomerDraft(order: OrderRow): CustomerDraft {
     taxId: order.taxId === '-' ? '' : order.taxId,
     address: order.address === '-' ? '' : order.address,
   };
-}
-
-function DrawerHeader({ order }: Readonly<{ order: OrderRow }>) {
-  return (
-    <Box
-      sx={{
-        px: { xs: 2, sm: 2.5, md: 3 },
-        py: { xs: 1.8, sm: 2.2 },
-        borderBottom: '1px solid #E8EFF8',
-        bgcolor: 'rgba(255, 255, 255, 0.94)',
-        backdropFilter: 'blur(10px)',
-      }}>
-      <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'flex-start', sm: 'center' }} spacing={1}>
-        <Box>
-          <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0F172A' }}>รายละเอียดงาน</Typography>
-          <Typography sx={{ mt: 0.4, color: '#64748B' }}>
-            {order.orderNumber} | {order.customerName}
-          </Typography>
-        </Box>
-        <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
-          {order.isBackdated ? <Chip size="small" label="รายการย้อนหลัง" color="warning" sx={{ fontWeight: 800 }} /> : null}
-          {statusChip(order.status)}
-        </Stack>
-      </Stack>
-    </Box>
-  );
 }
 
 function PaymentNotice({ order }: Readonly<{ order: OrderRow }>) {
@@ -825,28 +785,35 @@ export function OrderDetailDrawer({
   };
 
   return (
-    <Drawer
-      anchor={isMobile ? 'bottom' : 'right'}
-      open={drawerOpen}
-      onClose={onClose}
-      slotProps={{
-        paper: {
-          sx: getOrderDetailDrawerPaperSx(isMobile),
-        },
-      }}>
-      {selectedOrder ? (
-        <Stack sx={{ height: '100%' }}>
-          <DrawerHeader order={selectedOrder} />
-
-          <Box
-            sx={{
-              px: { xs: 2, sm: 2.5, md: 3 },
-              py: { xs: 2, sm: 2.3 },
-              overflowY: 'auto',
-              overflowX: 'hidden',
-              flex: 1,
-            }}>
-            <Stack spacing={isCompactDrawer ? 1.25 : 1.5}>
+    <>
+      <GlossyDetailDrawer
+        mobile={isMobile}
+        open={drawerOpen}
+        onClose={onClose}
+        title="รายละเอียดงาน"
+        subtitle={selectedOrder ? `${selectedOrder.orderNumber} | ${selectedOrder.customerName}` : undefined}
+        headerActions={selectedOrder ? (
+          <Stack direction="row" alignItems="center" gap={0.75} flexWrap="wrap">
+            {selectedOrder.isBackdated ? <Chip size="small" label="รายการย้อนหลัง" color="warning" sx={{ fontWeight: 800 }} /> : null}
+            {statusChip(selectedOrder.status)}
+          </Stack>
+        ) : undefined}
+        footer={selectedOrder ? (
+          <>
+            <Divider />
+            <DrawerActionBar
+              order={selectedOrder}
+              isEditing={isEditing}
+              updatingOrderId={updatingOrderId}
+              onEdit={() => setIsEditing(true)}
+              onSaveCustomer={() => void saveCustomer()}
+              onOpenPayRemaining={onOpenPayRemaining}
+              onClose={onClose}
+            />
+          </>
+        ) : undefined}>
+        {selectedOrder ? (
+          <Stack spacing={isCompactDrawer ? 1.25 : 1.5}>
               <PaymentNotice order={selectedOrder} />
               <OrderInfoCard order={selectedOrder} isEditing={isEditing} />
 
@@ -1099,21 +1066,9 @@ export function OrderDetailDrawer({
               />
 
               <JobTimelineCard items={buildOrderTimelineItems(selectedOrder)} />
-            </Stack>
-          </Box>
-
-          <Divider />
-          <DrawerActionBar
-            order={selectedOrder}
-            isEditing={isEditing}
-            updatingOrderId={updatingOrderId}
-            onEdit={() => setIsEditing(true)}
-            onSaveCustomer={() => void saveCustomer()}
-            onOpenPayRemaining={onOpenPayRemaining}
-            onClose={onClose}
-          />
-        </Stack>
-      ) : null}
+          </Stack>
+        ) : null}
+      </GlossyDetailDrawer>
       {/*
       <Dialog open={taxInvoiceConfirmOpen} onClose={() => setTaxInvoiceConfirmOpen(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>ยืนยันออกใบกำกับภาษี</DialogTitle>
@@ -1156,6 +1111,6 @@ export function OrderDetailDrawer({
         onConfirm={onConvertToTaxInvoice}
         onErrorChange={setTaxInvoiceError}
       />
-    </Drawer>
+    </>
   );
 }

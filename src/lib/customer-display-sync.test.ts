@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { sanitizeCustomerDisplayState } from './customer-display-sync';
+import { getCustomerDisplayPairingUrl, sanitizeCustomerDisplayState } from './customer-display-sync';
 
 test('customer display sync strips customer PII and internal note fields', () => {
   const state = sanitizeCustomerDisplayState({
@@ -39,4 +39,17 @@ test('customer display sync strips customer PII and internal note fields', () =>
 
 test('customer display sync clears remote state when there is no cart', () => {
   assert.equal(sanitizeCustomerDisplayState({ total: 0, cart: [] }), null);
+});
+
+test('customer display pairing URL uses the explicit customer-display route', () => {
+  const url = getCustomerDisplayPairingUrl(
+    {
+      sessionId: 'session-1',
+      displayToken: 'display-token-1',
+      expiresAt: '2099-01-01T00:00:00.000Z',
+    },
+    'https://glossy.example',
+  );
+
+  assert.equal(url, 'https://glossy.example/customer-display?display=display-token-1');
 });
