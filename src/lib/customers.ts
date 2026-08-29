@@ -20,10 +20,24 @@ export type CustomerProfile = {
   active: boolean;
 };
 
+export type CustomerListResult = {
+  data: CustomerProfile[];
+  page: number;
+  limit: number;
+  total: number;
+};
+
+export type CustomerListOptions = {
+  search?: string;
+  page?: number;
+  limit?: number;
+  active?: boolean;
+};
+
 export function getCustomerPhoneNumbers(
   customer: Pick<CustomerProfile, 'phoneNumber' | 'phoneNumbers'>,
 ): string[] {
-  return [...(customer.phoneNumbers ?? []), customer.phoneNumber]
+  return [customer.phoneNumber, ...(customer.phoneNumbers ?? [])]
     .filter((value): value is string => typeof value === 'string')
     .map(value => value.trim())
     .filter((value, index, values) => value && values.indexOf(value) === index);
@@ -58,9 +72,11 @@ export type CustomerDetail = {
     saleDate?: string;
     createdAt?: string;
     grandTotal?: number;
+    paidAmount?: number;
     remainingTotal?: number;
     status?: string;
     workflowStatus?: string;
+    taxInvoice?: string;
   }>;
   activeProductionJobs: Array<{
     _id: string;
@@ -81,11 +97,26 @@ export type CustomerDetail = {
   }>;
 };
 
+export async function fetchCustomersPage(options: CustomerListOptions = {}): Promise<CustomerListResult> {
+  const query = new URLSearchParams({
+    page: String(options.page ?? 1),
+    limit: String(options.limit ?? 20),
+  });
+  if (options.search?.trim()) query.set('search', options.search.trim());
+  if (options.active !== undefined) query.set('active', String(options.active));
+
+  const response = await fetchApiJson<Partial<CustomerListResult>>(`/customers?${query.toString()}`);
+  return {
+    data: Array.isArray(response.data) ? response.data : [],
+    page: Number(response.page ?? options.page ?? 1),
+    limit: Number(response.limit ?? options.limit ?? 20),
+    total: Number(response.total ?? 0),
+  };
+}
+
 export async function fetchCustomers(search = '', limit = 20): Promise<CustomerProfile[]> {
-  const query = new URLSearchParams({ limit: String(limit), active: 'true' });
-  if (search.trim()) query.set('search', search.trim());
-  const response = await fetchApiJson<{ data?: CustomerProfile[] }>(`/customers?${query.toString()}`);
-  return Array.isArray(response.data) ? response.data : [];
+  const response = await fetchCustomersPage({ search, limit, active: true });
+  return response.data;
 }
 
 export async function fetchCustomerDetail(id: string): Promise<CustomerDetail> {
@@ -100,7 +131,25 @@ export async function createCustomer(payload: Omit<CustomerProfile, '_id' | 'cus
   });
 }
 
-export async function updateCustomer(id: string, payload: Partial<Omit<CustomerProfile, '_id' | 'customerCode'>>): Promise<CustomerProfile> {
+type CustomerClearableField =
+  | 'email'
+  | 'taxId'
+  | 'companyName'
+  | 'address'
+  | 'branchType'
+  | 'branchNo'
+  | 'subDistrict'
+  | 'district'
+  | 'province'
+  | 'postalCode'
+  | 'shippingAddress';
+
+export type CustomerUpdatePayload = Partial<
+  Omit<CustomerProfile, '_id' | 'customerCode' | CustomerClearableField>
+> &
+  Partial<Record<CustomerClearableField, string | null>>;
+
+export async function updateCustomer(id: string, payload: CustomerUpdatePayload): Promise<CustomerProfile> {
   return fetchApiJson<CustomerProfile>(`/customers/${encodeURIComponent(id)}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },

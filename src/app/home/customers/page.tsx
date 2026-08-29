@@ -1,63 +1,215 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import { Alert, Box, Button, Card, CardActionArea, CardContent, Divider, Drawer, InputAdornment, Stack, TextField, Typography } from '@mui/material';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
+import {
+  Alert,
+  Box,
+  Button,
+  Card,
+  CardContent,
+  Chip,
+  InputAdornment,
+  MenuItem,
+  Skeleton,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TablePagination,
+  TableRow,
+  TextField,
+  Typography,
+} from '@mui/material';
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
-import { fetchCustomerDetail, fetchCustomers, formatCustomerPhoneNumbers, type CustomerDetail, type CustomerProfile } from '@/lib/customers';
+import {
+  fetchCustomerDetail,
+  fetchCustomersPage,
+  getCustomerPhoneNumbers,
+  type CustomerDetail,
+  type CustomerProfile,
+} from '@/lib/customers';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
+import CustomerDetailDrawer from '@/components/customers/CustomerDetailDrawer';
 
+type ActiveFilter = 'all' | 'active' | 'inactive';
 
-const money = new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', maximumFractionDigits: 2 });
+function branchLabel(customer: CustomerProfile): string | null {
+  if (!customer.branchType) return null;
+  const normalized = customer.branchType.trim().toLowerCase();
+  if (['headquarters', 'head_office', 'head-office', 'สำนักงานใหญ่'].includes(normalized)) return 'สำนักงานใหญ่';
+  if (['branch', 'สาขา'].includes(normalized)) return customer.branchNo ? `สาขา ${customer.branchNo}` : 'สาขา';
+  return customer.branchNo ? `${customer.branchType} ${customer.branchNo}` : customer.branchType;
+}
+
+function CustomerIdentity({ customer }: Readonly<{ customer: CustomerProfile }>) {
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Typography sx={{ fontSize: 14, fontWeight: 900, color: '#172033' }} noWrap>{customer.displayName}</Typography>
+      <Typography sx={{ mt: 0.15, fontSize: 11.5, color: '#718096', fontWeight: 700 }}>{customer.customerCode}</Typography>
+      {customer.companyName ? <Typography sx={{ mt: 0.35, fontSize: 12, color: '#475569' }} noWrap>{customer.companyName}</Typography> : null}
+    </Box>
+  );
+}
+
+function CustomerContact({ customer }: Readonly<{ customer: CustomerProfile }>) {
+  const phones = getCustomerPhoneNumbers(customer);
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      <Stack direction="row" spacing={0.6} alignItems="center" flexWrap="wrap" useFlexGap>
+        <Typography sx={{ fontSize: 12.5, color: '#334155', fontWeight: 700 }}>{phones[0] || 'ไม่มีเบอร์โทร'}</Typography>
+        {phones.length > 1 ? <Chip size="small" label={`+${phones.length - 1}`} sx={{ height: 20, fontSize: 10, fontWeight: 800 }} /> : null}
+      </Stack>
+      {customer.email ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#718096' }} noWrap>{customer.email}</Typography> : null}
+    </Box>
+  );
+}
+
+function CustomerTax({ customer }: Readonly<{ customer: CustomerProfile }>) {
+  const branch = branchLabel(customer);
+  if (!customer.taxId && !customer.companyName && !branch) return <Typography sx={{ color: '#98A2B3', fontSize: 12 }}>—</Typography>;
+  return (
+    <Box sx={{ minWidth: 0 }}>
+      {customer.taxId ? <Typography sx={{ fontSize: 12.5, color: '#334155', fontWeight: 700 }}>Tax ID {customer.taxId}</Typography> : null}
+      {branch ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#718096' }}>{branch}</Typography> : null}
+    </Box>
+  );
+}
+
+function CustomerStatus({ active }: Readonly<{ active: boolean }>) {
+  return (
+    <Chip
+      size="small"
+      label={active ? 'Active' : 'Inactive'}
+      sx={{ height: 24, bgcolor: active ? '#ECFDF3' : '#F2F4F7', color: active ? '#027A48' : '#667085', fontWeight: 800, fontSize: 10.5 }}
+    />
+  );
+}
+
+function DesktopSkeleton() {
+  return (
+    <TableBody>
+      {Array.from({ length: 6 }, (_, index) => (
+        <TableRow key={index}>
+          <TableCell><Skeleton width="75%" /><Skeleton width="45%" /></TableCell>
+          <TableCell><Skeleton width="70%" /><Skeleton width="60%" /></TableCell>
+          <TableCell><Skeleton width="65%" /></TableCell>
+          <TableCell><Skeleton width={68} /></TableCell>
+          <TableCell align="right"><Skeleton width={145} sx={{ ml: 'auto' }} /></TableCell>
+        </TableRow>
+      ))}
+    </TableBody>
+  );
+}
 
 export default function CustomersPage() {
   const [customers, setCustomers] = React.useState<CustomerProfile[]>([]);
   const [query, setQuery] = React.useState('');
+  const [activeFilter, setActiveFilter] = React.useState<ActiveFilter>('all');
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(25);
+  const [total, setTotal] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [error, setError] = React.useState<string | null>(null);
+  const [selectedId, setSelectedId] = React.useState<string | null>(null);
   const [selected, setSelected] = React.useState<CustomerDetail | null>(null);
   const [detailLoading, setDetailLoading] = React.useState(false);
   const [createOpen, setCreateOpen] = React.useState(false);
+  const [editingCustomer, setEditingCustomer] = React.useState<CustomerProfile | null>(null);
+  const listRequestId = React.useRef(0);
+  const detailRequestId = React.useRef(0);
 
-  const loadCustomers = React.useCallback(async (search = '') => {
+  const loadCustomers = React.useCallback(async () => {
+    const requestId = ++listRequestId.current;
     setLoading(true);
     setError(null);
     try {
-      setCustomers(await fetchCustomers(search, 50));
+      const response = await fetchCustomersPage({
+        search: query,
+        page: page + 1,
+        limit: rowsPerPage,
+        active: activeFilter === 'all' ? undefined : activeFilter === 'active',
+      });
+      if (requestId !== listRequestId.current) return;
+
+      const maxPage = Math.max(0, Math.ceil(response.total / rowsPerPage) - 1);
+      if (page > maxPage) {
+        setPage(maxPage);
+        return;
+      }
+
+      setCustomers(response.data);
+      setTotal(response.total);
       setLastSyncedAt(new Date());
     } catch (caught) {
+      if (requestId !== listRequestId.current) return;
       setError(caught instanceof Error ? caught.message : 'โหลดข้อมูลลูกค้าไม่สำเร็จ');
     } finally {
-      setLoading(false);
+      if (requestId === listRequestId.current) setLoading(false);
     }
-  }, []);
+  }, [activeFilter, page, query, rowsPerPage]);
 
   React.useEffect(() => {
-    const timer = globalThis.setTimeout(() => void loadCustomers(query), 250);
+    const timer = globalThis.setTimeout(() => void loadCustomers(), 250);
     return () => globalThis.clearTimeout(timer);
-  }, [loadCustomers, query]);
+  }, [loadCustomers]);
 
   const openCustomer = async (customer: CustomerProfile) => {
+    const requestId = ++detailRequestId.current;
+    setSelectedId(customer._id);
+    setSelected(null);
     setDetailLoading(true);
     setError(null);
     try {
-      setSelected(await fetchCustomerDetail(customer._id));
+      const detail = await fetchCustomerDetail(customer._id);
+      if (requestId !== detailRequestId.current) return;
+      setSelected(detail);
     } catch (caught) {
+      if (requestId !== detailRequestId.current) return;
+      setSelectedId(null);
       setError(caught instanceof Error ? caught.message : 'โหลดรายละเอียดลูกค้าไม่สำเร็จ');
     } finally {
-      setDetailLoading(false);
+      if (requestId === detailRequestId.current) setDetailLoading(false);
     }
+  };
+
+  const reloadSelectedCustomer = React.useCallback(async (customerId: string) => {
+    try {
+      setSelected(await fetchCustomerDetail(customerId));
+    } catch {
+      setSelected(null);
+      setSelectedId(null);
+    }
+  }, []);
+
+  const handleSaved = async (saved: CustomerProfile) => {
+    setEditingCustomer(null);
+    await loadCustomers();
+    if (selectedId === saved._id) await reloadSelectedCustomer(saved._id);
+  };
+
+  const handleQueryChange = (value: string) => {
+    setQuery(value);
+    setPage(0);
+  };
+
+  const handleFilterChange = (value: ActiveFilter) => {
+    setActiveFilter(value);
+    setPage(0);
   };
 
   return (
     <AdminPageContainer>
       <AdminHeroHeader
         title="ลูกค้า"
-        description="ค้นหาลูกค้าประจำ ใช้ข้อมูลเดิมตอนขาย และดูประวัติงานโดยไม่เปลี่ยนข้อมูลในบิลเก่า"
+        description="จัดการข้อมูลลูกค้า ประวัติการสั่งซื้อ ยอดค้าง และข้อมูลสำหรับออกเอกสาร"
         lastSynced={formatAdminLastSynced(lastSyncedAt)}
         thaiDate={formatAdminThaiDate(lastSyncedAt)}
         actions={
@@ -67,79 +219,152 @@ export default function CustomersPage() {
         }
       />
 
-      {error ? <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert> : null}
+      {error ? <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert> : null}
 
-      <TextField
-        fullWidth
-        value={query}
-        onChange={event => setQuery(event.target.value)}
-        placeholder="ค้นหาชื่อ รหัสลูกค้า เบอร์โทร อีเมล หรือเลขผู้เสียภาษี"
-        slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon /></InputAdornment> } }}
-        sx={{ mb: 2, '& .MuiOutlinedInput-root': { borderRadius: 3, bgcolor: '#fff' } }}
-      />
+      <Card variant="outlined" sx={{ mb: 1.5, borderRadius: 3.5, borderColor: '#E5EAF2', boxShadow: 'none' }}>
+        <CardContent sx={{ p: { xs: 1.5, sm: 1.75 }, '&:last-child': { pb: { xs: 1.5, sm: 1.75 } } }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', md: 'center' }}>
+            <TextField
+              fullWidth
+              size="small"
+              value={query}
+              onChange={event => handleQueryChange(event.target.value)}
+              placeholder="ค้นหาชื่อ/บริษัท รหัสลูกค้า เบอร์โทร อีเมล หรือเลขผู้เสียภาษี"
+              slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon sx={{ color: '#64748B' }} /></InputAdornment> } }}
+              sx={{ flex: 1, '& .MuiOutlinedInput-root': { minHeight: 44, borderRadius: 2.75, bgcolor: '#fff' } }}
+            />
+            <TextField
+              select
+              size="small"
+              label="สถานะ"
+              value={activeFilter}
+              onChange={event => handleFilterChange(event.target.value as ActiveFilter)}
+              sx={{ width: { xs: '100%', md: 170 }, '& .MuiOutlinedInput-root': { minHeight: 44, borderRadius: 2.75, bgcolor: '#fff' } }}>
+              <MenuItem value="all">ทั้งหมด</MenuItem>
+              <MenuItem value="active">Active</MenuItem>
+              <MenuItem value="inactive">Inactive</MenuItem>
+            </TextField>
+            <Typography sx={{ minWidth: { md: 118 }, textAlign: { xs: 'left', md: 'right' }, color: '#718096', fontSize: 12.5, fontWeight: 700 }}>
+              {total.toLocaleString('th-TH')} รายการ
+            </Typography>
+          </Stack>
+        </CardContent>
+      </Card>
 
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(3, minmax(0, 1fr))' }, gap: 1.5 }}>
-        {customers.map(customer => (
-          <Card key={customer._id} variant="outlined" sx={{ borderRadius: 3, minWidth: 0 }}>
-            <CardActionArea onClick={() => void openCustomer(customer)} sx={{ height: '100%', textAlign: 'left' }}>
-              <CardContent>
-                <Typography fontWeight={850} fontSize={17} noWrap>{customer.displayName}</Typography>
-                <Typography color="text.secondary" fontSize={12.5}>{customer.customerCode}</Typography>
-                <Stack spacing={0.45} sx={{ mt: 1.5 }}>
-                  <Typography fontSize={13.5}>{formatCustomerPhoneNumbers(customer) || 'ไม่มีเบอร์โทร'}</Typography>
-                  {customer.email ? <Typography fontSize={13.5} noWrap>{customer.email}</Typography> : null}
-                  {customer.taxId ? <Typography fontSize={12.5} color="text.secondary">Tax ID {customer.taxId}</Typography> : null}
+      <TableContainer component={Card} variant="outlined" sx={{ display: { xs: 'none', lg: 'block' }, borderRadius: 3.5, borderColor: '#E5EAF2', boxShadow: 'none' }}>
+        <Table sx={{ minWidth: 920 }}>
+          <TableHead>
+            <TableRow sx={{ bgcolor: '#F8FAFC' }}>
+              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '27%' }}>ลูกค้า</TableCell>
+              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '23%' }}>ติดต่อ</TableCell>
+              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '22%' }}>บริษัท / Tax</TableCell>
+              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '10%' }}>สถานะ</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 850, color: '#475569', width: '18%' }}>จัดการ</TableCell>
+            </TableRow>
+          </TableHead>
+          {loading && customers.length === 0 ? <DesktopSkeleton /> : (
+            <TableBody>
+              {customers.map(customer => (
+                <TableRow key={customer._id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
+                  <TableCell><CustomerIdentity customer={customer} /></TableCell>
+                  <TableCell><CustomerContact customer={customer} /></TableCell>
+                  <TableCell><CustomerTax customer={customer} /></TableCell>
+                  <TableCell><CustomerStatus active={customer.active} /></TableCell>
+                  <TableCell align="right">
+                    <Stack direction="row" justifyContent="flex-end" spacing={0.65}>
+                      <Button size="small" variant="text" startIcon={<VisibilityRoundedIcon />} onClick={() => void openCustomer(customer)} sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>รายละเอียด</Button>
+                      <Button size="small" variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => setEditingCustomer(customer)} sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>แก้ไข</Button>
+                    </Stack>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          )}
+        </Table>
+      </TableContainer>
+
+      <Stack spacing={1.1} sx={{ display: { xs: 'flex', lg: 'none' } }}>
+        {loading && customers.length === 0 ? Array.from({ length: 5 }, (_, index) => <Skeleton key={index} variant="rounded" height={172} sx={{ borderRadius: 3 }} />) : null}
+        {customers.map(customer => {
+          const phones = getCustomerPhoneNumbers(customer);
+          const branch = branchLabel(customer);
+          return (
+            <Card key={customer._id} variant="outlined" sx={{ borderRadius: 3.25, borderColor: '#E5EAF2', boxShadow: 'none' }}>
+              <CardContent sx={{ p: 1.65, '&:last-child': { pb: 1.65 } }}>
+                <Stack spacing={1.15}>
+                  <Stack direction="row" justifyContent="space-between" gap={1.2} alignItems="flex-start">
+                    <CustomerIdentity customer={customer} />
+                    <CustomerStatus active={customer.active} />
+                  </Stack>
+                  <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0.45 }}>
+                    <Typography sx={{ fontSize: 12.5, color: '#475569' }}>โทร {phones[0] || 'ไม่มีเบอร์โทร'}{phones.length > 1 ? ` (+${phones.length - 1})` : ''}</Typography>
+                    {customer.email ? <Typography sx={{ fontSize: 12.5, color: '#475569', overflowWrap: 'anywhere' }}>{customer.email}</Typography> : null}
+                    {customer.taxId ? <Typography sx={{ fontSize: 12.5, color: '#475569' }}>Tax ID {customer.taxId}</Typography> : null}
+                    {branch ? <Typography sx={{ fontSize: 12, color: '#718096' }}>{branch}</Typography> : null}
+                  </Box>
+                  <Stack direction="row" spacing={0.75}>
+                    <Button fullWidth variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => setEditingCustomer(customer)} sx={{ minHeight: 44, borderRadius: 2.5, textTransform: 'none', fontWeight: 800 }}>แก้ไข</Button>
+                    <Button fullWidth variant="contained" disableElevation endIcon={<VisibilityRoundedIcon />} onClick={() => void openCustomer(customer)} sx={{ minHeight: 44, borderRadius: 2.5, textTransform: 'none', fontWeight: 800 }}>รายละเอียด</Button>
+                  </Stack>
                 </Stack>
               </CardContent>
-            </CardActionArea>
-          </Card>
-        ))}
-      </Box>
-      {!loading && customers.length === 0 ? <Typography sx={{ py: 6, textAlign: 'center', color: 'text.secondary' }}>ยังไม่พบลูกค้าที่ตรงกับการค้นหา</Typography> : null}
-      {loading ? <Typography sx={{ py: 4, textAlign: 'center', color: 'text.secondary' }}>กำลังโหลด...</Typography> : null}
+            </Card>
+          );
+        })}
+      </Stack>
 
-      <Drawer anchor="right" open={Boolean(selected) || detailLoading} onClose={() => setSelected(null)} PaperProps={{ sx: { width: { xs: '100%', sm: 520 }, p: { xs: 2, sm: 3 } } }}>
-        {detailLoading && !selected ? <Typography>กำลังโหลดรายละเอียด...</Typography> : null}
-        {selected ? (
-          <Stack spacing={2.25}>
-            <Box>
-              <Typography variant="h5" fontWeight={900}>{selected.customer.displayName}</Typography>
-              <Typography color="text.secondary">{selected.customer.customerCode}</Typography>
-            </Box>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
-              <Card variant="outlined" sx={{ flex: 1, borderRadius: 3 }}><CardContent><Typography color="text.secondary" fontSize={12}>ออเดอร์</Typography><Typography variant="h5" fontWeight={850}>{selected.summary.orderCount}</Typography></CardContent></Card>
-              <Card variant="outlined" sx={{ flex: 1, borderRadius: 3 }}><CardContent><Typography color="text.secondary" fontSize={12}>ยอดค้างรวม</Typography><Typography variant="h5" fontWeight={850}>{money.format(selected.summary.outstandingTotal)}</Typography></CardContent></Card>
-            </Stack>
-            <Divider />
-            <Box>
-              <Typography fontWeight={800} sx={{ mb: 1 }}>ประวัติการขาย</Typography>
-              <Stack spacing={1}>
-                {selected.orders.slice(0, 10).map(order => (
-                  <Button key={order._id} component={Link} href={`/home/orders?search=${encodeURIComponent(order.orderNumber || order.orderId || '')}`} variant="outlined" sx={{ justifyContent: 'space-between', borderRadius: 2.5 }}>
-                    <span>{order.orderNumber || order.orderId || '-'}</span><span>{money.format(Number(order.remainingTotal || 0))} ค้าง</span>
-                  </Button>
-                ))}
-                {selected.orders.length === 0 ? <Typography color="text.secondary" fontSize={13}>ยังไม่มีประวัติการขายที่เชื่อมกับโปรไฟล์นี้</Typography> : null}
-              </Stack>
-            </Box>
-            <Box>
-              <Typography fontWeight={800} sx={{ mb: 1 }}>งานผลิตที่ยัง Active</Typography>
-              <Stack spacing={0.75}>{selected.activeProductionJobs.map(job => <Typography key={job._id} fontSize={13.5}>{job.jobNumber} · {job.workSummary} · {job.stage}</Typography>)}</Stack>
-              {selected.activeProductionJobs.length === 0 ? <Typography color="text.secondary" fontSize={13}>ไม่มีงานผลิตที่กำลังดำเนินการ</Typography> : null}
-            </Box>
-            <Box>
-              <Typography fontWeight={800} sx={{ mb: 1 }}>ไฟล์ลูกค้าที่เชื่อมแล้ว</Typography>
-              <Stack spacing={0.75}>{selected.linkedUploads.map(upload => <Button key={upload._id} component={Link} href={`/home/storage?order=${encodeURIComponent(upload.linkedOrderNumber || '')}`} variant="text" sx={{ justifyContent: 'flex-start' }}>{upload.orderCode} · {upload.jobType}</Button>)}</Stack>
-              {selected.linkedUploads.length === 0 ? <Typography color="text.secondary" fontSize={13}>ยังไม่มีไฟล์ที่เชื่อมกับออเดอร์ของลูกค้ารายนี้</Typography> : null}
-            </Box>
-          </Stack>
-        ) : null}
-      </Drawer>
+      {!loading && customers.length === 0 ? (
+        <Box sx={{ py: { xs: 6, md: 8 }, px: 2, textAlign: 'center' }}>
+          <Typography sx={{ fontSize: 16, fontWeight: 850, color: '#334155' }}>
+            {query.trim() ? `ไม่พบลูกค้าที่ตรงกับ “${query.trim()}”` : 'ยังไม่มีลูกค้าในรายการนี้'}
+          </Typography>
+          <Typography sx={{ mt: 0.6, color: '#7A8A9E', fontSize: 13 }}>ลองค้นหาด้วยชื่อ เบอร์โทร หรือรหัสลูกค้า</Typography>
+        </Box>
+      ) : null}
+
+      <Box sx={{ mt: 1.2, border: '1px solid #E5EAF2', borderRadius: 3, bgcolor: '#FFFFFF', overflow: 'hidden' }}>
+        <TablePagination
+          component="div"
+          count={total}
+          page={page}
+          onPageChange={(_event, nextPage) => setPage(nextPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+          rowsPerPageOptions={[10, 25, 50, 100]}
+          labelRowsPerPage="ต่อหน้า"
+          labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
+          sx={{
+            '& .MuiTablePagination-toolbar': { minHeight: 56, flexWrap: { xs: 'wrap', sm: 'nowrap' }, justifyContent: { xs: 'center', sm: 'flex-end' }, rowGap: 0.5, px: { xs: 1, sm: 2 } },
+            '& .MuiTablePagination-spacer': { display: { xs: 'none', sm: 'block' } },
+            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': { fontSize: 12.5 },
+          }}
+        />
+      </Box>
+
+      <CustomerDetailDrawer
+        open={Boolean(selectedId)}
+        detail={selected}
+        loading={detailLoading}
+        onClose={() => {
+          detailRequestId.current += 1;
+          setDetailLoading(false);
+          setSelectedId(null);
+          setSelected(null);
+        }}
+        onEdit={customer => setEditingCustomer(customer)}
+      />
 
       <CustomerCreateDialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreated={() => void loadCustomers(query)}
+        onCreated={() => { setPage(0); void loadCustomers(); }}
+      />
+
+      <CustomerCreateDialog
+        open={Boolean(editingCustomer)}
+        customer={editingCustomer}
+        onClose={() => setEditingCustomer(null)}
+        onSaved={customer => void handleSaved(customer)}
       />
     </AdminPageContainer>
   );
