@@ -4,6 +4,7 @@ import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
 import PrecisionManufacturingRoundedIcon from '@mui/icons-material/PrecisionManufacturingRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded';
+import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
@@ -46,6 +47,12 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
         href: '/home/orders',
         activePaths: ['/home/saleListPage'],
         icon: ReceiptLongRoundedIcon,
+      },
+      {
+        id: 'customers',
+        label: 'ลูกค้า',
+        href: '/home/customers',
+        icon: PeopleAltRoundedIcon,
       },
     ],
   },

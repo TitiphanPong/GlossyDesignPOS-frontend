@@ -11,6 +11,7 @@ export type StoredPendingOrderDraft = PendingOrderDraft & {
   payment?: PaymentMethod;
   discount?: number;
   discountSource?: OrderDiscountInput;
+  customerId?: string;
   customerName?: string;
   phoneNumber?: string;
   taxId?: string;
@@ -23,6 +24,7 @@ export type StoredPendingOrderDraft = PendingOrderDraft & {
 };
 
 type CheckoutCustomerInfo = {
+  customerId?: string;
   customerName: string;
   phoneNumber: string;
   taxId?: string;
@@ -204,6 +206,7 @@ export function buildPendingOrderPayload(order: StoredPendingOrderDraft, status:
 
   return {
     clientDraftId: order.clientDraftId,
+    customerId: order.customerId,
     orderType: 'NORMAL',
     customerName: order.customerName,
     phoneNumber: order.phoneNumber,

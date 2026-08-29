@@ -29,7 +29,7 @@ import Link from 'next/link';
 import { fetchProducts } from '@/lib/products';
 import type { Product } from '@/lib/contracts';
 
-type CustomerInfo = { customerName: string; phoneNumber: string; taxId: string; address: string; note: string };
+type CustomerInfo = { customerId?: string; customerName: string; phoneNumber: string; taxId: string; address: string; note: string };
 
 const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
 const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
@@ -63,6 +63,7 @@ function attachCatalogVariantPrice(item: CartItem, product: ActiveProduct): Cart
 }
 
 const sanitizeCustomerInfo = (customer: CustomerInfo): CustomerInfo => ({
+  ...(customer.customerId?.trim() ? { customerId: customer.customerId.trim() } : {}),
   customerName: customer.customerName.trim(),
   phoneNumber: customer.phoneNumber.trim(),
   taxId: customer.taxId.trim(),
@@ -218,6 +219,7 @@ export default function SellPage() {
       buildPendingOrderDraft({
         draftId: liveDraftIdRef.current,
         customer: {
+          ...(customer.customerId ? { customerId: customer.customerId } : {}),
           customerName: customer.customerName.trim() || 'Walk-in Customer',
           phoneNumber: customer.phoneNumber.trim(),
           taxId: customer.taxId.trim() || undefined,
@@ -230,7 +232,7 @@ export default function SellPage() {
         totals,
       })
     );
-  }, [cart.length, customer.address, customer.customerName, customer.note, customer.phoneNumber, customer.taxId, customerModalOpen, discount, lastPayment, successOpen, taxInvoice, totals]);
+  }, [cart.length, customer.address, customer.customerId, customer.customerName, customer.note, customer.phoneNumber, customer.taxId, customerModalOpen, discount, lastPayment, successOpen, taxInvoice, totals]);
 
   const summaryStats = React.useMemo(() => {
     const itemCount = cart.reduce((acc, item) => acc + Number(item.qty || 0), 0);

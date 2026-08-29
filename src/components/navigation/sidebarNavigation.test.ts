@@ -13,6 +13,11 @@ test('quick seller is the primary action and point of sale stays in the sales gr
   assert.equal(salesGroup?.items[0]?.href, '/home/posseller');
 });
 
+test('customer directory follows orders in the sales group', () => {
+  const salesGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'sales');
+  assert.deepEqual(salesGroup?.items.map(item => item.href), ['/home/posseller', '/home/orders', '/home/customers']);
+});
+
 test('production is the first operations destination before storage and stock', () => {
   const operationsGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'operations');
   assert.deepEqual(operationsGroup?.items.map(item => item.href), ['/home/production', '/home/storage', '/home/stock']);

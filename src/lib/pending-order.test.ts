@@ -68,6 +68,7 @@ test('buildPendingOrderPayload preserves clientDraftId but removes transient syn
     {
       orderId: '1712345678901',
       clientDraftId: 'draft-001',
+      customerId: '64b000000000000000000001',
       customerName: 'Alice',
       payment: 'cash',
       total: 280,
@@ -90,6 +91,7 @@ test('buildPendingOrderPayload preserves clientDraftId but removes transient syn
   assert.equal('vatAmount' in payload, false);
   assert.equal('grandTotal' in payload, false);
   assert.equal(payload.clientDraftId, 'draft-001');
+  assert.equal(payload.customerId, '64b000000000000000000001');
   assert.deepEqual(payload.discount, { type: 'amount', value: 20 });
   assert.deepEqual(payload.initialPayment, { amount: 85.6, method: 'cash', receivedAmount: 85.6 });
   assert.equal('orderSyncStatus' in payload, false);

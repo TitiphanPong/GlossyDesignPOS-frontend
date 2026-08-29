@@ -11,5 +11,8 @@ test('public backend allowlist does not expose tracking token through other meth
   assert.equal(isPublicBackendRequest('GET', ['tracking', 'token']), false);
   assert.equal(isPublicBackendRequest('PATCH', ['tracking', 'token']), false);
   assert.equal(isPublicBackendRequest('POST', ['orders']), false);
+  assert.equal(isPublicBackendRequest('GET', ['customers']), false);
+  assert.equal(isPublicBackendRequest('GET', ['customers', '64b000000000000000000001']), false);
+  assert.equal(isPublicBackendRequest('POST', ['customers']), false);
   assert.equal(isPublicBackendRequest('POST', ['orders', 'GD-1', 'tracking-access']), false);
 });

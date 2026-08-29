@@ -1,20 +1,22 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { alpha, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
+import { alpha, Autocomplete, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, Stack, TextField, Typography } from '@mui/material';
+import { fetchCustomers, type CustomerProfile } from '@/lib/customers';
 
 type Props = {
   open: boolean;
   taxInvoice: 'yes' | 'no';
   onClose: () => void;
   customer: {
+    customerId?: string;
     customerName: string;
     phoneNumber: string;
     taxId: string;
     address: string;
     note: string;
   };
-  onSubmit: (customer: { customerName: string; phoneNumber: string; taxId: string; address: string; note: string }) => void;
+  onSubmit: (customer: { customerId?: string; customerName: string; phoneNumber: string; taxId: string; address: string; note: string }) => void;
 };
 
 const CUSTOMER_NAME_MAX_LENGTH = 120;
@@ -71,6 +73,9 @@ export default function CustomerInfoModal({ open, taxInvoice, onClose, onSubmit,
   const [taxId, setTaxId] = useState('');
   const [address, setAddress] = useState('');
   const [note, setNote] = useState('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string | undefined>();
+  const [savedCustomers, setSavedCustomers] = useState<CustomerProfile[]>([]);
+  const [savedCustomerLoading, setSavedCustomerLoading] = useState(false);
   const [isLineOA, setIsLineOA] = useState(false);
   const [touched, setTouched] = useState({
     customerName: false,
@@ -81,6 +86,7 @@ export default function CustomerInfoModal({ open, taxInvoice, onClose, onSubmit,
   });
 
   useEffect(() => {
+    setSelectedCustomerId(customer.customerId);
     setCustomerName(stripLineOASuffix(customer.customerName));
     setPhoneNumber(customer.phoneNumber);
     setTaxId(customer.taxId);
@@ -95,6 +101,35 @@ export default function CustomerInfoModal({ open, taxInvoice, onClose, onSubmit,
       note: false,
     });
   }, [customer, open]);
+
+  useEffect(() => {
+    if (!open) return;
+    let active = true;
+    setSavedCustomerLoading(true);
+    void fetchCustomers('', 20)
+      .then(items => {
+        if (active) setSavedCustomers(items);
+      })
+      .catch(() => {
+        if (active) setSavedCustomers([]);
+      })
+      .finally(() => {
+        if (active) setSavedCustomerLoading(false);
+      });
+    return () => {
+      active = false;
+    };
+  }, [open]);
+
+  const applySavedCustomer = (profile: CustomerProfile | null) => {
+    setSelectedCustomerId(profile?._id);
+    if (!profile) return;
+    setCustomerName(profile.displayName);
+    setPhoneNumber(profile.phoneNumber ?? '');
+    setTaxId(profile.taxId ?? '');
+    setAddress(profile.address ?? '');
+    setIsLineOA(false);
+  };
 
   const trimmedCustomerName = customerName.trim();
   const trimmedPhoneNumber = phoneNumber.trim();
@@ -137,6 +172,7 @@ export default function CustomerInfoModal({ open, taxInvoice, onClose, onSubmit,
     }
 
     onSubmit({
+      ...(selectedCustomerId ? { customerId: selectedCustomerId } : {}),
       customerName: `${trimmedCustomerName}${isLineOA ? LINE_OA_SUFFIX : ''}`,
       phoneNumber: trimmedPhoneNumber,
       taxId: normalizedTaxId,
@@ -190,6 +226,15 @@ export default function CustomerInfoModal({ open, taxInvoice, onClose, onSubmit,
       <DialogContent sx={{ mt: 1.5, px: 3, py: 2 }}>
         <Stack spacing={2.2}>
           <Stack spacing={1.5}>
+            <Autocomplete
+              options={savedCustomers}
+              loading={savedCustomerLoading}
+              value={savedCustomers.find(item => item._id === selectedCustomerId) ?? null}
+              getOptionLabel={option => `${option.displayName}${option.phoneNumber ? ` · ${option.phoneNumber}` : ''}`}
+              isOptionEqualToValue={(option, value) => option._id === value._id}
+              onChange={(_event, value) => applySavedCustomer(value)}
+              renderInput={params => <TextField {...params} label="ค้นหาลูกค้าเดิม" helperText="เลือกโปรไฟล์เพื่อเติมข้อมูล หรือกรอกใหม่สำหรับลูกค้าหน้าร้าน" sx={buildFieldSx()} />}
+            />
             <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={1.5}>
               <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#2C4258', letterSpacing: '0.02em' }}>ข้อมูลติดต่อ</Typography>
               <FormControlLabel

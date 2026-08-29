@@ -311,6 +311,7 @@ export type OrderDiscountInput = {
 
 export type CreateOrderRequest = {
   clientDraftId?: string;
+  customerId?: string;
   orderType?: OrderType;
   entryMode?: OrderEntryMode;
   saleDate?: string;
