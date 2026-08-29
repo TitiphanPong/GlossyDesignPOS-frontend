@@ -20,6 +20,16 @@ export function calculateChange(received: number, grandTotal: number): number {
   return roundMoney(Math.max(0, received - grandTotal));
 }
 
+export function canConfirmQuickSalePayment(input: Readonly<{
+  paymentMethod: 'cash' | 'promptpay';
+  hasEnoughCash: boolean;
+  hasPromptPayProfile: boolean;
+  manualTransferVerified: boolean;
+}>): boolean {
+  if (input.paymentMethod === 'cash') return input.hasEnoughCash;
+  return input.hasPromptPayProfile || input.manualTransferVerified;
+}
+
 export function calculateAddedVat(taxableAmount: number): number {
   return roundMoney(Math.max(0, taxableAmount) * 0.07);
 }

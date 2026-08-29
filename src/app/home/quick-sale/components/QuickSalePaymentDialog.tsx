@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Alert, Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Stack, TextField, Typography, alpha } from '@mui/material';
+import { Alert, Box, Button, Checkbox, Chip, Dialog, DialogActions, DialogContent, DialogTitle, FormControlLabel, IconButton, InputAdornment, Stack, TextField, Typography, alpha } from '@mui/material';
 import AccountBalanceWalletOutlinedIcon from '@mui/icons-material/AccountBalanceWalletOutlined';
 import CheckCircleOutlineRoundedIcon from '@mui/icons-material/CheckCircleOutlineRounded';
 import CalendarTodayRoundedIcon from '@mui/icons-material/CalendarTodayRounded';
@@ -23,7 +23,7 @@ import type { PaymentMethod } from '@/lib/contracts';
 import type { CustomerProfile } from '@/lib/customers';
 import CustomerPicker from '@/components/customers/CustomerPicker';
 import { getPromptPayProfileFromEnv } from '@/lib/promptpay';
-import { calculateChange } from '../quickSale';
+import { calculateChange, canConfirmQuickSalePayment } from '../quickSale';
 
 type QuickSalePaymentDialogProps = Readonly<{
   open: boolean;
@@ -136,11 +136,19 @@ export default function QuickSalePaymentDialog({
   onSaleDateTimeChange,
   onBackdatedReasonChange,
 }: QuickSalePaymentDialogProps) {
+  const [manualTransferVerified, setManualTransferVerified] = React.useState(false);
   const changeAmount = calculateChange(receivedAmount, grandTotal);
   const missingAmount = Math.max(0, grandTotal - receivedAmount);
   const hasEnoughCash = receivedAmount >= grandTotal;
   const promptpayProfile = getPromptPayProfileFromEnv();
-  const canConfirm = paymentMethod === 'promptpay' ? Boolean(promptpayProfile) : hasEnoughCash;
+  const hasPromptPayProfile = Boolean(promptpayProfile);
+  const canConfirm = canConfirmQuickSalePayment({ paymentMethod, hasEnoughCash, hasPromptPayProfile, manualTransferVerified });
+
+  React.useEffect(() => {
+    if (!open || paymentMethod !== 'promptpay' || hasPromptPayProfile) {
+      setManualTransferVerified(false);
+    }
+  }, [hasPromptPayProfile, open, paymentMethod]);
 
   return (
     <Dialog
@@ -502,7 +510,10 @@ export default function QuickSalePaymentDialog({
                 ) : (
                   <Stack alignItems="center" gap={1} sx={{ py: 2, color: 'warning.dark' }}>
                     <QrCode2RoundedIcon sx={{ fontSize: 54, opacity: 0.35 }} />
-                    <Typography variant="body2" fontWeight={700}>การตั้งค่า PromptPay ไม่ครบ กรุณาตรวจสอบก่อนรับชำระ</Typography>
+                    <Typography variant="body2" fontWeight={800}>QR ในระบบยังไม่พร้อม</Typography>
+                    <Typography variant="caption" color="text.secondary" sx={{ maxWidth: 360 }}>
+                      ใช้ QR หน้าร้านหรือรับโอนผ่านช่องทางของร้านได้ตามปกติ แล้วตรวจสอบยอดเงินเข้าก่อนบันทึกรายการ
+                    </Typography>
                   </Stack>
                 )}
                 <Typography color="primary.main" fontWeight={900} sx={{ ...amountSx, mt: 1.5, fontSize: 28 }}>
@@ -515,6 +526,33 @@ export default function QuickSalePaymentDialog({
                   กรุณาตรวจสอบยอดเงินเข้าก่อนยืนยันการขาย
                 </Typography>
               </Stack>
+              {!promptpayProfile ? (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={manualTransferVerified}
+                      onChange={event => setManualTransferVerified(event.target.checked)}
+                      inputProps={{ 'aria-label': 'ตรวจสอบยอดเงินเข้าแล้ว' }}
+                    />
+                  }
+                  label={
+                    <Box>
+                      <Typography variant="body2" fontWeight={800}>ตรวจสอบยอดเงินเข้าแล้ว</Typography>
+                      <Typography variant="caption" color="text.secondary">ยืนยันว่าร้านได้รับเงิน ฿{money.format(grandTotal)} ก่อนลงรายการนี้</Typography>
+                    </Box>
+                  }
+                  sx={{
+                    m: 0,
+                    px: 1.25,
+                    py: 0.75,
+                    borderRadius: 2.5,
+                    border: '1px solid',
+                    borderColor: manualTransferVerified ? 'success.light' : 'divider',
+                    bgcolor: manualTransferVerified ? theme => alpha(theme.palette.success.main, 0.06) : 'background.paper',
+                    alignItems: 'center',
+                  }}
+                />
+              ) : null}
             </Stack>
           )}
         </Stack>

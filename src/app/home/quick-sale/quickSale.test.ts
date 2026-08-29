@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { calculateAddedVat, calculateChange, calculatePayableTotal, calculateQuickSale, isDefaultVariantName } from './quickSale';
+import { calculateAddedVat, calculateChange, calculatePayableTotal, calculateQuickSale, canConfirmQuickSalePayment, isDefaultVariantName } from './quickSale';
 import { computeTotals } from '../../utils/computeTotal';
 
 test('quick sale calculates amount and percentage discounts safely', () => {
@@ -72,6 +72,14 @@ test('quick sale keeps receipt total unchanged and adds VAT for a tax invoice', 
   assert.equal(calculatePayableTotal(120, 'no'), 120);
   assert.equal(calculatePayableTotal(240, 'no'), 240);
   assert.equal(calculatePayableTotal(240, 'yes'), 256.8);
+});
+
+test('manual transfer fallback requires staff verification when PromptPay profile is unavailable', () => {
+  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'promptpay', hasEnoughCash: false, hasPromptPayProfile: true, manualTransferVerified: false }), true);
+  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'promptpay', hasEnoughCash: false, hasPromptPayProfile: false, manualTransferVerified: false }), false);
+  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'promptpay', hasEnoughCash: false, hasPromptPayProfile: false, manualTransferVerified: true }), true);
+  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'cash', hasEnoughCash: false, hasPromptPayProfile: false, manualTransferVerified: true }), false);
+  assert.equal(canConfirmQuickSalePayment({ paymentMethod: 'cash', hasEnoughCash: true, hasPromptPayProfile: false, manualTransferVerified: false }), true);
 });
 
 test('default variants are recognized case-insensitively', () => {
