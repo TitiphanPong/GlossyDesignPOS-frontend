@@ -11,6 +11,7 @@ import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
 import { buildReceiptFileName, isShareCancelled, prefersReceiptShare } from '@/lib/receipt-download';
+import ReceiptShareDialog from './ReceiptShareDialog';
 
 type PrintDocumentLayoutProps = Readonly<{
   titleTh: string;
@@ -80,10 +81,21 @@ function HeaderButton({
 export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentType, onEditCustomer, summary, printableDocument }: PrintDocumentLayoutProps) {
   const isReceipt = documentType === 'receipt';
   const documentStageRef = useRef<HTMLDivElement>(null);
+  const receiptRenderRequestRef = useRef(0);
   const [useMobileShare, setUseMobileShare] = useState(false);
+  const [receiptShareOpen, setReceiptShareOpen] = useState(false);
+  const [receiptPreparing, setReceiptPreparing] = useState(false);
+  const [receiptAsset, setReceiptAsset] = useState<{ blob: Blob; file: File; dataUrl: string } | null>(null);
+  const [receiptStatusMessage, setReceiptStatusMessage] = useState<string | null>(null);
+  const [receiptStatusSeverity, setReceiptStatusSeverity] = useState<'info' | 'success' | 'warning' | 'error'>('info');
+  const [showReceiptSaveGuide, setShowReceiptSaveGuide] = useState(false);
+  const [canCopyReceiptImage, setCanCopyReceiptImage] = useState(false);
 
   useEffect(() => {
     setUseMobileShare(prefersReceiptShare(globalThis.navigator));
+    setCanCopyReceiptImage(
+      typeof globalThis.navigator?.clipboard?.write === 'function' && typeof globalThis.ClipboardItem === 'function'
+    );
   }, []);
 
   const handlePrint = async () => {
@@ -94,9 +106,9 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
     globalThis.print();
   };
 
-  const handleDownloadReceipt = async () => {
+  const renderReceiptImage = async () => {
     const receiptElement = documentStageRef.current?.querySelector<HTMLElement>('.receipt-document-sheet');
-    if (!receiptElement) return;
+    if (!receiptElement) throw new Error('ไม่พบใบเสร็จสำหรับสร้างรูป');
 
     if (typeof document !== 'undefined' && 'fonts' in document) {
       await document.fonts.ready;
@@ -109,47 +121,121 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
       useCORS: true,
     });
     const blob = await new Promise<Blob | null>(resolve => canvas.toBlob(resolve, 'image/png'));
-    if (!blob) return;
+    if (!blob) throw new Error('สร้างรูปใบเสร็จไม่สำเร็จ');
 
     const fileName = buildReceiptFileName(invoiceNumber);
-    const file = new File([blob], fileName, { type: 'image/png' });
-    const navigatorWithShare = globalThis.navigator;
+    return {
+      blob,
+      file: new File([blob], fileName, { type: 'image/png' }),
+      dataUrl: canvas.toDataURL('image/png'),
+    };
+  };
 
-    if (
-      useMobileShare &&
-      typeof navigatorWithShare.share === 'function' &&
-      typeof navigatorWithShare.canShare === 'function' &&
-      navigatorWithShare.canShare({ files: [file] })
-    ) {
+  const handleReceiptHeaderAction = async () => {
+    if (!useMobileShare) {
       try {
-        await navigatorWithShare.share({
-          files: [file],
-          title: 'ใบเสร็จ Glossy Design',
-        });
-        return;
-      } catch (error) {
-        if (isShareCancelled(error)) return;
-      }
-    }
-
-    const objectUrl = URL.createObjectURL(blob);
-    if (useMobileShare) {
-      const openedWindow = globalThis.open(objectUrl, '_blank', 'noopener,noreferrer');
-      if (openedWindow) {
-        globalThis.setTimeout(() => URL.revokeObjectURL(objectUrl), 60_000);
-      } else {
-        globalThis.location.assign(objectUrl);
+        const asset = await renderReceiptImage();
+        const objectUrl = URL.createObjectURL(asset.blob);
+        const downloadLink = document.createElement('a');
+        downloadLink.href = objectUrl;
+        downloadLink.download = asset.file.name;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+        downloadLink.remove();
+        globalThis.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+      } catch {
+        // Desktop keeps the existing direct-download behavior and fails without navigating away.
       }
       return;
     }
 
-    const downloadLink = document.createElement('a');
-    downloadLink.href = objectUrl;
-    downloadLink.download = fileName;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    downloadLink.remove();
-    globalThis.setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
+    const requestId = ++receiptRenderRequestRef.current;
+    setReceiptShareOpen(true);
+    setReceiptPreparing(true);
+    setReceiptAsset(null);
+    setReceiptStatusMessage(null);
+    setShowReceiptSaveGuide(false);
+
+    try {
+      const asset = await renderReceiptImage();
+      if (requestId === receiptRenderRequestRef.current) setReceiptAsset(asset);
+    } catch (error) {
+      if (requestId === receiptRenderRequestRef.current) {
+        setReceiptStatusSeverity('error');
+        setReceiptStatusMessage(error instanceof Error ? error.message : 'สร้างรูปใบเสร็จไม่สำเร็จ');
+      }
+    } finally {
+      if (requestId === receiptRenderRequestRef.current) setReceiptPreparing(false);
+    }
+  };
+
+  const closeReceiptShare = () => {
+    receiptRenderRequestRef.current += 1;
+    setReceiptShareOpen(false);
+    setReceiptPreparing(false);
+    setReceiptAsset(null);
+    setReceiptStatusMessage(null);
+    setShowReceiptSaveGuide(false);
+  };
+
+  const handleNativeReceiptShare = async () => {
+    if (!receiptAsset) return;
+    const navigatorWithShare = globalThis.navigator;
+    let supportsFileShare = typeof navigatorWithShare.share === 'function';
+
+    if (supportsFileShare && typeof navigatorWithShare.canShare === 'function') {
+      try {
+        supportsFileShare = navigatorWithShare.canShare({ files: [receiptAsset.file] });
+      } catch {
+        supportsFileShare = false;
+      }
+    }
+
+    if (!supportsFileShare) {
+      setReceiptStatusSeverity('warning');
+      setReceiptStatusMessage('เบราว์เซอร์นี้ไม่รองรับการแชร์ไฟล์ PNG โดยตรง ใช้ “บันทึกรูป” ด้านล่างแทนได้');
+      setShowReceiptSaveGuide(true);
+      return;
+    }
+
+    try {
+      await navigatorWithShare.share({
+        files: [receiptAsset.file],
+        title: `ใบเสร็จ ${invoiceNumber.replace(/^#/u, '')} · Glossy Design`,
+      });
+      closeReceiptShare();
+    } catch (error) {
+      if (isShareCancelled(error)) return;
+      setReceiptStatusSeverity('warning');
+      setReceiptStatusMessage('อุปกรณ์นี้ไม่สามารถแชร์ไฟล์ได้ในขณะนี้ โดยจะไม่เปิดหน้า blob ให้ ใช้ “บันทึกรูป” หรือ “คัดลอกรูป” แทนได้');
+      setShowReceiptSaveGuide(true);
+    }
+  };
+
+  const handleCopyReceiptImage = async () => {
+    if (!receiptAsset) return;
+    if (typeof globalThis.navigator?.clipboard?.write !== 'function' || typeof globalThis.ClipboardItem !== 'function') {
+      setReceiptStatusSeverity('warning');
+      setReceiptStatusMessage('เบราว์เซอร์นี้ไม่รองรับการคัดลอกรูปโดยตรง');
+      return;
+    }
+
+    try {
+      await globalThis.navigator.clipboard.write([
+        new globalThis.ClipboardItem({ 'image/png': receiptAsset.blob }),
+      ]);
+      setReceiptStatusSeverity('success');
+      setReceiptStatusMessage('คัดลอกรูปใบเสร็จแล้ว สามารถนำไปวางใน LINE หรือแอปอื่นได้');
+    } catch {
+      setReceiptStatusSeverity('warning');
+      setReceiptStatusMessage('เบราว์เซอร์ไม่อนุญาตให้คัดลอกรูป ใช้ “แชร์” หรือกดค้างที่รูปเพื่อบันทึกแทนได้');
+    }
+  };
+
+  const handleShowReceiptSaveGuide = () => {
+    setShowReceiptSaveGuide(true);
+    setReceiptStatusSeverity('info');
+    setReceiptStatusMessage('กดค้างที่รูปใบเสร็จ แล้วเลือกบันทึกรูปภาพ ระบบจะไม่พาไป URL แบบ blob');
   };
 
   return (
@@ -285,7 +371,7 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
               label={useMobileShare ? 'บันทึก / แชร์' : 'ดาวน์โหลด'}
               mobileLabel={useMobileShare ? 'แชร์' : 'บันทึก'}
               icon={useMobileShare ? <IosShareRoundedIcon /> : <DownloadRoundedIcon />}
-              onClick={() => void handleDownloadReceipt()}
+              onClick={() => void handleReceiptHeaderAction()}
               variant="outlined"
             />
           ) : null}
@@ -353,6 +439,23 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
           </Box>
         </Box>
       </Box>
+
+      {isReceipt && useMobileShare ? (
+        <ReceiptShareDialog
+          open={receiptShareOpen}
+          fileName={receiptAsset?.file.name ?? buildReceiptFileName(invoiceNumber)}
+          imageDataUrl={receiptAsset?.dataUrl ?? null}
+          preparing={receiptPreparing}
+          statusMessage={receiptStatusMessage}
+          statusSeverity={receiptStatusSeverity}
+          showSaveGuide={showReceiptSaveGuide}
+          canCopyImage={canCopyReceiptImage}
+          onClose={closeReceiptShare}
+          onShare={() => void handleNativeReceiptShare()}
+          onCopyImage={() => void handleCopyReceiptImage()}
+          onShowSaveGuide={handleShowReceiptSaveGuide}
+        />
+      ) : null}
 
       <style jsx global>{`
         @page {
