@@ -164,6 +164,23 @@ test('groupStorageRows merges files from the same batch into one row', () => {
   assert.equal(grouped[0]?.files.length, 2);
 });
 
+test('normalizeRecord preserves intake and linked Order metadata without requiring legacy rows to have it', () => {
+  const linked = normalizeRecord({
+    id: 'upload-linked',
+    orderCode: 'GL-20260829-ABCDEF12',
+    linkedOrderId: '71a1c287e53a7024d4ab8142',
+    linkedOrderNumber: 'ORD-0101',
+    files: [],
+  });
+  const legacy = normalizeRecord({ id: 'upload-legacy', files: [] });
+
+  assert.equal(linked.intakeCode, 'GL-20260829-ABCDEF12');
+  assert.equal(linked.linkedOrderId, '71a1c287e53a7024d4ab8142');
+  assert.equal(linked.linkedOrderNumber, 'ORD-0101');
+  assert.equal(legacy.intakeCode, '');
+  assert.equal(legacy.linkedOrderId, undefined);
+});
+
 test('normalizeRecord preserves public uploadId as a focusable source id', () => {
   const record = normalizeRecord({
     _id: 'mongo-id',

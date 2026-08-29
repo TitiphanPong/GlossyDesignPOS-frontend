@@ -22,6 +22,8 @@ export type UploadApiRecord = {
   uploadId?: string;
   sourceIds?: string[];
   orderCode?: string;
+  linkedOrderId?: string;
+  linkedOrderNumber?: string;
   customerName?: string;
   customer?: string;
   phone?: string;
@@ -52,6 +54,9 @@ export type StorageRow = {
   id: string;
   sourceIds: string[];
   batchId?: string;
+  intakeCode?: string;
+  linkedOrderId?: string;
+  linkedOrderNumber?: string;
   uploadDate: string;
   customerName: string;
   phone: string;
@@ -184,6 +189,10 @@ export function normalizeRecord(raw: UploadApiRecord): StorageRow {
         ? Array.from(new Set(raw.sourceIds.filter((value): value is string => Boolean(value))))
         : Array.from(new Set([id, raw.uploadId].filter((value): value is string => Boolean(value)))),
     batchId,
+    intakeCode: String(raw.orderCode ?? ''),
+    linkedOrderId: typeof raw.linkedOrderId === 'string' && raw.linkedOrderId.trim() ? raw.linkedOrderId.trim() : undefined,
+    linkedOrderNumber:
+      typeof raw.linkedOrderNumber === 'string' && raw.linkedOrderNumber.trim() ? raw.linkedOrderNumber.trim() : undefined,
     uploadDate: createdAt,
     customerName: String(raw.customerName ?? raw.customer ?? 'ไม่ระบุชื่อลูกค้า'),
     phone: String(raw.phone ?? raw.phoneNumber ?? '-'),

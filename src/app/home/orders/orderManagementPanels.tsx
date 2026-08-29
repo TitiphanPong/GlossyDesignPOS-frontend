@@ -41,6 +41,7 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import dayjs from 'dayjs';
+import Link from 'next/link';
 
 import JobTimelineCard from '../components/JobTimelineCard';
 import { commonButtonSx, statusChipSx } from '../components/adminUi';
@@ -288,6 +289,14 @@ function OrderInfoCard({ order, isEditing }: Readonly<{ order: OrderRow; isEditi
           <Typography sx={{ color: '#334155' }}>
             <strong>วันที่รับงาน :</strong> {dayjs(order.date).format('DD/MM/YYYY HH:mm')}
           </Typography>
+          <Button
+            component={Link}
+            href={`/home/storage?order=${encodeURIComponent(order.id)}`}
+            variant="outlined"
+            size="small"
+            sx={{ alignSelf: 'flex-start', mt: 0.4, borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}>
+            ดูไฟล์ลูกค้าที่เชื่อมกับ Order
+          </Button>
         </Stack>
       </CardContent>
     </Card>

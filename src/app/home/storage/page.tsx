@@ -234,6 +234,8 @@ export default function StoragePage() {
   const [statusFilter, setStatusFilter] = React.useState<'all' | StorageStatus>('all');
   const [jobTypeFilter] = React.useState('all');
   const [dateFilter, setDateFilter] = React.useState('');
+  const [linkStatusFilter, setLinkStatusFilter] = React.useState<'all' | 'linked' | 'unlinked'>('all');
+  const [orderReferenceFilter, setOrderReferenceFilter] = React.useState('');
   const [sortBy, setSortBy] = React.useState<SortType>('newest');
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
@@ -247,16 +249,25 @@ export default function StoragePage() {
 
   const [drawerStatus, setDrawerStatus] = React.useState<StorageStatus>('waiting');
   const [drawerNotes, setDrawerNotes] = React.useState('');
+  const [drawerOrderReference, setDrawerOrderReference] = React.useState('');
+  const [linkSaving, setLinkSaving] = React.useState(false);
 
   const [rowMenuAnchor, setRowMenuAnchor] = React.useState<null | HTMLElement>(null);
   const [rowMenuId, setRowMenuId] = React.useState<string | null>(null);
   const focusedUploadRef = React.useRef<string | null>(null);
 
   React.useEffect(() => {
-    const focusedUploadId = new URLSearchParams(window.location.search).get('focus')?.trim();
-    if (!focusedUploadId) return;
-    focusedUploadRef.current = focusedUploadId;
-    setSearch(focusedUploadId);
+    const params = new URLSearchParams(window.location.search);
+    const focusedUploadId = params.get('focus')?.trim();
+    const orderReference = params.get('order')?.trim();
+    if (focusedUploadId) {
+      focusedUploadRef.current = focusedUploadId;
+      setSearch(focusedUploadId);
+    }
+    if (orderReference) {
+      setOrderReferenceFilter(orderReference);
+      setLinkStatusFilter('linked');
+    }
   }, []);
 
   const fetchUploads = React.useCallback(async () => {
@@ -278,6 +289,8 @@ export default function StoragePage() {
               ...(statusFilter !== 'all' ? { storageStatus: statusFilter } : {}),
               ...(jobTypeFilter !== 'all' ? { jobType: jobTypeFilter } : {}),
               ...(dateFilter ? { date: dateFilter } : {}),
+              ...(linkStatusFilter !== 'all' ? { linkStatus: linkStatusFilter } : {}),
+              ...(orderReferenceFilter ? { orderReference: orderReferenceFilter } : {}),
               sort: sortBy,
             },
           });
@@ -357,11 +370,11 @@ export default function StoragePage() {
     } finally {
       setLoading(false);
     }
-  }, [dateFilter, deferredSearch, jobTypeFilter, page, rowsPerPage, sortBy, statusFilter]);
+  }, [dateFilter, deferredSearch, jobTypeFilter, linkStatusFilter, orderReferenceFilter, page, rowsPerPage, sortBy, statusFilter]);
 
   React.useEffect(() => {
     setPage(0);
-  }, [dateFilter, deferredSearch, jobTypeFilter, sortBy, statusFilter]);
+  }, [dateFilter, deferredSearch, jobTypeFilter, linkStatusFilter, orderReferenceFilter, sortBy, statusFilter]);
 
   React.useEffect(() => {
     fetchUploads();
@@ -462,6 +475,7 @@ export default function StoragePage() {
     setActiveRecord(focusedRow);
     setDrawerStatus(toEditableStorageStatus(focusedRow.status));
     setDrawerNotes(focusedRow.notes);
+    setDrawerOrderReference(focusedRow.linkedOrderNumber ?? '');
     setDrawerOpen(true);
     focusedUploadRef.current = null;
   }, [rows]);
@@ -589,6 +603,7 @@ export default function StoragePage() {
     setActiveRecord(row);
     setDrawerStatus(toEditableStorageStatus(row.status));
     setDrawerNotes(row.notes);
+    setDrawerOrderReference(row.linkedOrderNumber ?? '');
     setDrawerOpen(true);
   };
 
@@ -651,6 +666,52 @@ export default function StoragePage() {
     }
   }, [activeRecord, applyRowPatch, drawerNotes, drawerStatus, fetchUploads, persistUploadMutation, trackPersistingIds]);
 
+  const handleOrderLink = React.useCallback(
+    async (unlink = false) => {
+      if (!activeRecord) return;
+      const orderReference = unlink ? null : drawerOrderReference.trim();
+      if (!unlink && !orderReference) {
+        setActionMessage({ severity: 'error', text: 'กรุณาระบุเลขที่ Order ก่อนเชื่อมไฟล์' });
+        return;
+      }
+
+      setLinkSaving(true);
+      setActionMessage(null);
+      try {
+        const base = getApiBaseUrl();
+        const response = await axios.patch(`${base}/uploads/link-order`, {
+          uploadIds: activeRecord.sourceIds,
+          orderReference,
+        });
+        const result = response.data as { linkedOrderId?: string | null; linkedOrderNumber?: string | null };
+        setActiveRecord(current =>
+          current
+            ? {
+                ...current,
+                linkedOrderId: result.linkedOrderId ?? undefined,
+                linkedOrderNumber: result.linkedOrderNumber ?? undefined,
+              }
+            : current
+        );
+        setDrawerOrderReference(result.linkedOrderNumber ?? '');
+        setActionMessage({
+          severity: 'success',
+          text: result.linkedOrderId ? `เชื่อมไฟล์กับ ${result.linkedOrderNumber ?? 'Order'} แล้ว` : 'ยกเลิกการเชื่อมไฟล์กับ Order แล้ว',
+        });
+        await fetchUploads();
+      } catch (error) {
+        if (isMissingApiBaseError(error)) {
+          setMissingApiBase(true);
+        } else {
+          setActionMessage({ severity: 'error', text: getRequestErrorMessage(error, 'ไม่สามารถเชื่อมไฟล์กับ Order ได้') });
+        }
+      } finally {
+        setLinkSaving(false);
+      }
+    },
+    [activeRecord, drawerOrderReference, fetchUploads]
+  );
+
   const openRowMenu = (event: React.MouseEvent<HTMLButtonElement>, rowId: string) => {
     event.stopPropagation();
     setRowMenuAnchor(event.currentTarget);
@@ -688,6 +749,42 @@ export default function StoragePage() {
           onExport={exportFiltered}
           onDownloadSelected={downloadSelected}
         />
+
+        <Card sx={{ borderRadius: 3.5, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+          <CardContent sx={{ p: '16px !important' }}>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} alignItems={{ sm: 'center' }}>
+              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
+                <Select
+                  value={linkStatusFilter}
+                  onChange={event => setLinkStatusFilter(event.target.value as 'all' | 'linked' | 'unlinked')}
+                  sx={{ borderRadius: 2.5 }}>
+                  <MenuItem value="all">ทุกการเชื่อม Order</MenuItem>
+                  <MenuItem value="unlinked">ยังไม่เชื่อม Order</MenuItem>
+                  <MenuItem value="linked">เชื่อม Order แล้ว</MenuItem>
+                </Select>
+              </FormControl>
+              <TextField
+                size="small"
+                fullWidth
+                label="กรองตามเลขที่ Order"
+                value={orderReferenceFilter}
+                onChange={event => setOrderReferenceFilter(event.target.value.trim())}
+                placeholder="เช่น ORD-0101"
+                sx={{ maxWidth: { sm: 320 }, '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
+              />
+              {orderReferenceFilter ? (
+                <Button
+                  variant="text"
+                  onClick={() => {
+                    setOrderReferenceFilter('');
+                    setLinkStatusFilter('all');
+                  }}>
+                  ล้างตัวกรอง Order
+                </Button>
+              ) : null}
+            </Stack>
+          </CardContent>
+        </Card>
 
         <StorageToolbar
           search={search}
@@ -832,6 +929,52 @@ export default function StoragePage() {
                       </Stack>
                       <Typography sx={{ color: '#334155' }}>วันที่อัปโหลด : {formatDate(activeRecord.uploadDate)}</Typography>
                       <Typography sx={{ color: '#334155' }}>ประเภทงาน : {activeRecord.jobType}</Typography>
+                      <Typography sx={{ color: '#334155' }}>รหัสรับไฟล์ : {activeRecord.intakeCode || '-'}</Typography>
+                    </Stack>
+                  </CardContent>
+                </Card>
+
+                <Card sx={{ borderRadius: 4, border: '1px solid #DCE8FA', boxShadow: 'none', bgcolor: '#F9FBFF' }}>
+                  <CardContent>
+                    <Stack spacing={1.25}>
+                      <Box>
+                        <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>เชื่อมกับ Order</Typography>
+                        <Typography sx={{ mt: 0.25, color: '#64748B', fontSize: 12.5 }}>
+                          การเชื่อมนี้เป็นงานเจ้าหน้าที่เท่านั้น และไม่เปลี่ยนรหัสรับไฟล์ของลูกค้า
+                        </Typography>
+                      </Box>
+                      <TextField
+                        size="small"
+                        fullWidth
+                        label="เลขที่ Order / Order ID"
+                        value={drawerOrderReference}
+                        onChange={event => setDrawerOrderReference(event.target.value)}
+                        disabled={linkSaving}
+                        placeholder="เช่น ORD-0101"
+                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2.5, bgcolor: '#FFFFFF' } }}
+                      />
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                        <Button
+                          variant="contained"
+                          disabled={linkSaving || !drawerOrderReference.trim()}
+                          onClick={() => void handleOrderLink(false)}
+                          sx={{ flex: 1, borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}>
+                          {activeRecord.linkedOrderId ? 'เปลี่ยน Order ที่เชื่อม' : 'เชื่อมกับ Order'}
+                        </Button>
+                        {activeRecord.linkedOrderId ? (
+                          <Button
+                            variant="outlined"
+                            color="error"
+                            disabled={linkSaving}
+                            onClick={() => void handleOrderLink(true)}
+                            sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}>
+                            ยกเลิกการเชื่อม
+                          </Button>
+                        ) : null}
+                      </Stack>
+                      <Typography sx={{ color: activeRecord.linkedOrderId ? '#18794E' : '#8A95A7', fontSize: 12.5, fontWeight: 700 }}>
+                        {activeRecord.linkedOrderId ? `เชื่อมอยู่กับ ${activeRecord.linkedOrderNumber ?? activeRecord.linkedOrderId}` : 'ยังไม่เชื่อมกับ Order'}
+                      </Typography>
                     </Stack>
                   </CardContent>
                 </Card>
