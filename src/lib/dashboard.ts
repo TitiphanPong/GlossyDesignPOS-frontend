@@ -15,6 +15,7 @@ export type DashboardSummary = {
   orderStatus: Record<OrderStatus, number>;
   operations: {
     workflow: Record<'pending' | 'producing' | 'ready_for_pickup', number>;
+    production: { dueToday: number; overdue: number; rush: number };
     outstanding: { orders: number; amount: number };
     filesWaiting: number;
     lowStock: number;
@@ -48,6 +49,14 @@ export function buildDashboardOrdersHref(options: {
   if (options.workflowStatus) query.set('workflowStatus', options.workflowStatus);
   if (options.payment) query.set('payment', options.payment);
   return `/home/orders?${query.toString()}`;
+}
+
+export function buildDashboardProductionHref(filter: 'dueToday' | 'overdue' | 'rush'): string {
+  const query = new URLSearchParams({ active: 'true' });
+  if (filter === 'dueToday') query.set('due', 'today');
+  if (filter === 'overdue') query.set('due', 'overdue');
+  if (filter === 'rush') query.set('priority', 'rush');
+  return `/home/production?${query.toString()}`;
 }
 
 export function fetchDashboardSummary(params: { period?: 'today' | 'last7' | 'month' | 'custom'; month?: string; startDate?: string; endDate?: string } = {}): Promise<DashboardSummary> {

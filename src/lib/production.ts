@@ -55,6 +55,7 @@ export type ProductionJobQuery = {
   assigneeUserId?: string;
   jobType?: string;
   due?: ProductionDueFilter;
+  active?: boolean;
   q?: string;
 };
 
@@ -102,6 +103,7 @@ export function productionJobsPath(query: ProductionJobQuery = {}): string {
   if (query.assigneeUserId) params.set('assigneeUserId', query.assigneeUserId);
   if (query.jobType?.trim()) params.set('jobType', query.jobType.trim());
   if (query.due && query.due !== 'all') params.set('due', query.due);
+  if (query.active !== undefined) params.set('active', String(query.active));
   if (query.q?.trim()) params.set('q', query.q.trim());
   const search = params.toString();
   return `/production/jobs${search ? `?${search}` : ''}`;
