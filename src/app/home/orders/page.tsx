@@ -49,7 +49,7 @@ import DataTable, { DataTableSectionHeader, type DataTableColumn } from '../comp
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder, type PaymentMethod, type ProductionWorkflowStatus } from '../../../lib/contracts';
-import { convertOrderToTaxInvoice, deleteOrder, downloadOrdersExport, fetchOrderById, type OrderListSummary, updateOrderCustomerInfo } from '../../../lib/orders';
+import { cancelOrder as cancelOrderRequest, convertOrderToTaxInvoice, downloadOrdersExport, fetchOrderById, type OrderListSummary, updateOrderCustomerInfo } from '../../../lib/orders';
 import type { ExportType, OrderRow, SortOrder } from './orderManagementTypes';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import { parseOrderDrilldownFilters, type OutstandingPaymentFilter } from './orderDrilldownFilters';
@@ -119,9 +119,8 @@ export default function OrderManagementPage() {
   const [updatingOrderId, setUpdatingOrderId] = React.useState<string | null>(null);
   const [payRemainingTarget, setPayRemainingTarget] = React.useState<OrderRow | null>(null);
   const [cancelTarget, setCancelTarget] = React.useState<OrderRow | null>(null);
-  const [deleteTarget, setDeleteTarget] = React.useState<OrderRow | null>(null);
-  const [deletePassword, setDeletePassword] = React.useState('');
-  const [deleteError, setDeleteError] = React.useState<string | null>(null);
+  const [cancelReason, setCancelReason] = React.useState('');
+  const [cancelError, setCancelError] = React.useState<string | null>(null);
   const loadRequestRef = React.useRef(0);
   const focusedOrderRef = React.useRef<string | null>(null);
 
@@ -302,17 +301,17 @@ export default function OrderManagementPage() {
   );
 
   const cancelOrder = React.useCallback(
-    async (targetId: string) => {
+    async (targetId: string, reason: string) => {
       const target = rowsById.get(targetId);
       if (!target) return false;
 
       setUpdatingOrderId(targetId);
       try {
-        await updateOrderStatus(targetId, 'cancelled');
+        await cancelOrderRequest(targetId, reason);
         await loadOrders();
         return true;
       } catch (error) {
-        setLoadError(error instanceof Error && error.message ? error.message : 'ยกเลิกรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
+        setCancelError(error instanceof Error && error.message ? error.message : 'ยกเลิกรายการไม่สำเร็จ กรุณาลองใหม่อีกครั้ง');
         return false;
       } finally {
         setUpdatingOrderId(null);
@@ -357,32 +356,19 @@ export default function OrderManagementPage() {
     }
   }, []);
 
-  const confirmDelete = async () => {
-    if (!deleteTarget || !deletePassword) return;
-    setUpdatingOrderId(deleteTarget.id);
-    setDeleteError(null);
-    try {
-      await deleteOrder(deleteTarget.id, deletePassword);
-      setDeleteTarget(null);
-      setDeletePassword('');
-      setDrawerOpen(false);
-      await loadOrders();
-    } catch {
-      setDeleteError('รหัสผ่านไม่ถูกต้อง หรือไม่สามารถลบรายการได้');
-    } finally {
-      setUpdatingOrderId(null);
-    }
-  };
-
   const confirmCancel = async () => {
     if (!cancelTarget) return;
+    const reason = cancelReason.trim();
+    if (!reason) {
+      setCancelError('กรุณาระบุเหตุผลการยกเลิก');
+      return;
+    }
     const targetId = cancelTarget.id;
-    setUpdatingOrderId(targetId);
-    setLoadError(null);
-    try {
-      if (await cancelOrder(targetId)) setCancelTarget(null);
-    } finally {
-      setUpdatingOrderId(null);
+    setCancelError(null);
+    if (await cancelOrder(targetId, reason)) {
+      setCancelTarget(null);
+      setCancelReason('');
+      setDrawerOpen(false);
     }
   };
 
@@ -551,7 +537,7 @@ export default function OrderManagementPage() {
       header: 'ยอดคงเหลือ',
       align: 'right',
       render: row => {
-        const remaining = Math.max(row.total - row.paidAmount, 0);
+        const remaining = row.status === 'cancelled' ? 0 : Math.max(row.total - row.paidAmount, 0);
         return (
           <>
             <Typography
@@ -937,12 +923,11 @@ export default function OrderManagementPage() {
         onOpenDrawer={openDrawer}
         onCancelOrder={targetId => {
           const target = rowsById.get(targetId);
-          if (target) setCancelTarget(target);
-        }}
-        onDeleteOrder={order => {
-          setDeleteTarget(order);
-          setDeletePassword('');
-          setDeleteError(null);
+          if (target) {
+            setCancelTarget(target);
+            setCancelReason('');
+            setCancelError(null);
+          }
         }}
         onPrintDocument={printDocument}
       />
@@ -962,7 +947,11 @@ export default function OrderManagementPage() {
         onAdvanceWorkflow={advanceWorkflow}
         onCancelOrder={targetId => {
           const target = rowsById.get(targetId);
-          if (target) setCancelTarget(target);
+          if (target) {
+            setCancelTarget(target);
+            setCancelReason('');
+            setCancelError(null);
+          }
         }}
         onPrintDocument={printDocument}
       />
@@ -978,45 +967,41 @@ export default function OrderManagementPage() {
       <Dialog open={Boolean(cancelTarget)} onClose={() => (updatingOrderId ? undefined : setCancelTarget(null))} fullWidth maxWidth="xs">
         <DialogTitle sx={{ fontWeight: 800, color: '#B42318' }}>ยืนยันการยกเลิกงาน</DialogTitle>
         <DialogContent>
-          <Typography>
-            ต้องการยกเลิกงาน <strong>{cancelTarget?.orderNumber}</strong> ใช่หรือไม่? การยกเลิกงานนี้ไม่สามารถย้อนกลับได้
-          </Typography>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setCancelTarget(null)} disabled={Boolean(updatingOrderId)}>
-            ยกเลิก
-          </Button>
-          <Button color="error" variant="contained" disabled={Boolean(updatingOrderId)} onClick={() => void confirmCancel()}>
-            {updatingOrderId ? 'กำลังยกเลิก...' : 'ยืนยันยกเลิกงาน'}
-          </Button>
-        </DialogActions>
-      </Dialog>
-      <Dialog open={Boolean(deleteTarget)} onClose={() => (updatingOrderId ? undefined : setDeleteTarget(null))} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 800, color: '#B42318' }}>ยืนยันการลบรายการ</DialogTitle>
-        <DialogContent>
           <Typography sx={{ mb: 2 }}>
-            ต้องการลบงาน <strong>{deleteTarget?.orderNumber}</strong> ใช่หรือไม่? การลบนี้ไม่สามารถกู้คืนได้
+            ต้องการยกเลิกงาน <strong>{cancelTarget?.orderNumber}</strong> ใช่หรือไม่? ระบบจะเก็บประวัติรายการและการชำระเงินเดิมไว้ และบันทึกรายการคืนเงิน/ปรับปรุงทางการเงินแทนการลบข้อมูล
           </Typography>
+          {cancelTarget && cancelTarget.paidAmount > 0 ? (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              งานนี้มีเงินรับแล้ว ฿{formatMoney(cancelTarget.paidAmount)} ระบบจะบันทึกรายการคืนเงินเพื่อหักล้างยอดรับเดิม
+            </Alert>
+          ) : null}
+          {cancelTarget?.taxInvoice === 'yes' ? (
+            <Alert severity="warning" sx={{ mb: 2 }}>
+              งานนี้มีใบกำกับภาษีแล้ว กรุณาดำเนินการเอกสารแก้ไข/ยกเลิกภาษีตามขั้นตอนหลังยกเลิกงาน
+            </Alert>
+          ) : null}
           <TextField
             autoFocus
+            required
             fullWidth
-            type="password"
-            label="รหัสผ่านผู้ใช้งานปัจจุบัน"
-            value={deletePassword}
-            onChange={event => setDeletePassword(event.target.value)}
-            error={Boolean(deleteError)}
-            helperText={deleteError}
-            onKeyDown={event => {
-              if (event.key === 'Enter' && deletePassword) void confirmDelete();
+            multiline
+            minRows={3}
+            label="เหตุผลการยกเลิก"
+            value={cancelReason}
+            onChange={event => {
+              setCancelReason(event.target.value);
+              if (cancelError) setCancelError(null);
             }}
+            error={Boolean(cancelError)}
+            helperText={cancelError ?? 'เหตุผลนี้จะถูกเก็บในประวัติการแก้ไขรายการ'}
           />
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={() => setDeleteTarget(null)} disabled={Boolean(updatingOrderId)}>
-            ยกเลิก
+          <Button onClick={() => setCancelTarget(null)} disabled={Boolean(updatingOrderId)}>
+            กลับ
           </Button>
-          <Button color="error" variant="contained" disabled={!deletePassword || Boolean(updatingOrderId)} onClick={() => void confirmDelete()}>
-            {updatingOrderId ? 'กำลังลบ...' : 'ลบรายการถาวร'}
+          <Button color="error" variant="contained" disabled={!cancelReason.trim() || Boolean(updatingOrderId)} onClick={() => void confirmCancel()}>
+            {updatingOrderId ? 'กำลังยกเลิก...' : 'ยืนยันยกเลิกงาน'}
           </Button>
         </DialogActions>
       </Dialog>

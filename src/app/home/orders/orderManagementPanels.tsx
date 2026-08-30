@@ -28,7 +28,6 @@ import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
-import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
@@ -111,9 +110,9 @@ export function ExportMenu({ anchorEl, exporting, onClose, onExport }: Readonly<
   );
 }
 
-export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onOpenDrawer, onCancelOrder, onDeleteOrder, onPrintDocument }: Readonly<RowActionsMenuProps>) {
+export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClose, onOpenDrawer, onCancelOrder, onPrintDocument }: Readonly<RowActionsMenuProps>) {
   const rowMenuTargetId = rowMenuTarget?.id ?? '';
-  const cancelOrderDisabled = !rowMenuTarget || updatingOrderId === rowMenuTargetId;
+  const cancelOrderDisabled = !rowMenuTarget || rowMenuTarget.workflowStatus === 'cancelled' || updatingOrderId === rowMenuTargetId;
 
   return (
     <Menu
@@ -160,18 +159,6 @@ export function RowActionsMenu({ anchorEl, rowMenuTarget, updatingOrderId, onClo
         <Stack direction="row" spacing={1} alignItems="center">
           <ReceiptRoundedIcon fontSize="small" />
           <Typography sx={{ fontSize: 14 }}>พิมพ์ใบกำกับภาษี</Typography>
-        </Stack>
-      </MenuItem>
-      <MenuItem
-        sx={{ color: '#B42318' }}
-        disabled={cancelOrderDisabled}
-        onClick={() => {
-          if (rowMenuTarget) onDeleteOrder(rowMenuTarget);
-          onClose();
-        }}>
-        <Stack direction="row" spacing={1} alignItems="center">
-          <DeleteForeverRoundedIcon fontSize="small" />
-          <Typography sx={{ fontSize: 14 }}>ลบรายการ</Typography>
         </Stack>
       </MenuItem>
       <MenuItem
