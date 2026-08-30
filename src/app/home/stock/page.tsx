@@ -19,19 +19,13 @@ import {
   DialogTitle,
   InputAdornment,
   MenuItem,
-  Pagination,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate } from '../components/AdminHeroHeader';
+import DataTable, { DataTableSectionHeader, type DataTableColumn } from '../components/DataTable';
 import { fetchCurrentAdminRole, type AdminRole } from '@/lib/admin-capabilities';
 import { fetchApiJson } from '@/lib/api';
 import {
@@ -63,7 +57,6 @@ export default function StockPage() {
   const [overview, setOverview] = React.useState<StockOverview | null>(null);
   const [movements, setMovements] = React.useState<StockMovement[]>([]);
   const [movementPage, setMovementPage] = React.useState(1);
-  const [movementPages, setMovementPages] = React.useState(1);
   const [movementTotal, setMovementTotal] = React.useState(0);
   const [movementSearch, setMovementSearch] = React.useState('');
   const [movementFilter, setMovementFilter] = React.useState<StockMovementType | ''>('');
@@ -109,7 +102,6 @@ export default function StockPage() {
       ]);
       setOverview(stockOverview);
       setMovements(history.items);
-      setMovementPages(history.totalPages);
       setMovementTotal(history.total);
     } catch (historyError) {
       setError(historyError instanceof Error ? historyError.message : 'โหลดประวัติสต็อกไม่สำเร็จ');
@@ -196,6 +188,61 @@ export default function StockPage() {
   };
 
   const lowCount = overview?.lowStockCount ?? items.filter(isLowStock).length;
+  const movementTableColumns: DataTableColumn<StockMovement>[] = [
+    {
+      key: 'occurredAt',
+      header: 'เวลา',
+      render: movement => formatMovementDate(movement.occurredAt),
+    },
+    {
+      key: 'item',
+      header: 'วัสดุ',
+      render: movement => (
+        <>
+          <Typography variant="body2" fontWeight={700}>{movement.stockItem?.name ?? 'วัสดุที่ถูกลบ/ไม่พบ'}</Typography>
+          <Typography variant="caption" color="text.secondary">{movement.stockItem?.code ?? movement.stockItemId}</Typography>
+        </>
+      ),
+    },
+    {
+      key: 'type',
+      header: 'ประเภท',
+      render: movement => movementTypeLabel(movement.type),
+    },
+    {
+      key: 'delta',
+      header: 'จำนวน',
+      align: 'right',
+      render: movement => (
+        <Typography color={movement.delta >= 0 ? 'success.main' : 'error.main'} fontWeight={700}>
+          {movement.delta >= 0 ? '+' : ''}{movement.delta} {movement.stockItem?.unit ?? ''}
+        </Typography>
+      ),
+    },
+    {
+      key: 'balance',
+      header: 'คงเหลือ',
+      align: 'right',
+      render: movement => `${movement.balanceAfter} ${movement.stockItem?.unit ?? ''}`.trim(),
+    },
+    {
+      key: 'actor',
+      header: 'ผู้ทำรายการ',
+      render: movement => movement.actorUsername,
+    },
+    {
+      key: 'reason',
+      header: 'เหตุผล / อ้างอิง',
+      render: movement => (
+        <>
+          <Typography variant="body2">{movement.reason}</Typography>
+          {movement.referenceType && movement.referenceId ? (
+            <Typography variant="caption" color="text.secondary">{movement.referenceType}: {movement.referenceId}</Typography>
+          ) : null}
+        </>
+      ),
+    },
+  ];
 
   return (
     <AdminPageContainer>
@@ -283,13 +330,14 @@ export default function StockPage() {
           </CardContent>
         </Card>
 
-        <Card variant="outlined" sx={{ borderRadius: 3 }}>
+        <Card variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+          <DataTableSectionHeader
+            title="ประวัติการเคลื่อนไหวสต็อกทั้งหมด"
+            subtitle={`${movementTotal.toLocaleString('th-TH')} รายการตามตัวกรองล่าสุด`}
+            countLabel={`${movementTotal.toLocaleString('th-TH')} รายการ`}
+          />
           <CardContent>
             <Stack spacing={2}>
-              <Box>
-                <Typography variant="h6" fontWeight={900}>ประวัติการเคลื่อนไหวสต็อก</Typography>
-                <Typography variant="body2" color="text.secondary">ค้นหาและกรองประวัติจากข้อมูลทั้งหมดก่อนแบ่งหน้า พร้อมผู้ทำรายการ เหตุผล และเลขอ้างอิง</Typography>
-              </Box>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '2fr 1fr 1fr 1fr 1fr' }, gap: 1 }}>
                 <TextField size="small" label="ค้นหา" value={movementSearch} onChange={event => { setMovementSearch(event.target.value); setMovementPage(1); }} />
                 <TextField size="small" select label="วัสดุ" value={movementItemFilter} onChange={event => { setMovementItemFilter(event.target.value); setMovementPage(1); }}>
@@ -307,29 +355,24 @@ export default function StockPage() {
                 <TextField size="small" label="ตั้งแต่วันที่" type="date" value={movementFrom} onChange={event => { setMovementFrom(event.target.value); setMovementPage(1); }} slotProps={{ inputLabel: { shrink: true } }} />
                 <TextField size="small" label="ถึงวันที่" type="date" value={movementTo} onChange={event => { setMovementTo(event.target.value); setMovementPage(1); }} slotProps={{ inputLabel: { shrink: true } }} />
               </Box>
-              <TableContainer sx={{ overflowX: 'auto' }}>
-                <Table size="small" sx={{ minWidth: 900 }}>
-                  <TableHead><TableRow><TableCell>เวลา</TableCell><TableCell>วัสดุ</TableCell><TableCell>ประเภท</TableCell><TableCell align="right">จำนวน</TableCell><TableCell align="right">คงเหลือ</TableCell><TableCell>ผู้ทำรายการ</TableCell><TableCell>เหตุผล / อ้างอิง</TableCell></TableRow></TableHead>
-                  <TableBody>
-                    {movements.map(movement => (
-                      <TableRow key={movement._id} hover>
-                        <TableCell>{formatMovementDate(movement.occurredAt)}</TableCell>
-                        <TableCell><Typography variant="body2" fontWeight={700}>{movement.stockItem?.name ?? 'วัสดุที่ถูกลบ/ไม่พบ'}</Typography><Typography variant="caption" color="text.secondary">{movement.stockItem?.code ?? movement.stockItemId}</Typography></TableCell>
-                        <TableCell>{movementTypeLabel(movement.type)}</TableCell>
-                        <TableCell align="right"><Typography color={movement.delta >= 0 ? 'success.main' : 'error.main'} fontWeight={700}>{movement.delta >= 0 ? '+' : ''}{movement.delta} {movement.stockItem?.unit ?? ''}</Typography></TableCell>
-                        <TableCell align="right">{movement.balanceAfter} {movement.stockItem?.unit ?? ''}</TableCell>
-                        <TableCell>{movement.actorUsername}</TableCell>
-                        <TableCell><Typography variant="body2">{movement.reason}</Typography>{movement.referenceType && movement.referenceId ? <Typography variant="caption" color="text.secondary">{movement.referenceType}: {movement.referenceId}</Typography> : null}</TableCell>
-                      </TableRow>
-                    ))}
-                    {movements.length === 0 && <TableRow><TableCell colSpan={7} align="center" sx={{ py: 4, color: 'text.secondary' }}>ไม่พบประวัติที่ตรงกับตัวกรอง</TableCell></TableRow>}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-              <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" alignItems={{ xs: 'stretch', sm: 'center' }} gap={1}>
-                <Typography variant="body2" color="text.secondary">ทั้งหมด {movementTotal.toLocaleString('th-TH')} รายการ</Typography>
-                <Pagination page={movementPage} count={movementPages} onChange={(_, page) => setMovementPage(page)} color="primary" />
-              </Stack>
+              <DataTable
+                columns={movementTableColumns}
+                rows={movements}
+                getRowKey={movement => movement._id}
+                minWidth={900}
+                emptyState={{
+                  eyebrow: 'ประวัติสต็อก',
+                  title: 'ไม่พบประวัติที่ตรงกับตัวกรอง',
+                  subtitle: 'ลองเปลี่ยนคำค้นหา วัสดุ ประเภท หรือช่วงวันที่',
+                }}
+                pagination={movementTotal > 0 ? {
+                  count: movementTotal,
+                  page: Math.max(movementPage - 1, 0),
+                  rowsPerPage: 25,
+                  onPageChange: nextPage => setMovementPage(nextPage + 1),
+                  rowsPerPageOptions: [25],
+                } : undefined}
+              />
             </Stack>
           </CardContent>
         </Card>

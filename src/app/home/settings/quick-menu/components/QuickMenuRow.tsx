@@ -8,6 +8,7 @@ import DragIndicatorRoundedIcon from '@mui/icons-material/DragIndicatorRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import type { Product } from '@/lib/contracts';
 import InlinePriceEditor from './InlinePriceEditor';
+import { dataTableBodyRowSx } from '../../../components/DataTable';
 import QuickSellerStatusChip from './QuickSellerStatusChip';
 
 export const formatQuickMenuDate = (value?: string) =>
@@ -51,6 +52,7 @@ export default function QuickMenuRow({ product, reorderMode, position, selected,
       ref={setNodeRef}
       hover={!reorderMode}
       sx={{
+        ...dataTableBodyRowSx,
         opacity: isDragging ? 0.5 : product.active ? 1 : 0.62,
         transform: CSS.Transform.toString(transform),
         transition,

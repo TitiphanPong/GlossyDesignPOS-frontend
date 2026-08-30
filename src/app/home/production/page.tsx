@@ -29,12 +29,6 @@ import {
   InputAdornment,
   MenuItem,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   TextField,
   ToggleButton,
   ToggleButtonGroup,
@@ -46,6 +40,7 @@ import {
 import Link from 'next/link';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
+import DataTable, { type DataTableColumn } from '../components/DataTable';
 import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
 import {
   PRODUCTION_STAGES,
@@ -633,6 +628,73 @@ export default function ProductionPage() {
   }, [load, onChanged]);
 
   const visibleStages = stage === 'all' ? PRODUCTION_STAGES : [stage];
+  const productionTableColumns: DataTableColumn<ProductionJob>[] = [
+    {
+      key: 'job',
+      header: 'Job / Order',
+      render: job => (
+        <>
+          <Typography variant="body2" fontWeight={800}>{job.jobNumber}</Typography>
+          <Typography variant="caption" color="text.secondary">{job.orderNumber}</Typography>
+        </>
+      ),
+    },
+    {
+      key: 'work',
+      header: 'งาน',
+      render: job => (
+        <>
+          <Typography variant="body2">{job.workSummary}</Typography>
+          <Typography variant="caption" color="text.secondary">{job.jobType || 'ไม่ระบุประเภท'}</Typography>
+        </>
+      ),
+    },
+    {
+      key: 'stage',
+      header: 'ขั้นตอน',
+      render: job => <Chip size="small" color={stageTone[job.stage]} label={PRODUCTION_STAGE_META[job.stage].label} />,
+    },
+    {
+      key: 'due',
+      header: 'กำหนด',
+      render: job => (
+        <Stack spacing={0.4} alignItems="flex-start">
+          <Typography variant="body2" color={job.isOverdue ? 'error.main' : undefined} fontWeight={job.isOverdue ? 800 : 500}>{formatDue(job.dueAt)}</Typography>
+          {job.isRush ? <Chip size="small" color="error" label="RUSH" /> : null}
+        </Stack>
+      ),
+    },
+    {
+      key: 'assignee',
+      header: 'ผู้รับผิดชอบ',
+      render: job => job.assignee?.username || '-',
+    },
+    {
+      key: 'files',
+      header: 'ไฟล์',
+      align: 'center',
+      render: job => job.linkedUploadIds.length,
+    },
+    {
+      key: 'actions',
+      header: 'ทำงานต่อ',
+      align: 'right',
+      render: job => {
+        const next = nextProductionStage(job.stage);
+        return next ? (
+          <Button
+            size="small"
+            disabled={busyId === job.id}
+            onClick={event => {
+              event.stopPropagation();
+              void advance(job);
+            }}>
+            ไป {PRODUCTION_STAGE_META[next].shortLabel}
+          </Button>
+        ) : '—';
+      },
+    },
+  ];
 
   return (
     <AdminPageContainer>
@@ -738,27 +800,20 @@ export default function ProductionPage() {
         ) : null}
 
         {jobs.length > 0 && view === 'list' ? (
-          <TableContainer component={Card} variant="outlined" sx={{ borderRadius: 3 }}>
-            <Table size="small" sx={{ minWidth: 1000 }}>
-              <TableHead><TableRow><TableCell>Job / Order</TableCell><TableCell>งาน</TableCell><TableCell>ขั้นตอน</TableCell><TableCell>กำหนด</TableCell><TableCell>ผู้รับผิดชอบ</TableCell><TableCell>ไฟล์</TableCell><TableCell align="right">ทำงานต่อ</TableCell></TableRow></TableHead>
-              <TableBody>
-                {jobs.map(job => {
-                  const next = nextProductionStage(job.stage);
-                  return (
-                    <TableRow key={job.id} hover onClick={() => setSelectedJob(job)} sx={{ cursor: 'pointer' }}>
-                      <TableCell><Typography variant="body2" fontWeight={800}>{job.jobNumber}</Typography><Typography variant="caption" color="text.secondary">{job.orderNumber}</Typography></TableCell>
-                      <TableCell><Typography variant="body2">{job.workSummary}</Typography><Typography variant="caption" color="text.secondary">{job.jobType || 'ไม่ระบุประเภท'}</Typography></TableCell>
-                      <TableCell><Chip size="small" color={stageTone[job.stage]} label={PRODUCTION_STAGE_META[job.stage].label} /></TableCell>
-                      <TableCell><Typography variant="body2" color={job.isOverdue ? 'error.main' : undefined} fontWeight={job.isOverdue ? 800 : 500}>{formatDue(job.dueAt)}</Typography>{job.isRush ? <Chip size="small" color="error" label="RUSH" /> : null}</TableCell>
-                      <TableCell>{job.assignee?.username || '-'}</TableCell>
-                      <TableCell>{job.linkedUploadIds.length}</TableCell>
-                      <TableCell align="right">{next ? <Button size="small" disabled={busyId === job.id} onClick={event => { event.stopPropagation(); void advance(job); }}>ไป {PRODUCTION_STAGE_META[next].shortLabel}</Button> : '—'}</TableCell>
-                    </TableRow>
-                  );
-                })}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <Card variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+            <DataTable
+              sectionHeader={{
+                title: 'รายการงานผลิตทั้งหมด',
+                subtitle: `${total.toLocaleString('th-TH')} งานตามตัวกรองล่าสุด`,
+                countLabel: `${total.toLocaleString('th-TH')} งาน`,
+              }}
+              columns={productionTableColumns}
+              rows={jobs}
+              getRowKey={job => job.id}
+              onRowClick={setSelectedJob}
+              minWidth={1000}
+            />
+          </Card>
         ) : null}
 
         {jobs.length > 0 && page < totalPages ? (
