@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import { Box, Card, Checkbox, Chip, IconButton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, Card, Checkbox, Chip, IconButton, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination, TableRow, Tooltip, Typography } from '@mui/material';
 import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
@@ -99,6 +99,7 @@ export default function StorageTable(props: Readonly<StorageTableProps>) {
                 <Checkbox checked={allCurrentSelected} onChange={onToggleSelectAll} />
               </TableCell>
               <TableCell sx={{ minWidth: 164, bgcolor: '#F7FAFF' }}>วันที่อัปโหลด</TableCell>
+              <TableCell sx={{ minWidth: 230, bgcolor: '#F7FAFF' }}>ลูกค้า / LINE</TableCell>
               <TableCell sx={{ minWidth: 160, bgcolor: '#F7FAFF' }}>ประเภทงาน</TableCell>
               <TableCell sx={{ minWidth: 260, bgcolor: '#F7FAFF' }}>ตัวอย่างไฟล์</TableCell>
               <TableCell sx={{ minWidth: 130, bgcolor: '#F7FAFF' }}>สถานะ</TableCell>
@@ -109,14 +110,14 @@ export default function StorageTable(props: Readonly<StorageTableProps>) {
           <TableBody>
             {loading && (
               <TableRow>
-                <TableCell colSpan={7}>
+                <TableCell colSpan={8}>
                   <Typography sx={{ py: 5, textAlign: 'center', color: '#64748B' }}>กำลังโหลดข้อมูล...</Typography>
                 </TableCell>
               </TableRow>
             )}
             {!loading && rows.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7}>
+                <TableCell colSpan={8}>
                   <EmptyState compact icon={<SearchRoundedIcon fontSize="small" />} eyebrow="Storage" title="ไม่พบไฟล์งานที่อัปโหลด" subtitle="กรุณาคลิกปุ่ม Refresh อีกครั้งเพื่อโหลดข้อมูลใหม่" />
                 </TableCell>
               </TableRow>
@@ -141,6 +142,31 @@ export default function StorageTable(props: Readonly<StorageTableProps>) {
                     </TableCell>
                     <TableCell>
                       <Typography sx={{ color: '#334155', fontWeight: 600, fontSize: 13.5 }}>{formatDate(row.uploadDate)}</Typography>
+                    </TableCell>
+                    <TableCell>
+                      <Stack direction="row" spacing={1.1} alignItems="center" sx={{ minWidth: 0 }}>
+                        <Avatar
+                          src={row.linePictureUrl}
+                          alt={row.lineDisplayName === '-' ? row.customerName : row.lineDisplayName}
+                          sx={{ width: 38, height: 38, bgcolor: '#EAFBF0', color: '#087A3E', fontSize: 14, fontWeight: 900, flexShrink: 0 }}>
+                          {Array.from(row.lineDisplayName === '-' ? row.customerName : row.lineDisplayName)[0] ?? '?'}
+                        </Avatar>
+                        <Stack spacing={0.45} sx={{ minWidth: 0 }}>
+                          <Typography noWrap sx={{ maxWidth: 165, color: '#1F2937', fontWeight: 800, fontSize: 13.5 }}>
+                            {row.customerName}
+                          </Typography>
+                          <Stack direction="row" spacing={0.65} alignItems="center" sx={{ minWidth: 0 }}>
+                            <Chip
+                              size="small"
+                              label="LINE"
+                              sx={{ height: 19, borderRadius: 1.5, bgcolor: '#EAFBF0', color: '#087A3E', fontSize: 9.5, fontWeight: 900, '& .MuiChip-label': { px: 0.75 } }}
+                            />
+                            <Typography noWrap sx={{ maxWidth: 125, color: row.lineDisplayName === '-' ? '#94A3B8' : '#475569', fontSize: 12 }}>
+                              {row.lineDisplayName}
+                            </Typography>
+                          </Stack>
+                        </Stack>
+                      </Stack>
                     </TableCell>
                     <TableCell>
                       <Chip label={row.jobType} sx={{ borderRadius: 2.5, fontWeight: 700, ...jobTypeChipSx(row.jobType) }} />

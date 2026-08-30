@@ -208,8 +208,8 @@ function pickFileIcon(fileName: string) {
 }
 
 function toCsv(rows: StorageRow[]) {
-  const headers = ['วันที่อัปโหลด', 'ชื่อลูกค้า', 'เบอร์โทร', 'LINE ID', 'ประเภทงาน', 'สถานะ', 'หมายเหตุ'];
-  const body = rows.map(row => [formatDate(row.uploadDate), row.customerName, row.phone, row.lineId, row.jobType, storageStatusLabel(row.status), row.notes]);
+  const headers = ['วันที่อัปโหลด', 'ชื่อลูกค้า', 'LINE Display Name', 'เบอร์โทร', 'LINE User ID', 'ประเภทงาน', 'สถานะ', 'หมายเหตุ'];
+  const body = rows.map(row => [formatDate(row.uploadDate), row.customerName, row.lineDisplayName, row.phone, row.lineId, row.jobType, storageStatusLabel(row.status), row.notes]);
   return createExcelCompatibleCsv([headers, ...body]);
 }
 
@@ -868,21 +868,40 @@ export default function StoragePage() {
         subtitle={activeRecord ? `ลูกค้า : ${activeRecord.customerName}` : undefined}>
         {activeRecord ? (
           <Stack spacing={isCompactDrawer ? 1.35 : 1.6}>
-                {/* <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+                <Card sx={{ borderRadius: 4, border: '1px solid #DCE8FA', boxShadow: 'none', bgcolor: '#FBFDFF' }}>
                   <CardContent>
                     <Stack spacing={1.3}>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#1E5EFF', 0.14), color: '#2156D8' }}>
-                          <PersonRoundedIcon sx={{ fontSize: 18 }} />
+                      <Stack direction="row" alignItems="center" spacing={1.35}>
+                        <Avatar
+                          src={activeRecord.linePictureUrl}
+                          alt={activeRecord.lineDisplayName === '-' ? activeRecord.customerName : activeRecord.lineDisplayName}
+                          sx={{ width: 52, height: 52, bgcolor: '#EAFBF0', color: '#087A3E', fontSize: 18, fontWeight: 900 }}>
+                          {Array.from(activeRecord.lineDisplayName === '-' ? activeRecord.customerName : activeRecord.lineDisplayName)[0] ?? '?'}
                         </Avatar>
-                        <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>Customer Information</Typography>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>ข้อมูลลูกค้าและ LINE</Typography>
+                          <Typography noWrap sx={{ mt: 0.2, maxWidth: 300, color: activeRecord.lineDisplayName === '-' ? '#94A3B8' : '#087A3E', fontSize: 12.5, fontWeight: 700 }}>
+                            LINE: {activeRecord.lineDisplayName}
+                          </Typography>
+                        </Box>
                       </Stack>
-                      <Typography sx={{ color: '#334155' }}>ชื่อลูกค้า: {activeRecord.customerName}</Typography>
-                      <Typography sx={{ color: '#334155' }}>เบอร์โทร: {activeRecord.phone}</Typography>
-                      <Typography sx={{ color: '#334155' }}>LINE ID: {activeRecord.lineId}</Typography>
+                      <Box>
+                        <Typography sx={{ color: '#64748B', fontSize: 12 }}>ชื่อลูกค้า</Typography>
+                        <Typography sx={{ mt: 0.2, color: '#0F172A', fontWeight: 750 }}>{activeRecord.customerName}</Typography>
+                      </Box>
+                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{ color: '#64748B', fontSize: 12 }}>เบอร์โทร</Typography>
+                          <Typography sx={{ mt: 0.2, color: '#334155' }}>{activeRecord.phone}</Typography>
+                        </Box>
+                        <Box sx={{ flex: 1, minWidth: 0 }}>
+                          <Typography sx={{ color: '#64748B', fontSize: 12 }}>LINE User ID</Typography>
+                          <Typography sx={{ mt: 0.2, color: '#334155', fontSize: 12.5, overflowWrap: 'anywhere' }}>{activeRecord.lineId}</Typography>
+                        </Box>
+                      </Stack>
                     </Stack>
                   </CardContent>
-                </Card> */}
+                </Card>
 
                 <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
                   <CardContent>

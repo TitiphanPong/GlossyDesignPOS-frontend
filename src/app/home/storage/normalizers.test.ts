@@ -95,10 +95,13 @@ test('normalizeRecord exposes verified LINE user ids from backend uploads', () =
     customerName: 'LINE Customer',
     lineUserId: 'U1234567890abcdef',
     displayName: 'LINE Customer',
+    linePictureUrl: 'https://profile.line-scdn.net/example',
     files: [],
   });
 
   assert.equal(record.customerName, 'LINE Customer');
+  assert.equal(record.lineDisplayName, 'LINE Customer');
+  assert.equal(record.linePictureUrl, 'https://profile.line-scdn.net/example');
   assert.equal(record.lineId, 'U1234567890abcdef');
 });
 
@@ -228,6 +231,7 @@ test('normalizeRecord falls back safely when backend fields are missing', () => 
   assert.equal(record.id, 'upload-456');
   assert.equal(record.customerName, 'ไม่ระบุชื่อลูกค้า');
   assert.equal(record.phone, '-');
+  assert.equal(record.lineDisplayName, '-');
   assert.equal(record.lineId, '-');
   assert.equal(record.jobType, 'งานพิมพ์ทั่วไป');
   assert.equal(record.notes, '-');

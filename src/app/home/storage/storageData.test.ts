@@ -19,6 +19,7 @@ function row(overrides: Partial<StorageRow> = {}): StorageRow {
     uploadDate: '2026-08-12T08:00:00.000Z',
     customerName: 'Glossy Customer',
     phone: '0812345678',
+    lineDisplayName: 'Glossy LINE',
     lineId: 'glossy',
     jobType: 'Document',
     files: [],
@@ -32,6 +33,7 @@ function row(overrides: Partial<StorageRow> = {}): StorageRow {
 test('storage selectors filter search and dates without mutating rows', () => {
   const source = row();
   assert.equal(matchesStorageSearch(source, 'glossy'), true);
+  assert.equal(matchesStorageSearch(source, 'line'), true);
   assert.equal(matchesStorageSearch(source, '0812'), true);
   assert.equal(matchesStorageSearch(source, 'missing'), false);
   assert.equal(matchesStorageDateFilter(source.uploadDate, '2026-08-12'), true);

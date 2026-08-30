@@ -32,6 +32,7 @@ export type UploadApiRecord = {
   line?: string;
   lineUserId?: string;
   displayName?: string;
+  linePictureUrl?: string;
   note?: string;
   statusNote?: string;
   category?: string;
@@ -62,6 +63,8 @@ export type StorageRow = {
   uploadDate: string;
   customerName: string;
   phone: string;
+  lineDisplayName: string;
+  linePictureUrl?: string;
   lineId: string;
   jobType: string;
   files: FileItem[];
@@ -198,6 +201,8 @@ export function normalizeRecord(raw: UploadApiRecord): StorageRow {
     uploadDate: createdAt,
     customerName: String(raw.customerName ?? raw.customer ?? 'ไม่ระบุชื่อลูกค้า'),
     phone: String(raw.phone ?? raw.phoneNumber ?? '-'),
+    lineDisplayName: String(raw.displayName ?? '-'),
+    linePictureUrl: typeof raw.linePictureUrl === 'string' && raw.linePictureUrl.trim() ? raw.linePictureUrl.trim() : undefined,
     lineId: String(raw.lineUserId ?? raw.lineId ?? raw.line ?? '-'),
     jobType: formatJobTypeLabel(raw.jobType ?? raw.category),
     files,
@@ -238,6 +243,8 @@ export function groupStorageRows(rows: readonly StorageRow[]): StorageRow[] {
       uploadDate: new Date(row.uploadDate).getTime() < new Date(existing.uploadDate).getTime() ? row.uploadDate : existing.uploadDate,
       files: mergedFiles,
       sourceIds: Array.from(new Set([...existing.sourceIds, ...row.sourceIds])),
+      lineDisplayName: existing.lineDisplayName === '-' ? row.lineDisplayName : existing.lineDisplayName,
+      linePictureUrl: existing.linePictureUrl ?? row.linePictureUrl,
       notes: existing.notes === '-' ? row.notes : existing.notes,
       activities: Array.from(new Set([...existing.activities, ...row.activities])),
     });

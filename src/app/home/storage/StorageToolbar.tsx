@@ -52,7 +52,7 @@ export default function StorageToolbar(props: Readonly<StorageToolbarProps>) {
             <OutlinedInput
               value={search}
               onChange={event => onSearchChange(event.target.value)}
-              placeholder="ค้นหาจากชื่อลูกค้า เบอร์โทร ประเภทงาน หมายเหตุ"
+              placeholder="ค้นหาชื่อลูกค้า ชื่อ LINE เบอร์โทร ประเภทงาน หรือหมายเหตุ"
               startAdornment={
                 <InputAdornment position="start">
                   <SearchRoundedIcon sx={{ color: '#6B7A90' }} />

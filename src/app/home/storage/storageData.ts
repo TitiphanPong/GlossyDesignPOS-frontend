@@ -37,7 +37,14 @@ export function getBulkMutationTargetIds(selectedIds: string[], rowsById: Map<st
 
 export function matchesStorageSearch(row: StorageRow, query: string): boolean {
   if (!query) return true;
-  return row.customerName.toLowerCase().includes(query) || row.phone.toLowerCase().includes(query) || row.jobType.toLowerCase().includes(query) || row.notes.toLowerCase().includes(query);
+  return (
+    row.customerName.toLowerCase().includes(query) ||
+    row.lineDisplayName.toLowerCase().includes(query) ||
+    row.lineId.toLowerCase().includes(query) ||
+    row.phone.toLowerCase().includes(query) ||
+    row.jobType.toLowerCase().includes(query) ||
+    row.notes.toLowerCase().includes(query)
+  );
 }
 
 export function matchesStorageDateFilter(uploadDate: string, dateFilter: string): boolean {
