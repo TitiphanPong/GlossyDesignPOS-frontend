@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  cancelOrder,
   createOrder,
   extractOrderFromResponse,
   extractOrdersFromResponse,
@@ -218,6 +219,43 @@ test('payRemainingBalance accepts a wrapped updated order response', async () =>
     assert.equal(result.status, 'paid');
     assert.equal(result._id, 'abc126');
     assert.equal(result.paymentMethod, 'promptpay');
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('cancelOrder uses the dedicated append-only cancellation command with a reason', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  let capturedUrl = '';
+  let capturedMethod = '';
+  let capturedBody = '';
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+  globalThis.fetch = async (input, init) => {
+    capturedUrl = String(input);
+    capturedMethod = init?.method ?? '';
+    capturedBody = typeof init?.body === 'string' ? init.body : '';
+    return new Response(
+      JSON.stringify({
+        _id: 'abc-cancel',
+        orderId: 'legacy-cancel',
+        orderNumber: 'ORD-CANCEL-001',
+        payment: 'cash',
+        status: 'cancelled',
+        workflowStatus: 'cancelled',
+        createdAt: '2026-08-30T10:00:00.000Z',
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    );
+  };
+
+  try {
+    const result = await cancelOrder('abc-cancel', ' ลูกค้าขอยกเลิก ');
+    assert.equal(capturedUrl, 'http://localhost:3001/orders/abc-cancel/cancel');
+    assert.equal(capturedMethod, 'POST');
+    assert.equal(capturedBody, JSON.stringify({ reason: 'ลูกค้าขอยกเลิก' }));
+    assert.equal(result.status, 'cancelled');
   } finally {
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;

@@ -73,7 +73,6 @@ export type RowActionsMenuProps = {
   onClose: () => void;
   onOpenDrawer: (row: OrderRow) => void;
   onCancelOrder: (id: string) => void;
-  onDeleteOrder: (order: OrderRow) => void;
   onPrintDocument: (order: OrderRow, mode: 'receipt' | 'invoice') => void;
 };
 

@@ -392,10 +392,15 @@ export async function convertOrderToTaxInvoice(orderId: string): Promise<Normali
   return updatedOrder;
 }
 
-export async function deleteOrder(orderId: string, password: string): Promise<void> {
-  await fetchApiJson<unknown>(`/orders/${orderId}`, {
-    method: 'DELETE',
+export async function cancelOrder(orderId: string, reason: string): Promise<NormalizedOrder> {
+  const responseBody = await fetchApiJson<unknown>(`/orders/${orderId}/cancel`, {
+    method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ password }),
+    body: JSON.stringify({ reason: reason.trim() }),
   });
+  const updatedOrder = extractOrderFromResponse(responseBody);
+  if (!updatedOrder) {
+    throw new Error('Backend did not return a valid cancelled order');
+  }
+  return updatedOrder;
 }
