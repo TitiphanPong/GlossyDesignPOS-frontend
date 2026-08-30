@@ -195,6 +195,21 @@ test('creates a production job from an existing Order and opens its Job Ticket',
   await expect(page.getByText('ผลิตสติ๊กเกอร์ E2E', { exact: true }).first()).toBeVisible();
 });
 
+test('loads Production Board results beyond the first 50 rows without hiding the total', async ({ page }) => {
+  await loginAsCashier(page, '/home/production');
+
+  const search = page.getByPlaceholder('ค้นหาเลข Job, Order, ชื่อลูกค้า หรืองาน');
+  await search.fill('PAGING-E2E');
+  await expect(page.getByText('แสดง 50 จาก 51 งานที่ตรงตัวกรอง', { exact: true })).toBeVisible();
+  const loadMore = page.getByRole('button', { name: 'โหลดเพิ่ม (50/51)' });
+  await expect(loadMore).toBeVisible();
+  await loadMore.click();
+
+  await expect(page.getByText('PJ-PAGING-051', { exact: true })).toBeVisible();
+  await expect(page.getByText('แสดง 51 จาก 51 งานที่ตรงตัวกรอง', { exact: true })).toBeVisible();
+  await expect(loadMore).toBeHidden();
+});
+
 test('keeps anonymous upload public and sends a multipart file through the BFF', async ({ page }) => {
   await page.goto('/upload');
 

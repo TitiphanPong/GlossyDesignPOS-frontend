@@ -49,6 +49,17 @@ function productionJob() {
   };
 }
 
+function pagingProductionJob(index) {
+  return {
+    ...productionJob(),
+    id: `paging-production-${index}`,
+    jobNumber: `PJ-PAGING-${String(index).padStart(3, '0')}`,
+    workSummary: `PAGING-E2E job ${index}`,
+    stage: 'file_check',
+    customerMilestone: 'received',
+  };
+}
+
 function json(response, status, body) {
   response.writeHead(status, {
     'content-type': 'application/json; charset=utf-8',
@@ -238,8 +249,31 @@ const server = http.createServer(async (request, response) => {
 
   if (request.method === 'GET' && url.pathname === '/production/jobs') {
     const requestedStage = url.searchParams.get('stage');
-    const items = [productionJob(), ...(createdProductionJob ? [createdProductionJob] : [])].filter(job => !requestedStage || requestedStage === job.stage);
-    return json(response, 200, { items, page: 1, limit: 100, total: items.length, totalPages: 1 });
+    const requestedPage = Number(url.searchParams.get('page') || 1);
+    const requestedLimit = Number(url.searchParams.get('limit') || 25);
+    const search = url.searchParams.get('q') || '';
+    const allItems = search === 'PAGING-E2E'
+      ? Array.from({ length: 51 }, (_, index) => pagingProductionJob(index + 1))
+      : [productionJob(), ...(createdProductionJob ? [createdProductionJob] : [])];
+    const filteredItems = allItems.filter(job => !requestedStage || requestedStage === job.stage);
+    const start = (requestedPage - 1) * requestedLimit;
+    const items = filteredItems.slice(start, start + requestedLimit);
+    const stageCounts = {
+      file_check: allItems.filter(job => job.stage === 'file_check').length,
+      queued: allItems.filter(job => job.stage === 'queued').length,
+      producing: allItems.filter(job => job.stage === 'producing').length,
+      quality_check: allItems.filter(job => job.stage === 'quality_check').length,
+      ready: allItems.filter(job => job.stage === 'ready').length,
+      delivered: allItems.filter(job => job.stage === 'delivered').length,
+    };
+    return json(response, 200, {
+      items,
+      page: requestedPage,
+      limit: requestedLimit,
+      total: filteredItems.length,
+      totalPages: Math.max(1, Math.ceil(filteredItems.length / requestedLimit)),
+      stageCounts,
+    });
   }
 
   if (request.method === 'GET' && url.pathname === `/production/jobs/${productionJobId}`) {

@@ -24,7 +24,8 @@ test('productionJobsPath serializes operational filters without payment fields',
     assigneeUserId: 'staff-1',
     jobType: ' นามบัตร ',
     q: ' ORD-42 ',
-    limit: 100,
+    page: 3,
+    limit: 50,
   });
   const url = new URL(path, 'http://local.test');
 
@@ -35,6 +36,8 @@ test('productionJobsPath serializes operational filters without payment fields',
   assert.equal(url.searchParams.get('assigneeUserId'), 'staff-1');
   assert.equal(url.searchParams.get('jobType'), 'นามบัตร');
   assert.equal(url.searchParams.get('q'), 'ORD-42');
+  assert.equal(url.searchParams.get('page'), '3');
+  assert.equal(url.searchParams.get('limit'), '50');
   assert.equal(url.searchParams.has('payment'), false);
   assert.equal(url.searchParams.has('total'), false);
 });

@@ -92,6 +92,16 @@ function replaceJob(rows: ProductionJob[], updated: ProductionJob) {
   return rows.map(row => (row.id === updated.id ? updated : row));
 }
 
+function appendUniqueJobs(rows: ProductionJob[], incoming: ProductionJob[]) {
+  const byId = new Map(rows.map(job => [job.id, job]));
+  for (const job of incoming) byId.set(job.id, job);
+  return Array.from(byId.values());
+}
+
+function emptyStageCounts(): Record<ProductionStage, number> {
+  return Object.fromEntries(PRODUCTION_STAGES.map(stage => [stage, 0])) as Record<ProductionStage, number>;
+}
+
 function ProductionCard({
   job,
   busy,
@@ -155,12 +165,14 @@ function ProductionCard({
 function StageColumn({
   stage,
   jobs,
+  total,
   busyId,
   onOpen,
   onAdvance,
 }: Readonly<{
   stage: ProductionStage;
   jobs: ProductionJob[];
+  total: number;
   busyId: string | null;
   onOpen: (job: ProductionJob) => void;
   onAdvance: (job: ProductionJob) => void;
@@ -169,7 +181,7 @@ function StageColumn({
     <Box sx={{ minWidth: 0 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
         <Typography fontWeight={900}>{PRODUCTION_STAGE_META[stage].label}</Typography>
-        <Chip size="small" label={jobs.length} />
+        <Chip size="small" label={jobs.length === total ? total : `${jobs.length}/${total}`} />
       </Stack>
       <Stack spacing={1.25}>
         {jobs.map(job => <ProductionCard key={job.id} job={job} busy={busyId === job.id} onOpen={onOpen} onAdvance={onAdvance} />)}
@@ -535,7 +547,12 @@ export default function ProductionPage() {
   const [jobType, setJobType] = React.useState('all');
   const [knownJobTypes, setKnownJobTypes] = React.useState<string[]>([]);
   const [view, setView] = React.useState<ViewMode>('board');
+  const [page, setPage] = React.useState(1);
+  const [total, setTotal] = React.useState(0);
+  const [totalPages, setTotalPages] = React.useState(1);
+  const [stageCounts, setStageCounts] = React.useState<Record<ProductionStage, number>>(emptyStageCounts);
   const [loading, setLoading] = React.useState(true);
+  const [loadingMore, setLoadingMore] = React.useState(false);
   const [busyId, setBusyId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
@@ -558,12 +575,14 @@ export default function ProductionPage() {
     });
   }, []);
 
-  const load = React.useCallback(async () => {
-    setLoading(true);
+  const load = React.useCallback(async (targetPage = 1, append = false) => {
+    if (append) setLoadingMore(true);
+    else setLoading(true);
     setError(null);
     try {
       const response = await listProductionJobs({
-        limit: 100,
+        page: targetPage,
+        limit: 50,
         stage: stage === 'all' ? undefined : stage,
         due,
         priority: priority === 'all' ? undefined : priority,
@@ -571,18 +590,23 @@ export default function ProductionPage() {
         jobType: jobType === 'all' ? undefined : jobType,
         q: searchQuery || undefined,
       });
-      setJobs(response.items);
+      setJobs(current => append ? appendUniqueJobs(current, response.items) : response.items);
+      setPage(response.page);
+      setTotal(response.total);
+      setTotalPages(response.totalPages);
+      setStageCounts(response.stageCounts);
       setKnownJobTypes(current => Array.from(new Set([...current, ...response.items.map(item => item.jobType).filter((value): value is string => Boolean(value))])).sort());
       setLastSyncedAt(new Date());
       setSelectedJob(current => current ? response.items.find(item => item.id === current.id) ?? current : null);
     } catch (loadError) {
       setError(loadError instanceof Error ? loadError.message : 'โหลด Production Board ไม่สำเร็จ');
     } finally {
-      setLoading(false);
+      if (append) setLoadingMore(false);
+      else setLoading(false);
     }
   }, [assigneeId, due, jobType, priority, searchQuery, stage]);
 
-  React.useEffect(() => void load(), [load]);
+  React.useEffect(() => void load(1, false), [load]);
 
   React.useEffect(() => {
     if (mobile) setView('board');
@@ -673,7 +697,7 @@ export default function ProductionPage() {
               sx={{ whiteSpace: 'nowrap' }}
             >
               <ToggleButton value="all">ทั้งหมด</ToggleButton>
-              {PRODUCTION_STAGES.map(value => <ToggleButton key={value} value={value}>{PRODUCTION_STAGE_META[value].shortLabel}</ToggleButton>)}
+              {PRODUCTION_STAGES.map(value => <ToggleButton key={value} value={value}>{PRODUCTION_STAGE_META[value].shortLabel} ({stageCounts[value]})</ToggleButton>)}
             </ToggleButtonGroup>
           </Box>
           {!mobile ? (
@@ -683,6 +707,10 @@ export default function ProductionPage() {
             </ToggleButtonGroup>
           ) : null}
         </Stack>
+
+        <Typography variant="body2" color="text.secondary">
+          แสดง {jobs.length.toLocaleString('th-TH')} จาก {total.toLocaleString('th-TH')} งานที่ตรงตัวกรอง
+        </Typography>
 
         {loading && jobs.length === 0 ? <Box sx={{ py: 8, display: 'grid', placeItems: 'center' }}><CircularProgress /></Box> : null}
 
@@ -700,6 +728,7 @@ export default function ProductionPage() {
                 key={value}
                 stage={value}
                 jobs={jobs.filter(job => job.stage === value)}
+                total={stageCounts[value]}
                 busyId={busyId}
                 onOpen={setSelectedJob}
                 onAdvance={job => void advance(job)}
@@ -731,6 +760,14 @@ export default function ProductionPage() {
             </Table>
           </TableContainer>
         ) : null}
+
+        {jobs.length > 0 && page < totalPages ? (
+          <Box sx={{ display: 'grid', placeItems: 'center', py: 1 }}>
+            <Button variant="outlined" disabled={loadingMore} onClick={() => void load(page + 1, true)}>
+              {loadingMore ? 'กำลังโหลด...' : `โหลดเพิ่ม (${jobs.length.toLocaleString('th-TH')}/${total.toLocaleString('th-TH')})`}
+            </Button>
+          </Box>
+        ) : null}
       </Stack>
 
       <CreateProductionJobDialog
@@ -738,9 +775,8 @@ export default function ProductionPage() {
         assignees={assignees}
         onClose={() => setCreateOpen(false)}
         onCreated={job => {
-          setJobs(current => [job, ...current.filter(item => item.id !== job.id)]);
           setSelectedJob(job);
-          setLastSyncedAt(new Date());
+          void load(1, false);
         }}
       />
 

@@ -39,6 +39,7 @@ export type ProductionJobListResponse = {
   limit: number;
   total: number;
   totalPages: number;
+  stageCounts: Record<ProductionStage, number>;
 };
 
 export type ProductionAssignee = {
