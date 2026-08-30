@@ -12,12 +12,14 @@ import {
   Card,
   CardContent,
   Chip,
+  IconButton,
   InputAdornment,
   MenuItem,
   Skeleton,
   Stack,
   TablePagination,
   TextField,
+  Tooltip,
   Typography,
 } from '@mui/material';
 import AdminPageContainer from '../components/AdminPageContainer';
@@ -37,9 +39,16 @@ function branchLabel(customer: CustomerProfile): string | null {
   return customer.branchNo ? `${customer.branchType} ${customer.branchNo}` : customer.branchType;
 }
 
+function customerAddressLabel(customer: CustomerProfile): string {
+  return [
+    customer.address?.trim(),
+    [customer.subDistrict?.trim(), customer.district?.trim()].filter(Boolean).join(' '),
+    [customer.province?.trim(), customer.postalCode?.trim()].filter(Boolean).join(' '),
+  ].filter(Boolean).join(' ') || '-';
+}
+
 function CustomerIdentity({ customer }: Readonly<{ customer: CustomerProfile }>) {
   const primaryName = customer.companyName?.trim() || customer.displayName;
-  const secondaryName = customer.companyName?.trim() ? customer.displayName : null;
 
   return (
     <Box sx={{ minWidth: 0 }}>
@@ -47,12 +56,18 @@ function CustomerIdentity({ customer }: Readonly<{ customer: CustomerProfile }>)
         {primaryName}
       </Typography>
       <Typography sx={{ mt: 0.15, fontSize: 11.5, color: '#718096', fontWeight: 700 }}>{customer.customerCode}</Typography>
-      {secondaryName ? (
-        <Typography sx={{ mt: 0.35, fontSize: 12, color: '#475569' }} noWrap>
-          {secondaryName}
-        </Typography>
-      ) : null}
     </Box>
+  );
+}
+
+function CustomerAddress({ customer }: Readonly<{ customer: CustomerProfile }>) {
+  const address = customerAddressLabel(customer);
+  return (
+    <Tooltip title={address === '-' ? '' : address} placement="top-start">
+      <Typography sx={{ maxWidth: '100%', fontSize: 12, color: address === '-' ? '#98A2B3' : '#475569' }} noWrap>
+        {address}
+      </Typography>
+    </Tooltip>
   );
 }
 
@@ -174,38 +189,38 @@ export default function CustomersPage() {
     {
       key: 'company',
       header: 'บริษัท',
-      width: '45%',
+      width: '28%',
       render: customer => <CustomerIdentity customer={customer} />,
+    },
+    {
+      key: 'address',
+      header: 'ที่อยู่',
+      width: '42%',
+      render: customer => <CustomerAddress customer={customer} />,
     },
     {
       key: 'tax',
       header: 'สาขา / TaxID',
-      width: '30%',
+      width: '20%',
       render: customer => <CustomerTax customer={customer} />,
     },
     {
       key: 'actions',
       header: 'จัดการ',
       align: 'right',
-      width: '25%',
+      width: 120,
       render: customer => (
-        <Stack direction="row" justifyContent="flex-end" spacing={0.65}>
-          <Button
-            size="small"
-            variant="text"
-            startIcon={<VisibilityRoundedIcon />}
-            onClick={() => void openCustomer(customer)}
-            sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>
-            รายละเอียด
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            startIcon={<EditRoundedIcon />}
-            onClick={() => setEditingCustomer(customer)}
-            sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>
-            แก้ไข
-          </Button>
+        <Stack direction="row" justifyContent="flex-end" spacing={0.4}>
+          <Tooltip title="ดูรายละเอียด">
+            <IconButton size="small" aria-label="ดูรายละเอียดลูกค้า" onClick={() => void openCustomer(customer)}>
+              <VisibilityRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="แก้ไข">
+            <IconButton size="small" aria-label="แก้ไขข้อมูลลูกค้า" onClick={() => setEditingCustomer(customer)}>
+              <EditRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Stack>
       ),
     },

@@ -35,9 +35,11 @@ import LocalPrintshopRoundedIcon from '@mui/icons-material/LocalPrintshopRounded
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import SyncRoundedIcon from '@mui/icons-material/SyncRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
+import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import axios from 'axios';
 import JobTimelineCard, { type JobTimelineCardItem } from '../components/JobTimelineCard';
 import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
+import { commonButtonSx } from '../components/adminUi';
 import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
 import { normalizeRecord, type StorageRow, type StorageStatus, type UploadApiRecord } from './normalizers';
 import {
@@ -846,7 +848,7 @@ export default function StoragePage() {
                   bgcolor: 'rgba(255, 255, 255, 0.96)',
                   backdropFilter: 'blur(10px)',
                 }}>
-                <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.2} alignItems={{ sm: 'stretch' }} sx={{ width: '100%' }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} flexWrap="wrap" gap={1}>
                   <Button
                     variant="contained"
                     onClick={() => {
@@ -855,39 +857,26 @@ export default function StoragePage() {
                     disabled={drawerBusy}
                     startIcon={<SaveRoundedIcon />}
                     sx={{
+                      ...commonButtonSx,
                       width: { xs: '100%', sm: 'auto' },
-                      flex: 1,
-                      minHeight: 46,
-                      borderRadius: '14px',
+                      flex: '1 1 auto',
                       textTransform: 'none',
-                      fontWeight: 700,
-                      fontSize: 15.5,
-                      background: 'linear-gradient(135deg, #1E5EFF 0%, #4778FF 100%)',
-                      boxShadow: '0 12px 28px rgba(30, 94, 255, 0.24)',
-                      '&:hover': {
-                        background: 'linear-gradient(135deg, #1A56EB 0%, #3F71FF 100%)',
-                        boxShadow: '0 14px 30px rgba(30, 94, 255, 0.28)',
-                      },
-                      '&.Mui-disabled': {
-                        color: '#FFFFFF',
-                        opacity: 0.72,
-                      },
                     }}>
                     {drawerSaving ? 'กำลังบันทึก...' : 'บันทึกสถานะ'}
                   </Button>
                   <Button
                     variant="outlined"
+                    startIcon={<CloseRoundedIcon />}
                     onClick={() => setDrawerOpen(false)}
                     sx={{
+                      ...commonButtonSx,
                       width: { xs: '100%', sm: 'auto' },
-                      flex: { sm: '0 0 140px' },
-                      minHeight: 46,
-                      borderRadius: '14px',
+                      flex: '1 1 auto',
                       textTransform: 'none',
-                      fontWeight: 700,
-                      borderColor: '#D7E3F4',
-                      color: '#33517A',
+                      borderColor: '#CBD5E1',
+                      color: '#334155',
                       bgcolor: '#FFFFFF',
+                      '&:hover': { borderColor: '#94A3B8', bgcolor: '#F8FAFC' },
                     }}>
                     ปิดรายละเอียด
                   </Button>

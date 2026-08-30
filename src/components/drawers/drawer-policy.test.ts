@@ -42,3 +42,21 @@ test('feature detail drawers use the canonical Order-style drawer shell', async 
     `Direct MUI Drawer usage must go through GlossyDetailDrawer unless it is an approved utility drawer: ${offenders.join(', ')}`,
   );
 });
+
+test('customer detail drawer keeps edit and close actions in the shared drawer footer', async () => {
+  const root = process.cwd();
+  const content = await readFile(path.join(root, 'src/components/customers/CustomerDetailDrawer.tsx'), 'utf8');
+
+  assert.match(content, /footer=\{detail \? <CustomerDrawerActionBar/);
+  assert.doesNotMatch(content, /<IconButton/);
+  assert.match(content, /headerActions=\{detail \? \(\s*<Chip/);
+});
+
+test('storage drawer footer follows the Order action button sizing policy', async () => {
+  const root = process.cwd();
+  const content = await readFile(path.join(root, 'src/app/home/storage/page.tsx'), 'utf8');
+
+  assert.match(content, /\.\.\.commonButtonSx/);
+  assert.doesNotMatch(content, /flex:\s*\{ sm: '0 0 140px' \}/);
+  assert.doesNotMatch(content, /minHeight:\s*46/);
+});

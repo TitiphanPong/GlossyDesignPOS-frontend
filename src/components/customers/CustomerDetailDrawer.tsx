@@ -9,7 +9,6 @@ import {
   Button,
   Chip,
   Divider,
-  IconButton,
   Skeleton,
   Stack,
   Typography,
@@ -107,6 +106,47 @@ function DetailSkeleton() {
   );
 }
 
+function CustomerDrawerActionBar({ onEdit, onClose }: Readonly<{ onEdit: () => void; onClose: () => void }>) {
+  const actionButtonSx = {
+    minHeight: 44,
+    borderRadius: 2.5,
+    flex: '1 1 auto',
+    width: { xs: '100%', sm: 'auto' },
+    textTransform: 'none',
+    fontWeight: 800,
+  } as const;
+
+  return (
+    <Box
+      sx={{
+        px: { xs: 2, sm: 2.5, md: 3 },
+        py: { xs: 1.5, sm: 1.8 },
+        borderTop: '1px solid #E8EFF8',
+        bgcolor: 'rgba(255, 255, 255, 0.96)',
+        backdropFilter: 'blur(10px)',
+      }}>
+      <Stack direction={{ xs: 'column', sm: 'row' }} flexWrap="wrap" gap={1}>
+        <Button variant="contained" startIcon={<EditRoundedIcon />} onClick={onEdit} sx={actionButtonSx}>
+          แก้ไขข้อมูล
+        </Button>
+        <Button
+          variant="outlined"
+          startIcon={<CloseRoundedIcon />}
+          onClick={onClose}
+          sx={{
+            ...actionButtonSx,
+            borderColor: '#CBD5E1',
+            color: '#334155',
+            bgcolor: '#FFFFFF',
+            '&:hover': { borderColor: '#94A3B8', bgcolor: '#F8FAFC' },
+          }}>
+          ปิดรายละเอียด
+        </Button>
+      </Stack>
+    </Box>
+  );
+}
+
 type CustomerDetailDrawerProps = Readonly<{
   open: boolean;
   detail: CustomerDetail | null;
@@ -126,25 +166,14 @@ export default function CustomerDetailDrawer({ open, detail, loading, onClose, o
       onClose={onClose}
       title={detail?.customer.displayName ?? 'ข้อมูลลูกค้า'}
       subtitle={detail ? detail.customer.customerCode : <Skeleton width={110} />}
-      headerActions={(
-        <Stack direction="row" spacing={0.5} alignItems="center" flexWrap="wrap" useFlexGap>
-          {detail ? (
-            <Chip
-              size="small"
-              label={detail.customer.active ? 'Active' : 'Inactive'}
-              sx={{ height: 23, bgcolor: detail.customer.active ? '#ECFDF3' : '#F2F4F7', color: detail.customer.active ? '#027A48' : '#667085', fontWeight: 800, fontSize: 11 }}
-            />
-          ) : null}
-          {detail ? (
-            <Button variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => onEdit(detail.customer)} sx={{ minHeight: 40, borderRadius: 2.5, textTransform: 'none', fontWeight: 800 }}>
-              แก้ไข
-            </Button>
-          ) : null}
-          <IconButton aria-label="ปิดรายละเอียดลูกค้า" onClick={onClose} sx={{ minWidth: 40, minHeight: 40 }}>
-            <CloseRoundedIcon />
-          </IconButton>
-        </Stack>
-      )}>
+      headerActions={detail ? (
+        <Chip
+          size="small"
+          label={detail.customer.active ? 'Active' : 'Inactive'}
+          sx={{ height: 23, bgcolor: detail.customer.active ? '#ECFDF3' : '#F2F4F7', color: detail.customer.active ? '#027A48' : '#667085', fontWeight: 800, fontSize: 11 }}
+        />
+      ) : undefined}
+      footer={detail ? <CustomerDrawerActionBar onEdit={() => onEdit(detail.customer)} onClose={onClose} /> : undefined}>
       {loading && !detail ? <DetailSkeleton /> : null}
       {detail ? (
         <Stack spacing={2.4} divider={<Divider flexItem />}>
