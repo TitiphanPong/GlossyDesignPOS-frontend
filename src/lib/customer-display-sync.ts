@@ -20,22 +20,38 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === 'object';
 }
 
+function clearStoredSession(): void {
+  if (globalThis.window === undefined) return;
+  globalThis.localStorage.removeItem(CUSTOMER_DISPLAY_SESSION_KEY);
+}
+
+function storeSession(session: CustomerDisplaySession): void {
+  globalThis.localStorage.setItem(CUSTOMER_DISPLAY_SESSION_KEY, JSON.stringify(session));
+}
+
 function readSession(): CustomerDisplaySession | null {
   if (globalThis.window === undefined) return null;
   const raw = globalThis.localStorage.getItem(CUSTOMER_DISPLAY_SESSION_KEY);
   if (!raw) return null;
   try {
     const parsed = JSON.parse(raw) as Partial<CustomerDisplaySession>;
-    if (!parsed.sessionId || !parsed.displayToken || !parsed.expiresAt) return null;
+    if (!parsed.sessionId || !parsed.displayToken || !parsed.expiresAt) {
+      clearStoredSession();
+      return null;
+    }
     if (new Date(parsed.expiresAt).getTime() <= Date.now()) {
-      globalThis.localStorage.removeItem(CUSTOMER_DISPLAY_SESSION_KEY);
+      clearStoredSession();
       return null;
     }
     return parsed as CustomerDisplaySession;
   } catch {
-    globalThis.localStorage.removeItem(CUSTOMER_DISPLAY_SESSION_KEY);
+    clearStoredSession();
     return null;
   }
+}
+
+export function getCustomerDisplaySession(): CustomerDisplaySession | null {
+  return readSession();
 }
 
 function sanitizeCartItem(value: unknown): Record<string, unknown> | null {
@@ -91,20 +107,52 @@ export function sanitizeCustomerDisplayState(value: unknown): Record<string, unk
   };
 }
 
+async function republishPendingOrder(): Promise<void> {
+  const pending = globalThis.localStorage.getItem(PENDING_ORDER_KEY);
+  if (!pending) return;
+  try {
+    await publishCustomerDisplayStateIfPaired(JSON.parse(pending));
+  } catch {
+    // Pairing succeeds even if the currently open draft cannot be republished.
+  }
+}
+
+async function createCustomerDisplaySession(): Promise<CustomerDisplaySession> {
+  const created = await fetchApiJson<CustomerDisplaySession>('/customer-display/sessions', { method: 'POST' });
+  storeSession(created);
+  await republishPendingOrder();
+  return created;
+}
+
 export async function ensureCustomerDisplaySession(): Promise<CustomerDisplaySession> {
   const existing = readSession();
   if (existing) return existing;
-  const created = await fetchApiJson<CustomerDisplaySession>('/customer-display/sessions', { method: 'POST' });
-  globalThis.localStorage.setItem(CUSTOMER_DISPLAY_SESSION_KEY, JSON.stringify(created));
-  const pending = globalThis.localStorage.getItem(PENDING_ORDER_KEY);
-  if (pending) {
-    try {
-      await publishCustomerDisplayStateIfPaired(JSON.parse(pending));
-    } catch {
-      // Pairing succeeds even if the currently open draft cannot be republished.
-    }
-  }
-  return created;
+  return createCustomerDisplaySession();
+}
+
+export async function rotateCustomerDisplaySession(): Promise<CustomerDisplaySession> {
+  const existing = readSession();
+  if (!existing) return createCustomerDisplaySession();
+
+  const rotated = await fetchApiJson<CustomerDisplaySession>(
+    `/customer-display/sessions/${encodeURIComponent(existing.sessionId)}/rotate`,
+    { method: 'POST' },
+  );
+  storeSession(rotated);
+  await republishPendingOrder();
+  return rotated;
+}
+
+export async function revokeCustomerDisplaySession(): Promise<boolean> {
+  const existing = readSession();
+  if (!existing) return false;
+
+  await fetchApiJson<{ sessionId: string; revoked: true }>(
+    `/customer-display/sessions/${encodeURIComponent(existing.sessionId)}`,
+    { method: 'DELETE' },
+  );
+  clearStoredSession();
+  return true;
 }
 
 export function getCustomerDisplayPairingUrl(session: CustomerDisplaySession, origin = globalThis.location?.origin): string | null {
