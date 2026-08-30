@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { nextProductionStage, productionJobsPath } from './production';
+import { bangkokLocalDateTimeToIso, nextProductionStage, productionJobsPath } from './production';
 
 test('nextProductionStage follows the server-owned forward-only production sequence', () => {
   assert.equal(nextProductionStage('file_check'), 'queued');
@@ -9,6 +9,11 @@ test('nextProductionStage follows the server-owned forward-only production seque
   assert.equal(nextProductionStage('quality_check'), 'ready');
   assert.equal(nextProductionStage('ready'), 'delivered');
   assert.equal(nextProductionStage('delivered'), null);
+});
+
+test('bangkokLocalDateTimeToIso treats datetime-local input as Asia/Bangkok', () => {
+  assert.equal(bangkokLocalDateTimeToIso('2026-08-30T17:30'), '2026-08-30T10:30:00.000Z');
+  assert.throws(() => bangkokLocalDateTimeToIso('2026-08-30'), /วันและเวลา/);
 });
 
 test('productionJobsPath serializes operational filters without payment fields', () => {

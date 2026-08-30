@@ -57,6 +57,27 @@ export type ProductionJobQuery = {
   q?: string;
 };
 
+export type CreateProductionJobInput = {
+  orderId: string;
+  workSummary: string;
+  dueAt: string;
+  jobType?: string;
+  priority?: ProductionPriority;
+  assigneeUserId?: string;
+  internalNote?: string;
+  linkedUploadIds?: string[];
+};
+
+export function bangkokLocalDateTimeToIso(value: string): string {
+  const normalized = value.trim();
+  if (!/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(normalized)) {
+    throw new Error('กรุณาระบุวันและเวลากำหนดส่งให้ครบ');
+  }
+  const parsed = new Date(`${normalized}:00+07:00`);
+  if (!Number.isFinite(parsed.getTime())) throw new Error('วันและเวลากำหนดส่งไม่ถูกต้อง');
+  return parsed.toISOString();
+}
+
 export const PRODUCTION_STAGE_META: Record<ProductionStage, { label: string; shortLabel: string }> = {
   file_check: { label: 'ตรวจไฟล์', shortLabel: 'ตรวจไฟล์' },
   queued: { label: 'รอผลิต', shortLabel: 'คิว' },
@@ -87,6 +108,14 @@ export function productionJobsPath(query: ProductionJobQuery = {}): string {
 
 export function listProductionJobs(query: ProductionJobQuery = {}) {
   return fetchApiJson<ProductionJobListResponse>(productionJobsPath(query), { cache: 'no-store' });
+}
+
+export function createProductionJob(input: CreateProductionJobInput) {
+  return fetchApiJson<ProductionJob>('/production/jobs', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(input),
+  });
 }
 
 export function listProductionAssignees() {

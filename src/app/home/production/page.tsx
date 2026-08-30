@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import AssignmentIndRoundedIcon from '@mui/icons-material/AssignmentIndRounded';
 import ArrowForwardRoundedIcon from '@mui/icons-material/ArrowForwardRounded';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
@@ -20,6 +21,10 @@ import {
   CardContent,
   Chip,
   CircularProgress,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   Divider,
   InputAdornment,
   MenuItem,
@@ -46,6 +51,8 @@ import {
   PRODUCTION_STAGES,
   PRODUCTION_STAGE_META,
   advanceProductionJob,
+  bangkokLocalDateTimeToIso,
+  createProductionJob,
   listProductionAssignees,
   listProductionJobs,
   nextProductionStage,
@@ -56,6 +63,8 @@ import {
   type ProductionPriority,
   type ProductionStage,
 } from '@/lib/production';
+import { fetchOrdersPage } from '@/lib/orders';
+import type { NormalizedOrder } from '@/lib/contracts';
 
 type SessionIdentity = { id: string; username: string; role: 'staff' | 'manager' | 'admin' };
 type StageFilter = 'all' | ProductionStage;
@@ -364,6 +373,152 @@ function JobTicketDrawer({
   );
 }
 
+function defaultBangkokDueLocal() {
+  const tomorrowBangkok = new Date(Date.now() + (7 * 60 * 60 * 1000) + (24 * 60 * 60 * 1000));
+  return `${tomorrowBangkok.toISOString().slice(0, 10)}T17:00`;
+}
+
+function CreateProductionJobDialog({
+  open,
+  assignees,
+  onClose,
+  onCreated,
+}: Readonly<{
+  open: boolean;
+  assignees: ProductionAssignee[];
+  onClose: () => void;
+  onCreated: (job: ProductionJob) => void;
+}>) {
+  const [orderSearch, setOrderSearch] = React.useState('');
+  const [orders, setOrders] = React.useState<NormalizedOrder[]>([]);
+  const [selectedOrderId, setSelectedOrderId] = React.useState('');
+  const [workSummary, setWorkSummary] = React.useState('');
+  const [jobType, setJobType] = React.useState('');
+  const [dueAtLocal, setDueAtLocal] = React.useState(defaultBangkokDueLocal);
+  const [priority, setPriority] = React.useState<ProductionPriority>('normal');
+  const [assigneeUserId, setAssigneeUserId] = React.useState('');
+  const [internalNote, setInternalNote] = React.useState('');
+  const [uploadIds, setUploadIds] = React.useState('');
+  const [searching, setSearching] = React.useState(false);
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    if (!open) return;
+    setError(null);
+    setDueAtLocal(defaultBangkokDueLocal());
+  }, [open]);
+
+  const searchOrders = async () => {
+    setSearching(true);
+    setError(null);
+    try {
+      const response = await fetchOrdersPage({ search: orderSearch.trim() || undefined, limit: 10 });
+      setOrders(response.data);
+      if (response.data.length === 1) setSelectedOrderId(response.data[0]._id);
+    } catch (searchError) {
+      setError(searchError instanceof Error ? searchError.message : 'ค้นหา Order ไม่สำเร็จ');
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const selectOrder = (id: string) => {
+    setSelectedOrderId(id);
+    const order = orders.find(item => item._id === id);
+    if (!order || workSummary.trim()) return;
+    const summary = order.cart.map(item => item.name).filter(Boolean).slice(0, 3).join(', ');
+    if (summary) setWorkSummary(summary);
+  };
+
+  const submit = async () => {
+    if (saving) return;
+    const selectedOrder = orders.find(order => order._id === selectedOrderId);
+    if (!selectedOrder) {
+      setError('กรุณาค้นหาและเลือก Order ก่อนสร้างงาน');
+      return;
+    }
+    if (!workSummary.trim()) {
+      setError('กรุณาระบุรายละเอียดงานผลิต');
+      return;
+    }
+
+    setSaving(true);
+    setError(null);
+    try {
+      const linkedUploadIds = Array.from(new Set(uploadIds.split(/[\n,]/).map(value => value.trim()).filter(Boolean)));
+      const created = await createProductionJob({
+        orderId: selectedOrder._id,
+        workSummary: workSummary.trim(),
+        dueAt: bangkokLocalDateTimeToIso(dueAtLocal),
+        priority,
+        ...(jobType.trim() ? { jobType: jobType.trim() } : {}),
+        ...(assigneeUserId ? { assigneeUserId } : {}),
+        ...(internalNote.trim() ? { internalNote: internalNote.trim() } : {}),
+        ...(linkedUploadIds.length ? { linkedUploadIds } : {}),
+      });
+      onCreated(created);
+      onClose();
+      setOrderSearch('');
+      setOrders([]);
+      setSelectedOrderId('');
+      setWorkSummary('');
+      setJobType('');
+      setPriority('normal');
+      setAssigneeUserId('');
+      setInternalNote('');
+      setUploadIds('');
+    } catch (createError) {
+      setError(createError instanceof Error ? createError.message : 'สร้าง Production Job ไม่สำเร็จ');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
+      <DialogTitle>สร้าง Production Job</DialogTitle>
+      <DialogContent>
+        <Stack spacing={2} sx={{ pt: 1 }}>
+          {error ? <Alert severity="error">{error}</Alert> : null}
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+            <TextField fullWidth label="ค้นหา Order" value={orderSearch} onChange={event => setOrderSearch(event.target.value)} placeholder="เลข Order หรือชื่อลูกค้า" />
+            <Button variant="outlined" onClick={() => void searchOrders()} disabled={searching} sx={{ minWidth: 110 }}>
+              {searching ? 'กำลังค้น...' : 'ค้นหา'}
+            </Button>
+          </Stack>
+          <TextField select label="Order" value={selectedOrderId} onChange={event => selectOrder(event.target.value)} disabled={!orders.length}>
+            {orders.map(order => (
+              <MenuItem key={order._id} value={order._id}>{order.orderNumber} · {order.customerName || '-'}</MenuItem>
+            ))}
+          </TextField>
+          <TextField required label="รายละเอียดงานผลิต" value={workSummary} onChange={event => setWorkSummary(event.target.value)} inputProps={{ maxLength: 240 }} />
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
+            <TextField label="ประเภทงาน" value={jobType} onChange={event => setJobType(event.target.value)} inputProps={{ maxLength: 80 }} />
+            <TextField select label="ความเร่งด่วน" value={priority} onChange={event => setPriority(event.target.value as ProductionPriority)}>
+              <MenuItem value="normal">Normal</MenuItem>
+              <MenuItem value="rush">Rush</MenuItem>
+            </TextField>
+            <TextField label="กำหนดส่ง (เวลาไทย)" type="datetime-local" value={dueAtLocal} onChange={event => setDueAtLocal(event.target.value)} slotProps={{ inputLabel: { shrink: true } }} />
+            <TextField select label="ผู้รับผิดชอบ" value={assigneeUserId} onChange={event => setAssigneeUserId(event.target.value)}>
+              <MenuItem value="">ยังไม่มอบหมาย</MenuItem>
+              {assignees.map(user => <MenuItem key={user.id} value={user.id}>{user.username}</MenuItem>)}
+            </TextField>
+          </Box>
+          <TextField multiline minRows={2} label="Upload IDs ที่ผูกกับ Order นี้" value={uploadIds} onChange={event => setUploadIds(event.target.value)} helperText="คั่นด้วย comma หรือขึ้นบรรทัดใหม่ — ระบบจะปฏิเสธไฟล์ที่ไม่ได้ผูกกับ Order เดียวกัน" />
+          <TextField multiline minRows={3} label="โน้ตภายใน" value={internalNote} onChange={event => setInternalNote(event.target.value)} inputProps={{ maxLength: 2000 }} />
+        </Stack>
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose} disabled={saving}>ยกเลิก</Button>
+        <Button variant="contained" onClick={() => void submit()} disabled={saving}>
+          {saving ? 'กำลังสร้าง...' : 'สร้าง Job'}
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+}
+
 export default function ProductionPage() {
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down('md'));
@@ -384,6 +539,7 @@ export default function ProductionPage() {
   const [busyId, setBusyId] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
+  const [createOpen, setCreateOpen] = React.useState(false);
 
   React.useEffect(() => {
     const handle = window.setTimeout(() => setSearchQuery(search.trim()), 250);
@@ -462,7 +618,12 @@ export default function ProductionPage() {
           description="คุมคิวงานผลิตจากไฟล์เข้า → ผลิต → QC → พร้อมส่งมอบ โดยแยกจากสถานะการชำระเงิน"
           lastSynced={formatAdminLastSynced(lastSyncedAt)}
           thaiDate={formatAdminThaiDate(lastSyncedAt)}
-          actions={<Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading}>รีเฟรช</Button>}
+          actions={(
+            <Stack direction="row" spacing={1}>
+              <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)}>สร้าง Production Job</Button>
+              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading}>รีเฟรช</Button>
+            </Stack>
+          )}
         />
 
         {error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : null}
@@ -571,6 +732,17 @@ export default function ProductionPage() {
           </TableContainer>
         ) : null}
       </Stack>
+
+      <CreateProductionJobDialog
+        open={createOpen}
+        assignees={assignees}
+        onClose={() => setCreateOpen(false)}
+        onCreated={job => {
+          setJobs(current => [job, ...current.filter(item => item.id !== job.id)]);
+          setSelectedJob(job);
+          setLastSyncedAt(new Date());
+        }}
+      />
 
       <JobTicketDrawer
         job={selectedJob}

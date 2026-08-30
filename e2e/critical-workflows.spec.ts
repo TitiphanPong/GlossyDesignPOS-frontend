@@ -174,6 +174,27 @@ test('advances a normal production job through legal stages to ready', async ({ 
   await expect(page.getByRole('link', { name: 'เปิด Order หลัก' })).toBeVisible();
 });
 
+test('creates a production job from an existing Order and opens its Job Ticket', async ({ page }) => {
+  await loginAsCashier(page, '/home/production');
+
+  await page.getByRole('button', { name: 'สร้าง Production Job' }).click();
+  const dialog = page.getByRole('dialog').filter({ hasText: 'สร้าง Production Job' });
+  await expect(dialog).toBeVisible();
+  await dialog.getByLabel('ค้นหา Order').fill('ORD-E2E');
+  await dialog.getByRole('button', { name: 'ค้นหา' }).click();
+  await dialog.getByRole('combobox', { name: /^Order/ }).click();
+  await page.getByRole('option', { name: /ORD-E2E-0001/ }).click();
+  await dialog.getByLabel('รายละเอียดงานผลิต').fill('ผลิตสติ๊กเกอร์ E2E');
+  await dialog.getByLabel('ความเร่งด่วน').click();
+  await page.getByRole('option', { name: 'Rush' }).click();
+  await dialog.getByRole('button', { name: 'สร้าง Job' }).click();
+
+  await expect(dialog).toBeHidden();
+  await expect(page.getByText('PJ-20260830-E2ECREATE', { exact: true })).toBeVisible();
+  await expect(page.getByText('Job Ticket', { exact: true })).toBeVisible();
+  await expect(page.getByText('ผลิตสติ๊กเกอร์ E2E', { exact: true }).first()).toBeVisible();
+});
+
 test('keeps anonymous upload public and sends a multipart file through the BFF', async ({ page }) => {
   await page.goto('/upload');
 

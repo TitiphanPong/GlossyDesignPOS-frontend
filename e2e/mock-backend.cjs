@@ -7,6 +7,7 @@ const orderId = 'order-e2e-1';
 const orderNumber = 'ORD-E2E-0001';
 const staffUserId = '64b0000000000000000000aa';
 const productionJobId = '64b0000000000000000000bb';
+const createdProductionJobId = '64b0000000000000000000be';
 const existingCustomerId = '64b0000000000000000000cc';
 const createdCustomerId = '64b0000000000000000000dd';
 const customers = [
@@ -22,6 +23,7 @@ const customers = [
   },
 ];
 let lastOrderCreatePayload = null;
+let createdProductionJob = null;
 let productionStage = 'file_check';
 let productionStageHistory = [{ stage: 'file_check', changedAt: new Date().toISOString(), changedBy: staffUserId }];
 
@@ -178,15 +180,66 @@ const server = http.createServer(async (request, response) => {
     });
   }
 
+  if (request.method === 'GET' && url.pathname === '/orders') {
+    const now = new Date().toISOString();
+    return json(response, 200, {
+      data: [{
+        _id: orderId,
+        orderId,
+        orderNumber,
+        customerName: 'ลูกค้า Production E2E',
+        phoneNumber: '0812345678',
+        payment: 'cash',
+        status: 'paid',
+        workflowStatus: 'pending',
+        createdAt: now,
+        updatedAt: now,
+        cart: [{ name: 'งาน Production E2E', quantity: 1, unitPrice: 100, totalPrice: 100 }],
+        subtotal: 100,
+        discount: 0,
+        vatAmount: 0,
+        grandTotal: 100,
+        remainingTotal: 0,
+      }],
+      page: 1,
+      limit: 10,
+      total: 1,
+      summary: { sales: 100, collections: 100, outstanding: 0, orders: 1, paidOrders: 1, cancelledOrders: 0 },
+    });
+  }
+
   if (request.method === 'GET' && url.pathname === '/production/jobs/assignees') {
     return json(response, 200, [{ id: staffUserId, username: 'cashier' }]);
   }
 
+  if (request.method === 'POST' && url.pathname === '/production/jobs') {
+    const body = await readJson(request);
+    createdProductionJob = {
+      id: createdProductionJobId,
+      jobNumber: 'PJ-20260830-E2ECREATE',
+      orderId: body.orderId,
+      orderNumber,
+      workSummary: body.workSummary,
+      jobType: body.jobType,
+      dueAt: body.dueAt,
+      dueAtBangkok: '2026-08-31 17:00:00',
+      priority: body.priority || 'normal',
+      isRush: body.priority === 'rush',
+      isOverdue: false,
+      assignee: body.assigneeUserId ? { id: body.assigneeUserId, username: 'cashier' } : null,
+      internalNote: body.internalNote,
+      linkedUploadIds: body.linkedUploadIds || [],
+      stage: 'file_check',
+      customerMilestone: 'received',
+      stageHistory: [{ stage: 'file_check', changedAt: new Date().toISOString(), changedBy: staffUserId }],
+    };
+    return json(response, 201, createdProductionJob);
+  }
+
   if (request.method === 'GET' && url.pathname === '/production/jobs') {
-    const job = productionJob();
     const requestedStage = url.searchParams.get('stage');
-    const visible = !requestedStage || requestedStage === job.stage;
-    return json(response, 200, { items: visible ? [job] : [], page: 1, limit: 100, total: visible ? 1 : 0, totalPages: 1 });
+    const items = [productionJob(), ...(createdProductionJob ? [createdProductionJob] : [])].filter(job => !requestedStage || requestedStage === job.stage);
+    return json(response, 200, { items, page: 1, limit: 100, total: items.length, totalPages: 1 });
   }
 
   if (request.method === 'GET' && url.pathname === `/production/jobs/${productionJobId}`) {
