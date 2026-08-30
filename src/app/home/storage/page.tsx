@@ -833,7 +833,69 @@ export default function StoragePage() {
         open={drawerOpen}
         onClose={() => setDrawerOpen(false)}
         title="รายละเอียดงานพิมพ์"
-        subtitle={activeRecord ? `ลูกค้า : ${activeRecord.customerName}` : undefined}>
+        subtitle={activeRecord ? `ลูกค้า : ${activeRecord.customerName}` : undefined}
+        footer={
+          activeRecord ? (
+            <>
+              <Divider />
+              <Box
+                sx={{
+                  px: { xs: 2, sm: 2.5, md: 3 },
+                  py: { xs: 1.5, sm: 1.8 },
+                  borderTop: '1px solid #E8EFF8',
+                  bgcolor: 'rgba(255, 255, 255, 0.96)',
+                  backdropFilter: 'blur(10px)',
+                }}>
+                <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.2} alignItems={{ sm: 'stretch' }} sx={{ width: '100%' }}>
+                  <Button
+                    variant="contained"
+                    onClick={() => {
+                      void handleDrawerSave();
+                    }}
+                    disabled={drawerBusy}
+                    startIcon={<SaveRoundedIcon />}
+                    sx={{
+                      width: { xs: '100%', sm: 'auto' },
+                      flex: 1,
+                      minHeight: 46,
+                      borderRadius: '14px',
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      fontSize: 15.5,
+                      background: 'linear-gradient(135deg, #1E5EFF 0%, #4778FF 100%)',
+                      boxShadow: '0 12px 28px rgba(30, 94, 255, 0.24)',
+                      '&:hover': {
+                        background: 'linear-gradient(135deg, #1A56EB 0%, #3F71FF 100%)',
+                        boxShadow: '0 14px 30px rgba(30, 94, 255, 0.28)',
+                      },
+                      '&.Mui-disabled': {
+                        color: '#FFFFFF',
+                        opacity: 0.72,
+                      },
+                    }}>
+                    {drawerSaving ? 'กำลังบันทึก...' : 'บันทึกสถานะ'}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() => setDrawerOpen(false)}
+                    sx={{
+                      width: { xs: '100%', sm: 'auto' },
+                      flex: { sm: '0 0 140px' },
+                      minHeight: 46,
+                      borderRadius: '14px',
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      borderColor: '#D7E3F4',
+                      color: '#33517A',
+                      bgcolor: '#FFFFFF',
+                    }}>
+                    ปิดรายละเอียด
+                  </Button>
+                </Stack>
+              </Box>
+            </>
+          ) : undefined
+        }>
         {activeRecord ? (
           <Stack spacing={isCompactDrawer ? 1.35 : 1.6}>
             <Card sx={{ borderRadius: 4, border: '1px solid #DCE8FA', boxShadow: 'none', bgcolor: '#FBFDFF' }}>
@@ -1153,65 +1215,6 @@ export default function StoragePage() {
             </Card>
 
             <JobTimelineCard items={buildStorageTimelineItems(activeRecord)} subtitle="ลำดับการรับงานและอัปเดตความคืบหน้าของไฟล์งาน" />
-
-            <Divider />
-            <Box
-              sx={{
-                position: 'sticky',
-                bottom: 0,
-                px: { xs: 2, sm: 2.5, md: 3 },
-                py: { xs: 2, sm: 2.2 },
-                borderTop: '1px solid #E8EFF8',
-                bgcolor: 'rgba(248, 250, 255, 0.96)',
-                backdropFilter: 'blur(10px)',
-              }}>
-              <Stack direction={{ xs: 'column', sm: 'row' }} gap={1.2} alignItems={{ sm: 'stretch' }} sx={{ width: '100%' }}>
-                <Button
-                  variant="contained"
-                  onClick={() => {
-                    void handleDrawerSave();
-                  }}
-                  disabled={drawerBusy}
-                  startIcon={<SaveRoundedIcon />}
-                  sx={{
-                    width: { xs: '100%', sm: 'auto' },
-                    flex: 1,
-                    minHeight: 46,
-                    borderRadius: '14px',
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    fontSize: 15.5,
-                    background: 'linear-gradient(135deg, #1E5EFF 0%, #4778FF 100%)',
-                    boxShadow: '0 12px 28px rgba(30, 94, 255, 0.24)',
-                    '&:hover': {
-                      background: 'linear-gradient(135deg, #1A56EB 0%, #3F71FF 100%)',
-                      boxShadow: '0 14px 30px rgba(30, 94, 255, 0.28)',
-                    },
-                    '&.Mui-disabled': {
-                      color: '#FFFFFF',
-                      opacity: 0.72,
-                    },
-                  }}>
-                  {drawerSaving ? 'กำลังบันทึก...' : 'บันทึกสถานะ'}
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => setDrawerOpen(false)}
-                  sx={{
-                    width: { xs: '100%', sm: 'auto' },
-                    flex: { sm: '0 0 140px' },
-                    minHeight: 48,
-                    borderRadius: '14px',
-                    textTransform: 'none',
-                    fontWeight: 700,
-                    borderColor: '#D7E3F4',
-                    color: '#33517A',
-                    bgcolor: '#FFFFFF',
-                  }}>
-                  ปิดรายละเอียด
-                </Button>
-              </Stack>
-            </Box>
           </Stack>
         ) : null}
       </GlossyDetailDrawer>

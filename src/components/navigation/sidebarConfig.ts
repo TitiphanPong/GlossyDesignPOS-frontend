@@ -13,7 +13,7 @@ import type { SidebarMenuGroup, SidebarNavItem } from './sidebarTypes';
 
 export const SIDEBAR_PRIMARY_ACTION: SidebarNavItem = {
   id: 'quick-sale',
-  label: 'Quick Seller',
+  label: 'ขายด่วน',
   href: '/home/quick-sale',
   icon: BoltRoundedIcon,
 };
@@ -51,7 +51,7 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
       },
       {
         id: 'customers',
-        label: 'ฐานลูกค้า',
+        label: 'รายชื่อลูกค้า',
         href: '/home/customers',
         icon: PeopleAltRoundedIcon,
       },
@@ -86,12 +86,6 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
     label: 'MANAGEMENT',
     items: [
       {
-        id: 'system-health',
-        label: 'สถานะระบบ',
-        href: '/home/system-health',
-        icon: HealthAndSafetyRoundedIcon,
-      },
-      {
         id: 'quick-menu-settings',
         label: 'จัดการเมนูขายด่วน',
         href: '/home/settings/quick-menu',
@@ -100,10 +94,16 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
       },
       {
         id: 'staff-management',
-        label: 'ทีมและสิทธิ์ใช้งาน',
+        label: 'สิทธิ์การใช้งานระบบ',
         href: '/home/staff',
         icon: ManageAccountsRoundedIcon,
         roles: ['admin'],
+      },
+      {
+        id: 'system-health',
+        label: 'สถานะระบบ',
+        href: '/home/system-health',
+        icon: HealthAndSafetyRoundedIcon,
       },
     ],
   },

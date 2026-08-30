@@ -6,6 +6,7 @@ import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
 import InsertDriveFileRoundedIcon from '@mui/icons-material/InsertDriveFileRounded';
 import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
+import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import { EmptyState } from '../components/dashboardUi';
@@ -149,8 +150,16 @@ export default function StorageTable(props: Readonly<StorageTableProps>) {
                         <Avatar
                           src={row.linePictureUrl}
                           alt={row.lineDisplayName === '-' ? row.customerName : row.lineDisplayName}
-                          sx={{ width: 38, height: 38, bgcolor: '#EAFBF0', color: '#087A3E', fontSize: 14, fontWeight: 900, flexShrink: 0 }}>
-                          {Array.from(row.lineDisplayName === '-' ? row.customerName : row.lineDisplayName)[0] ?? '?'}
+                          sx={{
+                            width: 38,
+                            height: 38,
+                            flexShrink: 0,
+                            fontSize: 14,
+                            fontWeight: 900,
+                            bgcolor: row.lineDisplayName === '-' ? '#F1F5F9' : '#EAFBF0',
+                            color: row.lineDisplayName === '-' ? '#64748B' : '#087A3E',
+                          }}>
+                          {row.lineDisplayName === '-' ? <PersonRoundedIcon sx={{ fontSize: 21 }} /> : (Array.from(row.lineDisplayName)[0] ?? '?')}
                         </Avatar>
                         <Stack spacing={0.45} sx={{ minWidth: 0 }}>
                           <Typography noWrap sx={{ maxWidth: 165, color: '#1F2937', fontWeight: 800, fontSize: 13.5 }}>
