@@ -502,7 +502,6 @@ export default function OrderManagementPage() {
             </Box>
             <Box sx={{ minWidth: 0 }}>
               <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#374151', lineHeight: 1.3 }}>{row.customerName}</Typography>
-              <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.phoneNumber || 'ไม่มีเบอร์โทรศัพท์'}</Typography>
             </Box>
           </Box>
         );

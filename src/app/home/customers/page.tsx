@@ -14,7 +14,6 @@ import {
   Chip,
   IconButton,
   InputAdornment,
-  MenuItem,
   Skeleton,
   Stack,
   TablePagination,
@@ -28,8 +27,6 @@ import DataTable, { type DataTableColumn } from '../components/DataTable';
 import { fetchCustomerDetail, fetchCustomersPage, getCustomerPhoneNumbers, type CustomerDetail, type CustomerProfile } from '@/lib/customers';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
 import CustomerDetailDrawer from '@/components/customers/CustomerDetailDrawer';
-
-type ActiveFilter = 'all' | 'active' | 'inactive';
 
 function branchLabel(customer: CustomerProfile): string | null {
   if (!customer.branchType) return null;
@@ -91,7 +88,6 @@ function CustomerStatus({ active }: Readonly<{ active: boolean }>) {
 export default function CustomersPage() {
   const [customers, setCustomers] = React.useState<CustomerProfile[]>([]);
   const [query, setQuery] = React.useState('');
-  const [activeFilter, setActiveFilter] = React.useState<ActiveFilter>('all');
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(25);
   const [total, setTotal] = React.useState(0);
@@ -115,7 +111,6 @@ export default function CustomersPage() {
         search: query,
         page: page + 1,
         limit: rowsPerPage,
-        active: activeFilter === 'all' ? undefined : activeFilter === 'active',
       });
       if (requestId !== listRequestId.current) return;
 
@@ -134,7 +129,7 @@ export default function CustomersPage() {
     } finally {
       if (requestId === listRequestId.current) setLoading(false);
     }
-  }, [activeFilter, page, query, rowsPerPage]);
+  }, [page, query, rowsPerPage]);
 
   React.useEffect(() => {
     const timer = globalThis.setTimeout(() => void loadCustomers(), 250);
@@ -177,11 +172,6 @@ export default function CustomersPage() {
 
   const handleQueryChange = (value: string) => {
     setQuery(value);
-    setPage(0);
-  };
-
-  const handleFilterChange = (value: ActiveFilter) => {
-    setActiveFilter(value);
     setPage(0);
   };
 
@@ -266,17 +256,6 @@ export default function CustomersPage() {
               }}
               sx={{ flex: 1, '& .MuiOutlinedInput-root': { minHeight: 44, borderRadius: 2.75, bgcolor: '#fff' } }}
             />
-            <TextField
-              select
-              size="small"
-              label="สถานะ"
-              value={activeFilter}
-              onChange={event => handleFilterChange(event.target.value as ActiveFilter)}
-              sx={{ width: { xs: '100%', md: 170 }, '& .MuiOutlinedInput-root': { minHeight: 44, borderRadius: 2.75, bgcolor: '#fff' } }}>
-              <MenuItem value="all">ทั้งหมด</MenuItem>
-              <MenuItem value="active">Active</MenuItem>
-              <MenuItem value="inactive">Inactive</MenuItem>
-            </TextField>
             <Typography sx={{ minWidth: { md: 118 }, textAlign: { xs: 'left', md: 'right' }, color: '#718096', fontSize: 12.5, fontWeight: 700 }}>{total.toLocaleString('th-TH')} รายการ</Typography>
           </Stack>
         </CardContent>

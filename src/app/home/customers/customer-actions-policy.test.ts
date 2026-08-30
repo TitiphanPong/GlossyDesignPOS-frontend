@@ -18,3 +18,10 @@ test('customer desktop table gives the document address its own column', async (
   assert.match(source, /render: customer => <CustomerAddress customer=\{customer\} \/>/);
   assert.doesNotMatch(source, /const secondaryName/);
 });
+
+test('customer directory does not expose the unused active status filter', async () => {
+  const source = await readFile(path.join(process.cwd(), 'src/app/home/customers/page.tsx'), 'utf8');
+
+  assert.doesNotMatch(source, /ActiveFilter|activeFilter|handleFilterChange/);
+  assert.doesNotMatch(source, /label="สถานะ"/);
+});
