@@ -16,18 +16,13 @@ import {
   MenuItem,
   Skeleton,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
   TablePagination,
-  TableRow,
   TextField,
   Typography,
 } from '@mui/material';
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
+import DataTable, { type DataTableColumn } from '../components/DataTable';
 import { fetchCustomerDetail, fetchCustomersPage, getCustomerPhoneNumbers, type CustomerDetail, type CustomerProfile } from '@/lib/customers';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
 import CustomerDetailDrawer from '@/components/customers/CustomerDetailDrawer';
@@ -75,27 +70,6 @@ function CustomerTax({ customer }: Readonly<{ customer: CustomerProfile }>) {
 function CustomerStatus({ active }: Readonly<{ active: boolean }>) {
   return (
     <Chip size="small" label={active ? 'Active' : 'Inactive'} sx={{ height: 24, bgcolor: active ? '#ECFDF3' : '#F2F4F7', color: active ? '#027A48' : '#667085', fontWeight: 800, fontSize: 10.5 }} />
-  );
-}
-
-function DesktopSkeleton() {
-  return (
-    <TableBody>
-      {Array.from({ length: 6 }, (_, index) => (
-        <TableRow key={index}>
-          <TableCell>
-            <Skeleton width="75%" />
-            <Skeleton width="45%" />
-          </TableCell>
-          <TableCell>
-            <Skeleton width="65%" />
-          </TableCell>
-          <TableCell align="right">
-            <Skeleton width={145} sx={{ ml: 'auto' }} />
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
   );
 }
 
@@ -196,6 +170,47 @@ export default function CustomersPage() {
     setPage(0);
   };
 
+  const customerTableColumns: DataTableColumn<CustomerProfile>[] = [
+    {
+      key: 'company',
+      header: 'บริษัท',
+      width: '45%',
+      render: customer => <CustomerIdentity customer={customer} />,
+    },
+    {
+      key: 'tax',
+      header: 'สาขา / TaxID',
+      width: '30%',
+      render: customer => <CustomerTax customer={customer} />,
+    },
+    {
+      key: 'actions',
+      header: 'จัดการ',
+      align: 'right',
+      width: '25%',
+      render: customer => (
+        <Stack direction="row" justifyContent="flex-end" spacing={0.65}>
+          <Button
+            size="small"
+            variant="text"
+            startIcon={<VisibilityRoundedIcon />}
+            onClick={() => void openCustomer(customer)}
+            sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>
+            รายละเอียด
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            startIcon={<EditRoundedIcon />}
+            onClick={() => setEditingCustomer(customer)}
+            sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>
+            แก้ไข
+          </Button>
+        </Stack>
+      ),
+    },
+  ];
+
   return (
     <AdminPageContainer>
       <AdminHeroHeader
@@ -252,55 +267,16 @@ export default function CustomersPage() {
         </CardContent>
       </Card>
 
-      <TableContainer component={Card} variant="outlined" sx={{ display: { xs: 'none', lg: 'block' }, borderRadius: 3.5, borderColor: '#E5EAF2', boxShadow: 'none' }}>
-        <Table sx={{ minWidth: 920 }}>
-          <TableHead>
-            <TableRow sx={{ bgcolor: '#F8FAFC' }}>
-              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '45%' }}>บริษัท</TableCell>
-              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '30%' }}>สาขา / TaxID</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 850, color: '#475569', width: '25%' }}>
-                จัดการ
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          {loading && customers.length === 0 ? (
-            <DesktopSkeleton />
-          ) : (
-            <TableBody>
-              {customers.map(customer => (
-                <TableRow key={customer._id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
-                  <TableCell>
-                    <CustomerIdentity customer={customer} />
-                  </TableCell>
-                  <TableCell>
-                    <CustomerTax customer={customer} />
-                  </TableCell>
-                  <TableCell align="right">
-                    <Stack direction="row" justifyContent="flex-end" spacing={0.65}>
-                      <Button
-                        size="small"
-                        variant="text"
-                        startIcon={<VisibilityRoundedIcon />}
-                        onClick={() => void openCustomer(customer)}
-                        sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>
-                        รายละเอียด
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        startIcon={<EditRoundedIcon />}
-                        onClick={() => setEditingCustomer(customer)}
-                        sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>
-                        แก้ไข
-                      </Button>
-                    </Stack>
-                  </TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          )}
-        </Table>
-      </TableContainer>
+      <Card variant="outlined" sx={{ display: { xs: 'none', lg: 'block' }, borderRadius: 3.5, borderColor: '#E5EAF2', boxShadow: 'none' }}>
+        <DataTable
+          columns={customerTableColumns}
+          rows={customers}
+          getRowKey={customer => customer._id}
+          minWidth={920}
+          stickyHeader={false}
+          loading={loading && customers.length === 0}
+        />
+      </Card>
 
       <Stack spacing={1.1} sx={{ display: { xs: 'flex', lg: 'none' } }}>
         {loading && customers.length === 0 ? Array.from({ length: 5 }, (_, index) => <Skeleton key={index} variant="rounded" height={172} sx={{ borderRadius: 3 }} />) : null}

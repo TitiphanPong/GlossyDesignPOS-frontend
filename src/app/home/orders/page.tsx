@@ -15,12 +15,7 @@ import {
   IconButton,
   Snackbar,
   Stack,
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
   TablePagination,
-  TableRow,
   TextField,
   Tooltip,
   Typography,
@@ -50,6 +45,7 @@ import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../co
 import ReportFilterPanel, { DATE_PRESET_LABELS, bangkokDateParam, resolveDatePreset, type DatePreset } from '../components/ReportFilterPanel';
 import { commonButtonSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
+import DataTable, { type DataTableColumn } from '../components/DataTable';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder, type PaymentMethod, type ProductionWorkflowStatus } from '../../../lib/contracts';
@@ -463,6 +459,164 @@ export default function OrderManagementPage() {
     setSort('newest');
   };
 
+  const orderTableColumns: DataTableColumn<OrderRow>[] = [
+    {
+      key: 'orderNumber',
+      header: 'เลขที่งาน',
+      render: row => (
+        <>
+          <Typography sx={{ display: 'inline-block', fontWeight: 700, color: '#6C4DFF', fontVariantNumeric: 'tabular-nums' }}>{row.orderNumber}</Typography>
+          <Chip
+            size="small"
+            label={row.orderType === 'QUICK_SALE' ? 'งานด่วน' : 'งานปกติ'}
+            color={row.orderType === 'QUICK_SALE' ? 'warning' : 'default'}
+            sx={{ ml: 0.7, height: 20, fontSize: 10, fontWeight: 700 }}
+          />
+          {row.isBackdated ? <Chip size="small" label="ย้อนหลัง" color="warning" sx={{ ml: 0.7, height: 20, fontSize: 10, fontWeight: 700 }} /> : null}
+          <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.vat > 0 ? 'ใบกำกับภาษี' : 'ใบเสร็จทั่วไป'}</Typography>
+        </>
+      ),
+    },
+    {
+      key: 'customer',
+      header: 'ลูกค้า',
+      render: (row, index) => {
+        const avatarHue = (index * 47) % 360;
+        return (
+          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.2, minWidth: 180 }}>
+            <Box
+              sx={{
+                width: 30,
+                height: 30,
+                borderRadius: '9px',
+                background: `hsl(${avatarHue}, 65%, 92%)`,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 12,
+                fontWeight: 700,
+                color: `hsl(${avatarHue}, 55%, 38%)`,
+                flexShrink: 0,
+              }}>
+              {getCustomerInitial(row.customerName)}
+            </Box>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#374151', lineHeight: 1.3 }}>{row.customerName}</Typography>
+              <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.phoneNumber || 'ไม่มีเบอร์โทรศัพท์'}</Typography>
+            </Box>
+          </Box>
+        );
+      },
+    },
+    {
+      key: 'summary',
+      header: 'รายการ',
+      render: row => {
+        const summary = buildOrderLineSummary(row);
+        return (
+          <Box sx={{ minWidth: 220 }}>
+            <Typography sx={{ fontSize: 12.8, fontWeight: 700, color: '#374151', lineHeight: 1.35 }}>{summary.primary}</Typography>
+            <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', lineHeight: 1.35 }}>{summary.secondary}</Typography>
+          </Box>
+        );
+      },
+    },
+    {
+      key: 'status',
+      header: 'สถานะ',
+      render: row => {
+        const statusUi = ORDER_TABLE_STATUS_UI[row.status];
+        return (
+          <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.6, fontSize: 12.2, fontWeight: 700, color: '#374151', whiteSpace: 'nowrap' }}>
+            <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: statusUi.dot, flexShrink: 0 }} />
+            {statusUi.label}
+          </Box>
+        );
+      },
+    },
+    {
+      key: 'total',
+      header: 'ยอดรวม',
+      align: 'right',
+      render: row => (
+        <>
+          <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#1A1035', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{formatTableCurrency(row.total)}</Typography>
+          {row.discount > 0 ? (
+            <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>ส่วนลด ฿ {row.discount.toLocaleString('th-TH')}</Typography>
+          ) : null}
+        </>
+      ),
+    },
+    {
+      key: 'remaining',
+      header: 'ยอดคงเหลือ',
+      align: 'right',
+      render: row => {
+        const remaining = Math.max(row.total - row.paidAmount, 0);
+        return (
+          <>
+            <Typography
+              sx={{
+                fontSize: 13,
+                fontWeight: 800,
+                color: remaining > 0 ? '#B45309' : '#16A34A',
+                fontVariantNumeric: 'tabular-nums',
+                whiteSpace: 'nowrap',
+              }}>
+              {remaining > 0 ? formatTableCurrency(remaining) : 'ไม่มีคงเหลือ'}
+            </Typography>
+            {row.vat > 0 ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>VAT {formatTableCurrency(row.vat)}</Typography> : null}
+          </>
+        );
+      },
+    },
+    {
+      key: 'paymentMethod',
+      header: 'วิธีชำระเงิน',
+      render: row => <Typography sx={{ fontSize: 12.2, color: '#374151', whiteSpace: 'nowrap', fontWeight: 600 }}>{ORDER_TABLE_PAYMENT_LABEL[row.paymentMethod]}</Typography>,
+    },
+    {
+      key: 'createdAt',
+      header: 'วันที่รับงาน',
+      render: row => {
+        const createdAt = formatOrderRowTime(row.date);
+        return (
+          <>
+            <Typography sx={{ fontSize: 11.8, color: '#6B7280', whiteSpace: 'nowrap', fontWeight: 600 }}>{createdAt.relative}</Typography>
+            <Typography sx={{ mt: 0.35, fontSize: 11.2, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{createdAt.exact}</Typography>
+            {row.isBackdated ? (
+              <Typography sx={{ mt: 0.25, fontSize: 10.5, color: '#9A6700', whiteSpace: 'nowrap' }}>บันทึก {formatOrderRowTime(row.createdAt).exact}</Typography>
+            ) : null}
+          </>
+        );
+      },
+    },
+    {
+      key: 'actions',
+      header: 'จัดการ',
+      align: 'right',
+      render: row => (
+        <Stack direction="row" spacing={0.4} justifyContent="flex-end" onClick={event => event.stopPropagation()}>
+          <Tooltip title="ดูรายละเอียด">
+            <IconButton size="small" onClick={() => openDrawer(row)}>
+              <VisibilityRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="ใบกำกับภาษี">
+            <IconButton size="small" disabled={row.taxInvoice !== 'yes'} onClick={() => printDocument(row, 'invoice')}>
+              <ReceiptRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="จัดการ">
+            <IconButton size="small" onClick={event => openRowMenu(event, row.id)}>
+              <MoreHorizRoundedIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
+        </Stack>
+      ),
+    },
+  ];
+
   return (
     <AdminPageContainer>
       <Stack spacing={2.5}>
@@ -749,186 +903,18 @@ export default function OrderManagementPage() {
               ))}
             </Stack>
           ) : (
-            <Box sx={{ width: '100%', overflowX: 'auto' }}>
-              <Table stickyHeader size="small">
-                <TableHead>
-                  <TableRow
-                    sx={{
-                      '& th': {
-                        background: '#FAFAFA',
-                        color: '#9CA3AF',
-                        fontSize: 11.5,
-                        fontWeight: 700,
-                        letterSpacing: '0.3px',
-                        borderBottom: '1px solid #F3F4F6',
-                        py: 1.5,
-                        px: 2,
-                        whiteSpace: 'nowrap',
-                      },
-                    }}>
-                    <TableCell>เลขที่งาน</TableCell>
-                    <TableCell>ลูกค้า</TableCell>
-                    <TableCell>รายการ</TableCell>
-                    <TableCell>สถานะ</TableCell>
-                    <TableCell align="right">ยอดรวม</TableCell>
-                    <TableCell align="right">ยอดคงเหลือ</TableCell>
-                    <TableCell>วิธีชำระเงิน</TableCell>
-                    <TableCell>วันที่รับงาน</TableCell>
-                    <TableCell align="right">จัดการ</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {pagedRows.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={9}>
-                        <EmptyState
-                          compact
-                          icon={<SearchRoundedIcon fontSize="small" />}
-                          eyebrow="รายการงาน"
-                          title="ไม่พบรายการงานที่ตรงกับเงื่อนไข"
-                          subtitle="ลองเปลี่ยนคำค้นหา ตัวกรอง หรือช่วงเวลาเพื่อดูรายการงานเพิ่มเติม"
-                        />
-                      </TableCell>
-                    </TableRow>
-                  ) : null}
-
-                  {pagedRows.map((row, index) => {
-                    const summary = buildOrderLineSummary(row);
-                    const createdAt = formatOrderRowTime(row.date);
-                    const remaining = Math.max(row.total - row.paidAmount, 0);
-                    const statusUi = ORDER_TABLE_STATUS_UI[row.status];
-                    const avatarHue = (index * 47) % 360;
-
-                    return (
-                      <TableRow
-                        key={row.id}
-                        hover
-                        onClick={() => openDrawer(row)}
-                        sx={{
-                          cursor: 'pointer',
-                          '& td': {
-                            py: 1.6,
-                            px: 2,
-                            borderBottom: '1px solid #F9FAFB',
-                            fontSize: 13,
-                            verticalAlign: 'top',
-                          },
-                          '&:hover': { bgcolor: '#FBFCFF' },
-                        }}>
-                        <TableCell>
-                          <Typography sx={{ display: 'inline-block', fontWeight: 700, color: '#6C4DFF', fontVariantNumeric: 'tabular-nums' }}>{row.orderNumber}</Typography>
-                          <Chip
-                            size="small"
-                            label={row.orderType === 'QUICK_SALE' ? 'งานด่วน' : 'งานปกติ'}
-                            color={row.orderType === 'QUICK_SALE' ? 'warning' : 'default'}
-                            sx={{ ml: 0.7, height: 20, fontSize: 10, fontWeight: 700 }}
-                          />
-                          {row.isBackdated ? <Chip size="small" label="ย้อนหลัง" color="warning" sx={{ ml: 0.7, height: 20, fontSize: 10, fontWeight: 700 }} /> : null}
-                          <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.vat > 0 ? 'ใบกำกับภาษี' : 'ใบเสร็จทั่วไป'}</Typography>
-                        </TableCell>
-
-                        <TableCell>
-                          <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.2, minWidth: 180 }}>
-                            <Box
-                              sx={{
-                                width: 30,
-                                height: 30,
-                                borderRadius: '9px',
-                                background: `hsl(${avatarHue}, 65%, 92%)`,
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'center',
-                                fontSize: 12,
-                                fontWeight: 700,
-                                color: `hsl(${avatarHue}, 55%, 38%)`,
-                                flexShrink: 0,
-                              }}>
-                              {getCustomerInitial(row.customerName)}
-                            </Box>
-                            <Box sx={{ minWidth: 0 }}>
-                              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#374151', lineHeight: 1.3 }}>{row.customerName}</Typography>
-                              <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.phoneNumber || 'ไม่มีเบอร์โทรศัพท์'}</Typography>
-                            </Box>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell>
-                          <Box sx={{ minWidth: 220 }}>
-                            <Typography sx={{ fontSize: 12.8, fontWeight: 700, color: '#374151', lineHeight: 1.35 }}>{summary.primary}</Typography>
-                            <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', lineHeight: 1.35 }}>{summary.secondary}</Typography>
-                          </Box>
-                        </TableCell>
-
-                        <TableCell>
-                          <Box
-                            sx={{
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: 0.6,
-                              fontSize: 12.2,
-                              fontWeight: 700,
-                              color: '#374151',
-                              whiteSpace: 'nowrap',
-                            }}>
-                            <Box component="span" sx={{ width: 6, height: 6, borderRadius: '50%', bgcolor: statusUi.dot, flexShrink: 0 }} />
-                            {statusUi.label}
-                          </Box>
-                        </TableCell>
-
-                        <TableCell align="right">
-                          <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#1A1035', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{formatTableCurrency(row.total)}</Typography>
-                          {row.discount > 0 ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>ส่วนลด ฿ {row.discount.toLocaleString('th-TH')}</Typography> : null}
-                        </TableCell>
-
-                        <TableCell align="right">
-                          <Typography
-                            sx={{
-                              fontSize: 13,
-                              fontWeight: 800,
-                              color: remaining > 0 ? '#B45309' : '#16A34A',
-                              fontVariantNumeric: 'tabular-nums',
-                              whiteSpace: 'nowrap',
-                            }}>
-                            {remaining > 0 ? formatTableCurrency(remaining) : 'ไม่มีคงเหลือ'}
-                          </Typography>
-                          {row.vat > 0 ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>VAT {formatTableCurrency(row.vat)}</Typography> : null}
-                        </TableCell>
-
-                        <TableCell>
-                          <Typography sx={{ fontSize: 12.2, color: '#374151', whiteSpace: 'nowrap', fontWeight: 600 }}>{ORDER_TABLE_PAYMENT_LABEL[row.paymentMethod]}</Typography>
-                        </TableCell>
-
-                        <TableCell>
-                          <Typography sx={{ fontSize: 11.8, color: '#6B7280', whiteSpace: 'nowrap', fontWeight: 600 }}>{createdAt.relative}</Typography>
-                          <Typography sx={{ mt: 0.35, fontSize: 11.2, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{createdAt.exact}</Typography>
-                          {row.isBackdated ? <Typography sx={{ mt: 0.25, fontSize: 10.5, color: '#9A6700', whiteSpace: 'nowrap' }}>บันทึก {formatOrderRowTime(row.createdAt).exact}</Typography> : null}
-                        </TableCell>
-
-                        <TableCell align="right" onClick={event => event.stopPropagation()}>
-                          <Stack direction="row" spacing={0.4} justifyContent="flex-end">
-                            <Tooltip title="ดูรายละเอียด">
-                              <IconButton size="small" onClick={() => openDrawer(row)}>
-                                <VisibilityRoundedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="ใบกำกับภาษี">
-                              <IconButton size="small" disabled={row.taxInvoice !== 'yes'} onClick={() => printDocument(row, 'invoice')}>
-                                <ReceiptRoundedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                            <Tooltip title="จัดการ">
-                              <IconButton size="small" onClick={event => openRowMenu(event, row.id)}>
-                                <MoreHorizRoundedIcon fontSize="small" />
-                              </IconButton>
-                            </Tooltip>
-                          </Stack>
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </Box>
+            <DataTable
+              columns={orderTableColumns}
+              rows={pagedRows}
+              getRowKey={row => row.id}
+              onRowClick={openDrawer}
+              emptyState={{
+                icon: <SearchRoundedIcon fontSize="small" />,
+                eyebrow: 'รายการงาน',
+                title: 'ไม่พบรายการงานที่ตรงกับเงื่อนไข',
+                subtitle: 'ลองเปลี่ยนคำค้นหา ตัวกรอง หรือช่วงเวลาเพื่อดูรายการงานเพิ่มเติม',
+              }}
+            />
           )}
 
           <TablePagination
