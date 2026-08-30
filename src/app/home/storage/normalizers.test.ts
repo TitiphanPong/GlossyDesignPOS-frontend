@@ -238,3 +238,15 @@ test('normalizeRecord falls back safely when backend fields are missing', () => 
   assert.equal(record.status, 'waiting');
   assert.deepEqual(record.files, []);
 });
+
+test('normalizeRecord labels the upload placeholder as a walk-in customer', () => {
+  const record = normalizeRecord({
+    uploadId: 'upload-789',
+    customerName: 'Upload Customer',
+    displayName: 'Upload Customer',
+    files: [],
+  });
+
+  assert.equal(record.customerName, 'ลูกค้าหน้าร้าน');
+  assert.equal(record.lineDisplayName, '-');
+});

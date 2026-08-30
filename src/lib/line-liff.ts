@@ -23,11 +23,22 @@ type VerifiedLineSessionResponse = {
 let liffInitialization: Promise<void> | null = null;
 
 async function ensureLiffInitialized(liffId: string): Promise<void> {
-  liffInitialization ??= liff.init({
-    liffId,
-    withLoginOnExternalBrowser: true,
-  });
+  liffInitialization ??= liff.init({ liffId });
   await liffInitialization;
+}
+
+function describeLiffError(error: unknown): string {
+  if (!error || typeof error !== 'object') {
+    return error instanceof Error ? error.message : 'ไม่สามารถเริ่มต้น LINE LIFF ได้';
+  }
+
+  const candidate = error as { code?: unknown; message?: unknown };
+  const code = typeof candidate.code === 'string' ? candidate.code.trim() : '';
+  const message = typeof candidate.message === 'string' ? candidate.message.trim() : '';
+  if (code && message) return `LINE LIFF (${code}): ${message}`;
+  if (message) return message;
+  if (code) return `LINE LIFF error: ${code}`;
+  return 'ไม่สามารถเริ่มต้น LINE LIFF ได้';
 }
 
 async function verifySessionWithBackend(
@@ -69,11 +80,20 @@ export async function initializeLineUploadSession(): Promise<LineUploadSessionRe
     throw new Error('ยังไม่ได้ตั้งค่า LIFF ID สำหรับหน้าอัปโหลดผ่าน LINE');
   }
 
-  await ensureLiffInitialized(liffId);
+  try {
+    await ensureLiffInitialized(liffId);
+  } catch (error) {
+    throw new Error(describeLiffError(error));
+  }
+
+  const isInClient = liff.isInClient();
+  if (!isInClient && !liff.isLoggedIn()) {
+    liff.login();
+    return { status: 'redirecting' };
+  }
 
   if (!liff.isLoggedIn()) {
-    liff.login({ redirectUri: window.location.href });
-    return { status: 'redirecting' };
+    throw new Error('LINE LIFF เปิดได้ แต่ยังไม่มีสถานะเข้าสู่ระบบ กรุณาปิดหน้านี้แล้วเปิดผ่าน LIFF URL อีกครั้ง');
   }
 
   const idToken = liff.getIDToken();

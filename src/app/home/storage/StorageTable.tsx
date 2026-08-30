@@ -51,7 +51,8 @@ function jobTypeChipSx(jobType: string) {
   const normalized = jobType.toLowerCase();
   if (normalized.includes('document') || normalized.includes('เอกสาร')) return { color: '#1D4ED8', bgcolor: '#DBEAFE', border: '1px solid #93C5FD' };
   if (normalized.includes('sticker') || normalized.includes('สติกเกอร์') || normalized.includes('สติ๊กเกอร์')) return { color: '#8A3FFC', bgcolor: '#F3E8FF', border: '1px solid #D9B8FF' };
-  if (normalized.includes('banner') || normalized.includes('vinyl') || normalized.includes('ไวนิล') || normalized.includes('ป้าย')) return { color: '#9A3412', bgcolor: '#FFF1E8', border: '1px solid #F8C9B0' };
+  if (normalized.includes('banner') || normalized.includes('vinyl') || normalized.includes('ไวนิล') || normalized.includes('ป้าย'))
+    return { color: '#9A3412', bgcolor: '#FFF1E8', border: '1px solid #F8C9B0' };
   if (normalized.includes('business') || normalized.includes('namecard') || normalized.includes('นามบัตร')) return { color: '#0F5B7A', bgcolor: '#E7F6FD', border: '1px solid #B8E4F7' };
   if (normalized.includes('packaging') || normalized.includes('binding') || normalized.includes('เข้าเล่ม')) return { color: '#166534', bgcolor: '#ECFDF3', border: '1px solid #BBE7D0' };
   if (normalized.includes('other') || normalized.includes('อื่น')) return { color: '#B45309', bgcolor: '#FEF3C7', border: '1px solid #FCD34D' };
@@ -155,16 +156,20 @@ export default function StorageTable(props: Readonly<StorageTableProps>) {
                           <Typography noWrap sx={{ maxWidth: 165, color: '#1F2937', fontWeight: 800, fontSize: 13.5 }}>
                             {row.customerName}
                           </Typography>
-                          <Stack direction="row" spacing={0.65} alignItems="center" sx={{ minWidth: 0 }}>
-                            <Chip
-                              size="small"
-                              label="LINE"
-                              sx={{ height: 19, borderRadius: 1.5, bgcolor: '#EAFBF0', color: '#087A3E', fontSize: 9.5, fontWeight: 900, '& .MuiChip-label': { px: 0.75 } }}
-                            />
-                            <Typography noWrap sx={{ maxWidth: 125, color: row.lineDisplayName === '-' ? '#94A3B8' : '#475569', fontSize: 12 }}>
-                              {row.lineDisplayName}
-                            </Typography>
-                          </Stack>
+                          {row.lineDisplayName !== '-' ? (
+                            <Stack direction="row" spacing={0.65} alignItems="center" sx={{ minWidth: 0 }}>
+                              <Chip
+                                size="small"
+                                label="LINE Official"
+                                sx={{ height: 19, borderRadius: 1.5, bgcolor: '#EAFBF0', color: '#087A3E', fontSize: 9.5, fontWeight: 900, '& .MuiChip-label': { px: 0.75 } }}
+                              />
+                              {row.lineDisplayName === row.customerName ? null : (
+                                <Typography noWrap sx={{ maxWidth: 125, color: '#475569', fontSize: 12 }}>
+                                  {row.lineDisplayName}
+                                </Typography>
+                              )}
+                            </Stack>
+                          ) : null}
                         </Stack>
                       </Stack>
                     </TableCell>

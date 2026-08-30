@@ -28,13 +28,7 @@ import {
 } from '@mui/material';
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
-import {
-  fetchCustomerDetail,
-  fetchCustomersPage,
-  getCustomerPhoneNumbers,
-  type CustomerDetail,
-  type CustomerProfile,
-} from '@/lib/customers';
+import { fetchCustomerDetail, fetchCustomersPage, getCustomerPhoneNumbers, type CustomerDetail, type CustomerProfile } from '@/lib/customers';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
 import CustomerDetailDrawer from '@/components/customers/CustomerDetailDrawer';
 
@@ -49,24 +43,20 @@ function branchLabel(customer: CustomerProfile): string | null {
 }
 
 function CustomerIdentity({ customer }: Readonly<{ customer: CustomerProfile }>) {
-  return (
-    <Box sx={{ minWidth: 0 }}>
-      <Typography sx={{ fontSize: 14, fontWeight: 900, color: '#172033' }} noWrap>{customer.displayName}</Typography>
-      <Typography sx={{ mt: 0.15, fontSize: 11.5, color: '#718096', fontWeight: 700 }}>{customer.customerCode}</Typography>
-      {customer.companyName ? <Typography sx={{ mt: 0.35, fontSize: 12, color: '#475569' }} noWrap>{customer.companyName}</Typography> : null}
-    </Box>
-  );
-}
+  const primaryName = customer.companyName?.trim() || customer.displayName;
+  const secondaryName = customer.companyName?.trim() ? customer.displayName : null;
 
-function CustomerContact({ customer }: Readonly<{ customer: CustomerProfile }>) {
-  const phones = getCustomerPhoneNumbers(customer);
   return (
     <Box sx={{ minWidth: 0 }}>
-      <Stack direction="row" spacing={0.6} alignItems="center" flexWrap="wrap" useFlexGap>
-        <Typography sx={{ fontSize: 12.5, color: '#334155', fontWeight: 700 }}>{phones[0] || 'ไม่มีเบอร์โทร'}</Typography>
-        {phones.length > 1 ? <Chip size="small" label={`+${phones.length - 1}`} sx={{ height: 20, fontSize: 10, fontWeight: 800 }} /> : null}
-      </Stack>
-      {customer.email ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#718096' }} noWrap>{customer.email}</Typography> : null}
+      <Typography sx={{ fontSize: 14, fontWeight: 900, color: '#172033' }} noWrap>
+        {primaryName}
+      </Typography>
+      <Typography sx={{ mt: 0.15, fontSize: 11.5, color: '#718096', fontWeight: 700 }}>{customer.customerCode}</Typography>
+      {secondaryName ? (
+        <Typography sx={{ mt: 0.35, fontSize: 12, color: '#475569' }} noWrap>
+          {secondaryName}
+        </Typography>
+      ) : null}
     </Box>
   );
 }
@@ -84,11 +74,7 @@ function CustomerTax({ customer }: Readonly<{ customer: CustomerProfile }>) {
 
 function CustomerStatus({ active }: Readonly<{ active: boolean }>) {
   return (
-    <Chip
-      size="small"
-      label={active ? 'Active' : 'Inactive'}
-      sx={{ height: 24, bgcolor: active ? '#ECFDF3' : '#F2F4F7', color: active ? '#027A48' : '#667085', fontWeight: 800, fontSize: 10.5 }}
-    />
+    <Chip size="small" label={active ? 'Active' : 'Inactive'} sx={{ height: 24, bgcolor: active ? '#ECFDF3' : '#F2F4F7', color: active ? '#027A48' : '#667085', fontWeight: 800, fontSize: 10.5 }} />
   );
 }
 
@@ -97,11 +83,16 @@ function DesktopSkeleton() {
     <TableBody>
       {Array.from({ length: 6 }, (_, index) => (
         <TableRow key={index}>
-          <TableCell><Skeleton width="75%" /><Skeleton width="45%" /></TableCell>
-          <TableCell><Skeleton width="70%" /><Skeleton width="60%" /></TableCell>
-          <TableCell><Skeleton width="65%" /></TableCell>
-          <TableCell><Skeleton width={68} /></TableCell>
-          <TableCell align="right"><Skeleton width={145} sx={{ ml: 'auto' }} /></TableCell>
+          <TableCell>
+            <Skeleton width="75%" />
+            <Skeleton width="45%" />
+          </TableCell>
+          <TableCell>
+            <Skeleton width="65%" />
+          </TableCell>
+          <TableCell align="right">
+            <Skeleton width={145} sx={{ ml: 'auto' }} />
+          </TableCell>
         </TableRow>
       ))}
     </TableBody>
@@ -219,7 +210,11 @@ export default function CustomersPage() {
         }
       />
 
-      {error ? <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>{error}</Alert> : null}
+      {error ? (
+        <Alert severity="error" sx={{ mb: 2 }} onClose={() => setError(null)}>
+          {error}
+        </Alert>
+      ) : null}
 
       <Card variant="outlined" sx={{ mb: 1.5, borderRadius: 3.5, borderColor: '#E5EAF2', boxShadow: 'none' }}>
         <CardContent sx={{ p: { xs: 1.5, sm: 1.75 }, '&:last-child': { pb: { xs: 1.5, sm: 1.75 } } }}>
@@ -230,7 +225,15 @@ export default function CustomersPage() {
               value={query}
               onChange={event => handleQueryChange(event.target.value)}
               placeholder="ค้นหาชื่อ/บริษัท รหัสลูกค้า เบอร์โทร อีเมล หรือเลขผู้เสียภาษี"
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon sx={{ color: '#64748B' }} /></InputAdornment> } }}
+              slotProps={{
+                input: {
+                  startAdornment: (
+                    <InputAdornment position="start">
+                      <SearchRoundedIcon sx={{ color: '#64748B' }} />
+                    </InputAdornment>
+                  ),
+                },
+              }}
               sx={{ flex: 1, '& .MuiOutlinedInput-root': { minHeight: 44, borderRadius: 2.75, bgcolor: '#fff' } }}
             />
             <TextField
@@ -244,9 +247,7 @@ export default function CustomersPage() {
               <MenuItem value="active">Active</MenuItem>
               <MenuItem value="inactive">Inactive</MenuItem>
             </TextField>
-            <Typography sx={{ minWidth: { md: 118 }, textAlign: { xs: 'left', md: 'right' }, color: '#718096', fontSize: 12.5, fontWeight: 700 }}>
-              {total.toLocaleString('th-TH')} รายการ
-            </Typography>
+            <Typography sx={{ minWidth: { md: 118 }, textAlign: { xs: 'left', md: 'right' }, color: '#718096', fontSize: 12.5, fontWeight: 700 }}>{total.toLocaleString('th-TH')} รายการ</Typography>
           </Stack>
         </CardContent>
       </Card>
@@ -255,25 +256,43 @@ export default function CustomersPage() {
         <Table sx={{ minWidth: 920 }}>
           <TableHead>
             <TableRow sx={{ bgcolor: '#F8FAFC' }}>
-              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '27%' }}>ลูกค้า</TableCell>
-              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '23%' }}>ติดต่อ</TableCell>
-              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '22%' }}>บริษัท / Tax</TableCell>
-              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '10%' }}>สถานะ</TableCell>
-              <TableCell align="right" sx={{ fontWeight: 850, color: '#475569', width: '18%' }}>จัดการ</TableCell>
+              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '45%' }}>บริษัท</TableCell>
+              <TableCell sx={{ fontWeight: 850, color: '#475569', width: '30%' }}>สาขา / TaxID</TableCell>
+              <TableCell align="right" sx={{ fontWeight: 850, color: '#475569', width: '25%' }}>
+                จัดการ
+              </TableCell>
             </TableRow>
           </TableHead>
-          {loading && customers.length === 0 ? <DesktopSkeleton /> : (
+          {loading && customers.length === 0 ? (
+            <DesktopSkeleton />
+          ) : (
             <TableBody>
               {customers.map(customer => (
                 <TableRow key={customer._id} hover sx={{ '&:last-child td': { borderBottom: 0 } }}>
-                  <TableCell><CustomerIdentity customer={customer} /></TableCell>
-                  <TableCell><CustomerContact customer={customer} /></TableCell>
-                  <TableCell><CustomerTax customer={customer} /></TableCell>
-                  <TableCell><CustomerStatus active={customer.active} /></TableCell>
+                  <TableCell>
+                    <CustomerIdentity customer={customer} />
+                  </TableCell>
+                  <TableCell>
+                    <CustomerTax customer={customer} />
+                  </TableCell>
                   <TableCell align="right">
                     <Stack direction="row" justifyContent="flex-end" spacing={0.65}>
-                      <Button size="small" variant="text" startIcon={<VisibilityRoundedIcon />} onClick={() => void openCustomer(customer)} sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>รายละเอียด</Button>
-                      <Button size="small" variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => setEditingCustomer(customer)} sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>แก้ไข</Button>
+                      <Button
+                        size="small"
+                        variant="text"
+                        startIcon={<VisibilityRoundedIcon />}
+                        onClick={() => void openCustomer(customer)}
+                        sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>
+                        รายละเอียด
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        startIcon={<EditRoundedIcon />}
+                        onClick={() => setEditingCustomer(customer)}
+                        sx={{ minHeight: 38, borderRadius: 2, textTransform: 'none', fontWeight: 750 }}>
+                        แก้ไข
+                      </Button>
                     </Stack>
                   </TableCell>
                 </TableRow>
@@ -297,14 +316,32 @@ export default function CustomersPage() {
                     <CustomerStatus active={customer.active} />
                   </Stack>
                   <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0.45 }}>
-                    <Typography sx={{ fontSize: 12.5, color: '#475569' }}>โทร {phones[0] || 'ไม่มีเบอร์โทร'}{phones.length > 1 ? ` (+${phones.length - 1})` : ''}</Typography>
+                    <Typography sx={{ fontSize: 12.5, color: '#475569' }}>
+                      โทร {phones[0] || 'ไม่มีเบอร์โทร'}
+                      {phones.length > 1 ? ` (+${phones.length - 1})` : ''}
+                    </Typography>
                     {customer.email ? <Typography sx={{ fontSize: 12.5, color: '#475569', overflowWrap: 'anywhere' }}>{customer.email}</Typography> : null}
                     {customer.taxId ? <Typography sx={{ fontSize: 12.5, color: '#475569' }}>Tax ID {customer.taxId}</Typography> : null}
                     {branch ? <Typography sx={{ fontSize: 12, color: '#718096' }}>{branch}</Typography> : null}
                   </Box>
                   <Stack direction="row" spacing={0.75}>
-                    <Button fullWidth variant="outlined" startIcon={<EditRoundedIcon />} onClick={() => setEditingCustomer(customer)} sx={{ minHeight: 44, borderRadius: 2.5, textTransform: 'none', fontWeight: 800 }}>แก้ไข</Button>
-                    <Button fullWidth variant="contained" disableElevation endIcon={<VisibilityRoundedIcon />} onClick={() => void openCustomer(customer)} sx={{ minHeight: 44, borderRadius: 2.5, textTransform: 'none', fontWeight: 800 }}>รายละเอียด</Button>
+                    <Button
+                      fullWidth
+                      variant="outlined"
+                      startIcon={<EditRoundedIcon />}
+                      onClick={() => setEditingCustomer(customer)}
+                      sx={{ minHeight: 44, borderRadius: 2.5, textTransform: 'none', fontWeight: 800 }}>
+                      แก้ไข
+                    </Button>
+                    <Button
+                      fullWidth
+                      variant="contained"
+                      disableElevation
+                      endIcon={<VisibilityRoundedIcon />}
+                      onClick={() => void openCustomer(customer)}
+                      sx={{ minHeight: 44, borderRadius: 2.5, textTransform: 'none', fontWeight: 800 }}>
+                      รายละเอียด
+                    </Button>
                   </Stack>
                 </Stack>
               </CardContent>
@@ -315,9 +352,7 @@ export default function CustomersPage() {
 
       {!loading && customers.length === 0 ? (
         <Box sx={{ py: { xs: 6, md: 8 }, px: 2, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: 16, fontWeight: 850, color: '#334155' }}>
-            {query.trim() ? `ไม่พบลูกค้าที่ตรงกับ “${query.trim()}”` : 'ยังไม่มีลูกค้าในรายการนี้'}
-          </Typography>
+          <Typography sx={{ fontSize: 16, fontWeight: 850, color: '#334155' }}>{query.trim() ? `ไม่พบลูกค้าที่ตรงกับ “${query.trim()}”` : 'ยังไม่มีลูกค้าในรายการนี้'}</Typography>
           <Typography sx={{ mt: 0.6, color: '#7A8A9E', fontSize: 13 }}>ลองค้นหาด้วยชื่อ เบอร์โทร หรือรหัสลูกค้า</Typography>
         </Box>
       ) : null}
@@ -329,7 +364,10 @@ export default function CustomersPage() {
           page={page}
           onPageChange={(_event, nextPage) => setPage(nextPage)}
           rowsPerPage={rowsPerPage}
-          onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+          onRowsPerPageChange={event => {
+            setRowsPerPage(Number(event.target.value));
+            setPage(0);
+          }}
           rowsPerPageOptions={[10, 25, 50, 100]}
           labelRowsPerPage="ต่อหน้า"
           labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
@@ -357,15 +395,13 @@ export default function CustomersPage() {
       <CustomerCreateDialog
         open={createOpen}
         onClose={() => setCreateOpen(false)}
-        onCreated={() => { setPage(0); void loadCustomers(); }}
+        onCreated={() => {
+          setPage(0);
+          void loadCustomers();
+        }}
       />
 
-      <CustomerCreateDialog
-        open={Boolean(editingCustomer)}
-        customer={editingCustomer}
-        onClose={() => setEditingCustomer(null)}
-        onSaved={customer => void handleSaved(customer)}
-      />
+      <CustomerCreateDialog open={Boolean(editingCustomer)} customer={editingCustomer} onClose={() => setEditingCustomer(null)} onSaved={customer => void handleSaved(customer)} />
     </AdminPageContainer>
   );
 }

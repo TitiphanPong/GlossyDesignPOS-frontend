@@ -54,6 +54,7 @@ import {
 import StorageOverview, { type StorageStats } from './StorageOverview';
 import StorageToolbar from './StorageToolbar';
 import StorageTable from './StorageTable';
+import { EMPTY_DATE_RANGE, type ReportDateRangeValue } from '../components/ReportFilterPanel';
 
 const endpointCandidates = ['/uploads'];
 const EMPTY_STORAGE_STATS: StorageStats = {
@@ -233,7 +234,7 @@ export default function StoragePage() {
   const [search, setSearch] = React.useState('');
   const [statusFilter, setStatusFilter] = React.useState<'all' | StorageStatus>('all');
   const [jobTypeFilter] = React.useState('all');
-  const [dateFilter, setDateFilter] = React.useState('');
+  const [dateRange, setDateRange] = React.useState<ReportDateRangeValue>(EMPTY_DATE_RANGE);
   const [linkStatusFilter, setLinkStatusFilter] = React.useState<'all' | 'linked' | 'unlinked'>('all');
   const [orderReferenceFilter, setOrderReferenceFilter] = React.useState('');
   const [sortBy, setSortBy] = React.useState<SortType>('newest');
@@ -288,7 +289,8 @@ export default function StoragePage() {
               ...(deferredSearch ? { q: deferredSearch } : {}),
               ...(statusFilter !== 'all' ? { storageStatus: statusFilter } : {}),
               ...(jobTypeFilter !== 'all' ? { jobType: jobTypeFilter } : {}),
-              ...(dateFilter ? { date: dateFilter } : {}),
+              ...(dateRange.startDate ? { dateFrom: dateRange.startDate.format('YYYY-MM-DD') } : {}),
+              ...(dateRange.endDate ? { dateTo: dateRange.endDate.format('YYYY-MM-DD') } : {}),
               ...(linkStatusFilter !== 'all' ? { linkStatus: linkStatusFilter } : {}),
               ...(orderReferenceFilter ? { orderReference: orderReferenceFilter } : {}),
               sort: sortBy,
@@ -330,9 +332,7 @@ export default function StoragePage() {
             }
           }
 
-          const normalized = list
-            .filter((item): item is UploadApiRecord => typeof item === 'object' && item !== null)
-            .map(normalizeRecord);
+          const normalized = list.filter((item): item is UploadApiRecord => typeof item === 'object' && item !== null).map(normalizeRecord);
           const resolvedTotal = total ?? normalized.length;
           const maxPage = Math.max(0, Math.ceil(resolvedTotal / rowsPerPage) - 1);
           if (page > maxPage) {
@@ -370,11 +370,11 @@ export default function StoragePage() {
     } finally {
       setLoading(false);
     }
-  }, [dateFilter, deferredSearch, jobTypeFilter, linkStatusFilter, orderReferenceFilter, page, rowsPerPage, sortBy, statusFilter]);
+  }, [dateRange, deferredSearch, jobTypeFilter, linkStatusFilter, orderReferenceFilter, page, rowsPerPage, sortBy, statusFilter]);
 
   React.useEffect(() => {
     setPage(0);
-  }, [dateFilter, deferredSearch, jobTypeFilter, linkStatusFilter, orderReferenceFilter, sortBy, statusFilter]);
+  }, [dateRange, deferredSearch, jobTypeFilter, linkStatusFilter, orderReferenceFilter, sortBy, statusFilter]);
 
   React.useEffect(() => {
     fetchUploads();
@@ -750,54 +750,22 @@ export default function StoragePage() {
           onDownloadSelected={downloadSelected}
         />
 
-        <Card sx={{ borderRadius: 3.5, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
-          <CardContent sx={{ p: '16px !important' }}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25} alignItems={{ sm: 'center' }}>
-              <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 180 } }}>
-                <Select
-                  value={linkStatusFilter}
-                  onChange={event => setLinkStatusFilter(event.target.value as 'all' | 'linked' | 'unlinked')}
-                  sx={{ borderRadius: 2.5 }}>
-                  <MenuItem value="all">ทุกการเชื่อม Order</MenuItem>
-                  <MenuItem value="unlinked">ยังไม่เชื่อม Order</MenuItem>
-                  <MenuItem value="linked">เชื่อม Order แล้ว</MenuItem>
-                </Select>
-              </FormControl>
-              <TextField
-                size="small"
-                fullWidth
-                label="กรองตามเลขที่ Order"
-                value={orderReferenceFilter}
-                onChange={event => setOrderReferenceFilter(event.target.value.trim())}
-                placeholder="เช่น ORD-0101"
-                sx={{ maxWidth: { sm: 320 }, '& .MuiOutlinedInput-root': { borderRadius: 2.5 } }}
-              />
-              {orderReferenceFilter ? (
-                <Button
-                  variant="text"
-                  onClick={() => {
-                    setOrderReferenceFilter('');
-                    setLinkStatusFilter('all');
-                  }}>
-                  ล้างตัวกรอง Order
-                </Button>
-              ) : null}
-            </Stack>
-          </CardContent>
-        </Card>
-
         <StorageToolbar
           search={search}
           statusFilter={statusFilter}
-          dateFilter={dateFilter}
+          dateRange={dateRange}
           sortBy={sortBy}
+          linkStatusFilter={linkStatusFilter}
+          orderReferenceFilter={orderReferenceFilter}
           selectedCount={selectedRows.length}
           bulkUpdating={bulkUpdating}
           bulkDeleting={bulkDeleting}
           onSearchChange={setSearch}
           onStatusChange={setStatusFilter}
-          onDateChange={setDateFilter}
+          onDateRangeChange={setDateRange}
           onSortChange={setSortBy}
+          onLinkStatusChange={setLinkStatusFilter}
+          onOrderReferenceChange={setOrderReferenceFilter}
           onDownloadSelected={downloadSelected}
           onBulkStatus={() => void handleBulkStatus()}
           onBulkDelete={() => void handleBulkDelete()}
@@ -868,330 +836,323 @@ export default function StoragePage() {
         subtitle={activeRecord ? `ลูกค้า : ${activeRecord.customerName}` : undefined}>
         {activeRecord ? (
           <Stack spacing={isCompactDrawer ? 1.35 : 1.6}>
-                <Card sx={{ borderRadius: 4, border: '1px solid #DCE8FA', boxShadow: 'none', bgcolor: '#FBFDFF' }}>
-                  <CardContent>
-                    <Stack spacing={1.3}>
-                      <Stack direction="row" alignItems="center" spacing={1.35}>
-                        <Avatar
-                          src={activeRecord.linePictureUrl}
-                          alt={activeRecord.lineDisplayName === '-' ? activeRecord.customerName : activeRecord.lineDisplayName}
-                          sx={{ width: 52, height: 52, bgcolor: '#EAFBF0', color: '#087A3E', fontSize: 18, fontWeight: 900 }}>
-                          {Array.from(activeRecord.lineDisplayName === '-' ? activeRecord.customerName : activeRecord.lineDisplayName)[0] ?? '?'}
-                        </Avatar>
-                        <Box sx={{ minWidth: 0 }}>
-                          <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>ข้อมูลลูกค้าและ LINE</Typography>
-                          <Typography noWrap sx={{ mt: 0.2, maxWidth: 300, color: activeRecord.lineDisplayName === '-' ? '#94A3B8' : '#087A3E', fontSize: 12.5, fontWeight: 700 }}>
-                            LINE: {activeRecord.lineDisplayName}
-                          </Typography>
-                        </Box>
-                      </Stack>
-                      <Box>
-                        <Typography sx={{ color: '#64748B', fontSize: 12 }}>ชื่อลูกค้า</Typography>
-                        <Typography sx={{ mt: 0.2, color: '#0F172A', fontWeight: 750 }}>{activeRecord.customerName}</Typography>
-                      </Box>
-                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography sx={{ color: '#64748B', fontSize: 12 }}>เบอร์โทร</Typography>
-                          <Typography sx={{ mt: 0.2, color: '#334155' }}>{activeRecord.phone}</Typography>
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography sx={{ color: '#64748B', fontSize: 12 }}>LINE User ID</Typography>
-                          <Typography sx={{ mt: 0.2, color: '#334155', fontSize: 12.5, overflowWrap: 'anywhere' }}>{activeRecord.lineId}</Typography>
-                        </Box>
-                      </Stack>
-                    </Stack>
-                  </CardContent>
-                </Card>
-
-                <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
-                  <CardContent>
-                    <Stack spacing={1.3}>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#F08C00', 0.14), color: '#AF6305' }}>
-                          <AccessTimeRoundedIcon sx={{ fontSize: 18 }} />
-                        </Avatar>
-                        <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>รายละเอียดงาน</Typography>
-                      </Stack>
-                      <Typography sx={{ color: '#334155' }}>วันที่อัปโหลด : {formatDate(activeRecord.uploadDate)}</Typography>
-                      <Typography sx={{ color: '#334155' }}>ประเภทงาน : {activeRecord.jobType}</Typography>
-                      <Typography sx={{ color: '#334155' }}>รหัสรับไฟล์ : {activeRecord.intakeCode || '-'}</Typography>
-                    </Stack>
-                  </CardContent>
-                </Card>
-
-                <Card sx={{ borderRadius: 4, border: '1px solid #DCE8FA', boxShadow: 'none', bgcolor: '#F9FBFF' }}>
-                  <CardContent>
-                    <Stack spacing={1.25}>
-                      <Box>
-                        <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>เชื่อมกับ Order</Typography>
-                        <Typography sx={{ mt: 0.25, color: '#64748B', fontSize: 12.5 }}>
-                          การเชื่อมนี้เป็นงานเจ้าหน้าที่เท่านั้น และไม่เปลี่ยนรหัสรับไฟล์ของลูกค้า
-                        </Typography>
-                      </Box>
-                      <TextField
-                        size="small"
-                        fullWidth
-                        label="เลขที่ Order / Order ID"
-                        value={drawerOrderReference}
-                        onChange={event => setDrawerOrderReference(event.target.value)}
-                        disabled={linkSaving}
-                        placeholder="เช่น ORD-0101"
-                        sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2.5, bgcolor: '#FFFFFF' } }}
-                      />
-                      <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
-                        <Button
-                          variant="contained"
-                          disabled={linkSaving || !drawerOrderReference.trim()}
-                          onClick={() => void handleOrderLink(false)}
-                          sx={{ flex: 1, borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}>
-                          {activeRecord.linkedOrderId ? 'เปลี่ยน Order ที่เชื่อม' : 'เชื่อมกับ Order'}
-                        </Button>
-                        {activeRecord.linkedOrderId ? (
-                          <Button
-                            variant="outlined"
-                            color="error"
-                            disabled={linkSaving}
-                            onClick={() => void handleOrderLink(true)}
-                            sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}>
-                            ยกเลิกการเชื่อม
-                          </Button>
-                        ) : null}
-                      </Stack>
-                      <Typography sx={{ color: activeRecord.linkedOrderId ? '#18794E' : '#8A95A7', fontSize: 12.5, fontWeight: 700 }}>
-                        {activeRecord.linkedOrderId ? `เชื่อมอยู่กับ ${activeRecord.linkedOrderNumber ?? activeRecord.linkedOrderId}` : 'ยังไม่เชื่อมกับ Order'}
+            <Card sx={{ borderRadius: 4, border: '1px solid #DCE8FA', boxShadow: 'none', bgcolor: '#FBFDFF' }}>
+              <CardContent>
+                <Stack spacing={1.3}>
+                  <Stack direction="row" alignItems="center" spacing={1.35}>
+                    <Avatar
+                      src={activeRecord.linePictureUrl}
+                      alt={activeRecord.lineDisplayName === '-' ? activeRecord.customerName : activeRecord.lineDisplayName}
+                      sx={{ width: 52, height: 52, bgcolor: '#EAFBF0', color: '#087A3E', fontSize: 18, fontWeight: 900 }}>
+                      {Array.from(activeRecord.lineDisplayName === '-' ? activeRecord.customerName : activeRecord.lineDisplayName)[0] ?? '?'}
+                    </Avatar>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>ข้อมูลลูกค้าและ LINE</Typography>
+                      <Typography noWrap sx={{ mt: 0.2, maxWidth: 300, color: activeRecord.lineDisplayName === '-' ? '#94A3B8' : '#087A3E', fontSize: 12.5, fontWeight: 700 }}>
+                        LINE: {activeRecord.lineDisplayName}
                       </Typography>
-                    </Stack>
-                  </CardContent>
-                </Card>
+                    </Box>
+                  </Stack>
+                  <Box>
+                    <Typography sx={{ color: '#64748B', fontSize: 12 }}>ชื่อลูกค้า</Typography>
+                    <Typography sx={{ mt: 0.2, color: '#0F172A', fontWeight: 750 }}>{activeRecord.customerName}</Typography>
+                  </Box>
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ color: '#64748B', fontSize: 12 }}>เบอร์โทร</Typography>
+                      <Typography sx={{ mt: 0.2, color: '#334155' }}>{activeRecord.phone}</Typography>
+                    </Box>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography sx={{ color: '#64748B', fontSize: 12 }}>LINE User ID</Typography>
+                      <Typography sx={{ mt: 0.2, color: '#334155', fontSize: 12.5, overflowWrap: 'anywhere' }}>{activeRecord.lineId}</Typography>
+                    </Box>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
 
-                <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
-                  <CardContent>
-                    <Stack spacing={1.3}>
-                      <Stack direction="row" alignItems="center" spacing={1}>
-                        <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#2A6BF6', 0.14), color: '#2A6BF6' }}>
-                          <LocalPrintshopRoundedIcon sx={{ fontSize: 18 }} />
-                        </Avatar>
-                        <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>ไฟล์งาน</Typography>
-                      </Stack>
+            <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+              <CardContent>
+                <Stack spacing={1.3}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#F08C00', 0.14), color: '#AF6305' }}>
+                      <AccessTimeRoundedIcon sx={{ fontSize: 18 }} />
+                    </Avatar>
+                    <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>รายละเอียดงาน</Typography>
+                  </Stack>
+                  <Typography sx={{ color: '#334155' }}>วันที่อัปโหลด : {formatDate(activeRecord.uploadDate)}</Typography>
+                  <Typography sx={{ color: '#334155' }}>ประเภทงาน : {activeRecord.jobType}</Typography>
+                  <Typography sx={{ color: '#334155' }}>รหัสรับไฟล์ : {activeRecord.intakeCode || '-'}</Typography>
+                </Stack>
+              </CardContent>
+            </Card>
 
-                      <Stack spacing={1}>
-                        {activeRecord.files.map(file => (
-                          <Stack
-                            key={file.id}
-                            direction="row"
-                            alignItems="center"
-                            justifyContent="space-between"
-                            sx={{
-                              p: 1,
-                              borderRadius: 3,
-                              border: '1px solid #E6EDF7',
-                              bgcolor: '#FCFDFF',
-                            }}>
-                            <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-                              <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: '#F2F6FD', display: 'grid', placeItems: 'center' }}>{pickFileIcon(file.name)}</Box>
-                              <Box sx={{ minWidth: 0 }}>
-                                <Typography noWrap sx={{ maxWidth: 220, fontWeight: 600 }}>
-                                  {file.name}
-                                </Typography>
-                                <Typography sx={{ color: '#94A3B8', fontSize: 12 }}>{file.size}</Typography>
-                              </Box>
-                            </Stack>
-                            <IconButton size="small" onClick={() => downloadUrl(file.url, file.name)}>
-                              <DownloadRoundedIcon fontSize="small" />
-                            </IconButton>
-                          </Stack>
-                        ))}
-                      </Stack>
-
-                      <Button
-                        onClick={() => activeRecord.files.forEach(file => downloadUrl(file.url, file.name))}
-                        variant="contained"
-                        startIcon={<DownloadRoundedIcon />}
-                        sx={{
-                          mt: 1,
-                          borderRadius: 3,
-                          width: { xs: '100%', sm: 'auto' },
-                          textTransform: 'none',
-                          fontWeight: 700,
-                          bgcolor: '#1F5CE6',
-                        }}>
-                        ดาวน์โหลดทั้งหมด
+            <Card sx={{ borderRadius: 4, border: '1px solid #DCE8FA', boxShadow: 'none', bgcolor: '#F9FBFF' }}>
+              <CardContent>
+                <Stack spacing={1.25}>
+                  <Box>
+                    <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>เชื่อมกับ Order</Typography>
+                    <Typography sx={{ mt: 0.25, color: '#64748B', fontSize: 12.5 }}>การเชื่อมนี้เป็นงานเจ้าหน้าที่เท่านั้น และไม่เปลี่ยนรหัสรับไฟล์ของลูกค้า</Typography>
+                  </Box>
+                  <TextField
+                    size="small"
+                    fullWidth
+                    label="เลขที่ Order / Order ID"
+                    value={drawerOrderReference}
+                    onChange={event => setDrawerOrderReference(event.target.value)}
+                    disabled={linkSaving}
+                    placeholder="เช่น ORD-0101"
+                    sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2.5, bgcolor: '#FFFFFF' } }}
+                  />
+                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1}>
+                    <Button
+                      variant="contained"
+                      disabled={linkSaving || !drawerOrderReference.trim()}
+                      onClick={() => void handleOrderLink(false)}
+                      sx={{ flex: 1, borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}>
+                      {activeRecord.linkedOrderId ? 'เปลี่ยน Order ที่เชื่อม' : 'เชื่อมกับ Order'}
+                    </Button>
+                    {activeRecord.linkedOrderId ? (
+                      <Button variant="outlined" color="error" disabled={linkSaving} onClick={() => void handleOrderLink(true)} sx={{ borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}>
+                        ยกเลิกการเชื่อม
                       </Button>
-                    </Stack>
-                  </CardContent>
-                </Card>
+                    ) : null}
+                  </Stack>
+                  <Typography sx={{ color: activeRecord.linkedOrderId ? '#18794E' : '#8A95A7', fontSize: 12.5, fontWeight: 700 }}>
+                    {activeRecord.linkedOrderId ? `เชื่อมอยู่กับ ${activeRecord.linkedOrderNumber ?? activeRecord.linkedOrderId}` : 'ยังไม่เชื่อมกับ Order'}
+                  </Typography>
+                </Stack>
+              </CardContent>
+            </Card>
 
-                <Card
-                  sx={{
-                    borderRadius: '24px',
-                    border: '1px solid #E2ECF8',
-                    boxShadow: '0 18px 50px rgba(15, 23, 42, 0.06)',
-                    bgcolor: '#FFFFFF',
-                    overflow: 'hidden',
-                  }}>
-                  <CardContent sx={{ p: { xs: '18px !important', sm: '20px !important' } }}>
-                    <Stack spacing={2}>
-                      <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1.25}>
-                        <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
-                          <Box
-                            sx={{
-                              width: 44,
-                              height: 44,
-                              borderRadius: '14px',
-                              bgcolor: '#EEF6FF',
-                              color: '#1E5EFF',
-                              display: 'grid',
-                              placeItems: 'center',
-                              flexShrink: 0,
-                            }}>
-                            <FactCheckRoundedIcon sx={{ fontSize: 22 }} />
-                          </Box>
+            <Card sx={{ borderRadius: 4, border: '1px solid #E6EDF7', boxShadow: 'none' }}>
+              <CardContent>
+                <Stack spacing={1.3}>
+                  <Stack direction="row" alignItems="center" spacing={1}>
+                    <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#2A6BF6', 0.14), color: '#2A6BF6' }}>
+                      <LocalPrintshopRoundedIcon sx={{ fontSize: 18 }} />
+                    </Avatar>
+                    <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>ไฟล์งาน</Typography>
+                  </Stack>
+
+                  <Stack spacing={1}>
+                    {activeRecord.files.map(file => (
+                      <Stack
+                        key={file.id}
+                        direction="row"
+                        alignItems="center"
+                        justifyContent="space-between"
+                        sx={{
+                          p: 1,
+                          borderRadius: 3,
+                          border: '1px solid #E6EDF7',
+                          bgcolor: '#FCFDFF',
+                        }}>
+                        <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                          <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: '#F2F6FD', display: 'grid', placeItems: 'center' }}>{pickFileIcon(file.name)}</Box>
                           <Box sx={{ minWidth: 0 }}>
-                            <Typography sx={{ fontWeight: 800, color: '#16233B', fontSize: { xs: 17, sm: 18 }, lineHeight: 1.2 }}>สถานะการดำเนินงาน</Typography>
-                            <Typography sx={{ color: '#7A8CA5', fontSize: 13, mt: 0.2 }}>อัปเดตความคืบหน้าของงานพิมพ์</Typography>
+                            <Typography noWrap sx={{ maxWidth: 220, fontWeight: 600 }}>
+                              {file.name}
+                            </Typography>
+                            <Typography sx={{ color: '#94A3B8', fontSize: 12 }}>{file.size}</Typography>
                           </Box>
                         </Stack>
+                        <IconButton size="small" onClick={() => downloadUrl(file.url, file.name)}>
+                          <DownloadRoundedIcon fontSize="small" />
+                        </IconButton>
                       </Stack>
+                    ))}
+                  </Stack>
 
-                      {drawerStatusView ? (
-                        <Box
-                          sx={{
-                            borderRadius: '18px',
-                            px: 2,
-                            py: 2,
-                            border: `1px solid ${drawerStatusView.border}`,
-                            background: drawerStatusView.gradient,
-                            display: 'flex',
-                            flexDirection: { xs: 'column', sm: 'row' },
-                            alignItems: { xs: 'flex-start', sm: 'center' },
-                            gap: 1.5,
-                          }}>
-                          <Box
-                            sx={{
-                              width: 56,
-                              height: 56,
-                              borderRadius: '16px',
-                              bgcolor: alpha(drawerStatusView.accent, 0.1),
-                              color: drawerStatusView.accent,
-                              display: 'grid',
-                              placeItems: 'center',
-                              flexShrink: 0,
-                              boxShadow: `inset 0 0 0 1px ${alpha(drawerStatusView.accent, 0.08)}`,
-                            }}>
-                            {React.cloneElement(drawerStatusView.icon, { sx: { fontSize: 26 } })}
-                          </Box>
+                  <Button
+                    onClick={() => activeRecord.files.forEach(file => downloadUrl(file.url, file.name))}
+                    variant="contained"
+                    startIcon={<DownloadRoundedIcon />}
+                    sx={{
+                      mt: 1,
+                      borderRadius: 3,
+                      width: { xs: '100%', sm: 'auto' },
+                      textTransform: 'none',
+                      fontWeight: 700,
+                      bgcolor: '#1F5CE6',
+                    }}>
+                    ดาวน์โหลดทั้งหมด
+                  </Button>
+                </Stack>
+              </CardContent>
+            </Card>
 
-                          <Stack spacing={0.5} sx={{ minWidth: 0, flex: 1 }}>
-                            <Typography sx={{ fontWeight: 800, color: drawerStatusView.accent, fontSize: { xs: 18, sm: 20 }, lineHeight: 1.15 }}>{drawerStatusView.label}</Typography>
-                            <Typography sx={{ color: '#334155', fontSize: 13.5, lineHeight: 1.45 }}>{drawerStatusView.description}</Typography>
-                          </Stack>
-                        </Box>
-                      ) : null}
-
-                      <Stack spacing={1}>
-                        <Typography sx={{ fontWeight: 700, color: '#16233B', fontSize: 15 }}>
-                          เปลี่ยนสถานะ{' '}
-                          <Box component="span" sx={{ color: '#EF4444' }}>
-                            *
-                          </Box>
-                        </Typography>
-                        <FormControl fullWidth>
-                          <Select<StorageStatus>
-                            value={drawerStatus}
-                            onChange={event => setDrawerStatus(event.target.value)}
-                            displayEmpty
-                            input={
-                              <OutlinedInput
-                                startAdornment={
-                                  <InputAdornment position="start" sx={{ mr: 1.5 }}>
-                                    <SyncRoundedIcon sx={{ color: '#1E5EFF', fontSize: 20 }} />
-                                  </InputAdornment>
-                                }
-                              />
-                            }
-                            renderValue={value => (
-                              <Stack direction="row" alignItems="center" spacing={1.1}>
-                                <Box
-                                  sx={{
-                                    width: 8,
-                                    height: 8,
-                                    borderRadius: '999px',
-                                    bgcolor: getStorageStatusPresentation(value).accent,
-                                    boxShadow: `0 0 0 4px ${alpha(getStorageStatusPresentation(value).accent, 0.12)}`,
-                                  }}
-                                />
-                                <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>{storageStatusLabel(value)}</Typography>
-                              </Stack>
-                            )}
-                            sx={{
-                              height: 52,
-                              borderRadius: '14px',
-                              bgcolor: '#FFFFFF',
-                              '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D8E4F5', borderWidth: 1.5 },
-                              '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#BFD3F3' },
-                              '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#1E5EFF', borderWidth: 2 },
-                              '& .MuiSelect-select': { display: 'flex', alignItems: 'center', py: 1.1, fontSize: 15, fontWeight: 600, color: '#1A2740' },
-                              '& .MuiSvgIcon-root.MuiSelect-icon': { fontSize: 24, color: '#6B7C99', right: 12 },
-                            }}>
-                            <MenuItem value="waiting">รอดาวน์โหลด</MenuItem>
-                            <MenuItem value="pending">รอดำเนินการ</MenuItem>
-                            <MenuItem value="completed">เสร็จสิ้น</MenuItem>
-                          </Select>
-                        </FormControl>
-                      </Stack>
-
-                      <Stack spacing={1}>
-                        <Typography sx={{ fontWeight: 700, color: '#16233B', fontSize: 15 }}>บันทึกเพิ่มเติม</Typography>
-                        <Box sx={{ position: 'relative' }}>
-                          <TextField
-                            fullWidth
-                            multiline
-                            minRows={5}
-                            placeholder="เพิ่มรายละเอียดเกี่ยวกับสถานะงาน..."
-                            value={drawerNotes}
-                            onChange={event => setDrawerNotes(event.target.value)}
-                            sx={{
-                              '& .MuiOutlinedInput-root': {
-                                minHeight: 120,
-                                alignItems: 'flex-start',
-                                borderRadius: '16px',
-                                bgcolor: '#FFFFFF',
-                                pr: 2,
-                                boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7)',
-                                '& fieldset': { borderColor: '#D1DBEA', borderWidth: 1.5 },
-                                '&:hover fieldset': { borderColor: '#BFD3F3' },
-                                '&.Mui-focused fieldset': { borderColor: '#1E5EFF', borderWidth: 2 },
-                              },
-                              '& .MuiInputBase-inputMultiline': {
-                                px: 0,
-                                py: 0,
-                                fontSize: 14,
-                                color: '#22314B',
-                              },
-                              '& .MuiInputBase-input::placeholder': {
-                                color: '#A0AEC0',
-                                opacity: 1,
-                              },
-                            }}
-                          />
-                          <Typography
-                            sx={{
-                              position: 'absolute',
-                              right: 18,
-                              bottom: 14,
-                              color: '#8194B2',
-                              fontSize: 13,
-                              pointerEvents: 'none',
-                            }}>
-                            {drawerNoteLength} / 500
-                          </Typography>
-                        </Box>
-                      </Stack>
+            <Card
+              sx={{
+                borderRadius: '24px',
+                border: '1px solid #E2ECF8',
+                boxShadow: '0 18px 50px rgba(15, 23, 42, 0.06)',
+                bgcolor: '#FFFFFF',
+                overflow: 'hidden',
+              }}>
+              <CardContent sx={{ p: { xs: '18px !important', sm: '20px !important' } }}>
+                <Stack spacing={2}>
+                  <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1.25}>
+                    <Stack direction="row" spacing={1.25} alignItems="center" sx={{ minWidth: 0, flex: 1 }}>
+                      <Box
+                        sx={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: '14px',
+                          bgcolor: '#EEF6FF',
+                          color: '#1E5EFF',
+                          display: 'grid',
+                          placeItems: 'center',
+                          flexShrink: 0,
+                        }}>
+                        <FactCheckRoundedIcon sx={{ fontSize: 22 }} />
+                      </Box>
+                      <Box sx={{ minWidth: 0 }}>
+                        <Typography sx={{ fontWeight: 800, color: '#16233B', fontSize: { xs: 17, sm: 18 }, lineHeight: 1.2 }}>สถานะการดำเนินงาน</Typography>
+                        <Typography sx={{ color: '#7A8CA5', fontSize: 13, mt: 0.2 }}>อัปเดตความคืบหน้าของงานพิมพ์</Typography>
+                      </Box>
                     </Stack>
-                  </CardContent>
-                </Card>
+                  </Stack>
 
-                <JobTimelineCard items={buildStorageTimelineItems(activeRecord)} subtitle="ลำดับการรับงานและอัปเดตความคืบหน้าของไฟล์งาน" />
+                  {drawerStatusView ? (
+                    <Box
+                      sx={{
+                        borderRadius: '18px',
+                        px: 2,
+                        py: 2,
+                        border: `1px solid ${drawerStatusView.border}`,
+                        background: drawerStatusView.gradient,
+                        display: 'flex',
+                        flexDirection: { xs: 'column', sm: 'row' },
+                        alignItems: { xs: 'flex-start', sm: 'center' },
+                        gap: 1.5,
+                      }}>
+                      <Box
+                        sx={{
+                          width: 56,
+                          height: 56,
+                          borderRadius: '16px',
+                          bgcolor: alpha(drawerStatusView.accent, 0.1),
+                          color: drawerStatusView.accent,
+                          display: 'grid',
+                          placeItems: 'center',
+                          flexShrink: 0,
+                          boxShadow: `inset 0 0 0 1px ${alpha(drawerStatusView.accent, 0.08)}`,
+                        }}>
+                        {React.cloneElement(drawerStatusView.icon, { sx: { fontSize: 26 } })}
+                      </Box>
+
+                      <Stack spacing={0.5} sx={{ minWidth: 0, flex: 1 }}>
+                        <Typography sx={{ fontWeight: 800, color: drawerStatusView.accent, fontSize: { xs: 18, sm: 20 }, lineHeight: 1.15 }}>{drawerStatusView.label}</Typography>
+                        <Typography sx={{ color: '#334155', fontSize: 13.5, lineHeight: 1.45 }}>{drawerStatusView.description}</Typography>
+                      </Stack>
+                    </Box>
+                  ) : null}
+
+                  <Stack spacing={1}>
+                    <Typography sx={{ fontWeight: 700, color: '#16233B', fontSize: 15 }}>
+                      เปลี่ยนสถานะ{' '}
+                      <Box component="span" sx={{ color: '#EF4444' }}>
+                        *
+                      </Box>
+                    </Typography>
+                    <FormControl fullWidth>
+                      <Select<StorageStatus>
+                        value={drawerStatus}
+                        onChange={event => setDrawerStatus(event.target.value)}
+                        displayEmpty
+                        input={
+                          <OutlinedInput
+                            startAdornment={
+                              <InputAdornment position="start" sx={{ mr: 1.5 }}>
+                                <SyncRoundedIcon sx={{ color: '#1E5EFF', fontSize: 20 }} />
+                              </InputAdornment>
+                            }
+                          />
+                        }
+                        renderValue={value => (
+                          <Stack direction="row" alignItems="center" spacing={1.1}>
+                            <Box
+                              sx={{
+                                width: 8,
+                                height: 8,
+                                borderRadius: '999px',
+                                bgcolor: getStorageStatusPresentation(value).accent,
+                                boxShadow: `0 0 0 4px ${alpha(getStorageStatusPresentation(value).accent, 0.12)}`,
+                              }}
+                            />
+                            <Typography sx={{ fontWeight: 700, color: '#0F172A' }}>{storageStatusLabel(value)}</Typography>
+                          </Stack>
+                        )}
+                        sx={{
+                          height: 52,
+                          borderRadius: '14px',
+                          bgcolor: '#FFFFFF',
+                          '& .MuiOutlinedInput-notchedOutline': { borderColor: '#D8E4F5', borderWidth: 1.5 },
+                          '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: '#BFD3F3' },
+                          '&.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: '#1E5EFF', borderWidth: 2 },
+                          '& .MuiSelect-select': { display: 'flex', alignItems: 'center', py: 1.1, fontSize: 15, fontWeight: 600, color: '#1A2740' },
+                          '& .MuiSvgIcon-root.MuiSelect-icon': { fontSize: 24, color: '#6B7C99', right: 12 },
+                        }}>
+                        <MenuItem value="waiting">รอดาวน์โหลด</MenuItem>
+                        <MenuItem value="pending">รอดำเนินการ</MenuItem>
+                        <MenuItem value="completed">เสร็จสิ้น</MenuItem>
+                      </Select>
+                    </FormControl>
+                  </Stack>
+
+                  <Stack spacing={1}>
+                    <Typography sx={{ fontWeight: 700, color: '#16233B', fontSize: 15 }}>บันทึกเพิ่มเติม</Typography>
+                    <Box sx={{ position: 'relative' }}>
+                      <TextField
+                        fullWidth
+                        multiline
+                        minRows={5}
+                        placeholder="เพิ่มรายละเอียดเกี่ยวกับสถานะงาน..."
+                        value={drawerNotes}
+                        onChange={event => setDrawerNotes(event.target.value)}
+                        sx={{
+                          '& .MuiOutlinedInput-root': {
+                            minHeight: 120,
+                            alignItems: 'flex-start',
+                            borderRadius: '16px',
+                            bgcolor: '#FFFFFF',
+                            pr: 2,
+                            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.7)',
+                            '& fieldset': { borderColor: '#D1DBEA', borderWidth: 1.5 },
+                            '&:hover fieldset': { borderColor: '#BFD3F3' },
+                            '&.Mui-focused fieldset': { borderColor: '#1E5EFF', borderWidth: 2 },
+                          },
+                          '& .MuiInputBase-inputMultiline': {
+                            px: 0,
+                            py: 0,
+                            fontSize: 14,
+                            color: '#22314B',
+                          },
+                          '& .MuiInputBase-input::placeholder': {
+                            color: '#A0AEC0',
+                            opacity: 1,
+                          },
+                        }}
+                      />
+                      <Typography
+                        sx={{
+                          position: 'absolute',
+                          right: 18,
+                          bottom: 14,
+                          color: '#8194B2',
+                          fontSize: 13,
+                          pointerEvents: 'none',
+                        }}>
+                        {drawerNoteLength} / 500
+                      </Typography>
+                    </Box>
+                  </Stack>
+                </Stack>
+              </CardContent>
+            </Card>
+
+            <JobTimelineCard items={buildStorageTimelineItems(activeRecord)} subtitle="ลำดับการรับงานและอัปเดตความคืบหน้าของไฟล์งาน" />
 
             <Divider />
             <Box

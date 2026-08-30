@@ -115,7 +115,9 @@ function formatBytes(value?: number) {
 }
 
 function normalizeStage(value?: string): 'waiting' | 'pending' | undefined {
-  const stage = String(value ?? '').toLowerCase().trim();
+  const stage = String(value ?? '')
+    .toLowerCase()
+    .trim();
   if (stage === 'waiting' || stage === 'waiting-download') return 'waiting';
   if (stage === 'pending') return 'pending';
   return undefined;
@@ -128,7 +130,11 @@ function extractUploadMetadata(raw: Pick<UploadApiRecord, 'note' | 'statusNote' 
   const rawNote = String(raw.note ?? '');
   const batchMatch = BATCH_MARKER_PATTERN.exec(rawNote);
   const stageMatch = STAGE_MARKER_PATTERN.exec(rawNote);
-  const cleanNote = rawNote.replace(BATCH_MARKER_PATTERN, '').replace(STAGE_MARKER_PATTERN, '').replace(/\n{3,}/g, '\n\n').trim();
+  const cleanNote = rawNote
+    .replace(BATCH_MARKER_PATTERN, '')
+    .replace(STAGE_MARKER_PATTERN, '')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
   let markerStage: 'waiting' | 'pending' | undefined;
   if (stageMatch?.[1] === 'pending') {
     markerStage = 'pending';
@@ -181,6 +187,22 @@ export function normalizeFiles(rawFiles: UploadApiRecord['files']): FileItem[] {
     .filter((item): item is FileItem => Boolean(item));
 }
 
+/** Placeholder sent by the public upload page when the customer is not signed in with LINE. */
+const WALK_IN_PLACEHOLDER_NAME = 'Upload Customer';
+const WALK_IN_CUSTOMER_LABEL = 'ลูกค้าหน้าร้าน';
+
+function resolveCustomerName(value: unknown): string {
+  const name = typeof value === 'string' ? value.trim() : '';
+  if (!name) return 'ไม่ระบุชื่อลูกค้า';
+  return name === WALK_IN_PLACEHOLDER_NAME ? WALK_IN_CUSTOMER_LABEL : name;
+}
+
+function resolveLineDisplayName(value: unknown): string {
+  const name = typeof value === 'string' ? value.trim() : '';
+  if (!name || name === WALK_IN_PLACEHOLDER_NAME) return '-';
+  return name;
+}
+
 export function normalizeRecord(raw: UploadApiRecord): StorageRow {
   const id = String(raw._id ?? raw.id ?? raw.uploadId ?? `upload-${Math.random().toString(36).slice(2)}`);
   const files = normalizeFiles(raw.files);
@@ -196,12 +218,11 @@ export function normalizeRecord(raw: UploadApiRecord): StorageRow {
     batchId,
     intakeCode: String(raw.orderCode ?? ''),
     linkedOrderId: typeof raw.linkedOrderId === 'string' && raw.linkedOrderId.trim() ? raw.linkedOrderId.trim() : undefined,
-    linkedOrderNumber:
-      typeof raw.linkedOrderNumber === 'string' && raw.linkedOrderNumber.trim() ? raw.linkedOrderNumber.trim() : undefined,
+    linkedOrderNumber: typeof raw.linkedOrderNumber === 'string' && raw.linkedOrderNumber.trim() ? raw.linkedOrderNumber.trim() : undefined,
     uploadDate: createdAt,
-    customerName: String(raw.customerName ?? raw.customer ?? 'ไม่ระบุชื่อลูกค้า'),
+    customerName: resolveCustomerName(raw.customerName ?? raw.customer),
     phone: String(raw.phone ?? raw.phoneNumber ?? '-'),
-    lineDisplayName: String(raw.displayName ?? '-'),
+    lineDisplayName: resolveLineDisplayName(raw.displayName),
     linePictureUrl: typeof raw.linePictureUrl === 'string' && raw.linePictureUrl.trim() ? raw.linePictureUrl.trim() : undefined,
     lineId: String(raw.lineUserId ?? raw.lineId ?? raw.line ?? '-'),
     jobType: formatJobTypeLabel(raw.jobType ?? raw.category),
