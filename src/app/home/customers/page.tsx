@@ -269,6 +269,11 @@ export default function CustomersPage() {
 
       <Card variant="outlined" sx={{ display: { xs: 'none', lg: 'block' }, borderRadius: 3.5, borderColor: '#E5EAF2', boxShadow: 'none' }}>
         <DataTable
+          sectionHeader={{
+            title: 'รายการลูกค้าทั้งหมด',
+            subtitle: `${total.toLocaleString('th-TH')} รายการตามตัวกรองล่าสุด`,
+            countLabel: `${total.toLocaleString('th-TH')} รายการ`,
+          }}
           columns={customerTableColumns}
           rows={customers}
           getRowKey={customer => customer._id}

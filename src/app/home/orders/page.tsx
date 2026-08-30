@@ -45,7 +45,7 @@ import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../co
 import ReportFilterPanel, { DATE_PRESET_LABELS, bangkokDateParam, resolveDatePreset, type DatePreset } from '../components/ReportFilterPanel';
 import { commonButtonSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
-import DataTable, { type DataTableColumn } from '../components/DataTable';
+import DataTable, { DataTableSectionHeader, type DataTableColumn } from '../components/DataTable';
 import PayRemainingModal from '../saleListPage/components/PayRemainingModal';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder, type PaymentMethod, type ProductionWorkflowStatus } from '../../../lib/contracts';
@@ -827,23 +827,11 @@ export default function OrderManagementPage() {
             overflow: 'hidden',
             boxShadow: '0 12px 30px rgba(15, 37, 74, 0.08)',
           }}>
-          <Box
-            sx={{
-              px: { xs: 2, md: 3 },
-              py: { xs: 2, md: 2.6 },
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              gap: 1.5,
-              borderBottom: '1px solid #F3F4F6',
-              bgcolor: '#FFFFFF',
-            }}>
-            <Box>
-              <Typography sx={{ fontSize: 16, fontWeight: 800, color: '#1A1035', letterSpacing: '-0.2px' }}>รายการงานทั้งหมด</Typography>
-              <Typography sx={{ mt: 0.35, fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>{totalRows} รายการตามตัวกรองล่าสุด</Typography>
-            </Box>
-            <Chip label={`${totalRows} รายการ`} sx={{ borderRadius: '999px', bgcolor: '#F5F0FF', color: '#6C4DFF', fontWeight: 700 }} />
-          </Box>
+          <DataTableSectionHeader
+            title="รายการงานทั้งหมด"
+            subtitle={`${totalRows.toLocaleString('th-TH')} รายการตามตัวกรองล่าสุด`}
+            countLabel={`${totalRows.toLocaleString('th-TH')} รายการ`}
+          />
 
           {isMobile ? (
             <Stack spacing={1.2} sx={{ p: 1.4 }}>
