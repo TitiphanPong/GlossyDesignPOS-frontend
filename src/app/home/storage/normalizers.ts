@@ -30,6 +30,8 @@ export type UploadApiRecord = {
   phoneNumber?: string;
   lineId?: string;
   line?: string;
+  lineUserId?: string;
+  displayName?: string;
   note?: string;
   statusNote?: string;
   category?: string;
@@ -196,7 +198,7 @@ export function normalizeRecord(raw: UploadApiRecord): StorageRow {
     uploadDate: createdAt,
     customerName: String(raw.customerName ?? raw.customer ?? 'ไม่ระบุชื่อลูกค้า'),
     phone: String(raw.phone ?? raw.phoneNumber ?? '-'),
-    lineId: String(raw.lineId ?? raw.line ?? '-'),
+    lineId: String(raw.lineUserId ?? raw.lineId ?? raw.line ?? '-'),
     jobType: formatJobTypeLabel(raw.jobType ?? raw.category),
     files,
     status: raw.storageStatus ?? resolveStorageStatus(raw.status, stage),

@@ -89,6 +89,19 @@ test('normalizeRecord fills alternate id and customer fields safely', () => {
   assert.equal(record.activities.length, 3);
 });
 
+test('normalizeRecord exposes verified LINE user ids from backend uploads', () => {
+  const record = normalizeRecord({
+    uploadId: 'upload-line-1',
+    customerName: 'LINE Customer',
+    lineUserId: 'U1234567890abcdef',
+    displayName: 'LINE Customer',
+    files: [],
+  });
+
+  assert.equal(record.customerName, 'LINE Customer');
+  assert.equal(record.lineId, 'U1234567890abcdef');
+});
+
 test('normalizeRecord maps stage markers into waiting and pending states', () => {
   const waitingRecord = normalizeRecord({
     id: 'upload-1',

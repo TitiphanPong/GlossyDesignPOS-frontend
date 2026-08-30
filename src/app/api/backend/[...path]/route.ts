@@ -16,10 +16,10 @@ function getBackendUrl(path: string[], search: string): string {
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
-  const isPublicPost = isPublicBackendRequest(request.method, path);
+  const isPublicRequest = isPublicBackendRequest(request.method, path);
   const cookie = request.cookies.get(ADMIN_AUTH_COOKIE_NAME)?.value;
   const session = await verifyAdminSession(cookie);
-  if (!session?.accessToken && !isPublicPost) {
+  if (!session?.accessToken && !isPublicRequest) {
     return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
   }
 
@@ -72,7 +72,7 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     responseHeaders.delete('transfer-encoding');
 
     const proxiedResponse = new NextResponse(response.body, { status: response.status, headers: responseHeaders });
-    if (response.status === 401) {
+    if (response.status === 401 && !isPublicRequest) {
       proxiedResponse.cookies.set({
         name: ADMIN_AUTH_COOKIE_NAME,
         value: '',

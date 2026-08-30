@@ -11,8 +11,9 @@ export interface UploadResponse {
 }
 
 export interface UploadPayload {
-  customerName: string;
-  phone: string;
+  customerName?: string;
+  phone?: string;
+  lineIdToken?: string;
   jobType: string;
   note?: string;
   statusNote?: string;
@@ -23,9 +24,19 @@ export interface UploadPayload {
 export async function uploadFile(file: File, payload: UploadPayload, signal?: AbortSignal): Promise<UploadResponse> {
   const formData = new FormData();
   formData.append('files', file);
-  formData.append('customerName', payload.customerName);
-  formData.append('phone', payload.phone);
   formData.append('jobType', payload.jobType);
+
+  if (payload.customerName) {
+    formData.append('customerName', payload.customerName);
+  }
+
+  if (payload.phone) {
+    formData.append('phone', payload.phone);
+  }
+
+  if (payload.lineIdToken) {
+    formData.append('lineIdToken', payload.lineIdToken);
+  }
 
   if (payload.note) {
     formData.append('note', payload.note);
@@ -43,9 +54,13 @@ export async function uploadFile(file: File, payload: UploadPayload, signal?: Ab
     formData.append('stage', payload.stage);
   }
 
-  return fetchApiJson<UploadResponse>('/uploads', {
-    method: 'POST',
-    body: formData,
-    signal,
-  });
+  return fetchApiJson<UploadResponse>(
+    '/uploads',
+    {
+      method: 'POST',
+      body: formData,
+      signal,
+    },
+    { redirectOnUnauthorized: false },
+  );
 }

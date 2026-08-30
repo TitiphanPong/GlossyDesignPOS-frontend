@@ -1,5 +1,6 @@
 const PUBLIC_POST_PATHS = new Set([
   'uploads',
+  'line/session',
   'tracking/lookup',
   'tracking/token',
 ]);

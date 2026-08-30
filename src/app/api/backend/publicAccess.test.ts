@@ -4,6 +4,7 @@ import { isPublicBackendRequest } from './publicAccess';
 
 test('public backend allowlist includes only the canonical anonymous POST contracts', () => {
   assert.equal(isPublicBackendRequest('POST', ['uploads']), true);
+  assert.equal(isPublicBackendRequest('POST', ['line', 'session']), true);
   assert.equal(isPublicBackendRequest('POST', ['upload']), false);
   assert.equal(isPublicBackendRequest('POST', ['tracking', 'token']), true);
   assert.equal(isPublicBackendRequest('POST', ['tracking', 'lookup']), true);

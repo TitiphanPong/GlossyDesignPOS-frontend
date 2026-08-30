@@ -18,7 +18,9 @@ import StickyNote2Rounded from '@mui/icons-material/StickyNote2Rounded';
 import TableChartRounded from '@mui/icons-material/TableChartRounded';
 import ViewAgendaRounded from '@mui/icons-material/ViewAgendaRounded';
 import type { ReactElement } from 'react';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { closeLineLiffWindow, initializeLineUploadSession, type LineUploadSession } from '@/lib/line-liff';
 import { uploadFile, type UploadPayload } from '@/lib/upload-api';
 import { ACCEPTED_EXTENSIONS, buildAcceptAttribute, formatFileSize, getFileExtension, MAX_FILE_SIZE_LABEL, validateUploadFile } from './helpers';
 import { createUploadQueueItems, openUploadedSignedUrl, uploadPendingFiles, type UploadQueueItem, type UploadStatus } from './upload-flow';
@@ -270,11 +272,16 @@ function getStepBadgeClass(active: boolean, done: boolean) {
 }
 
 export default function UploadPage() { // NOSONAR: event orchestration remains colocated with page state.
+  const pathname = usePathname();
+  const lineMode = pathname.startsWith('/upload/line');
   const [selectedJobType, setSelectedJobType] = useState<string>('document');
   const [uploadedFiles, setUploadedFiles] = useState<UploadFileItem[]>([]);
   const [isDragOver, setIsDragOver] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
   const [feedbackModal, setFeedbackModal] = useState<FeedbackModalState>(null);
+  const [lineSession, setLineSession] = useState<LineUploadSession | null>(null);
+  const [lineStatus, setLineStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
+  const [lineError, setLineError] = useState('');
 
   const [jobNote, setJobNote] = useState('');
   const [touchedFields, setTouchedFields] = useState({
@@ -282,6 +289,37 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
   });
 
   const inputRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    if (!lineMode) {
+      setLineStatus('idle');
+      setLineSession(null);
+      setLineError('');
+      return;
+    }
+
+    let cancelled = false;
+    setLineStatus('loading');
+    setLineError('');
+
+    void initializeLineUploadSession()
+      .then(result => {
+        if (cancelled || result.status === 'redirecting') return;
+        setLineSession(result.session);
+        setLineStatus('ready');
+      })
+      .catch(error => {
+        if (cancelled) return;
+        setLineSession(null);
+        setLineStatus('error');
+        setLineError(error instanceof Error ? error.message : 'ไม่สามารถเชื่อมต่อ LINE ได้');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [lineMode]);
+
   const selectedJobLabel = useMemo(() => jobOptions.find(item => item.id === selectedJobType)?.label ?? '-', [selectedJobType]);
   const trimmedJobNote = jobNote.trim();
   const fieldErrors = useMemo(() => getUploadFieldErrors(trimmedJobNote), [trimmedJobNote]);
@@ -293,7 +331,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
   const currentStep = getCurrentStep(isUploading, uploadedCount, errorItems.length, totalFiles);
   const uploadProgress = totalFiles === 0 ? 0 : Math.round((uploadedCount / totalFiles) * 100);
   const showUploadProgress = isUploading || uploadedCount > 0;
-  const primaryActionDisabled = isUploading || uploadedFiles.length === 0;
+  const primaryActionDisabled = isUploading || uploadedFiles.length === 0 || (lineMode && lineStatus !== 'ready');
 
   const clearFeedback = () => {
     setFeedbackModal(null);
@@ -397,6 +435,10 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
 
   const handleUploadAll = async () => {
     if (isUploading) return;
+    if (lineMode && !lineSession) {
+      openErrorModal(lineError || 'กำลังตรวจสอบตัวตนจาก LINE กรุณารอสักครู่แล้วลองใหม่');
+      return;
+    }
 
     const batchId = createUploadBatchId();
     const legacyNote = buildLegacyUploadNote(trimmedJobNote, batchId);
@@ -422,9 +464,9 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
     const uploadResult = await uploadPendingFiles({
       items: uploadedFiles,
       payload: {
-        // Placeholder identity fields remain until LINE profile data is available.
-        customerName: UPLOAD_PLACEHOLDER_CUSTOMER_NAME,
-        phone: UPLOAD_PLACEHOLDER_PHONE,
+        customerName: lineSession?.displayName ?? UPLOAD_PLACEHOLDER_CUSTOMER_NAME,
+        phone: lineSession ? undefined : UPLOAD_PLACEHOLDER_PHONE,
+        lineIdToken: lineSession?.idToken,
         jobType,
         note: legacyNote,
         statusNote: trimmedJobNote || undefined,
@@ -458,7 +500,11 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
         kind: 'success',
         title: 'ส่งไฟล์สำเร็จ!',
         message: `อัปโหลดสำเร็จ ${uploadResult.successCount} ไฟล์`,
-        details: [`ประเภทงาน: ${selectedJobLabel}`, `ไฟล์ที่ส่งสำเร็จ: ${uploadResult.successCount} ไฟล์`],
+        details: [
+          `ประเภทงาน: ${selectedJobLabel}`,
+          `ไฟล์ที่ส่งสำเร็จ: ${uploadResult.successCount} ไฟล์`,
+          ...(lineSession ? [`ส่งผ่าน LINE: ${lineSession.displayName}`] : []),
+        ],
       });
     }
   };
@@ -469,7 +515,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
     inputRef.current?.click();
   };
 
-  const disableFileActions = isUploading;
+  const disableFileActions = isUploading || (lineMode && lineStatus !== 'ready');
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-indigo-50/40 px-4 py-5 pb-28 sm:px-6 sm:py-8 sm:pb-32 md:pb-8">
@@ -497,6 +543,22 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                 <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">รองรับไฟล์สูงสุด {MAX_FILE_SIZE_LABEL}</span>
                 <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700">อัปโหลดได้หลายไฟล์</span>
               </div>
+
+              {lineMode ? (
+                <div className={`mt-4 rounded-2xl border px-3.5 py-3 ${lineStatus === 'error' ? 'border-rose-200 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}`}>
+                  <div className="flex items-center gap-2">
+                    <span className={`h-2.5 w-2.5 rounded-full ${lineStatus === 'ready' ? 'bg-emerald-500' : lineStatus === 'error' ? 'bg-rose-500' : 'bg-amber-400'}`} />
+                    <p className={`text-sm font-semibold ${lineStatus === 'error' ? 'text-rose-800' : 'text-emerald-800'}`}>
+                      {lineStatus === 'ready' && lineSession
+                        ? `เชื่อมต่อ LINE แล้ว • ${lineSession.displayName}`
+                        : lineStatus === 'error'
+                          ? 'เชื่อมต่อ LINE ไม่สำเร็จ'
+                          : 'กำลังตรวจสอบบัญชี LINE...'}
+                    </p>
+                  </div>
+                  {lineStatus === 'error' ? <p className="mt-1.5 text-xs leading-5 text-rose-700">{lineError}</p> : null}
+                </div>
+              ) : null}
             </div>
 
             <div className="flex items-center gap-4 self-start sm:self-center">
@@ -759,9 +821,15 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                     </button>
                     <button
                       type="button"
-                      onClick={() => setFeedbackModal(null)}
+                      onClick={() => {
+                        if (lineSession?.isInClient) {
+                          closeLineLiffWindow();
+                          return;
+                        }
+                        setFeedbackModal(null);
+                      }}
                       className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
-                      รับทราบ
+                      {lineSession?.isInClient ? 'ปิดหน้าต่าง' : 'รับทราบ'}
                     </button>
                   </>
                 ) : (

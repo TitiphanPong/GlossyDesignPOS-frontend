@@ -83,9 +83,13 @@ export async function parseApiErrorResponse(res: Response): Promise<string> {
   return `Request failed with status ${res.status}`;
 }
 
-export async function fetchApi(path: string, init?: RequestInit): Promise<Response> {
+export async function fetchApi(
+  path: string,
+  init?: RequestInit,
+  options?: Readonly<{ redirectOnUnauthorized?: boolean }>,
+): Promise<Response> {
   const res = await fetch(buildApiUrl(path), init);
-  if (res.status === 401 && typeof window !== 'undefined') {
+  if (res.status === 401 && options?.redirectOnUnauthorized !== false && typeof window !== 'undefined') {
     const target = `${window.location.pathname}${window.location.search}`;
     window.location.replace(`/login?redirectTo=${encodeURIComponent(target)}`);
   }
@@ -95,8 +99,12 @@ export async function fetchApi(path: string, init?: RequestInit): Promise<Respon
   return res;
 }
 
-export async function fetchApiJson<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetchApi(path, init);
+export async function fetchApiJson<T>(
+  path: string,
+  init?: RequestInit,
+  options?: Readonly<{ redirectOnUnauthorized?: boolean }>,
+): Promise<T> {
+  const res = await fetchApi(path, init, options);
   return (await res.json()) as T;
 }
 
