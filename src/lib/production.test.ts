@@ -21,6 +21,7 @@ test('productionJobsPath serializes operational filters without payment fields',
     stage: 'producing',
     priority: 'rush',
     due: 'overdue',
+    active: true,
     assigneeUserId: 'staff-1',
     jobType: ' นามบัตร ',
     q: ' ORD-42 ',
@@ -33,6 +34,7 @@ test('productionJobsPath serializes operational filters without payment fields',
   assert.equal(url.searchParams.get('stage'), 'producing');
   assert.equal(url.searchParams.get('priority'), 'rush');
   assert.equal(url.searchParams.get('due'), 'overdue');
+  assert.equal(url.searchParams.get('active'), 'true');
   assert.equal(url.searchParams.get('assigneeUserId'), 'staff-1');
   assert.equal(url.searchParams.get('jobType'), 'นามบัตร');
   assert.equal(url.searchParams.get('q'), 'ORD-42');

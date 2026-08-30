@@ -47,6 +47,20 @@ test('low stock deep-links to the focused stock item', () => {
   );
 });
 
+test('production overdue deep-links to the active Production Board job', () => {
+  assert.equal(
+    getNotificationActionHref(
+      item({
+        type: 'production_overdue',
+        entityType: 'production_job',
+        entityId: 'job 99',
+        action: { label: 'เปิด Production Board', action: 'open_production_job' },
+      })
+    ),
+    '/home/production?active=true&focus=job%2099'
+  );
+});
+
 test('legacy order detail href is normalized to the current orders route', () => {
   assert.equal(
     getNotificationActionHref(item({ action: { label: 'ดูงาน', href: '/home/orders/order-99' } })),

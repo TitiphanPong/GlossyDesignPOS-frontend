@@ -27,7 +27,7 @@ export type Notification = {
   amount?: number;
   dueDate?: string;
   relatedUploadId?: string;
-  entityType?: 'order' | 'upload' | 'payment' | 'stock';
+  entityType?: 'order' | 'upload' | 'payment' | 'stock' | 'production_job';
   entityId?: string;
   action?: {
     label: string;

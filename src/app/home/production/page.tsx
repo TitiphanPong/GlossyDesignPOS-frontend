@@ -38,6 +38,7 @@ import {
   useTheme,
 } from '@mui/material';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
 import DataTable, { type DataTableColumn } from '../components/DataTable';
@@ -48,6 +49,7 @@ import {
   advanceProductionJob,
   bangkokLocalDateTimeToIso,
   createProductionJob,
+  getProductionJob,
   listProductionAssignees,
   listProductionJobs,
   nextProductionStage,
@@ -527,6 +529,7 @@ function CreateProductionJobDialog({
 }
 
 export default function ProductionPage() {
+  const searchParams = useSearchParams();
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down('md'));
   const [jobs, setJobs] = React.useState<ProductionJob[]>([]);
@@ -536,8 +539,15 @@ export default function ProductionPage() {
   const [search, setSearch] = React.useState('');
   const [searchQuery, setSearchQuery] = React.useState('');
   const [stage, setStage] = React.useState<StageFilter>('all');
-  const [due, setDue] = React.useState<ProductionDueFilter>('all');
-  const [priority, setPriority] = React.useState<PriorityFilter>('all');
+  const [due, setDue] = React.useState<ProductionDueFilter>(() => {
+    const value = searchParams.get('due');
+    return value === 'today' || value === 'overdue' ? value : 'all';
+  });
+  const [priority, setPriority] = React.useState<PriorityFilter>(() => {
+    const value = searchParams.get('priority');
+    return value === 'rush' || value === 'normal' ? value : 'all';
+  });
+  const [activeOnly] = React.useState(() => searchParams.get('active') === 'true');
   const [assigneeId, setAssigneeId] = React.useState('all');
   const [jobType, setJobType] = React.useState('all');
   const [knownJobTypes, setKnownJobTypes] = React.useState<string[]>([]);
@@ -583,6 +593,7 @@ export default function ProductionPage() {
         priority: priority === 'all' ? undefined : priority,
         assigneeUserId: assigneeId === 'all' ? undefined : assigneeId,
         jobType: jobType === 'all' ? undefined : jobType,
+        active: activeOnly || undefined,
         q: searchQuery || undefined,
       });
       setJobs(current => append ? appendUniqueJobs(current, response.items) : response.items);
@@ -599,9 +610,27 @@ export default function ProductionPage() {
       if (append) setLoadingMore(false);
       else setLoading(false);
     }
-  }, [assigneeId, due, jobType, priority, searchQuery, stage]);
+  }, [activeOnly, assigneeId, due, jobType, priority, searchQuery, stage]);
 
   React.useEffect(() => void load(1, false), [load]);
+
+  React.useEffect(() => {
+    const focusJobId = searchParams.get('focus');
+    if (!focusJobId) return;
+    let cancelled = false;
+    void getProductionJob(focusJobId)
+      .then(job => {
+        if (cancelled) return;
+        setJobs(current => appendUniqueJobs(current, [job]));
+        setSelectedJob(job);
+      })
+      .catch(focusError => {
+        if (!cancelled) setError(focusError instanceof Error ? focusError.message : 'เปิด Production Job ไม่สำเร็จ');
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [searchParams]);
 
   React.useEffect(() => {
     if (mobile) setView('board');

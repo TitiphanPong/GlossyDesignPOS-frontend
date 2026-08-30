@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 
-import { buildDashboardOrdersHref, fetchDashboardSummary } from './dashboard';
+import { buildDashboardOrdersHref, buildDashboardProductionHref, fetchDashboardSummary } from './dashboard';
 
 test('fetchDashboardSummary requests the selected Bangkok sale month', async () => {
   const originalFetch = globalThis.fetch;
@@ -42,6 +42,12 @@ test('builds a workflow drill-down that keeps the selected date range', () => {
     }),
     '/home/orders?startDate=2026-08-22&endDate=2026-08-28&workflowStatus=producing'
   );
+});
+
+test('builds executable Production Board urgency drill-downs for incomplete jobs', () => {
+  assert.equal(buildDashboardProductionHref('dueToday'), '/home/production?active=true&due=today');
+  assert.equal(buildDashboardProductionHref('overdue'), '/home/production?active=true&due=overdue');
+  assert.equal(buildDashboardProductionHref('rush'), '/home/production?active=true&priority=rush');
 });
 
 test('builds an outstanding drill-down for today', () => {

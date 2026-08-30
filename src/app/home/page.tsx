@@ -7,6 +7,7 @@ import dayjs from 'dayjs';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
+import LocalFireDepartmentRoundedIcon from '@mui/icons-material/LocalFireDepartmentRounded';
 import PaidRoundedIcon from '@mui/icons-material/PaidRounded';
 import PrecisionManufacturingRoundedIcon from '@mui/icons-material/PrecisionManufacturingRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
@@ -18,7 +19,7 @@ import GroupsRoundedIcon from '@mui/icons-material/GroupsRounded';
 import Link from 'next/link';
 import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts';
 import { isMissingApiBaseError } from '../../lib/api';
-import { buildDashboardOrdersHref, fetchDashboardSummary, type DashboardProduct, type DashboardSummary } from '../../lib/dashboard';
+import { buildDashboardOrdersHref, buildDashboardProductionHref, fetchDashboardSummary, type DashboardProduct, type DashboardSummary } from '../../lib/dashboard';
 import AdminPageContainer from './components/AdminPageContainer';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx } from './components/AdminHeroHeader';
 
@@ -460,6 +461,30 @@ export default function DashboardPage() {
       icon: CloudUploadRoundedIcon,
       color: '#0891B2',
       href: '/home/storage',
+    },
+    {
+      label: 'งานครบกำหนดวันนี้',
+      value: integer(operations.production.dueToday),
+      helper: 'เฉพาะ Production Job ที่ยังไม่จบ',
+      icon: ScheduleRoundedIcon,
+      color: '#D97706',
+      href: buildDashboardProductionHref('dueToday'),
+    },
+    {
+      label: 'งานเกินกำหนด',
+      value: integer(operations.production.overdue),
+      helper: 'เปิดคิวที่ต้องเร่งจัดการ',
+      icon: ScheduleRoundedIcon,
+      color: '#DC2626',
+      href: buildDashboardProductionHref('overdue'),
+    },
+    {
+      label: 'งาน Rush',
+      value: integer(operations.production.rush),
+      helper: 'งานเร่งด่วนที่ยังอยู่ระหว่างผลิต',
+      icon: LocalFireDepartmentRoundedIcon,
+      color: '#EA580C',
+      href: buildDashboardProductionHref('rush'),
     },
     { label: 'สต็อกต่ำ', value: integer(operations.lowStock), helper: 'ตรวจสอบรายการที่ต้องเติม', icon: Inventory2RoundedIcon, color: '#7C3AED', href: '/home/stock' },
   ];
