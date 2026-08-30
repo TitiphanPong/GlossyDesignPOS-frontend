@@ -10,6 +10,10 @@ import {
   Card,
   CardContent,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControl,
   IconButton,
   InputAdornment,
@@ -24,6 +28,9 @@ import {
   useTheme,
 } from '@mui/material';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
+import ContentCopyRoundedIcon from '@mui/icons-material/ContentCopyRounded';
+import DeleteForeverRoundedIcon from '@mui/icons-material/DeleteForeverRounded';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
@@ -45,7 +52,6 @@ import { normalizeRecord, type StorageRow, type StorageStatus, type UploadApiRec
 import {
   applyStorageRowPatch,
   buildPersistedNote,
-  getBulkMutationTargetIds,
   rowContainsAnySourceId,
   toEditableStorageStatus,
   toPersistedUploadStatus,
@@ -229,8 +235,8 @@ export default function StoragePage() {
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [actionMessage, setActionMessage] = React.useState<{ severity: 'success' | 'error'; text: string } | null>(null);
   const [persistingIds, setPersistingIds] = React.useState<string[]>([]);
-  const [bulkUpdating, setBulkUpdating] = React.useState(false);
-  const [bulkDeleting, setBulkDeleting] = React.useState(false);
+  const [deleteTarget, setDeleteTarget] = React.useState<StorageRow | null>(null);
+  const [deleteBusy, setDeleteBusy] = React.useState(false);
   const [drawerSaving, setDrawerSaving] = React.useState(false);
 
   const [search, setSearch] = React.useState('');
@@ -246,7 +252,6 @@ export default function StoragePage() {
   const [stats, setStats] = React.useState<StorageStats>(EMPTY_STORAGE_STATS);
   const deferredSearch = React.useDeferredValue(search.trim());
 
-  const [selectedIds, setSelectedIds] = React.useState<string[]>([]);
   const [drawerOpen, setDrawerOpen] = React.useState(false);
   const [activeRecord, setActiveRecord] = React.useState<StorageRow | null>(null);
 
@@ -424,7 +429,6 @@ export default function StoragePage() {
   const removeRows = React.useCallback(
     (targetIds: string[]) => {
       setRows(current => current.filter(row => !rowContainsAnySourceId(row, targetIds)));
-      setSelectedIds(current => current.filter(id => !targetIds.includes(id)));
 
       if (activeRecord?.sourceIds != null && rowContainsAnySourceId(activeRecord, targetIds)) {
         setDrawerOpen(false);
@@ -482,12 +486,6 @@ export default function StoragePage() {
     focusedUploadRef.current = null;
   }, [rows]);
 
-  const selectedIdSet = React.useMemo(() => new Set(selectedIds), [selectedIds]);
-
-  const selectedRows = React.useMemo(() => {
-    return filteredRows.filter(row => selectedIdSet.has(row.id));
-  }, [filteredRows, selectedIdSet]);
-
   const downloadUrl = React.useCallback((url: string, fileName: string) => {
     if (!url) return;
     const anchor = document.createElement('a');
@@ -500,65 +498,16 @@ export default function StoragePage() {
     anchor.remove();
   }, []);
 
-  const downloadSelected = React.useCallback(() => {
-    selectedRows.forEach(row => {
-      row.files.forEach(file => {
-        if (file.url) downloadUrl(file.url, file.name);
-      });
-    });
-  }, [downloadUrl, selectedRows]);
-
   const exportFiltered = React.useCallback(() => {
     const csv = toCsv(filteredRows);
     downloadCsvFile(csv, `storage-export-${new Date().toISOString().slice(0, 10)}.csv`);
   }, [filteredRows]);
 
-  const handleBulkStatus = React.useCallback(async () => {
-    if (selectedIds.length === 0) return;
-
-    const targetIds = getBulkMutationTargetIds(selectedIds, rowsById);
-    const nextStatus: StorageStatus = 'pending';
+  const handleDeleteConfirmed = React.useCallback(async () => {
+    if (!deleteTarget) return;
+    const targetIds = deleteTarget.sourceIds;
     setActionMessage(null);
-    setBulkUpdating(true);
-    trackPersistingIds(targetIds, true);
-
-    try {
-      const results = await Promise.allSettled(targetIds.map(rowId => persistUploadMutation(rowId, 'patch', { status: nextStatus })));
-      const succeeded = targetIds.filter((_, index) => results[index]?.status === 'fulfilled');
-      const failed = targetIds.length - succeeded.length;
-
-      if (succeeded.length > 0) {
-        applyRowPatch(succeeded, { status: nextStatus });
-      }
-
-      if (failed > 0) {
-        setActionMessage({
-          severity: 'error',
-          text: `อัปเดตสถานะสำเร็จ ${succeeded.length} จาก ${targetIds.length} รายการ กรุณาลองใหม่สำหรับรายการที่ยังไม่สำเร็จ`,
-        });
-      } else {
-        setActionMessage({ severity: 'success', text: `อัปเดตสถานะ ${targetIds.length} รายการแล้ว` });
-      }
-      await fetchUploads();
-    } catch (error) {
-      if (isMissingApiBaseError(error)) {
-        setMissingApiBase(true);
-      } else {
-        setActionMessage({ severity: 'error', text: getRequestErrorMessage(error, 'ไม่สามารถอัปเดตสถานะงานได้') });
-      }
-    } finally {
-      trackPersistingIds(targetIds, false);
-      setBulkUpdating(false);
-    }
-  }, [applyRowPatch, fetchUploads, persistUploadMutation, rowsById, selectedIds, trackPersistingIds]);
-
-  const handleBulkDelete = React.useCallback(async () => {
-    if (selectedIds.length === 0) return;
-    if (!confirm('ยืนยันการลบรายการที่เลือก?')) return;
-
-    const targetIds = getBulkMutationTargetIds(selectedIds, rowsById);
-    setActionMessage(null);
-    setBulkDeleting(true);
+    setDeleteBusy(true);
     trackPersistingIds(targetIds, true);
 
     try {
@@ -573,33 +522,24 @@ export default function StoragePage() {
       if (failed > 0) {
         setActionMessage({
           severity: 'error',
-          text: `ลบสำเร็จ ${succeeded.length} จาก ${targetIds.length} รายการ กรุณาลองใหม่สำหรับรายการที่ยังไม่สำเร็จ`,
+          text: `ลบสำเร็จ ${succeeded.length} จาก ${targetIds.length} ไฟล์ กรุณาลองใหม่สำหรับไฟล์ที่ยังไม่สำเร็จ`,
         });
       } else {
-        setActionMessage({ severity: 'success', text: `ลบ ${targetIds.length} รายการแล้ว` });
+        setActionMessage({ severity: 'success', text: 'ลบรายการออกจากคลังไฟล์แล้ว' });
+        setDeleteTarget(null);
       }
       await fetchUploads();
     } catch (error) {
       if (isMissingApiBaseError(error)) {
         setMissingApiBase(true);
       } else {
-        setActionMessage({ severity: 'error', text: getRequestErrorMessage(error, 'ไม่สามารถลบรายการที่เลือกได้') });
+        setActionMessage({ severity: 'error', text: getRequestErrorMessage(error, 'ไม่สามารถลบรายการได้') });
       }
     } finally {
       trackPersistingIds(targetIds, false);
-      setBulkDeleting(false);
+      setDeleteBusy(false);
     }
-  }, [fetchUploads, persistUploadMutation, removeRows, rowsById, selectedIds, trackPersistingIds]);
-
-  const allCurrentSelected = React.useMemo(() => filteredRows.length > 0 && filteredRows.every(row => selectedIdSet.has(row.id)), [filteredRows, selectedIdSet]);
-
-  const toggleSelectAll = React.useCallback(() => {
-    if (allCurrentSelected) {
-      setSelectedIds([]);
-      return;
-    }
-    setSelectedIds(filteredRows.map(row => row.id));
-  }, [allCurrentSelected, filteredRows]);
+  }, [deleteTarget, fetchUploads, persistUploadMutation, removeRows, trackPersistingIds]);
 
   const openDrawer = (row: StorageRow) => {
     setActiveRecord(row);
@@ -608,13 +548,6 @@ export default function StoragePage() {
     setDrawerOrderReference(row.linkedOrderNumber ?? '');
     setDrawerOpen(true);
   };
-
-  const handleRowSelectionChange = React.useCallback((rowId: string, checked: boolean) => {
-    setSelectedIds(current => {
-      if (checked) return current.includes(rowId) ? current : [...current, rowId];
-      return current.filter(id => id !== rowId);
-    });
-  }, []);
 
   const handleCopyFirstFileLink = React.useCallback(async (row: StorageRow) => {
     const firstFile = row.files.find(file => Boolean(file.url));
@@ -746,10 +679,8 @@ export default function StoragePage() {
           missingApiBase={missingApiBase}
           errorMessage={errorMessage}
           actionMessage={actionMessage}
-          selectedCount={selectedRows.length}
           onRefresh={() => void fetchUploads()}
           onExport={exportFiltered}
-          onDownloadSelected={downloadSelected}
         />
 
         <StorageToolbar
@@ -759,48 +690,77 @@ export default function StoragePage() {
           sortBy={sortBy}
           linkStatusFilter={linkStatusFilter}
           orderReferenceFilter={orderReferenceFilter}
-          selectedCount={selectedRows.length}
-          bulkUpdating={bulkUpdating}
-          bulkDeleting={bulkDeleting}
           onSearchChange={setSearch}
           onStatusChange={setStatusFilter}
           onDateRangeChange={setDateRange}
           onSortChange={setSortBy}
           onLinkStatusChange={setLinkStatusFilter}
           onOrderReferenceChange={setOrderReferenceFilter}
-          onDownloadSelected={downloadSelected}
-          onBulkStatus={() => void handleBulkStatus()}
-          onBulkDelete={() => void handleBulkDelete()}
         />
 
         <StorageTable
           rows={filteredRows}
           loading={loading}
           totalRows={totalRows}
-          selectedIds={selectedIds}
-          allCurrentSelected={allCurrentSelected}
           page={page}
           rowsPerPage={rowsPerPage}
-          onToggleSelectAll={toggleSelectAll}
-          onRowSelectionChange={handleRowSelectionChange}
           onOpenRow={openDrawer}
           onDownloadRow={handleDownloadRowFiles}
-          onCopyFirstFileLink={row => void handleCopyFirstFileLink(row)}
           onOpenRowMenu={openRowMenu}
-          onPageChange={nextPage => {
-            setSelectedIds([]);
-            setPage(nextPage);
-          }}
+          onPageChange={setPage}
           onRowsPerPageChange={nextRowsPerPage => {
-            setSelectedIds([]);
             setRowsPerPage(nextRowsPerPage);
             setPage(0);
           }}
         />
       </Stack>
 
-      <Menu open={Boolean(rowMenuAnchor)} anchorEl={rowMenuAnchor} onClose={closeRowMenu}>
+      <Menu
+        open={Boolean(rowMenuAnchor)}
+        anchorEl={rowMenuAnchor}
+        onClose={closeRowMenu}
+        slotProps={{
+          paper: {
+            sx: {
+              borderRadius: 3,
+              border: '1px solid #E6EDF7',
+              boxShadow: '0 16px 34px rgba(15, 23, 42, 0.14)',
+              p: 0.6,
+            },
+          },
+        }}>
         <MenuItem
+          onClick={() => {
+            if (rowMenuTarget) openDrawer(rowMenuTarget);
+            closeRowMenu();
+          }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <VisibilityRoundedIcon fontSize="small" />
+            <Typography sx={{ fontSize: 14 }}>ดูรายละเอียด</Typography>
+          </Stack>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (rowMenuTarget) handleDownloadRowFiles(rowMenuTarget);
+            closeRowMenu();
+          }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <DownloadRoundedIcon fontSize="small" />
+            <Typography sx={{ fontSize: 14 }}>ดาวน์โหลดไฟล์</Typography>
+          </Stack>
+        </MenuItem>
+        <MenuItem
+          onClick={() => {
+            if (rowMenuTarget) void handleCopyFirstFileLink(rowMenuTarget);
+            closeRowMenu();
+          }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <ContentCopyRoundedIcon fontSize="small" />
+            <Typography sx={{ fontSize: 14 }}>คัดลอกลิงก์ไฟล์</Typography>
+          </Stack>
+        </MenuItem>
+        <MenuItem
+          disabled={!rowMenuTarget || rowMenuTarget.status === 'completed' || rowMenuTarget.sourceIds.some(sourceId => persistingIds.includes(sourceId))}
           onClick={() => {
             if (rowMenuTarget) {
               void (async () => {
@@ -826,9 +786,42 @@ export default function StoragePage() {
             }
             closeRowMenu();
           }}>
-          เปลี่ยนสถานะเป็นเสร็จสิ้น
+          <Stack direction="row" spacing={1} alignItems="center">
+            <TaskAltRoundedIcon fontSize="small" />
+            <Typography sx={{ fontSize: 14 }}>เปลี่ยนสถานะเป็นเสร็จสิ้น</Typography>
+          </Stack>
+        </MenuItem>
+        <MenuItem
+          sx={{ color: '#B42318' }}
+          disabled={!rowMenuTarget || rowMenuTarget.sourceIds.some(sourceId => persistingIds.includes(sourceId))}
+          onClick={() => {
+            setDeleteTarget(rowMenuTarget);
+            closeRowMenu();
+          }}>
+          <Stack direction="row" spacing={1} alignItems="center">
+            <DeleteForeverRoundedIcon fontSize="small" />
+            <Typography sx={{ fontSize: 14 }}>ลบรายการ</Typography>
+          </Stack>
         </MenuItem>
       </Menu>
+
+      <Dialog open={Boolean(deleteTarget)} onClose={() => !deleteBusy && setDeleteTarget(null)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>ยืนยันการลบรายการ</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1.25}>
+            <Typography color="text.secondary">
+              ต้องการลบรายการของ <strong>{deleteTarget?.customerName}</strong> จำนวน {deleteTarget?.files.length.toLocaleString('th-TH') ?? 0} ไฟล์ใช่หรือไม่
+            </Typography>
+            <Typography sx={{ color: '#B42318', fontSize: 13 }}>การดำเนินการนี้จะลบไฟล์ออกจากคลังและไม่สามารถย้อนกลับได้</Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setDeleteTarget(null)} disabled={deleteBusy}>ยกเลิก</Button>
+          <Button color="error" variant="contained" startIcon={<DeleteForeverRoundedIcon />} disabled={deleteBusy} onClick={() => void handleDeleteConfirmed()}>
+            {deleteBusy ? 'กำลังลบ...' : 'ยืนยันลบรายการ'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <GlossyDetailDrawer
         mobile={isMobile}
@@ -889,7 +882,7 @@ export default function StoragePage() {
           <Stack spacing={isCompactDrawer ? 1.35 : 1.6}>
             <Card sx={{ borderRadius: 4, border: '1px solid #DCE8FA', boxShadow: 'none', bgcolor: '#FBFDFF' }}>
               <CardContent>
-                <Stack spacing={1.3}>
+                <Stack spacing={1.6}>
                   <Stack direction="row" alignItems="center" spacing={1.35}>
                     <Avatar
                       src={activeRecord.linePictureUrl}
@@ -904,20 +897,17 @@ export default function StoragePage() {
                       </Typography>
                     </Box>
                   </Stack>
-                  <Box>
-                    <Typography sx={{ color: '#64748B', fontSize: 12 }}>ชื่อลูกค้า</Typography>
-                    <Typography sx={{ mt: 0.2, color: '#0F172A', fontWeight: 750 }}>{activeRecord.customerName}</Typography>
-                  </Box>
-                  <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5}>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography sx={{ color: '#64748B', fontSize: 12 }}>เบอร์โทร</Typography>
-                      <Typography sx={{ mt: 0.2, color: '#334155' }}>{activeRecord.phone}</Typography>
+
+                  <Box sx={{ display: 'grid', rowGap: 1.4 }}>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography sx={{ color: '#64748B', fontSize: 12 }}>ชื่อลูกค้า</Typography>
+                      <Typography sx={{ mt: 0.2, color: '#0F172A', fontWeight: 750, overflowWrap: 'anywhere' }}>{activeRecord.customerName}</Typography>
                     </Box>
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Box sx={{ minWidth: 0 }}>
                       <Typography sx={{ color: '#64748B', fontSize: 12 }}>LINE User ID</Typography>
-                      <Typography sx={{ mt: 0.2, color: '#334155', fontSize: 12.5, overflowWrap: 'anywhere' }}>{activeRecord.lineId}</Typography>
+                      <Typography sx={{ mt: 0.2, color: '#334155', fontSize: 12.5, overflowWrap: 'anywhere' }}>{activeRecord.lineId || '-'}</Typography>
                     </Box>
-                  </Stack>
+                  </Box>
                 </Stack>
               </CardContent>
             </Card>

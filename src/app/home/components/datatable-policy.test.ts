@@ -5,7 +5,6 @@ import test from 'node:test';
 
 const DIRECT_TABLE_ROOT_ALLOWLIST = new Set([
   'src/app/home/components/DataTable.tsx',
-  'src/app/home/storage/StorageTable.tsx',
 ]);
 
 async function collectSourceFiles(directory: string): Promise<string[]> {
@@ -20,7 +19,7 @@ async function collectSourceFiles(directory: string): Promise<string[]> {
   return files.flat();
 }
 
-test('admin table roots use the shared Orders-style DataTable except Storage', async () => {
+test('admin table roots use the shared Orders-style DataTable', async () => {
   const root = process.cwd();
   const homeRoot = path.join(root, 'src', 'app', 'home');
   const sourceFiles = await collectSourceFiles(homeRoot);
@@ -39,6 +38,6 @@ test('admin table roots use the shared Orders-style DataTable except Storage', a
   assert.deepEqual(
     offenders,
     [],
-    `Admin table roots must use the shared DataTable; Storage is the only approved exception: ${offenders.join(', ')}`,
+    `Admin table roots must use the shared DataTable: ${offenders.join(', ')}`,
   );
 });

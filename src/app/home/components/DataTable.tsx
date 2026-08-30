@@ -65,17 +65,7 @@ export type DataTableSectionHeaderProps = {
 
 export function DataTableSectionHeader({ title, subtitle, countLabel }: Readonly<DataTableSectionHeaderProps>) {
   return (
-    <Box
-      sx={{
-        px: { xs: 2, md: 3 },
-        py: { xs: 2, md: 2.6 },
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: 1.5,
-        borderBottom: '1px solid #F3F4F6',
-        bgcolor: '#FFFFFF',
-      }}>
+    <Box sx={{ px: { xs: 2, md: 3 }, py: { xs: 2, md: 2.6 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, borderBottom: '1px solid #F3F4F6', bgcolor: '#FFFFFF' }}>
       <Box>
         <Typography sx={{ fontSize: 16, fontWeight: 800, color: '#1A1035', letterSpacing: '-0.2px' }}>{title}</Typography>
         {subtitle ? <Typography sx={{ mt: 0.35, fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>{subtitle}</Typography> : null}
@@ -100,6 +90,7 @@ export type DataTableProps<T> = {
   stickyHeader?: boolean;
   size?: 'small' | 'medium';
   minWidth?: number | string;
+  maxHeight?: number | string;
   emptyState?: DataTableEmptyStateProps;
   pagination?: DataTablePaginationProps;
   loading?: boolean;
@@ -120,6 +111,7 @@ export default function DataTable<T>({
   stickyHeader = true,
   size = 'small',
   minWidth,
+  maxHeight,
   emptyState,
   pagination,
   loading = false,
@@ -155,7 +147,7 @@ export default function DataTable<T>({
   return (
     <>
       {sectionHeader ? <DataTableSectionHeader {...sectionHeader} /> : null}
-      <Box sx={{ width: '100%', overflowX: 'auto' }}>
+      <Box sx={{ width: '100%', maxHeight, overflow: 'auto' }}>
         <Table stickyHeader={stickyHeader} size={size} sx={{ minWidth }}>
           <TableHead>
             <TableRow sx={dataTableHeaderRowSx}>

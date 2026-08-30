@@ -1,7 +1,4 @@
-import { Button, FormControl, Stack, TextField, Typography } from '@mui/material';
-import DeleteOutlineRoundedIcon from '@mui/icons-material/DeleteOutlineRounded';
-import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
-import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
+import { FormControl, TextField, Typography } from '@mui/material';
 import SortRoundedIcon from '@mui/icons-material/SortRounded';
 import LinkRoundedIcon from '@mui/icons-material/LinkRounded';
 import ReportFilterPanel, { EMPTY_DATE_RANGE, createDateRangeConfig, type ReportDateRangeValue } from '../components/ReportFilterPanel';
@@ -15,18 +12,12 @@ type StorageToolbarProps = {
   sortBy: SortType;
   linkStatusFilter: 'all' | 'linked' | 'unlinked';
   orderReferenceFilter: string;
-  selectedCount: number;
-  bulkUpdating: boolean;
-  bulkDeleting: boolean;
   onSearchChange: (value: string) => void;
   onStatusChange: (value: 'all' | StorageStatus) => void;
   onDateRangeChange: (value: ReportDateRangeValue) => void;
   onSortChange: (value: SortType) => void;
   onLinkStatusChange: (value: 'all' | 'linked' | 'unlinked') => void;
   onOrderReferenceChange: (value: string) => void;
-  onDownloadSelected: () => void;
-  onBulkStatus: () => void;
-  onBulkDelete: () => void;
 };
 
 export default function StorageToolbar(props: Readonly<StorageToolbarProps>) {
@@ -37,20 +28,13 @@ export default function StorageToolbar(props: Readonly<StorageToolbarProps>) {
     sortBy,
     linkStatusFilter,
     orderReferenceFilter,
-    selectedCount,
-    bulkUpdating,
-    bulkDeleting,
     onSearchChange,
     onStatusChange,
     onDateRangeChange,
     onSortChange,
     onLinkStatusChange,
     onOrderReferenceChange,
-    onDownloadSelected,
-    onBulkStatus,
-    onBulkDelete,
   } = props;
-  const noSelection = selectedCount === 0;
   const hasActiveFilters = Boolean(search) || statusFilter !== 'all' || dateRange.preset !== 'all' || sortBy !== 'newest' || linkStatusFilter !== 'all' || Boolean(orderReferenceFilter);
 
   const resetFilters = () => {
@@ -132,43 +116,7 @@ export default function StorageToolbar(props: Readonly<StorageToolbarProps>) {
             }}
           />
         </FormControl>
-      }>
-      <Stack
-        direction={{ xs: 'column', lg: 'row' }}
-        spacing={1.2}
-        useFlexGap
-        alignItems={{ xs: 'stretch', lg: 'center' }}
-        justifyContent="space-between"
-        sx={{ pt: 1.35, borderTop: '1px solid #F1F5F9' }}>
-        <Typography sx={{ fontSize: 12.5, color: '#7B8797', fontWeight: 500 }}>เลือกหลายรายการเพื่อดาวน์โหลด อัปเดตสถานะ หรือลบออกจากรายการ</Typography>
-        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.2} useFlexGap flexWrap="wrap">
-          <Button
-            onClick={onDownloadSelected}
-            disabled={noSelection}
-            variant="contained"
-            startIcon={<DownloadRoundedIcon />}
-            sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, minWidth: { sm: 156 }, bgcolor: '#215AE8', boxShadow: '0 14px 24px rgba(26, 89, 247, 0.28)' }}>
-            ดาวน์โหลดที่เลือก
-          </Button>
-          <Button
-            onClick={onBulkStatus}
-            disabled={noSelection || bulkUpdating || bulkDeleting}
-            variant="outlined"
-            startIcon={<EditNoteRoundedIcon />}
-            sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, minWidth: { sm: 180 } }}>
-            {bulkUpdating ? 'กำลังอัปเดต...' : 'ตั้งเป็นรอดำเนินการ'}
-          </Button>
-          <Button
-            onClick={onBulkDelete}
-            disabled={noSelection || bulkDeleting || bulkUpdating}
-            variant="outlined"
-            color="error"
-            startIcon={<DeleteOutlineRoundedIcon />}
-            sx={{ borderRadius: 3, textTransform: 'none', fontWeight: 700, minWidth: { sm: 132 } }}>
-            {bulkDeleting ? 'กำลังลบ...' : 'ลบที่เลือก'}
-          </Button>
-        </Stack>
-      </Stack>
-    </ReportFilterPanel>
+      }
+    />
   );
 }

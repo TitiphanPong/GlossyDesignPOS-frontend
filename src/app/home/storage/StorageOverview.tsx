@@ -1,13 +1,12 @@
 import { Alert, alpha, Box, Button, Card, CardContent, Stack, Typography } from '@mui/material';
 import AutorenewRoundedIcon from '@mui/icons-material/AutorenewRounded';
 import CloudUploadRoundedIcon from '@mui/icons-material/CloudUploadRounded';
-import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import FileDownloadDoneRoundedIcon from '@mui/icons-material/FileDownloadDoneRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import PendingActionsRoundedIcon from '@mui/icons-material/PendingActionsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
-import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
+import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx } from '../components/AdminHeroHeader';
 import { MissingApiConfigState } from '../components/dashboardUi';
 
 export type StorageStats = {
@@ -24,10 +23,8 @@ type StorageOverviewProps = {
   missingApiBase: boolean;
   errorMessage: string | null;
   actionMessage: { severity: 'success' | 'error'; text: string } | null;
-  selectedCount: number;
   onRefresh: () => void;
   onExport: () => void;
-  onDownloadSelected: () => void;
 };
 
 function StatCard({ title, value, subtitle, icon, tone }: Readonly<{ title: string; value: string; subtitle: string; icon: React.ReactNode; tone: string }>) {
@@ -56,7 +53,7 @@ function StatCard({ title, value, subtitle, icon, tone }: Readonly<{ title: stri
 }
 
 export default function StorageOverview(props: Readonly<StorageOverviewProps>) {
-  const { stats, lastSyncedAt, missingApiBase, errorMessage, actionMessage, selectedCount, onRefresh, onExport, onDownloadSelected } = props;
+  const { stats, lastSyncedAt, missingApiBase, errorMessage, actionMessage, onRefresh, onExport } = props;
   return (
     <>
       <AdminHeroHeader
@@ -88,14 +85,6 @@ export default function StorageOverview(props: Readonly<StorageOverviewProps>) {
                 variant="outlined"
                 sx={heroOutlineButtonSx}>
                 ส่งออก
-              </Button>
-              <Button
-                onClick={onDownloadSelected}
-                disabled={selectedCount === 0}
-                variant="contained"
-                startIcon={<DownloadRoundedIcon />}
-                sx={heroPrimaryButtonSx}>
-                ดาวน์โหลดที่เลือก
               </Button>
           </>
         }
