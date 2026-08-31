@@ -211,12 +211,8 @@ Recommended cleanup if env files are tracked:
 git rm --cached .env.local .env.production
 ```
 
-## Codex Automation
+## Legacy Codex Automation
 
-This repo also includes local and GitHub-based TODO automation helpers:
+The repository still retains the historical Codex queue scripts and workflow files for reference, but they are no longer an active work queue. The legacy GitHub workflows are inert and the old `codex:todo:*` npm entry points have been removed.
 
-- `npm run codex:todo:prepare`
-- `npm run codex:todo:complete`
-- `npm run codex:todo:cycle`
-
-These scripts read from `TODO.md`, prepare a selected task, and help automate bounded change sets and verification.
+Governance V2 uses the workspace-root `TODO.md` as the sole active execution backlog. Cross-repository governance files are versioned separately in `TitiphanPong/GlossyDesign-Governance`; do not reintroduce a Frontend-local TODO queue or automation that mutates one independently.
