@@ -6,9 +6,9 @@ export const metadata: Metadata = {
   title: 'Glossy Design | Premium Printing & Branding',
   description: 'Glossy Design คือสตูดิโองานพิมพ์และงานแบรนด์ระดับพรีเมียมสำหรับนามบัตร แพ็กเกจ ป้าย และสื่อสิ่งพิมพ์ทุกประเภท',
   icons: {
-    icon: '/logo/logo.png',
-    shortcut: '/logo/logo.png',
-    apple: '/logo/logo.png',
+    icon: '/logo/logo_website.png',
+    shortcut: '/logo/logo_website.png',
+    apple: '/logo/logo_website.png',
   },
 };
 
