@@ -100,6 +100,235 @@
 .services { display:flex; justify-content:center; gap:17px; margin-top:18px; font-size:16px; white-space:nowrap; opacity:.9; }
 .cta { justify-self:end; background:white; color:#092b65; border-radius:30px; padding:13px 20px; font-size:15px; font-weight:800; margin-top:4px; box-shadow:0 8px 18px rgba(0,0,0,.13); }
 
-@media (max-width: 1100px) {
-  .stage { transform-origin: top left; }
+@media (max-width: 720px) {
+  .stage {
+    width: 100%;
+    max-width: 480px;
+    height: auto;
+    min-width: 0;
+    overflow: hidden;
+    border-radius: 28px;
+    box-shadow: 0 18px 46px rgba(4, 31, 76, 0.14);
+  }
+
+  .stage::before {
+    width: 430px;
+    height: 430px;
+    top: -245px;
+    left: -185px;
+  }
+
+  .header {
+    height: auto;
+    padding: 34px 22px 22px;
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .eyebrow {
+    font-size: 12px;
+    letter-spacing: .14em;
+  }
+
+  .headline {
+    margin-top: 7px;
+    max-width: 100%;
+    font-size: clamp(42px, 13vw, 58px);
+    line-height: .98;
+    letter-spacing: -.05em;
+    text-wrap: balance;
+  }
+
+  .subheadline {
+    margin-top: 15px;
+    max-width: 100%;
+    font-size: 16px;
+    line-height: 1.55;
+  }
+
+  .heroVisual {
+    width: 100%;
+    height: 154px;
+    border-radius: 24px;
+    overflow: hidden;
+    background: linear-gradient(145deg, rgba(255,255,255,.82), rgba(235,244,255,.92));
+    border: 1px solid rgba(11,45,98,.08);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.92), 0 12px 28px rgba(17,49,92,.08);
+  }
+
+  .folder {
+    width: 142px;
+    height: 92px;
+    right: 54px;
+    top: 43px;
+    border-radius: 16px 16px 22px 22px;
+    box-shadow: 0 14px 24px rgba(8, 49, 123, .22), inset 0 1px 0 rgba(255,255,255,.45);
+  }
+
+  .folder::before {
+    width: 58px;
+    height: 22px;
+    left: 12px;
+    top: -14px;
+    border-radius: 10px 12px 0 0;
+  }
+
+  .fileChip {
+    width: 50px;
+    height: 66px;
+    top: 22px;
+    border-radius: 10px;
+    font-size: 14px;
+    box-shadow: 0 9px 16px rgba(0,0,0,.14);
+  }
+
+  .fileChip:nth-child(2) { right: 135px; top: 21px; }
+  .fileChip:nth-child(3) { right: 91px; top: 15px; }
+  .fileChip:nth-child(4) { right: 46px; top: 24px; }
+
+  .visualCheck {
+    right: 24px;
+    bottom: 16px;
+    width: 42px;
+    height: 42px;
+    font-size: 27px;
+  }
+
+  .columns {
+    grid-template-columns: 1fr;
+    gap: 16px;
+    padding: 0 16px 18px;
+  }
+
+  .column {
+    height: auto;
+    border-radius: 24px;
+  }
+
+  .columnHeader {
+    height: 58px;
+    gap: 10px;
+    font-size: 24px;
+  }
+
+  .badge {
+    width: 30px;
+    height: 30px;
+  }
+
+  .card {
+    height: auto;
+    min-height: 128px;
+    grid-template-columns: 88px minmax(0, 1fr);
+    gap: 15px;
+    padding: 18px;
+  }
+
+  .cardTitle {
+    font-size: 18px;
+    line-height: 1.28;
+  }
+
+  .cardEmphasis {
+    margin-top: 2px;
+    font-size: 20px;
+    line-height: 1.24;
+  }
+
+  .cardBody {
+    margin-top: 7px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .iconTile {
+    width: 84px;
+    height: 80px;
+    border-radius: 16px;
+  }
+
+  .miniFiles { gap: 3px; }
+  .miniFile { width: 22px; height: 38px; border-radius: 5px; font-size: 8px; }
+  .picture { width: 64px; height: 48px; border-radius: 9px; }
+  .picture::after { width: 34px; height: 34px; top: 6px; right: 6px; }
+  .original { width: 62px; height: 42px; border-radius: 7px; font-size: 9px; }
+  .phone { width: 42px; height: 68px; border-radius: 9px; padding: 5px; }
+  .phoneScreen { border-radius: 5px; }
+  .pixel { width: 64px; height: 52px; background-size: 17px 17px; border-radius: 7px; }
+  .smallFile { width: 48px; height: 60px; border-radius: 6px; }
+  .smallFile::after { bottom: 8px; left: 5px; right: 5px; padding: 3px 0; font-size: 7px; }
+  .warning { right: 5px; bottom: 5px; width: 23px; height: 23px; font-size: 14px; }
+
+  .tip {
+    position: relative;
+    left: auto;
+    bottom: auto;
+    min-width: 0;
+    max-width: none;
+    height: auto;
+    margin: 0 16px 18px;
+    padding: 15px 16px;
+    border-radius: 20px;
+    gap: 12px;
+  }
+
+  .bulb {
+    width: 40px;
+    height: 40px;
+    font-size: 21px;
+  }
+
+  .tipText {
+    min-width: 0;
+    font-size: 14px;
+    line-height: 1.42;
+  }
+
+  .footer {
+    position: relative;
+    left: auto;
+    right: auto;
+    bottom: auto;
+    height: auto;
+    border-radius: 28px 28px 0 0;
+    padding: 24px 18px 22px;
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .brand {
+    justify-content: center;
+  }
+
+  .brand img {
+    width: 46px;
+    height: 46px;
+  }
+
+  .brandWord {
+    font-size: 20px;
+  }
+
+  .brandSmall {
+    font-size: 8px;
+    margin-top: 5px;
+  }
+
+  .services {
+    margin-top: 0;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 8px 14px;
+    font-size: 13px;
+    white-space: normal;
+  }
+
+  .cta {
+    width: 100%;
+    justify-self: stretch;
+    margin-top: 0;
+    padding: 13px 18px;
+    text-align: center;
+    font-size: 14px;
+  }
 }

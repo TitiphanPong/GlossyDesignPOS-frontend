@@ -14,9 +14,10 @@ export default function ArtworkPocPage() {
         minHeight: '100vh',
         display: 'grid',
         placeItems: 'start center',
-        padding: '32px',
-        overflow: 'auto',
-        background: '#dfe7f1',
+        padding: 'clamp(12px, 3vw, 32px)',
+        overflowX: 'hidden',
+        overflowY: 'auto',
+        background: 'linear-gradient(180deg, #dfe9f6 0%, #eef4fb 42%, #dfe7f1 100%)',
       }}
     >
       <PremiumEditorialArtwork data={printFileArtworkSample} />
