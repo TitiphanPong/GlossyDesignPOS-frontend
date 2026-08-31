@@ -402,6 +402,7 @@ export default function StockPage() {
               <MenuItem value="issue">เบิกใช้</MenuItem>
               {privileged && <MenuItem value="adjustment_in">ปรับเพิ่ม</MenuItem>}
               {privileged && <MenuItem value="adjustment_out">ปรับลด</MenuItem>}
+              {privileged && <MenuItem value="waste">ของเสีย</MenuItem>}
             </TextField>
             <TextField label="จำนวน" type="number" value={quantity} onChange={event => setQuantity(event.target.value)} slotProps={{ htmlInput: { min: 0.000001, step: 'any' } }} />
             <TextField label="เหตุผล" multiline minRows={3} value={reason} onChange={event => setReason(event.target.value)} />

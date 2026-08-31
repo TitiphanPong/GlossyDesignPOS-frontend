@@ -1,5 +1,5 @@
 import { extractArrayPayload, extractObjectPayload, fetchApi, fetchApiJson, isRecord } from './api';
-import type { Product, ProductVariant } from './contracts';
+import type { Product, ProductRecipe, ProductVariant } from './contracts';
 
 const PRODUCT_CACHE_TTL_MS = 30_000;
 type ProductCacheEntry = { expiresAt: number; promise: Promise<Product[]> };
@@ -41,6 +41,21 @@ function readBoolean(value: unknown, fallback = true): boolean {
   return fallback;
 }
 
+function normalizeRecipe(value: unknown): ProductRecipe | undefined {
+  if (!Array.isArray(value)) return undefined;
+  return value.flatMap(component => {
+    if (!isRecord(component)) return [];
+    const stockItemId = readString(component.stockItemId);
+    const unit = readString(component.unit);
+    const quantity = readNumber(component.quantity, Number.NaN);
+    const conversionFactor = component.conversionFactor == null
+      ? undefined
+      : readNumber(component.conversionFactor, Number.NaN);
+    if (!stockItemId || !unit || !(quantity > 0) || (conversionFactor !== undefined && !(conversionFactor > 0))) return [];
+    return [{ stockItemId, quantity, unit, conversionFactor }];
+  });
+}
+
 function fallbackTypeCode(name: string, category: string): string {
   const source = `${category || name}`
     .toLowerCase()
@@ -62,6 +77,7 @@ function normalizeProductVariant(value: unknown): ProductVariant {
     sides: readString(raw.sides) || undefined,
     size: readString(raw.size) || undefined,
     active: readBoolean(raw.active, true),
+    recipe: normalizeRecipe(raw.recipe),
   };
 }
 
@@ -99,6 +115,7 @@ function normalizeProduct(value: unknown): Product | null {
     priceDisplayMode: value.priceDisplayMode === 'STARTING_AT' ? 'STARTING_AT' : 'FIXED',
     createdAt: readString(value.createdAt) || undefined,
     updatedAt: readString(value.updatedAt) || undefined,
+    recipe: normalizeRecipe(value.recipe),
     variants,
   };
 }
