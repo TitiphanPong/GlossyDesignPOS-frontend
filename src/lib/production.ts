@@ -26,6 +26,8 @@ export type ProductionJob = {
   assignee: { id: string; username: string } | null;
   internalNote?: string;
   linkedUploadIds: string[];
+  orderLineIndexes: number[];
+  materialIssuedAt?: string | null;
   stage: ProductionStage;
   customerMilestone: 'received' | 'in_progress' | 'ready' | 'completed';
   stageHistory: ProductionStageHistoryEntry[];
@@ -68,6 +70,7 @@ export type CreateProductionJobInput = {
   assigneeUserId?: string;
   internalNote?: string;
   linkedUploadIds?: string[];
+  orderLineIndexes?: number[];
 };
 
 export function bangkokLocalDateTimeToIso(value: string): string {
@@ -139,7 +142,7 @@ export function advanceProductionJob(id: string, stage: ProductionStage) {
 
 export function updateProductionJob(
   id: string,
-  patch: { assigneeUserId?: string; internalNote?: string; jobType?: string; linkedUploadIds?: string[] },
+  patch: { assigneeUserId?: string; internalNote?: string; jobType?: string; linkedUploadIds?: string[]; orderLineIndexes?: number[] },
 ) {
   return fetchApiJson<ProductionJob>(`/production/jobs/${encodeURIComponent(id)}`, {
     method: 'PATCH',

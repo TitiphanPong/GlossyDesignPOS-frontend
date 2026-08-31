@@ -95,6 +95,26 @@ test('customer documents render a secure tracking QR when staff-issued access is
   assert.doesNotMatch(receiptHtml, /order=ORD-2026-00123/);
 });
 
+test('tax invoice keeps document numbers above the header and the issued date below the title', () => {
+  const trackingToken = 'F'.repeat(43);
+  const html = renderToStaticMarkup(
+    InvoiceDocument({
+      documentType: 'tax-invoice',
+      order: sampleOrder,
+      trackingOrigin: 'https://pos.example.com',
+      trackingToken,
+    })
+  );
+
+  assert.equal(html.match(/data-invoice-region="issued-date"/g)?.length, 2);
+  assert.equal(html.match(/data-invoice-region="tracking-qr"/g)?.length, 2);
+  assert.ok(html.indexOf('เล่มที่ Book No.') < html.indexOf('data-invoice-region="company-header"'));
+  assert.ok(html.indexOf('เลขที่ Invoice No.') < html.indexOf('data-invoice-region="company-header"'));
+  assert.ok(html.indexOf('data-invoice-region="company-header"') < html.indexOf('data-invoice-region="document-title"'));
+  assert.ok(html.indexOf('data-invoice-region="document-title"') < html.indexOf('data-invoice-region="issued-date"'));
+  assert.ok(html.indexOf('data-invoice-region="company-information"') < html.indexOf('data-invoice-region="tracking-qr"'));
+});
+
 test('customer documents remain printable when tracking QR generation is unavailable', () => {
   const html = renderToStaticMarkup(InvoiceDocument({ documentType: 'receipt', order: sampleOrder }));
 

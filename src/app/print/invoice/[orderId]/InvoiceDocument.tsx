@@ -248,14 +248,14 @@ function TrackingQr({ trackingUrl, compact = false }: Readonly<{ trackingUrl?: s
     return null;
   }
 
-  const size = compact ? '12mm' : '24mm';
+  const size = compact ? '21mm' : '24mm';
 
   return (
-    <Stack alignItems="center" spacing={compact ? '0.4mm' : '1mm'} sx={{ flexShrink: 0, textAlign: 'center' }}>
+    <Stack data-invoice-region="tracking-qr" alignItems="center" spacing="1mm" sx={{ flexShrink: 0, textAlign: 'center' }}>
       <Box sx={{ width: size, height: size, display: 'grid', placeItems: 'center', bgcolor: '#fff' }}>
-        <QRCodeSVG value={trackingUrl} size={compact ? 45 : 91} level="M" marginSize={0} title="Order tracking QR" />
+        <QRCodeSVG value={trackingUrl} size={compact ? 79 : 91} level="M" marginSize={0} title="Order tracking QR" />
       </Box>
-      <Typography sx={{ fontSize: compact ? '1.7mm' : '2.35mm', fontWeight: 700, lineHeight: 1.15 }}>ติดตามสถานะงาน</Typography>
+      <Typography sx={{ fontSize: compact ? '2.3mm' : '2.35mm', fontWeight: 600, lineHeight: 1.15 }}>ติดตามสถานะงาน</Typography>
     </Stack>
   );
 }
@@ -310,7 +310,6 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
       sx={{
         width: `${COPY_WIDTH_MM}mm`,
         height: `${PAGE_HEIGHT_MM}mm`,
-        border: BORDER,
         boxSizing: 'border-box',
         px: '2mm',
         py: '1.8mm',
@@ -325,41 +324,65 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
         breakInside: 'avoid',
       }}>
       <Stack spacing="0.8mm">
-        <Box sx={{ display: 'grid', gridTemplateColumns: '56% 44%' }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: trackingUrl ? '1fr 40mm' : '56% 44%' }}>
           <Box sx={{ px: '1.4mm', py: '1.1mm' }}>
             <Typography sx={{ fontSize: '3mm', lineHeight: 1.2 }}>เล่มที่ Book No. {invoiceData.bookNo}</Typography>
           </Box>
-          <Box sx={{ pl: '4mm', py: '1.1mm', textAlign: 'left' }}>
+          <Box sx={{ pl: trackingUrl ? 0 : '4mm', py: '1.1mm', textAlign: trackingUrl ? 'center' : 'right' }}>
             <Typography sx={{ fontSize: '3mm', lineHeight: 1.2 }}>เลขที่ Invoice No. {invoiceData.invoiceNo}</Typography>
           </Box>
         </Box>
 
-        <Box sx={{ px: '1mm', py: '1.5mm' }}>
-          <Box sx={{ display: 'grid', gridTemplateColumns: '56% 44%', alignItems: 'start' }}>
-            <Box sx={{ pr: '4mm', textAlign: 'left' }}>
-              <Typography sx={{ fontSize: '3.2mm', fontWeight: 800, lineHeight: 1.1, color: '#000' }}>
+        <Box
+          data-invoice-region="company-header"
+          sx={{
+            mt: '1.5mm',
+            mb: '2mm',
+            position: 'relative',
+            minHeight: trackingUrl ? '25mm' : 'auto',
+            bgcolor: '#fff',
+            overflow: 'visible',
+          }}>
+          <Box
+            sx={{
+              pr: trackingUrl ? '40mm' : 0,
+              minHeight: trackingUrl ? '25mm' : 'auto',
+              display: 'flex',
+              alignItems: 'center',
+            }}>
+            <Box
+              data-invoice-region="company-information"
+              sx={{
+                minWidth: 0,
+                px: '1mm',
+                py: '0.8mm',
+              }}>
+              <Typography sx={{ fontSize: '3.45mm', fontWeight: 800, lineHeight: 1.1, color: '#000' }}>
                 {invoiceData.company.thaiName}{' '}
                 <Box component="span" sx={{ fontSize: '2.7mm', fontWeight: 400 }}>
-                  (สาขา 00001)
+                  (สาขา {invoiceData.company.branchNumber})
                 </Box>
               </Typography>
-              <Typography sx={{ mt: '0.5mm', fontSize: '3.2mm', fontWeight: 700, lineHeight: 1.1, color: '#000' }}>
+              <Typography sx={{ mt: '0.7mm', fontSize: '3.45mm', fontWeight: 700, lineHeight: 1.1, color: '#000' }}>
                 {invoiceData.company.englishName}{' '}
                 <Box component="span" sx={{ fontSize: '2.7mm', fontWeight: 400 }}>
-                  (Branch 00001)
+                  (Branch {invoiceData.company.branchNumber})
                 </Box>
               </Typography>
-              <Typography sx={{ mt: '1mm', fontSize: '2.75mm', lineHeight: 1.2, color: '#000' }}>Tax ID : {invoiceData.company.taxId}</Typography>
-            </Box>
-            <Box sx={{ pl: '4mm', borderLeft: '0.2mm solid #555', textAlign: 'left' }}>
-              <Typography sx={{ fontSize: '3mm', fontWeight: 400, lineHeight: 1.2, color: '#000' }}>{invoiceData.company.address}</Typography>
-              <Typography sx={{ mt: '0.55mm', fontSize: '2.75mm', lineHeight: 1.2, color: '#000' }}>โทร / Phone : {invoiceData.company.phone}</Typography>
-              <Typography sx={{ mt: '0.25mm', fontSize: '2.75mm', lineHeight: 1.2, color: '#000' }}>Email : {invoiceData.company.email}</Typography>
+              <Typography sx={{ mt: '0.7mm', fontSize: '2.75mm', lineHeight: 1.2, color: '#000' }}>
+                Tax ID : {invoiceData.company.taxId} โทร / Phone : {invoiceData.company.phone}
+              </Typography>
+              <Typography sx={{ mt: '0.55mm', fontSize: '2.75mm', lineHeight: 1.2, color: '#000' }}>{invoiceData.company.address}</Typography>
             </Box>
           </Box>
+          {trackingUrl ? (
+            <Box sx={{ position: 'absolute', top: '50%', right: 0, width: '40mm', transform: 'translateY(-50%)', display: 'grid', placeItems: 'center' }}>
+              <TrackingQr trackingUrl={trackingUrl} compact />
+            </Box>
+          ) : null}
         </Box>
 
-        <Box sx={{ position: 'relative', border: BORDER, px: '1.6mm', py: '1.3mm', minHeight: '14.4mm' }}>
+        <Box data-invoice-region="document-title" sx={{ position: 'relative', px: '1.6mm', py: '1.3mm', minHeight: '14.4mm' }}>
           <Typography
             sx={{
               position: 'absolute',
@@ -368,13 +391,31 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
               transform: 'translate(-50%, -50%)',
               width: '100%',
               px: '20mm',
-              fontSize: '4.8mm',
+              fontSize: '5.6mm',
               fontWeight: 700,
               lineHeight: 1.2,
               textAlign: 'center',
             }}>
             {renderedCopyTitle}
           </Typography>
+        </Box>
+
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+          <Box
+            data-invoice-region="issued-date"
+            sx={{
+              width: '43mm',
+              bgcolor: '#f3f3f3',
+              px: '2mm',
+              py: '1.15mm',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'baseline',
+              gap: '1.5mm',
+            }}>
+            <Typography sx={{ fontSize: '2.65mm', fontWeight: 700, lineHeight: 1.15, whiteSpace: 'nowrap' }}>วันที่ / Date</Typography>
+            <Typography sx={{ fontSize: '3.2mm', fontWeight: 800, lineHeight: 1.15, whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{invoiceData.dateLine}</Typography>
+          </Box>
         </Box>
       </Stack>
 
@@ -441,7 +482,7 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
         </Box>
       </Box>
 
-      <Box sx={{ border: BORDER, bgcolor: '#fff' }}>
+      <Box sx={{ bgcolor: '#fff' }}>
         <Stack spacing={0}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: '1.8mm', py: '1.1mm', borderBottom: DOTTED_BORDER }}>
             <Typography sx={{ fontSize: '3mm', fontWeight: 400, lineHeight: 1.2 }}>รวมมูลค่าสินค้า / TOTAL</Typography>
@@ -461,7 +502,7 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
               <Box sx={{ px: '1.5mm', py: '0.4mm', bgcolor: '#E5E7EB', whiteSpace: 'nowrap' }}>
                 <Typography sx={{ fontSize: '4.6mm', fontWeight: 400, lineHeight: 1.2, whiteSpace: 'nowrap' }}>{invoiceData.amountInWords}</Typography>
               </Box>
-              <Typography sx={{ fontSize: '2.4mm', fontWeight: 600, lineHeight: 1.15 }}>จำนวนเงินเป็นตัวอักษร / Amount in Words</Typography>
+              <Typography sx={{ fontSize: '2.4mm', fontWeight: 500, lineHeight: 1.15 }}>จำนวนเงินเป็นตัวอักษร / Amount in Words</Typography>
             </Stack>
           </Box>
         </Stack>
@@ -492,10 +533,8 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
           </Box>
         </Box>
 
-        <Box sx={{ mt: '1.2mm', px: '1.5mm', py: '0.8mm', borderTop: DOTTED_BORDER, display: 'grid', gridTemplateColumns: trackingUrl ? 'auto 1fr auto' : 'auto 1fr', columnGap: '3mm', alignItems: 'center' }}>
-          <Typography sx={{ fontSize: '3.2mm', fontWeight: 700, lineHeight: 1.2, whiteSpace: 'nowrap' }}>วันที่ / Date : {invoiceData.dateLine}</Typography>
-          <Typography sx={{ minWidth: 0, fontSize: '2.3mm', lineHeight: 1.2, textAlign: 'right' }}>{invoiceData.notes}</Typography>
-          <TrackingQr trackingUrl={trackingUrl} compact />
+        <Box sx={{ mt: '1.2mm', px: '1.5mm', py: '0.8mm', borderTop: DOTTED_BORDER }}>
+          <Typography sx={{ minWidth: 0, fontSize: '2.3mm', lineHeight: 1.2, textAlign: 'center' }}>{invoiceData.notes}</Typography>
         </Box>
       </Box>
     </Box>
@@ -559,7 +598,6 @@ export function ReceiptTemplate({ invoiceData, trackingUrl }: Readonly<{ invoice
         <Stack spacing="1mm" alignItems="center" textAlign="center">
           <Typography sx={{ fontSize: '4.5mm', fontWeight: 800, lineHeight: 1.15 }}>{invoiceData.company.thaiName}</Typography>
           {invoiceData.company.englishName !== '-' ? <Typography sx={{ fontSize: '2.7mm', lineHeight: 1.2 }}>{invoiceData.company.englishName}</Typography> : null}
-
         </Stack>
 
         <Box sx={{ borderTop: '0.3mm dashed #111827', borderBottom: '0.3mm dashed #111827', py: '2.5mm', textAlign: 'center' }}>

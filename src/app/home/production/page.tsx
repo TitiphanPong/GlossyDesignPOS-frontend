@@ -19,6 +19,7 @@ import {
   Card,
   CardActionArea,
   CardContent,
+  Checkbox,
   Chip,
   CircularProgress,
   Dialog,
@@ -26,6 +27,7 @@ import {
   DialogContent,
   DialogTitle,
   Divider,
+  FormControlLabel,
   InputAdornment,
   MenuItem,
   Stack,
@@ -373,8 +375,26 @@ function JobTicketDrawer({
 
             <Card variant="outlined" sx={{ borderRadius: 3 }}>
               <CardContent>
-                <Typography fontWeight={900}>วัสดุ / Stock reference</Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>ยังไม่มีรายการวัสดุที่เชื่อมกับ Job Ticket นี้</Typography>
+                <Stack spacing={1}>
+                  <Typography fontWeight={900}>วัสดุ / BOM</Typography>
+                  <Stack direction="row" gap={0.75} flexWrap="wrap" useFlexGap>
+                    <Chip
+                      size="small"
+                      variant="outlined"
+                      label={job.orderLineIndexes.length ? `Order line ${job.orderLineIndexes.map(index => index + 1).join(', ')}` : 'ทุก Order line (single Job)'}
+                    />
+                    <Chip
+                      size="small"
+                      color={job.materialIssuedAt ? 'success' : 'default'}
+                      label={job.materialIssuedAt ? 'ตัดวัสดุแล้ว' : 'ยังไม่ตัดวัสดุ'}
+                    />
+                  </Stack>
+                  <Typography variant="body2" color="text.secondary">
+                    {job.materialIssuedAt
+                      ? `บันทึก Stock issue แบบ append-only เมื่อ ${formatDue(job.materialIssuedAt)}`
+                      : 'ระบบจะอ่านสูตรจาก Product/Variant และตัด Stock เมื่อ Job เข้าสู่ขั้นผลิต; ถ้าสูตรไม่ครบระบบจะหยุดและแจ้งข้อผิดพลาด'}
+                  </Typography>
+                </Stack>
               </CardContent>
             </Card>
       </Stack>
@@ -401,6 +421,7 @@ function CreateProductionJobDialog({
   const [orderSearch, setOrderSearch] = React.useState('');
   const [orders, setOrders] = React.useState<NormalizedOrder[]>([]);
   const [selectedOrderId, setSelectedOrderId] = React.useState('');
+  const [orderLineIndexes, setOrderLineIndexes] = React.useState<number[]>([]);
   const [workSummary, setWorkSummary] = React.useState('');
   const [jobType, setJobType] = React.useState('');
   const [dueAtLocal, setDueAtLocal] = React.useState(defaultBangkokDueLocal);
@@ -424,7 +445,15 @@ function CreateProductionJobDialog({
     try {
       const response = await fetchOrdersPage({ search: orderSearch.trim() || undefined, limit: 10 });
       setOrders(response.data);
-      if (response.data.length === 1) setSelectedOrderId(response.data[0]._id);
+      if (response.data.length === 1) {
+        const onlyOrder = response.data[0];
+        setSelectedOrderId(onlyOrder._id);
+        setOrderLineIndexes(onlyOrder.cart.map((_, index) => index));
+        if (!workSummary.trim()) {
+          const summary = onlyOrder.cart.map(item => item.name).filter(Boolean).slice(0, 3).join(', ');
+          if (summary) setWorkSummary(summary);
+        }
+      }
     } catch (searchError) {
       setError(searchError instanceof Error ? searchError.message : 'ค้นหา Order ไม่สำเร็จ');
     } finally {
@@ -435,6 +464,7 @@ function CreateProductionJobDialog({
   const selectOrder = (id: string) => {
     setSelectedOrderId(id);
     const order = orders.find(item => item._id === id);
+    setOrderLineIndexes(order?.cart.map((_, index) => index) ?? []);
     if (!order || workSummary.trim()) return;
     const summary = order.cart.map(item => item.name).filter(Boolean).slice(0, 3).join(', ');
     if (summary) setWorkSummary(summary);
@@ -445,6 +475,10 @@ function CreateProductionJobDialog({
     const selectedOrder = orders.find(order => order._id === selectedOrderId);
     if (!selectedOrder) {
       setError('กรุณาค้นหาและเลือก Order ก่อนสร้างงาน');
+      return;
+    }
+    if (selectedOrder.cart.length > 0 && orderLineIndexes.length === 0) {
+      setError('กรุณาเลือกอย่างน้อย 1 บรรทัดสินค้าให้ Production Job นี้');
       return;
     }
     if (!workSummary.trim()) {
@@ -461,6 +495,7 @@ function CreateProductionJobDialog({
         workSummary: workSummary.trim(),
         dueAt: bangkokLocalDateTimeToIso(dueAtLocal),
         priority,
+        ...(orderLineIndexes.length ? { orderLineIndexes } : {}),
         ...(jobType.trim() ? { jobType: jobType.trim() } : {}),
         ...(assigneeUserId ? { assigneeUserId } : {}),
         ...(internalNote.trim() ? { internalNote: internalNote.trim() } : {}),
@@ -471,6 +506,7 @@ function CreateProductionJobDialog({
       setOrderSearch('');
       setOrders([]);
       setSelectedOrderId('');
+      setOrderLineIndexes([]);
       setWorkSummary('');
       setJobType('');
       setPriority('normal');
@@ -483,6 +519,8 @@ function CreateProductionJobDialog({
       setSaving(false);
     }
   };
+
+  const selectedOrder = orders.find(order => order._id === selectedOrderId);
 
   return (
     <Dialog open={open} onClose={saving ? undefined : onClose} fullWidth maxWidth="sm">
@@ -501,6 +539,37 @@ function CreateProductionJobDialog({
               <MenuItem key={order._id} value={order._id}>{order.orderNumber} · {order.customerName || '-'}</MenuItem>
             ))}
           </TextField>
+          {selectedOrder?.cart.length ? (
+            <Box sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2.5, p: 1.5 }}>
+              <Stack spacing={0.75}>
+                <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
+                  <Typography variant="body2" fontWeight={800}>บรรทัดสินค้าที่ Job นี้รับผิดชอบ</Typography>
+                  <Chip size="small" label={`${orderLineIndexes.length}/${selectedOrder.cart.length} รายการ`} />
+                </Stack>
+                <Typography variant="caption" color="text.secondary">
+                  เลือกให้ตรงกับงานนี้ ระบบใช้ mapping นี้ตอนตัดวัสดุ BOM และจะไม่ยอมให้ Job อื่นใช้บรรทัดเดียวกันซ้ำ
+                </Typography>
+                {selectedOrder.cart.map((item, index) => {
+                  const details = [item.variant?.name, item.material, item.size].filter(Boolean).join(' · ');
+                  return (
+                    <FormControlLabel
+                      key={`${selectedOrder._id}-${index}`}
+                      control={(
+                        <Checkbox
+                          size="small"
+                          checked={orderLineIndexes.includes(index)}
+                          onChange={(_, checked) => setOrderLineIndexes(current => checked
+                            ? [...new Set([...current, index])].sort((left, right) => left - right)
+                            : current.filter(value => value !== index))}
+                        />
+                      )}
+                      label={`${index + 1}. ${item.name || 'รายการสินค้า'} × ${item.quantity || item.qty}${details ? ` · ${details}` : ''}`}
+                    />
+                  );
+                })}
+              </Stack>
+            </Box>
+          ) : null}
           <TextField required label="รายละเอียดงานผลิต" value={workSummary} onChange={event => setWorkSummary(event.target.value)} inputProps={{ maxLength: 240 }} />
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 1.5 }}>
             <TextField label="ประเภทงาน" value={jobType} onChange={event => setJobType(event.target.value)} inputProps={{ maxLength: 80 }} />

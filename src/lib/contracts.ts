@@ -13,6 +13,15 @@ export type ProductionWorkflowStatus = 'pending' | 'producing' | 'ready_for_pick
 export type OrderType = 'NORMAL' | 'QUICK_SALE';
 export type OrderEntryMode = 'normal' | 'backdated';
 
+export type ProductRecipeComponent = {
+  stockItemId: string;
+  quantity: number;
+  unit: string;
+  conversionFactor?: number;
+};
+
+export type ProductRecipe = ProductRecipeComponent[];
+
 export type ProductVariant = {
   id?: string;
   _id?: string;
@@ -23,6 +32,7 @@ export type ProductVariant = {
   sides?: string;
   size?: string;
   active: boolean;
+  recipe?: ProductRecipe;
 };
 
 export type Product = {
@@ -48,6 +58,7 @@ export type Product = {
   priceDisplayMode?: 'FIXED' | 'STARTING_AT';
   createdAt?: string;
   updatedAt?: string;
+  recipe?: ProductRecipe;
   variants: ProductVariant[];
 };
 
