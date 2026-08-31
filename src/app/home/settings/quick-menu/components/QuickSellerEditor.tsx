@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel, IconButton, Stack, Switch, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, DialogTitle, Divider, FormControlLabel, IconButton, MenuItem, Stack, Switch, TextField, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import type { Product } from '@/lib/contracts';
@@ -10,13 +10,13 @@ import QuickSellerProductTile from '../../../quick-sale/components/QuickSellerPr
 import QuickSellerStatusChip from './QuickSellerStatusChip';
 import { commonButtonSx, uiCardSx } from '../../../components/adminUi';
 
-type Props = { open: boolean; initial: QuickProductPayload; editing: Product | null; busy: boolean; onClose: () => void; onSave: (value: QuickProductPayload) => Promise<void> };
+type Props = { open: boolean; initial: QuickProductPayload; editing: Product | null; canonicalProducts: Product[]; busy: boolean; onClose: () => void; onSave: (value: QuickProductPayload) => Promise<void> };
 
 const Section = ({ title, description, children }: Readonly<{ title: string; description: string; children: React.ReactNode }>) => (
   <Card sx={uiCardSx}><CardContent sx={{ p: { xs: 2, md: 2.5 } }}><Typography variant="h6" fontWeight={800}>{title}</Typography><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{description}</Typography>{children}</CardContent></Card>
 );
 
-export default function QuickSellerEditor({ open, initial, editing, busy, onClose, onSave }: Readonly<Props>) {
+export default function QuickSellerEditor({ open, initial, editing, canonicalProducts, busy, onClose, onSave }: Readonly<Props>) {
   const theme = useTheme();
   const fullScreen = useMediaQuery(theme.breakpoints.down('md'));
   const [form, setForm] = React.useState(initial);
@@ -24,9 +24,26 @@ export default function QuickSellerEditor({ open, initial, editing, busy, onClos
   React.useEffect(() => setForm(initial), [initial, open]);
   const dirty = JSON.stringify(form) !== JSON.stringify(initial);
   const close = () => dirty ? setConfirmClose(true) : onClose();
-  const valid = form.name.trim() && form.code.trim() && form.category.trim() && form.price >= 0;
+  const mappedProduct = canonicalProducts.find(product => product.id === form.productId);
+  const mappedVariants = mappedProduct?.variants.filter(variant => variant.active) ?? [];
+  const valid = form.name.trim() && form.code.trim() && form.category.trim() && form.price >= 0 && (!form.productId || Boolean(form.variantId));
   const preview: Product = { id: 'preview', name: form.name, code: form.code, typeCode: form.typeCode || form.code, category: form.category, active: form.active !== false, emoji: form.emoji, tint: form.tint, isHotMenu: form.isHotMenu, quickSaleEnabled: true, quickSaleSortOrder: form.quickSaleSortOrder, unitLabel: form.unitLabel, variants: [{ name: 'ราคาปกติ', price: form.price, active: true }] };
   const field = <K extends keyof QuickProductPayload>(key: K, value: QuickProductPayload[K]) => setForm(current => ({ ...current, [key]: value }));
+  const mapProduct = (productId: string) => {
+    const product = canonicalProducts.find(candidate => candidate.id === productId);
+    const onlyVariant = product?.variants.filter(variant => variant.active).length === 1 ? product.variants.find(variant => variant.active) : undefined;
+    setForm(current => ({
+      ...current,
+      productId: productId || undefined,
+      variantId: onlyVariant?.id || onlyVariant?._id || undefined,
+      ...(product ? { name: product.name, category: product.category } : {}),
+      ...(onlyVariant ? { price: onlyVariant.price } : {}),
+    }));
+  };
+  const mapVariant = (variantId: string) => {
+    const variant = mappedVariants.find(candidate => (candidate.id || candidate._id) === variantId);
+    setForm(current => ({ ...current, variantId: variantId || undefined, ...(variant ? { price: variant.price } : {}) }));
+  };
 
   return <>
     <Dialog open={open} onClose={(_, reason) => reason !== 'backdropClick' && close()} fullScreen={fullScreen} fullWidth maxWidth="lg" PaperProps={{ sx: { borderRadius: { xs: 0, md: 4 }, bgcolor: '#F7F9FC' } }}>
@@ -38,6 +55,21 @@ export default function QuickSellerEditor({ open, initial, editing, busy, onClos
           <Stack spacing={2.5} minWidth={0}>
             <Section title="ข้อมูลทั่วไป" description="ชื่อ หมวดหมู่ และภาพจำของรายการบนหน้าขาย">
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}><TextField label="ชื่อรายการ" required value={form.name} onChange={e => field('name', e.target.value)} /><TextField label="รหัสรายการ" required value={form.code} onChange={e => field('code', e.target.value)} /><TextField label="หมวดหมู่" required value={form.category} onChange={e => field('category', e.target.value)} /><TextField label="ไอคอน Emoji" inputProps={{ maxLength: 8 }} value={form.emoji || ''} onChange={e => field('emoji', e.target.value)} helperText="เช่น 🖨️ หรือ 📄" /></Box>
+            </Section>
+            <Section title="เชื่อมกับแคตตาล็อกหลัก" description="เลือก Product/Variant เมื่อต้องการให้ Quick Seller ใช้ราคาและตัวตนจากแคตตาล็อกหลัก โดยรายการเดิมที่ไม่เชื่อมยังทำงานแบบเดิม">
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+                <TextField select label="Product หลัก" value={form.productId || ''} onChange={e => mapProduct(e.target.value)} helperText={editing?.productId ? 'รายการที่เชื่อมแล้วสามารถเปลี่ยน Product ได้ แต่ยังไม่เปิดการยกเลิก mapping ใน migration นี้' : 'ไม่เลือก = Quick menu แบบ legacy/custom'}>
+                  <MenuItem value="" disabled={Boolean(editing?.productId)}>ไม่เชื่อมแคตตาล็อก</MenuItem>
+                  {canonicalProducts.map(product => <MenuItem key={product.id} value={product.id}>{product.name} ({product.code})</MenuItem>)}
+                </TextField>
+                <TextField select label="Variant หลัก" value={form.variantId || ''} onChange={e => mapVariant(e.target.value)} disabled={!mappedProduct} helperText={mappedProduct && mappedVariants.length > 1 ? 'ต้องเลือก variant ที่ชัดเจน' : 'ใช้ variant ที่ Quick Seller จะขาย'}>
+                  <MenuItem value="">เลือก Variant</MenuItem>
+                  {mappedVariants.map(variant => {
+                    const variantId = variant.id || variant._id || '';
+                    return <MenuItem key={variantId || variant.name} value={variantId}>{variant.name} — ฿{variant.price.toLocaleString('th-TH')}</MenuItem>;
+                  })}
+                </TextField>
+              </Box>
             </Section>
             <Section title="ราคาและหน่วย" description="ราคาที่แสดงและใช้เมื่อเพิ่มรายการลงตะกร้า">
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}><TextField label="ราคา" required type="number" value={form.price} inputProps={{ min: 0 }} onChange={e => field('price', Number(e.target.value))} /><TextField label="หน่วย" value={form.unitLabel || ''} onChange={e => field('unitLabel', e.target.value)} placeholder="ชิ้น" /></Box>

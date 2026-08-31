@@ -35,6 +35,7 @@ import { roundMoney } from '../quickSale';
 
 export type QuickSaleCartItem = {
   key: string;
+  quickProductId?: string;
   productId?: string;
   productCode?: string;
   typeCode?: string;

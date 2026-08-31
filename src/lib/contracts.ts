@@ -28,6 +28,9 @@ export type ProductVariant = {
 export type Product = {
   id: string;
   _id?: string;
+  quickProductId?: string;
+  productId?: string;
+  variantId?: string;
   name: string;
   category: string;
   code: string;
@@ -293,6 +296,7 @@ export type NormalizedOrderAmounts = {
 };
 
 export type CreateOrderLine = {
+  quickProductId?: string;
   productId?: string;
   productCode?: string;
   typeCode?: string;

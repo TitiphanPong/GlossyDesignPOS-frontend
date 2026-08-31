@@ -199,8 +199,10 @@ export default function QuickSalePage() {
         depositTotal: payableTotal,
         remainingTotal: 0,
         adjustedCart: items.map(item => ({
+          quickProductId: item.quickProductId,
           productId: item.productId,
           productCode: item.productCode,
+          variantId: item.variantId,
           name: item.productName,
           category: item.category,
           qty: item.quantity,
@@ -245,7 +247,8 @@ export default function QuickSalePage() {
   const addProduct = React.useCallback((product: Product) => {
     const variant = firstActiveVariant(product);
     if (!variant) return;
-    const key = `${product.id}:${variant.id || variant._id || variant.name}`;
+    const quickProductId = product.quickProductId || product.id;
+    const key = `${quickProductId}:${product.variantId || variant.id || variant._id || variant.name}`;
     setItems(previous =>
       previous.some(item => item.key === key)
         ? previous.map(item => (item.key === key ? { ...item, quantity: item.quantity + 1 } : item))
@@ -253,10 +256,11 @@ export default function QuickSalePage() {
             ...previous,
             {
               key,
-              productId: product.id,
+              quickProductId,
+              productId: product.productId,
               productCode: product.code,
               typeCode: product.typeCode,
-              variantId: variant.id || variant._id || undefined,
+              variantId: product.variantId || variant.id || variant._id || undefined,
               variantName: variant.name,
               productName: !isDefaultVariantName(variant.name) ? `${product.name} — ${variant.name}` : product.name,
               category: product.category,
@@ -345,6 +349,7 @@ export default function QuickSalePage() {
         salesChannel: 'quick_sale',
         ...checkoutCustomer,
         cart: items.map(item => ({
+          ...(item.quickProductId ? { quickProductId: item.quickProductId } : {}),
           ...(item.productId ? { productId: item.productId } : {}),
           ...(item.productCode ? { productCode: item.productCode } : {}),
           ...(item.typeCode ? { typeCode: item.typeCode } : {}),

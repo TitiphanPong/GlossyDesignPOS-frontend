@@ -11,6 +11,7 @@ import type { Product } from '@/lib/contracts';
 import {
   createQuickProduct,
   deleteQuickProduct,
+  fetchProducts,
   fetchQuickProductsForAdmin,
   reorderQuickProducts,
   updateQuickProduct,
@@ -28,6 +29,8 @@ const PAGE_SIZES = [10, 25, 50, 100];
 const EMPTY: QuickProductPayload = { name: '', code: '', category: 'ทั่วไป', price: 0, unitLabel: 'ชิ้น', emoji: '📄', tint: '#E2E8F0', active: true, isHotMenu: false, quickSaleSortOrder: 0 };
 
 const toPayload = (product: Product): QuickProductPayload => ({
+  productId: product.productId,
+  variantId: product.variantId,
   name: product.name,
   code: product.code,
   typeCode: product.typeCode,
@@ -43,6 +46,7 @@ const toPayload = (product: Product): QuickProductPayload => ({
 
 export default function QuickMenuSettingsPage() {
   const [products, setProducts] = React.useState<Product[]>([]);
+  const [catalogProducts, setCatalogProducts] = React.useState<Product[]>([]);
   const [query, setQuery] = React.useState('');
   const [category, setCategory] = React.useState(ALL);
   const [status, setStatus] = React.useState<QuickMenuStatusFilter>('all');
@@ -70,7 +74,12 @@ export default function QuickMenuSettingsPage() {
     setLoading(true);
     setError(null);
     try {
-      setProducts(await fetchQuickProductsForAdmin());
+      const [quickMenus, catalog] = await Promise.all([
+        fetchQuickProductsForAdmin(),
+        fetchProducts({ force: true }),
+      ]);
+      setProducts(quickMenus);
+      setCatalogProducts(catalog.filter(product => product.active));
       setLastSyncedAt(new Date());
     } catch (e) {
       setError(e instanceof Error ? e.message : 'โหลดรายการขายด่วนไม่สำเร็จ');
@@ -348,7 +357,7 @@ export default function QuickMenuSettingsPage() {
           onMove={handleMove}
         />
       </Stack>
-      <QuickSellerEditor open={editorOpen} initial={draft} editing={editing} busy={busy} onClose={() => setEditorOpen(false)} onSave={saveEditor} />
+      <QuickSellerEditor open={editorOpen} initial={draft} editing={editing} canonicalProducts={catalogProducts} busy={busy} onClose={() => setEditorOpen(false)} onSave={saveEditor} />
       <Dialog open={Boolean(deleteTarget)} onClose={() => !busy && setDeleteTarget(null)} maxWidth="xs" fullWidth>
         <DialogTitle>ยืนยันการลบรายการ</DialogTitle>
         <DialogContent>

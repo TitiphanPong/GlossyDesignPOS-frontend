@@ -79,6 +79,9 @@ function normalizeProduct(value: unknown): Product | null {
   return {
     id,
     _id: readString(value._id) || undefined,
+    quickProductId: readString(value.quickProductId) || undefined,
+    productId: readString(value.productId) || undefined,
+    variantId: readString(value.variantId) || undefined,
     name,
     category,
     code: readString(value.code, typeCode),
@@ -136,7 +139,7 @@ export function fetchQuickProducts(options: { force?: boolean } = {}): Promise<P
   );
 }
 
-export type QuickProductPayload = { name: string; code: string; typeCode?: string; category: string; price: number; unitLabel?: string; emoji?: string; tint?: string; isHotMenu?: boolean; active?: boolean; quickSaleSortOrder?: number };
+export type QuickProductPayload = { productId?: string; variantId?: string; name: string; code: string; typeCode?: string; category: string; price: number; unitLabel?: string; emoji?: string; tint?: string; isHotMenu?: boolean; active?: boolean; quickSaleSortOrder?: number };
 
 export async function fetchQuickProductsForAdmin(): Promise<Product[]> {
   return extractProductsFromResponse(await fetchApiJson<unknown>('/quick-products?includeInactive=true', { cache: 'no-store' }));
