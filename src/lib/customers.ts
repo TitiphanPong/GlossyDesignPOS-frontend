@@ -78,6 +78,11 @@ export type CustomerDetail = {
     workflowStatus?: string;
     taxInvoice?: string;
   }>;
+  orderPagination: {
+    page: number;
+    limit: number;
+    total: number;
+  };
   activeProductionJobs: Array<{
     _id: string;
     jobNumber: string;
@@ -119,8 +124,18 @@ export async function fetchCustomers(search = '', limit = 20): Promise<CustomerP
   return response.data;
 }
 
-export async function fetchCustomerDetail(id: string): Promise<CustomerDetail> {
-  return fetchApiJson<CustomerDetail>(`/customers/${encodeURIComponent(id)}`, { cache: 'no-store' });
+export async function fetchCustomerDetail(
+  id: string,
+  options: { orderPage?: number; orderLimit?: number } = {},
+): Promise<CustomerDetail> {
+  const query = new URLSearchParams({
+    orderPage: String(options.orderPage ?? 1),
+    orderLimit: String(options.orderLimit ?? 10),
+  });
+  return fetchApiJson<CustomerDetail>(
+    `/customers/${encodeURIComponent(id)}?${query.toString()}`,
+    { cache: 'no-store' },
+  );
 }
 
 export async function createCustomer(payload: Omit<CustomerProfile, '_id' | 'customerCode' | 'active'>): Promise<CustomerProfile> {

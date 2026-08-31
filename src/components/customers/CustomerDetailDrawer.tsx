@@ -11,6 +11,7 @@ import {
   Divider,
   Skeleton,
   Stack,
+  TablePagination,
   Typography,
 } from '@mui/material';
 import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
@@ -153,9 +154,10 @@ type CustomerDetailDrawerProps = Readonly<{
   loading: boolean;
   onClose: () => void;
   onEdit: (customer: CustomerDetail['customer']) => void;
+  onOrderPageChange: (page: number, limit: number) => void;
 }>;
 
-export default function CustomerDetailDrawer({ open, detail, loading, onClose, onEdit }: CustomerDetailDrawerProps) {
+export default function CustomerDetailDrawer({ open, detail, loading, onClose, onEdit, onOrderPageChange }: CustomerDetailDrawerProps) {
   const phones = detail ? getCustomerPhoneNumbers(detail.customer) : [];
   const address = detail ? buildAddress(detail.customer) : null;
   const taxBranch = detail ? branchLabel(detail.customer.branchType, detail.customer.branchNo) : null;
@@ -229,7 +231,7 @@ export default function CustomerDetailDrawer({ open, detail, loading, onClose, o
 
               <Section title="ประวัติการขาย">
                 <Stack spacing={0.9}>
-                  {detail.orders.slice(0, 10).map(order => {
+                  {detail.orders.map(order => {
                     const orderNumber = order.orderNumber || order.orderId || '-';
                     const remaining = Number(order.remainingTotal || 0);
                     return (
@@ -257,6 +259,18 @@ export default function CustomerDetailDrawer({ open, detail, loading, onClose, o
                     );
                   })}
                   {detail.orders.length === 0 ? <Typography sx={{ py: 1.5, color: '#7A8A9E', fontSize: 13 }}>ยังไม่มีประวัติการสั่งซื้อ</Typography> : null}
+                  <TablePagination
+                    component="div"
+                    count={detail.orderPagination.total}
+                    page={Math.max(0, detail.orderPagination.page - 1)}
+                    rowsPerPage={detail.orderPagination.limit}
+                    onPageChange={(_event, nextPage) => onOrderPageChange(nextPage + 1, detail.orderPagination.limit)}
+                    onRowsPerPageChange={event => onOrderPageChange(1, Number(event.target.value))}
+                    rowsPerPageOptions={[10, 25, 50, 100]}
+                    labelRowsPerPage="ต่อหน้า"
+                    labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
+                    sx={{ mx: -1.5, '& .MuiTablePagination-toolbar': { px: 1.5, flexWrap: 'wrap' } }}
+                  />
                 </Stack>
               </Section>
 

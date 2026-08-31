@@ -155,6 +155,23 @@ export default function CustomersPage() {
     }
   };
 
+  const loadCustomerOrderPage = React.useCallback(async (orderPage: number, orderLimit: number) => {
+    if (!selectedId) return;
+    const requestId = ++detailRequestId.current;
+    setDetailLoading(true);
+    setError(null);
+    try {
+      const detail = await fetchCustomerDetail(selectedId, { orderPage, orderLimit });
+      if (requestId !== detailRequestId.current) return;
+      setSelected(detail);
+    } catch (caught) {
+      if (requestId !== detailRequestId.current) return;
+      setError(caught instanceof Error ? caught.message : 'โหลดประวัติการขายไม่สำเร็จ');
+    } finally {
+      if (requestId === detailRequestId.current) setDetailLoading(false);
+    }
+  }, [selectedId]);
+
   const reloadSelectedCustomer = React.useCallback(async (customerId: string) => {
     try {
       setSelected(await fetchCustomerDetail(customerId));
@@ -365,6 +382,7 @@ export default function CustomersPage() {
           setSelected(null);
         }}
         onEdit={customer => setEditingCustomer(customer)}
+        onOrderPageChange={(orderPage, orderLimit) => void loadCustomerOrderPage(orderPage, orderLimit)}
       />
 
       <CustomerCreateDialog

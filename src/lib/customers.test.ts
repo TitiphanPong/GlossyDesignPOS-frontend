@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
+  fetchCustomerDetail,
   fetchCustomersPage,
   getCustomerPhoneNumbers,
   updateCustomer,
@@ -52,6 +53,40 @@ test('fetchCustomersPage forwards server-side search, pagination, and inactive f
     assert.equal(url.searchParams.get('active'), 'false');
     assert.equal(result.total, 61);
     assert.equal(result.data[0]?.active, false);
+  } finally {
+    globalThis.fetch = originalFetch;
+    process.env.NEXT_PUBLIC_API_URL = originalApiBase;
+  }
+});
+
+test('fetchCustomerDetail forwards identity-scoped Order pagination and keeps returned page metadata', async () => {
+  const originalFetch = globalThis.fetch;
+  const originalApiBase = process.env.NEXT_PUBLIC_API_URL;
+  let capturedUrl = '';
+
+  process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3001';
+  globalThis.fetch = (async input => {
+    capturedUrl = String(input);
+    return new Response(
+      JSON.stringify({
+        customer: { _id: 'customer-1', customerCode: 'CUS-1', displayName: 'Acme', active: true },
+        summary: { orderCount: 42, outstandingTotal: 0 },
+        orders: [],
+        orderPagination: { page: 3, limit: 25, total: 42 },
+        activeProductionJobs: [],
+        linkedUploads: [],
+      }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } },
+    );
+  }) as typeof fetch;
+
+  try {
+    const result = await fetchCustomerDetail('customer-1', { orderPage: 3, orderLimit: 25 });
+    const url = new URL(capturedUrl);
+    assert.equal(url.pathname, '/customers/customer-1');
+    assert.equal(url.searchParams.get('orderPage'), '3');
+    assert.equal(url.searchParams.get('orderLimit'), '25');
+    assert.deepEqual(result.orderPagination, { page: 3, limit: 25, total: 42 });
   } finally {
     globalThis.fetch = originalFetch;
     process.env.NEXT_PUBLIC_API_URL = originalApiBase;
