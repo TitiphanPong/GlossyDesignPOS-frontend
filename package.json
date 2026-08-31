@@ -9,6 +9,7 @@
     "start": "next start",
     "test": "node --import tsx --test src/**/*.test.ts",
     "test:e2e:browser": "playwright test",
+    "render:artwork-poc": "playwright test e2e/artwork-poc.spec.ts --project=chromium",
     "lint": "eslint . --max-warnings=0",
     "check:utf8": "node scripts/check-utf8.cjs",
     "format": "prettier --write \"src/**/*.{ts,tsx,js,jsx,json,css,md}\""
