@@ -6,7 +6,6 @@ import Link from 'next/link';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
-import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
 import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
@@ -20,6 +19,7 @@ type PrintDocumentLayoutProps = Readonly<{
   documentType: 'quotation' | 'tax-invoice' | 'receipt';
   onEditCustomer: () => void;
   summary?: React.ReactNode;
+  mobilePreviewDocument?: React.ReactNode;
   printableDocument: React.ReactNode;
 }>;
 
@@ -44,17 +44,17 @@ function HeaderButton({
       startIcon={icon}
       onClick={onClick}
       sx={{
-        minHeight: { xs: 42, sm: 44 },
+        minHeight: { xs: 48, sm: 44 },
         width: '100%',
         minWidth: 0,
-        px: { xs: 0.7, sm: 2 },
-        borderRadius: { xs: '10px', sm: '12px' },
+        px: { xs: 0.75, sm: 2 },
+        borderRadius: '11px',
         fontSize: { xs: 12, sm: 14 },
         fontWeight: 750,
         letterSpacing: '-0.01em',
         whiteSpace: 'nowrap',
         textTransform: 'none',
-        boxShadow: isContained ? { xs: '0 5px 14px rgba(37, 99, 235, 0.18)', sm: '0 10px 24px rgba(37, 99, 235, 0.22)' } : 'none',
+        boxShadow: isContained ? { xs: '0 5px 14px rgba(37, 99, 235, 0.18)', sm: '0 8px 18px rgba(37, 99, 235, 0.2)' } : 'none',
         borderColor: '#E2E8F0',
         color: isContained ? '#FFFFFF' : '#0F172A',
         bgcolor: isContained ? '#2563EB' : '#FFFFFF',
@@ -65,20 +65,31 @@ function HeaderButton({
         '&:hover': {
           borderColor: isContained ? '#2563EB' : '#CBD5E1',
           bgcolor: isContained ? '#1D4ED8' : '#F8FAFC',
-          boxShadow: isContained ? '0 12px 28px rgba(37, 99, 235, 0.28)' : 'none',
+          boxShadow: isContained ? '0 10px 22px rgba(37, 99, 235, 0.26)' : '0 2px 5px rgba(15, 23, 42, 0.04)',
+        },
+        '&:active': {
+          transform: 'translateY(1px)',
+          boxShadow: isContained ? '0 4px 12px rgba(37, 99, 235, 0.2)' : 'none',
+        },
+        '&:focus-visible': {
+          outline: '3px solid rgba(37, 99, 235, 0.25)',
+          outlineOffset: 2,
+        },
+        '@media (min-width: 600px) and (max-width: 767.95px)': {
+          minHeight: 48,
         },
       }}>
-      <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' } }}>
+      <Box component="span" sx={{ display: { xs: 'inline', sm: 'none' }, '@media (min-width: 600px) and (max-width: 767.95px)': { display: 'inline' } }}>
         {mobileLabel ?? label}
       </Box>
-      <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' } }}>
+      <Box component="span" sx={{ display: { xs: 'none', sm: 'inline' }, '@media (min-width: 600px) and (max-width: 767.95px)': { display: 'none' } }}>
         {label}
       </Box>
     </Button>
   );
 }
 
-export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentType, onEditCustomer, summary, printableDocument }: PrintDocumentLayoutProps) {
+export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentType, onEditCustomer, summary, mobilePreviewDocument, printableDocument }: PrintDocumentLayoutProps) {
   const isReceipt = documentType === 'receipt';
   const documentStageRef = useRef<HTMLDivElement>(null);
   const receiptRenderRequestRef = useRef(0);
@@ -249,42 +260,64 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
         bgcolor: '#EEF2F7',
         backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(226,232,240,0.55))',
       }}>
-      <Stack
+      <Box
         className="print-toolbar"
-        direction={{ xs: 'column', sm: 'row' }}
-        justifyContent="space-between"
-        alignItems={{ xs: 'stretch', sm: 'center' }}
-        spacing={{ xs: 1, sm: 0 }}
         sx={{
           position: { xs: 'relative', sm: 'sticky' },
           top: { sm: 0 },
           zIndex: 10,
           width: '100%',
           minWidth: 0,
-          minHeight: { xs: 'auto', sm: '88px' },
-          px: { xs: 1.25, sm: '32px' },
-          pt: { xs: 1.1, sm: '1.8rem' },
-          pb: { xs: 1, sm: '1.8rem' },
-          borderBottom: '1px solid #DCE3EC',
-          bgcolor: 'rgba(255,255,255,0.96)',
+          px: { xs: 0, sm: 2, md: 3 },
+          py: { xs: 0, sm: 1.5 },
+          borderBottom: { xs: '1px solid #E5E7EB', sm: 'none' },
+          bgcolor: { xs: '#FFFFFF', sm: 'rgba(248,250,252,0.78)' },
           backdropFilter: { xs: 'none', sm: 'blur(16px)' },
-          boxShadow: { xs: '0 5px 16px rgba(15, 23, 42, 0.04)', sm: '0 8px 26px rgba(15, 23, 42, 0.06)' },
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: 3,
-            bgcolor: '#2563EB',
-          },
         }}>
-        <Stack direction="row" spacing={{ xs: 1.05, sm: 2 }} alignItems={{ xs: 'center', sm: 'flex-start' }} sx={{ minWidth: 0, width: { xs: '100%', sm: 'auto' } }}>
+        <Box
+          className="print-toolbar-card"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2.5,
+            width: '100%',
+            maxWidth: '1440px',
+            minWidth: 0,
+            minHeight: 104,
+            boxSizing: 'border-box',
+            mx: 'auto',
+            px: { xs: 2, sm: 2.25, lg: 2.5 },
+            py: { xs: 2, sm: 1.5 },
+            border: { xs: 'none', sm: '1px solid #E5E7EB' },
+            borderRadius: { xs: 0, sm: '16px' },
+            bgcolor: '#FFFFFF',
+            boxShadow: { xs: 'none', sm: '0 8px 24px rgba(15, 23, 42, 0.06)' },
+            '@media (min-width: 768px) and (max-width: 1199.95px)': {
+              flexWrap: 'wrap',
+              gap: 1.5,
+              minHeight: 0,
+            },
+            '@media (max-width: 767.95px)': {
+              flexDirection: 'column',
+              alignItems: 'stretch',
+              gap: 1.75,
+              minHeight: 0,
+            },
+          }}>
+          <Stack
+            direction="row"
+            spacing={{ xs: 1.25, sm: 1.5 }}
+            alignItems="flex-start"
+            sx={{
+              minWidth: 0,
+              flex: '1 1 auto',
+              '@media (min-width: 768px) and (max-width: 1199.95px)': { flexBasis: '360px' },
+            }}>
           <ButtonBase
             component={Link}
             href="/home"
             sx={{
-              borderRadius: { xs: '10px', sm: '14px' },
+              borderRadius: '13px',
               flexShrink: 0,
               transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               '&:hover': {
@@ -294,65 +327,77 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
             }}>
             <Box
               sx={{
-                width: { xs: 36, sm: 48 },
-                height: { xs: 36, sm: 48 },
-                borderRadius: { xs: '10px', sm: '16px' },
+                width: { xs: 44, sm: 52 },
+                height: { xs: 44, sm: 52 },
+                borderRadius: '13px',
                 border: '1px solid #E5E7EB',
                 bgcolor: '#FFFFFF',
                 display: 'grid',
                 placeItems: 'center',
-                boxShadow: { xs: '0 4px 12px rgba(15, 23, 42, 0.08)', sm: '0 10px 22px rgba(15, 23, 42, 0.12)' },
+                boxShadow: '0 5px 14px rgba(15, 23, 42, 0.07)',
               }}>
-              <Image src="/logo/logo.png" alt="Glossy Design logo" width={26} height={26} priority />
+              <Image src="/logo/logo.png" alt="Glossy Design logo" width={30} height={30} priority />
             </Box>
           </ButtonBase>
 
           <Box sx={{ minWidth: 0, flex: 1 }}>
-            <Stack direction="row" spacing={0.75} alignItems="flex-start" sx={{ minWidth: 0 }}>
-              <DescriptionRoundedIcon sx={{ display: { xs: 'none', sm: 'block' }, mt: 0.35, fontSize: 18, color: '#2563EB', flexShrink: 0 }} />
-              <Box sx={{ minWidth: 0 }}>
-                <Typography
-                  sx={{
-                    fontSize: { xs: 16, sm: 20, md: 22 },
-                    fontWeight: 800,
-                    color: '#0F172A',
-                    lineHeight: { xs: 1.15, sm: 1.18 },
-                    letterSpacing: '-0.025em',
-                    overflowWrap: 'anywhere',
-                  }}>
-                  {titleTh}
-                </Typography>
-                <Typography
-                  sx={{
-                    mt: { xs: 0.1, sm: 0.2 },
-                    fontSize: { xs: 11.25, sm: 13 },
-                    fontWeight: 650,
-                    color: '#64748B',
-                    lineHeight: 1.2,
-                    letterSpacing: '0.01em',
-                    overflowWrap: 'anywhere',
-                  }}>
-                  {titleEn}
-                </Typography>
-              </Box>
-            </Stack>
             <Typography
               sx={{
-                mt: { xs: 0.4, sm: 0.65 },
-                display: 'inline-block',
-                maxWidth: '100%',
-                px: { xs: 0.8, sm: 1 },
-                py: { xs: 0.2, sm: 0.3 },
-                borderRadius: '7px',
-                bgcolor: '#EFF6FF',
-                fontSize: { xs: 11.5, sm: 13 },
+                fontSize: { xs: 16, sm: 19, lg: 21 },
                 fontWeight: 800,
-                color: '#1D4ED8',
-                lineHeight: 1.2,
+                color: '#0F172A',
+                lineHeight: { xs: 1.24, sm: 1.2 },
+                letterSpacing: '-0.025em',
                 overflowWrap: 'anywhere',
+                display: '-webkit-box',
+                WebkitBoxOrient: 'vertical',
+                WebkitLineClamp: { xs: 2, sm: 'unset' },
+                overflow: 'hidden',
+                '@media (min-width: 600px) and (max-width: 767.95px)': { WebkitLineClamp: 2 },
               }}>
-              {invoiceNumber}
+              {titleTh}
             </Typography>
+            <Box
+              sx={{
+                mt: 0.25,
+                display: 'flex',
+                alignItems: 'center',
+                flexWrap: 'wrap',
+                gap: 0.75,
+                minWidth: 0,
+                '@media (max-width: 767.95px)': { display: 'block' },
+              }}>
+              <Typography
+                sx={{
+                  minWidth: 0,
+                  fontSize: { xs: 11.5, sm: 12.5 },
+                  fontWeight: 600,
+                  color: '#64748B',
+                  lineHeight: 1.25,
+                  letterSpacing: '0.01em',
+                  overflowWrap: 'anywhere',
+                }}>
+                {titleEn}
+              </Typography>
+              <Typography
+                sx={{
+                  mt: { xs: 0.75, sm: 0 },
+                  display: 'inline-block',
+                  maxWidth: '100%',
+                  px: 1,
+                  py: 0.35,
+                  borderRadius: '8px',
+                  bgcolor: '#EFF6FF',
+                  fontSize: { xs: 11.5, sm: 12.5 },
+                  fontWeight: 800,
+                  color: '#1D4ED8',
+                  lineHeight: 1.2,
+                  overflowWrap: 'anywhere',
+                  fontVariantNumeric: 'tabular-nums',
+                }}>
+                {invoiceNumber}
+              </Typography>
+            </Box>
           </Box>
         </Stack>
 
@@ -360,10 +405,17 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
           sx={{
             display: 'grid',
             gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, auto))' },
-            gap: { xs: 0.7, sm: 1.5 },
+            gap: { xs: 0.75, sm: 1 },
             flexShrink: 0,
+            minWidth: 0,
             width: { xs: '100%', sm: 'auto' },
             justifyContent: { sm: 'end' },
+            '@media (min-width: 768px) and (max-width: 1199.95px)': {
+              marginLeft: 'auto',
+            },
+            '@media (max-width: 767.95px)': {
+              width: '100%',
+            },
           }}>
           <HeaderButton label="แก้ไข" mobileLabel="แก้ไข" icon={<EditRoundedIcon />} onClick={onEditCustomer} variant="outlined" />
           {isReceipt ? (
@@ -380,14 +432,15 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
           ) : null}
           <HeaderButton label="พิมพ์" mobileLabel="พิมพ์" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" />
         </Box>
-      </Stack>
+        </Box>
+      </Box>
 
       <Box
         className="print-document-scroll"
         sx={{
           width: '100%',
           maxWidth: '100%',
-          px: { xs: 1, sm: 2, md: 3 },
+          px: { xs: 2, sm: 2, md: 3 },
           py: { xs: 1.5, sm: 2.5, md: 4 },
           overflowX: { xs: 'hidden', sm: 'auto' },
           overflowY: 'visible',
@@ -405,6 +458,35 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
           </Box>
         ) : null}
 
+        {mobilePreviewDocument ? (
+          <Box
+            className="mobile-invoice-preview"
+            sx={{
+              display: { xs: 'flex', sm: 'none' },
+              justifyContent: 'center',
+              width: '100%',
+              minWidth: 0,
+              overflow: 'hidden',
+              '@media (min-width: 600px) and (max-width: 767.95px)': { display: 'flex' },
+              '@media (min-width: 768px)': { display: 'none' },
+            }}>
+            <Box
+              sx={{
+                width: '139mm',
+                height: '197mm',
+                flexShrink: 0,
+                zoom: 0.62,
+                bgcolor: '#FFFFFF',
+                boxShadow: '0 14px 32px rgba(15, 23, 42, 0.14)',
+                '@media (min-width: 400px)': { zoom: 0.68 },
+                '@media (min-width: 480px)': { zoom: 0.84 },
+                '@media (min-width: 600px)': { zoom: 1 },
+              }}>
+              {mobilePreviewDocument}
+            </Box>
+          </Box>
+        ) : null}
+
         <Box
           className="print-document-stage"
           ref={documentStageRef}
@@ -413,9 +495,10 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
             minWidth: 0,
             maxWidth: isReceipt ? { xs: 390, sm: 'none' } : 'none',
             mx: 'auto',
-            display: 'flex',
+            display: isReceipt ? 'flex' : { xs: 'none', sm: 'flex' },
             justifyContent: 'center',
             height: 'auto',
+            ...(!isReceipt ? { '@media (max-width: 767.95px)': { display: 'none' } } : {}),
           }}>
           <Box
             className="print-document-only print-paper"
@@ -481,6 +564,10 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
           }
 
           .print-toolbar {
+            display: none !important;
+          }
+
+          .mobile-invoice-preview {
             display: none !important;
           }
 

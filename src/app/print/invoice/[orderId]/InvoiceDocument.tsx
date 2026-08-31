@@ -682,3 +682,14 @@ export function InvoiceDocument({ documentType, order, trackingOrigin, trackingT
 
   return <TaxInvoiceTemplate invoiceData={invoiceData} trackingUrl={trackingUrl} />;
 }
+
+export function InvoiceMobilePreview({ documentType, order, trackingOrigin, trackingToken }: Readonly<InvoiceDocumentProps>) {
+  const invoiceData = buildInvoiceDataFromOrder(order, documentType);
+  const trackingUrl = trackingToken ? buildSecureOrderTrackingUrl(trackingToken, trackingOrigin) : null;
+
+  if (documentType === 'receipt') {
+    return <ReceiptTemplate invoiceData={invoiceData} trackingUrl={trackingUrl} />;
+  }
+
+  return <InvoiceCopy invoiceData={invoiceData} copyIndex={0} trackingUrl={trackingUrl} />;
+}

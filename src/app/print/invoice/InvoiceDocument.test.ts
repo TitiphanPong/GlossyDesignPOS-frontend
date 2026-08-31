@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import type { NormalizedInvoiceOrder } from '../../../lib/contracts';
-import { buildInvoiceDataFromOrder, InvoiceDocument, ReceiptTemplate, TaxInvoiceTemplate } from './[orderId]/InvoiceDocument';
+import { buildInvoiceDataFromOrder, InvoiceDocument, InvoiceMobilePreview, ReceiptTemplate, TaxInvoiceTemplate } from './[orderId]/InvoiceDocument';
 
 const sampleOrder: NormalizedInvoiceOrder = {
   orderId: 'order-123',
@@ -113,6 +113,13 @@ test('tax invoice keeps document numbers above the header and the issued date be
   assert.ok(html.indexOf('data-invoice-region="company-header"') < html.indexOf('data-invoice-region="document-title"'));
   assert.ok(html.indexOf('data-invoice-region="document-title"') < html.indexOf('data-invoice-region="issued-date"'));
   assert.ok(html.indexOf('data-invoice-region="company-information"') < html.indexOf('data-invoice-region="tracking-qr"'));
+});
+
+test('mobile tax invoice preview renders one readable original copy', () => {
+  const html = renderToStaticMarkup(InvoiceMobilePreview({ documentType: 'tax-invoice', order: sampleOrder }));
+
+  assert.equal(html.match(/data-copy-index="0"/g)?.length, 1);
+  assert.equal(html.match(/data-copy-index="1"/g)?.length ?? 0, 0);
 });
 
 test('customer documents remain printable when tracking QR generation is unavailable', () => {

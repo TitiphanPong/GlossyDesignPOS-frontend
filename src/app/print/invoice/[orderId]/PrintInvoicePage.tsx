@@ -9,7 +9,7 @@ import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import { isMissingApiBaseError } from '../../../../lib/api';
 import { createInvoiceOrderFromNormalizedOrder, type CustomerInfo, type NormalizedInvoiceOrder } from '../../../../lib/contracts';
 import { fetchOrderById, getOrderTrackingAccess, updateOrderCustomerInfo } from '../../../../lib/orders';
-import { getMissingCompanyConfigFields, InvoiceDocument } from './InvoiceDocument';
+import { getMissingCompanyConfigFields, InvoiceDocument, InvoiceMobilePreview } from './InvoiceDocument';
 import { PrintDocumentLayout } from './PrintDocumentLayout';
 import { getInvoiceDocumentMeta, resolveInvoiceDocumentType } from '../../../home/invoice/[orderId]/invoice-utils';
 
@@ -400,6 +400,9 @@ export function PrintInvoicePage({ params }: PrintInvoicePageProps) {
         invoiceNumber={`#${documentType === 'tax-invoice' ? order.invoiceNumber || order.orderNumber || order.orderId : order.orderNumber || order.orderId}`}
         documentType={documentType}
         onEditCustomer={handleOpenDrawer}
+        mobilePreviewDocument={
+          documentType === 'receipt' ? undefined : <InvoiceMobilePreview documentType={documentType} order={order} trackingOrigin={trackingOrigin} trackingToken={trackingToken} />
+        }
         printableDocument={<InvoiceDocument documentType={documentType} order={order} trackingOrigin={trackingOrigin} trackingToken={trackingToken} />}
       />
 
