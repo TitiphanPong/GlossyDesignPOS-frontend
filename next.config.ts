@@ -1,9 +1,12 @@
 import type { NextConfig } from 'next';
 
+const isolatedDistDir = process.env.NEXT_DIST_DIR?.trim();
+
 const nextConfig: NextConfig = {
-  // Keep development artifacts separate so `next dev` does not corrupt
-  // production build output when both workflows run on the same machine.
-  distDir: process.env.NODE_ENV === 'development' ? '.next-dev' : '.next',
+  // Keep normal development, Playwright, and production artifacts independent.
+  // Playwright sets NEXT_DIST_DIR=.next-e2e so its Next lock cannot collide with
+  // a developer-owned `next dev` process using .next-dev.
+  distDir: process.env.NODE_ENV === 'development' ? isolatedDistDir || '.next-dev' : '.next',
   outputFileTracingRoot: process.cwd(),
   async redirects() {
     return [

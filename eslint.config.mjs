@@ -5,7 +5,7 @@ import nextTypeScript from 'eslint-config-next/typescript';
 export default defineConfig([
   ...nextVitals,
   ...nextTypeScript,
-  globalIgnores(['.next/**', '.next-dev/**', '.codex/**']),
+  globalIgnores(['.next/**', '.next-dev/**', '.next-e2e/**', '.codex/**']),
   {
     files: ['scripts/**/*.cjs'],
     rules: {

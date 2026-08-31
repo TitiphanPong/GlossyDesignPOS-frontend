@@ -114,9 +114,9 @@ test('creates a customer from quick sale and auto-selects the new profile', asyn
   const createDialog = page.getByRole('dialog').filter({ hasText: 'บันทึกโปรไฟล์สำหรับใช้ซ้ำตอนขายครั้งถัดไป' });
   await expect(createDialog).toBeVisible();
   await createDialog.getByLabel('ชื่อลูกค้า').fill('ลูกค้าใหม่ E2E');
-  await createDialog.getByLabel('เบอร์โทรศัพท์').fill('0899999999');
+  await createDialog.getByRole('textbox', { name: 'เบอร์โทรศัพท์หลัก', exact: true }).fill('0899999999');
   await createDialog.getByLabel('เลขประจำตัวผู้เสียภาษี').fill('0105666666666');
-  await createDialog.getByLabel('ที่อยู่').fill('88 ถนนพระราม 9 กรุงเทพฯ');
+  await createDialog.getByRole('textbox', { name: 'ที่อยู่', exact: true }).fill('88 ถนนพระราม 9 กรุงเทพฯ');
   await createDialog.getByRole('button', { name: 'บันทึกลูกค้า' }).click();
 
   await expect(createDialog).toBeHidden();

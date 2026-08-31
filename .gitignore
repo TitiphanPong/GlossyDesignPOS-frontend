@@ -4,6 +4,7 @@ node_modules/
 # build
 .next/
 .next-dev/
+.next-e2e/
 out/
 dist/
 *.tsbuildinfo

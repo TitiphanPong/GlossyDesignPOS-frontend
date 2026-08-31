@@ -51,6 +51,7 @@ Open `http://localhost:3000`.
 - `npm run lint` runs ESLint
 - `npm test` runs the TypeScript test suite
 - `npm run build` creates a production build
+- `npm run test:e2e:browser` runs Playwright against an isolated Next dev server on `127.0.0.1:3101` with build output in `.next-e2e`, so a normal developer server can keep running independently
 - `npm run check:utf8` validates text file encoding
 - `npm run format` formats source files with Prettier
 
