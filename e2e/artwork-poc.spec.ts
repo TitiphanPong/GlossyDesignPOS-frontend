@@ -1,10 +1,26 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
+const artworkPath = '/artwork-poc';
 const outputPath = 'test-results/artwork-poc/glossy-print-files-1080x1350.png';
+
+async function loginForArtwork(page: Page) {
+  await page.goto(artworkPath);
+  await expect(page).toHaveURL(url => url.pathname === '/login' && url.searchParams.get('redirectTo') === artworkPath);
+  await page.getByLabel('ชื่อผู้ใช้').fill('cashier');
+  await page.getByRole('textbox', { name: 'รหัสผ่าน' }).fill('e2e-password');
+  await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
+  await expect(page).toHaveURL(url => url.pathname === artworkPath);
+}
+
+test('redirects anonymous Artwork POC access through the admin login boundary', async ({ page }) => {
+  await page.goto(artworkPath);
+  await expect(page).toHaveURL(url => url.pathname === '/login' && url.searchParams.get('redirectTo') === artworkPath);
+  await expect(page.locator('[data-artwork-canvas="true"]')).toHaveCount(0);
+});
 
 test('renders the deterministic premium artwork at exactly 1080x1350', async ({ page }) => {
   await page.setViewportSize({ width: 1200, height: 1500 });
-  await page.goto('/artwork-poc');
+  await loginForArtwork(page);
   await page.evaluate(() => document.fonts.ready);
 
   const artwork = page.locator('[data-artwork-canvas="true"]');
@@ -20,7 +36,7 @@ test('renders the deterministic premium artwork at exactly 1080x1350', async ({ 
 
 test('reflows the artwork for a 390px mobile viewport without horizontal overflow', async ({ page }) => {
   await page.setViewportSize({ width: 390, height: 844 });
-  await page.goto('/artwork-poc');
+  await loginForArtwork(page);
   await page.evaluate(() => document.fonts.ready);
 
   const artwork = page.locator('[data-artwork-canvas="true"]');
