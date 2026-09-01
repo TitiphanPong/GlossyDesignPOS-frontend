@@ -67,6 +67,28 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
 
   await expect(configurator).toBeHidden();
   await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('5');
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await expect(paymentDialog).toBeVisible();
+  await paymentDialog.getByRole('button', { name: /โอนเงิน \/ PromptPay/ }).click();
+  await expect(paymentDialog.getByText('Glossy E2E', { exact: true })).toBeVisible();
+  await expect(paymentDialog.getByText('PromptPay ••••5678', { exact: true })).toBeVisible();
+  await paymentDialog.getByRole('button', { name: /ยืนยันว่าชำระเงินแล้ว/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+  await expect(page.getByText('ORD-E2E-0001', { exact: true })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    initialPayment: {
+      method: 'promptpay',
+      amount: 125,
+      receivedAmount: 125,
+    },
+  });
 });
 
 test('completes a cashier quick-sale checkout against controlled test data', async ({ page }) => {
