@@ -48,6 +48,7 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
   await loginAsCashier(page, '/home/quick-sale-v2');
 
   await expect(page.getByText('Quick Sale V2 · ทดลอง', { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'รายการอื่น / กำหนดราคาเอง' })).toHaveCount(0);
   await page.getByRole('button', { name: /งานเอกสาร/ }).click();
 
   const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
