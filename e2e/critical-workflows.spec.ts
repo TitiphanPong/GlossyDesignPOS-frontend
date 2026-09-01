@@ -50,6 +50,16 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
 
   await expect(configurator).toBeHidden();
   await expect(page.getByRole('button', { name: /ชำระเงิน/ })).toBeEnabled();
+
+  await page.getByRole('button', { name: 'แก้ไข E2E A4 Print' }).click();
+  await expect(configurator).toBeVisible();
+  await expect(configurator.getByText('PRINT · A4 · ขาวดำ · 1 ชิ้น', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: '5', exact: true }).click();
+  await expect(configurator.getByText('฿125.00', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+
+  await expect(configurator).toBeHidden();
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('5');
 });
 
 test('completes a cashier quick-sale checkout against controlled test data', async ({ page }) => {

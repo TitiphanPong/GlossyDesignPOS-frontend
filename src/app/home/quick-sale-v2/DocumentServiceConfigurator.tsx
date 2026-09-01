@@ -12,6 +12,7 @@ import {
   type DocumentWorkType,
   type QuickSaleV2DocumentDefaults,
   type QuickSaleV2DocumentMapping,
+  type QuickSaleV2DocumentSelection,
 } from '@/lib/quickSaleV2';
 
 const WORK_TYPES: Array<{ value: DocumentWorkType; label: string }> = [
@@ -41,7 +42,7 @@ export default function DocumentServiceConfigurator({
   products: Product[];
   mappings: QuickSaleV2DocumentMapping[];
   defaults: QuickSaleV2DocumentDefaults;
-  onAdd: (product: Product, quantity: number) => void;
+  onAdd: (product: Product, quantity: number, selection: QuickSaleV2DocumentSelection) => void;
   previewOnly?: boolean;
 }) {
   const [workType, setWorkType] = React.useState<DocumentWorkType>(defaults.workType);
@@ -148,7 +149,7 @@ export default function DocumentServiceConfigurator({
           variant="contained"
           size="large"
           disabled={!product || !variant || previewOnly}
-          onClick={() => product && !previewOnly && onAdd(product, quantity)}
+          onClick={() => product && !previewOnly && onAdd(product, quantity, { workType, size, colorMode })}
           sx={{ minHeight: 48, borderRadius: 2.5, fontWeight: 900 }}
         >
           {previewOnly ? 'Preview เท่านั้น' : 'เพิ่มลงรายการ'}

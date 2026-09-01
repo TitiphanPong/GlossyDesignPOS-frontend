@@ -58,7 +58,7 @@ import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
 import CustomerDisplayPairingButton from '@/components/customer-display/CustomerDisplayPairingButton';
 import { calculateAddedVat, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, validateQuickSaleBackdate, type DiscountMode } from './quickSale';
-import { DEFAULT_QUICK_SALE_V2_DOCUMENT_DEFAULTS, fetchQuickSaleV2Published, type QuickSaleV2Config } from '@/lib/quickSaleV2';
+import { DEFAULT_QUICK_SALE_V2_DOCUMENT_DEFAULTS, fetchQuickSaleV2Published, type QuickSaleV2Config, type QuickSaleV2DocumentSelection } from '@/lib/quickSaleV2';
 import DocumentServiceConfigurator from '../quick-sale-v2/DocumentServiceConfigurator';
 
 type QuickItem = QuickSaleCartItem;
@@ -104,6 +104,7 @@ export default function QuickSalePage() {
   const [products, setProducts] = React.useState<Product[]>([]);
   const [v2Config, setV2Config] = React.useState<QuickSaleV2Config>({ mappings: [], defaults: { ...DEFAULT_QUICK_SALE_V2_DOCUMENT_DEFAULTS }, version: 0, updatedAt: null });
   const [v2ConfiguratorOpen, setV2ConfiguratorOpen] = React.useState(false);
+  const [editingV2ItemKey, setEditingV2ItemKey] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -287,6 +288,50 @@ export default function QuickSalePage() {
     );
   }, []);
 
+  const applyV2DocumentItem = React.useCallback((product: Product, quantity: number, selection: QuickSaleV2DocumentSelection) => {
+    const variant = firstActiveVariant(product);
+    if (!variant) return;
+    const quickProductId = product.quickProductId || product.id;
+    const key = `${quickProductId}:${product.variantId || variant.id || variant._id || variant.name}`;
+    const nextItem: QuickItem = {
+      key,
+      quickProductId,
+      productId: product.productId,
+      productCode: product.code,
+      typeCode: product.typeCode,
+      variantId: product.variantId || variant.id || variant._id || undefined,
+      variantName: variant.name,
+      productName: !isDefaultVariantName(variant.name) ? `${product.name} — ${variant.name}` : product.name,
+      category: product.category,
+      quantity: Math.max(1, quantity),
+      unitPrice: variant.price,
+      catalogUnitPrice: variant.price,
+      v2DocumentSelection: selection,
+    };
+
+    setItems(previous => {
+      if (!editingV2ItemKey) {
+        return previous.some(item => item.key === key)
+          ? previous.map(item => item.key === key ? { ...item, quantity: item.quantity + nextItem.quantity, v2DocumentSelection: selection } : item)
+          : [...previous, nextItem];
+      }
+      const existingTarget = previous.find(item => item.key === key && item.key !== editingV2ItemKey);
+      if (existingTarget) {
+        return previous
+          .filter(item => item.key !== editingV2ItemKey)
+          .map(item => item.key === key ? { ...item, quantity: item.quantity + nextItem.quantity, v2DocumentSelection: selection } : item);
+      }
+      return previous.map(item => item.key === editingV2ItemKey ? nextItem : item);
+    });
+    setEditingV2ItemKey(null);
+    setV2ConfiguratorOpen(false);
+  }, [editingV2ItemKey]);
+
+  const editingV2Item = editingV2ItemKey ? items.find(item => item.key === editingV2ItemKey) ?? null : null;
+  const v2ConfiguratorDefaults = editingV2Item?.v2DocumentSelection
+    ? { ...editingV2Item.v2DocumentSelection, quantity: editingV2Item.quantity }
+    : v2Config.defaults;
+
   React.useEffect(() => {
     const handler = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
@@ -464,6 +509,10 @@ export default function QuickSalePage() {
       setDiscountMode={setDiscountMode}
       onCheckout={openCheckout}
       canOverridePrice={allowPriceOverride}
+      onEditItem={v2 ? item => {
+        setEditingV2ItemKey(item.key);
+        setV2ConfiguratorOpen(true);
+      } : undefined}
     />
   );
   return (
@@ -538,7 +587,10 @@ export default function QuickSalePage() {
               <Typography fontSize={16} fontWeight={900} color="#172033">เลือกกลุ่มงาน</Typography>
               <Button
                 variant="outlined"
-                onClick={() => setV2ConfiguratorOpen(true)}
+                onClick={() => {
+                  setEditingV2ItemKey(null);
+                  setV2ConfiguratorOpen(true);
+                }}
                 startIcon={<ArticleRoundedIcon />}
                 sx={{ minHeight: 88, borderRadius: 3, justifyContent: 'flex-start', px: 2, textTransform: 'none', fontWeight: 900 }}>
                 <Box sx={{ textAlign: 'left' }}>
@@ -795,7 +847,10 @@ export default function QuickSalePage() {
 
       <Dialog
         open={v2ConfiguratorOpen}
-        onClose={() => setV2ConfiguratorOpen(false)}
+        onClose={() => {
+          setV2ConfiguratorOpen(false);
+          setEditingV2ItemKey(null);
+        }}
         fullWidth
         maxWidth="sm"
         PaperProps={{ sx: { width: { xs: 'calc(100% - 20px)', sm: 620 }, m: { xs: 1.25, sm: 3 }, borderRadius: 4 } }}>
@@ -812,11 +867,8 @@ export default function QuickSalePage() {
           <DocumentServiceConfigurator
             products={products}
             mappings={v2Config.mappings}
-            defaults={v2Config.defaults}
-            onAdd={(product, quantity) => {
-              addProduct(product, quantity);
-              setV2ConfiguratorOpen(false);
-            }}
+            defaults={v2ConfiguratorDefaults}
+            onAdd={applyV2DocumentItem}
           />
         </DialogContent>
       </Dialog>

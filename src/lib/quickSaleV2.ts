@@ -11,10 +11,13 @@ export type QuickSaleV2DocumentMapping = {
   quickProductId: string;
 };
 
-export type QuickSaleV2DocumentDefaults = {
+export type QuickSaleV2DocumentSelection = {
   workType: DocumentWorkType;
   size: DocumentSize;
   colorMode: DocumentColorMode;
+};
+
+export type QuickSaleV2DocumentDefaults = QuickSaleV2DocumentSelection & {
   quantity: number;
 };
 

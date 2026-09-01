@@ -30,6 +30,7 @@ import ScannerRoundedIcon from '@mui/icons-material/ScannerRounded';
 import SellRoundedIcon from '@mui/icons-material/SellRounded';
 import ShoppingCartRoundedIcon from '@mui/icons-material/ShoppingCartRounded';
 
+import type { QuickSaleV2DocumentSelection } from '@/lib/quickSaleV2';
 import type { DiscountMode } from '../quickSale';
 import { roundMoney } from '../quickSale';
 
@@ -46,6 +47,7 @@ export type QuickSaleCartItem = {
   quantity: number;
   unitPrice: number;
   catalogUnitPrice?: number;
+  v2DocumentSelection?: QuickSaleV2DocumentSelection;
 };
 
 type QuickSaleTotals = {
@@ -64,6 +66,7 @@ type QuickSellerCartProps = Readonly<{
   setDiscountMode: (mode: DiscountMode) => void;
   onCheckout: () => void;
   canOverridePrice: boolean;
+  onEditItem?: (item: QuickSaleCartItem) => void;
 }>;
 
 const money = new Intl.NumberFormat('th-TH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -174,7 +177,7 @@ function PriceEditor({ item, onCommit }: Readonly<{ item: QuickSaleCartItem; onC
   );
 }
 
-function CartItemRow({ item, onUpdate, onRemove, canOverridePrice }: Readonly<{ item: QuickSaleCartItem; onUpdate: (values: Partial<QuickSaleCartItem>) => void; onRemove: () => void; canOverridePrice: boolean }>) {
+function CartItemRow({ item, onUpdate, onRemove, canOverridePrice, onEdit }: Readonly<{ item: QuickSaleCartItem; onUpdate: (values: Partial<QuickSaleCartItem>) => void; onRemove: () => void; canOverridePrice: boolean; onEdit?: () => void }>) {
   const visual = getItemVisual(item);
   return (
     <Box sx={{ py: 1.5, borderBottom: '1px solid #E8EDF4', transition: 'background-color 160ms ease', '&:hover': { bgcolor: '#FAFCFF' } }}>
@@ -194,6 +197,16 @@ function CartItemRow({ item, onUpdate, onRemove, canOverridePrice }: Readonly<{ 
             </Tooltip>
           )}
         </Box>
+        {onEdit ? (
+          <Tooltip title="แก้ไขตัวเลือก">
+            <IconButton
+              aria-label={`แก้ไข ${item.productName}`}
+              onClick={onEdit}
+              sx={{ position: 'absolute', top: 0, left: 0, width: 32, height: 32, color: '#64748B', '&:hover': { color: '#1463E9', bgcolor: '#EFF6FF' } }}>
+              <EditRoundedIcon sx={{ fontSize: 18 }} />
+            </IconButton>
+          </Tooltip>
+        ) : null}
         <Tooltip title="ลบรายการ">
           <IconButton
             aria-label={`ลบ ${item.productName}`}
@@ -256,7 +269,7 @@ function DiscountControl({ value, mode, appliedDiscount, onApplyMode, onApplyVal
   );
 }
 
-export default function QuickSellerCart({ items, setItems, totals, discountValue, discountMode, setDiscountValue, setDiscountMode, onCheckout, canOverridePrice }: QuickSellerCartProps) {
+export default function QuickSellerCart({ items, setItems, totals, discountValue, discountMode, setDiscountValue, setDiscountMode, onCheckout, canOverridePrice, onEditItem }: QuickSellerCartProps) {
   const updateItem = (key: string, values: Partial<QuickSaleCartItem>) => {
     setItems(previous => previous.map(item => (item.key === key ? { ...item, ...values } : item)));
   };
@@ -299,6 +312,7 @@ export default function QuickSellerCart({ items, setItems, totals, discountValue
               onUpdate={values => updateItem(item.key, values)}
               onRemove={() => setItems(previous => previous.filter(row => row.key !== item.key))}
               canOverridePrice={canOverridePrice}
+              onEdit={item.v2DocumentSelection && onEditItem ? () => onEditItem(item) : undefined}
             />
           ))
         )}
