@@ -114,6 +114,45 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
   });
 });
 
+test('keeps Quick Sale V2 tax-invoice checkout on the shared authoritative VAT contract', async ({ page }) => {
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await expect(paymentDialog).toBeVisible();
+
+  const customerSearch = paymentDialog.getByLabel('ค้นหาลูกค้าเดิม');
+  await customerSearch.fill('บริษัท E2E');
+  await page.getByRole('option', { name: /บริษัท E2E จำกัด/ }).click();
+  await paymentDialog.getByRole('button', { name: /ใบกำกับภาษี/ }).click();
+  await expect(paymentDialog.getByText('VAT 7%', { exact: true })).toBeVisible();
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    customerId: '64b0000000000000000000cc',
+    taxId: '0105555555555',
+    address: '99 ถนนสุขุมวิท กรุงเทพฯ',
+    taxInvoice: 'yes',
+    cart: [{ quickProductId: 'product-e2e-1', quantity: 1 }],
+    initialPayment: {
+      method: 'cash',
+      amount: 26.75,
+      receivedAmount: 26.75,
+    },
+  });
+});
+
 test('completes a cashier quick-sale checkout against controlled test data', async ({ page }) => {
   await loginAsCashier(page);
 
