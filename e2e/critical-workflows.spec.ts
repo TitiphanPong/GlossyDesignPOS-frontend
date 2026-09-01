@@ -153,6 +153,51 @@ test('keeps Quick Sale V2 tax-invoice checkout on the shared authoritative VAT c
   });
 });
 
+test('keeps Quick Sale V2 backdated checkout on the shared sale-date audit contract', async ({ page }) => {
+  test.setTimeout(60_000);
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await expect(configurator.getByText('E2E A4 Print', { exact: true })).toBeVisible();
+  await expect(configurator.getByRole('button', { name: /เพิ่มลงรายการ/ })).toBeEnabled();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await expect(paymentDialog).toBeVisible();
+  await paymentDialog.getByRole('button', { name: 'ลงรายการย้อนหลัง' }).click();
+  await expect(paymentDialog.getByText('รายละเอียดการขายย้อนหลัง', { exact: true })).toBeVisible();
+
+  const backdatedAt = new Date();
+  backdatedAt.setDate(backdatedAt.getDate() - 1);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const backdatedInput = `${pad(backdatedAt.getDate())}/${pad(backdatedAt.getMonth() + 1)}/${backdatedAt.getFullYear()} 10:00`;
+  await paymentDialog.getByRole('group', { name: 'วันที่และเวลาที่เกิดการขาย' }).locator('input').fill(backdatedInput, { force: true });
+  await paymentDialog.getByLabel('เหตุผลที่ลงรายการย้อนหลัง').fill('รายการขายตกหล่น E2E');
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    entryMode: 'backdated',
+    backdatedReason: 'รายการขายตกหล่น E2E',
+    cart: [{ quickProductId: 'product-e2e-1', quantity: 1 }],
+    initialPayment: {
+      method: 'cash',
+      amount: 25,
+      receivedAmount: 25,
+    },
+  });
+  expect(typeof orderPayload.saleDate).toBe('string');
+  expect(Number.isNaN(Date.parse(orderPayload.saleDate))).toBe(false);
+});
+
 test('completes a cashier quick-sale checkout against controlled test data', async ({ page }) => {
   await loginAsCashier(page);
 
