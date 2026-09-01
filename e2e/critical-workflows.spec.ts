@@ -114,6 +114,24 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
   });
 });
 
+test('removes a configured Quick Sale V2 item from cart before checkout', async ({ page }) => {
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await expect(configurator.getByText('E2E A4 Print', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+
+  const checkoutButton = page.getByRole('button', { name: /ชำระเงิน/ });
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('1');
+  await expect(checkoutButton).toBeEnabled();
+
+  await page.getByRole('button', { name: 'ลบ E2E A4 Print' }).click();
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveCount(0);
+  await expect(checkoutButton).toBeDisabled();
+});
+
 test('keeps Quick Sale V2 A4/A3 color and quantity presets on explicit SKU mappings', async ({ page }) => {
   test.setTimeout(60_000);
   await loginAsCashier(page, '/home/quick-sale-v2');
