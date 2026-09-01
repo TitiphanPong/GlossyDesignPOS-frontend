@@ -582,6 +582,11 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
             overflow: visible !important;
           }
 
+          .print-document-stage {
+            display: flex !important;
+            visibility: visible !important;
+          }
+
           .print-paper,
           .invoice-document-sheet,
           .invoice-copy {

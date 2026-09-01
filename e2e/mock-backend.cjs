@@ -230,6 +230,41 @@ const server = http.createServer(async (request, response) => {
     });
   }
 
+  if (request.method === 'GET' && url.pathname === `/orders/${orderId}`) {
+    const now = new Date().toISOString();
+    return json(response, 200, {
+      _id: orderId,
+      orderId,
+      orderNumber,
+      invoiceNumber: 'INV-202608-001-001',
+      bookNo: '001',
+      invoiceSequence: '001',
+      invoicePeriod: '202608',
+      customerName: 'ลูกค้า Invoice E2E',
+      phoneNumber: '0812345678',
+      taxId: '0105555555555',
+      address: '99 ถนนทดสอบ กรุงเทพมหานคร 10250',
+      payment: 'cash',
+      paymentMethod: 'cash',
+      status: 'paid',
+      workflowStatus: 'pending',
+      saleDate: now,
+      createdAt: now,
+      updatedAt: now,
+      taxInvoice: 'yes',
+      cart: [{ name: 'งานพิมพ์ Invoice E2E', quantity: 2, unitPrice: 100, totalPrice: 200 }],
+      subtotal: 200,
+      discount: 0,
+      vatAmount: 14,
+      grandTotal: 214,
+      depositTotal: 214,
+      paidAmount: 214,
+      remainingTotal: 0,
+      receivedAmount: 214,
+      changeAmount: 0,
+    });
+  }
+
   if (request.method === 'GET' && url.pathname === '/production/jobs/assignees') {
     return json(response, 200, [{ id: staffUserId, username: 'cashier' }]);
   }
