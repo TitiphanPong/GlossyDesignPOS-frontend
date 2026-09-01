@@ -1,13 +1,20 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function loginAsCashier(page: Page, target = '/home/quick-sale') {
+  const sessionCheck = page.waitForResponse(
+    response => response.url().endsWith('/api/admin/session') && response.request().method() === 'GET'
+  );
   await page.goto(target);
   await expect(page).toHaveURL(url => url.pathname === '/login' && url.searchParams.get('redirectTo') === target);
-  await page.waitForLoadState('networkidle');
+  await sessionCheck;
   await page.getByLabel('ชื่อผู้ใช้').fill('cashier');
   await page.getByRole('textbox', { name: 'รหัสผ่าน' }).fill('e2e-password');
+  const loginResponse = page.waitForResponse(
+    response => response.url().endsWith('/api/admin/session') && response.request().method() === 'POST'
+  );
   await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
-  await expect(page).toHaveURL(url => `${url.pathname}${url.search}` === target);
+  expect((await loginResponse).status()).toBe(200);
+  await expect(page).toHaveURL(url => `${url.pathname}${url.search}` === target, { timeout: 30_000 });
 }
 
 test('fails closed without leaking login credentials before hydration', async ({ browser, baseURL }) => {
@@ -67,6 +74,16 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
 
   await expect(configurator).toBeHidden();
   await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('5');
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await expect(paymentDialog).toBeVisible();
+  await paymentDialog.getByRole('button', { name: /เงินสด/ }).click();
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+  await expect(page.getByText('ORD-E2E-0001', { exact: true })).toBeVisible();
 });
 
 test('completes a cashier quick-sale checkout against controlled test data', async ({ page }) => {
