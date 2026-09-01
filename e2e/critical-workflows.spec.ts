@@ -114,6 +114,54 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
   });
 });
 
+test('keeps Quick Sale V2 A4/A3 color and quantity presets on explicit SKU mappings', async ({ page }) => {
+  test.setTimeout(60_000);
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await expect(configurator).toBeVisible();
+  await configurator.getByText('สี', { exact: true }).click();
+  await expect(configurator.getByText('E2E A4 Color', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: '50', exact: true }).click();
+  await expect(configurator.getByText('PRINT · A4 · สี · 50 ชิ้น', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('฿600.00', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Color' })).toHaveValue('50');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  await expect(configurator).toBeVisible();
+  await configurator.getByText('A3', { exact: true }).click();
+  await configurator.getByText('สี', { exact: true }).click();
+  await expect(configurator.getByText('E2E A3 Color', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('PRINT · A3 · สี · 1 ชิ้น', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('฿25.00', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await paymentDialog.getByRole('button', { name: /โอนเงิน \/ PromptPay/ }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันว่าชำระเงินแล้ว/ }).click();
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    cart: [
+      { quickProductId: 'product-e2e-a4-color', quantity: 50 },
+      { quickProductId: 'product-e2e-a3-color', quantity: 1 },
+    ],
+    initialPayment: {
+      method: 'promptpay',
+      amount: 625,
+      receivedAmount: 625,
+    },
+  });
+});
+
 test('keeps Quick Sale V2 tax-invoice checkout on the shared authoritative VAT contract', async ({ page }) => {
   await loginAsCashier(page, '/home/quick-sale-v2');
 

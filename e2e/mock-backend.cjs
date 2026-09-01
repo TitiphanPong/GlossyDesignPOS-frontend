@@ -195,6 +195,32 @@ const server = http.createServer(async (request, response) => {
         quickSaleSortOrder: 2,
         variants: [{ id: 'variant-e2e-2', name: 'Default', price: 15, active: true }],
       },
+      {
+        id: 'product-e2e-a4-color',
+        _id: 'product-e2e-a4-color',
+        name: 'E2E A4 Color',
+        category: 'Print',
+        code: 'E2E-A4-COLOR',
+        typeCode: 'print',
+        active: true,
+        quickSaleEnabled: true,
+        isHotMenu: false,
+        quickSaleSortOrder: 3,
+        variants: [{ id: 'variant-e2e-a4-color', name: 'Default', price: 12, active: true }],
+      },
+      {
+        id: 'product-e2e-a3-color',
+        _id: 'product-e2e-a3-color',
+        name: 'E2E A3 Color',
+        category: 'Print',
+        code: 'E2E-A3-COLOR',
+        typeCode: 'print',
+        active: true,
+        quickSaleEnabled: true,
+        isHotMenu: false,
+        quickSaleSortOrder: 4,
+        variants: [{ id: 'variant-e2e-a3-color', name: 'Default', price: 25, active: true }],
+      },
     ]);
   }
 
@@ -203,6 +229,8 @@ const server = http.createServer(async (request, response) => {
       mappings: [
         { workType: 'print', size: 'A4', colorMode: 'bw', quickProductId: 'product-e2e-1' },
         { workType: 'copy', size: 'A4', colorMode: 'bw', quickProductId: 'product-e2e-2' },
+        { workType: 'print', size: 'A4', colorMode: 'color', quickProductId: 'product-e2e-a4-color' },
+        { workType: 'print', size: 'A3', colorMode: 'color', quickProductId: 'product-e2e-a3-color' },
       ],
       version: 1,
       updatedAt: new Date().toISOString(),
