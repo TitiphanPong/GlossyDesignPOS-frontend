@@ -34,10 +34,12 @@ export default function DocumentServiceConfigurator({
   products,
   mappings,
   onAdd,
+  previewOnly = false,
 }: {
   products: Product[];
   mappings: QuickSaleV2DocumentMapping[];
   onAdd: (product: Product, quantity: number) => void;
+  previewOnly?: boolean;
 }) {
   const [workType, setWorkType] = React.useState<DocumentWorkType>('print');
   const [size, setSize] = React.useState<DocumentSize>('A4');
@@ -132,8 +134,14 @@ export default function DocumentServiceConfigurator({
           </Paper>
         )}
 
-        <Button variant="contained" size="large" disabled={!product || !variant} onClick={() => product && onAdd(product, quantity)} sx={{ minHeight: 48, borderRadius: 2.5, fontWeight: 900 }}>
-          เพิ่มลงรายการ
+        <Button
+          variant="contained"
+          size="large"
+          disabled={!product || !variant || previewOnly}
+          onClick={() => product && !previewOnly && onAdd(product, quantity)}
+          sx={{ minHeight: 48, borderRadius: 2.5, fontWeight: 900 }}
+        >
+          {previewOnly ? 'Preview เท่านั้น' : 'เพิ่มลงรายการ'}
         </Button>
       </Stack>
     </Paper>

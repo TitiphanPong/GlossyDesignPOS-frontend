@@ -5,6 +5,7 @@ import {
   Alert,
   Box,
   Button,
+  Chip,
   CircularProgress,
   Divider,
   FormControl,
@@ -13,12 +14,15 @@ import {
   Paper,
   Select,
   Stack,
+  Tab,
+  Tabs,
   Typography,
 } from '@mui/material';
 import PublishRoundedIcon from '@mui/icons-material/PublishRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import AdminPageContainer from '@/app/home/components/AdminPageContainer';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate } from '@/app/home/components/AdminHeroHeader';
+import DocumentServiceConfigurator from '../../quick-sale-v2/DocumentServiceConfigurator';
 import { fetchQuickProductsForAdmin } from '@/lib/products';
 import type { Product } from '@/lib/contracts';
 import {
@@ -42,16 +46,42 @@ const COLORS: Array<{ value: DocumentColorMode; label: string }> = [
   { value: 'bw', label: 'ขาวดำ' },
   { value: 'color', label: 'สี' },
 ];
-
-const combinations = WORK_TYPES.flatMap(workType =>
-  SIZES.flatMap(size =>
-    COLORS.map(colorMode => ({ workType: workType.value, workTypeLabel: workType.label, size, colorMode: colorMode.value, colorLabel: colorMode.label })),
-  ),
-);
+const TOTAL_DOCUMENT_COMBINATIONS = WORK_TYPES.length * SIZES.length * COLORS.length;
 
 function productLabel(product: Product): string {
   const price = product.variants.find(variant => variant.active)?.price;
   return `${product.name}${price != null ? ` · ฿${price.toFixed(2)}` : ''}`;
+}
+
+function MappingSelect({
+  id,
+  value,
+  products,
+  onChange,
+}: {
+  id: string;
+  value: string;
+  products: Product[];
+  onChange: (quickProductId: string) => void;
+}) {
+  return (
+    <FormControl fullWidth size="small">
+      <InputLabel id={`${id}-label`}>Quick Product</InputLabel>
+      <Select
+        labelId={`${id}-label`}
+        label="Quick Product"
+        value={value}
+        onChange={event => onChange(String(event.target.value))}
+      >
+        <MenuItem value=""><em>ยังไม่ผูก — ปิดตัวเลือกนี้</em></MenuItem>
+        {products.map(product => (
+          <MenuItem key={product.quickProductId || product.id} value={product.quickProductId || ''}>
+            {productLabel(product)}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+  );
 }
 
 export default function QuickSaleV2SettingsPage() {
@@ -59,6 +89,7 @@ export default function QuickSaleV2SettingsPage() {
   const [mappings, setMappings] = React.useState<QuickSaleV2DocumentMapping[]>([]);
   const [version, setVersion] = React.useState(0);
   const [updatedAt, setUpdatedAt] = React.useState<Date | null>(null);
+  const [tab, setTab] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
   const [notice, setNotice] = React.useState<string | null>(null);
@@ -131,11 +162,14 @@ export default function QuickSaleV2SettingsPage() {
     }
   };
 
+  const mappedCount = mappings.length;
+  const familyEnabled = mappedCount > 0;
+
   return (
     <AdminPageContainer>
       <AdminHeroHeader
         title="Quick Seller V2 Settings"
-        description="Pilot งานเอกสาร · Mapping ตัวเลือกไปยัง Quick Product เดิม โดยไม่สร้างราคาหรือ financial logic ชุดใหม่"
+        description="จัดหน้าขาย ราคา/ตัวเลือก และ Preview จาก Draft เดียวกัน โดยไม่กระทบ Quick Seller V1"
         lastSynced={formatAdminLastSynced(updatedAt)}
         thaiDate={formatAdminThaiDate(updatedAt ?? new Date())}
       />
@@ -149,53 +183,124 @@ export default function QuickSaleV2SettingsPage() {
 
         <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
           <Box sx={{ p: 2 }}>
-            <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1} alignItems={{ sm: 'center' }}>
+            <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" gap={1.5} alignItems={{ md: 'center' }}>
               <Box>
-                <Typography fontWeight={900}>งานเอกสาร · Explicit SKU mapping</Typography>
-                <Typography variant="body2" color="text.secondary">Published version: {version}</Typography>
+                <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
+                  <Typography fontWeight={900}>V2 Layout Draft</Typography>
+                  <Chip size="small" label={`Published v${version}`} variant="outlined" />
+                  <Chip size="small" color={familyEnabled ? 'success' : 'default'} label={familyEnabled ? 'งานเอกสารพร้อมแสดง' : 'งานเอกสารยังไม่มี mapping'} />
+                </Stack>
+                <Typography variant="body2" color="text.secondary">
+                  ผูกแล้ว {mappedCount}/{TOTAL_DOCUMENT_COMBINATIONS} ตัวเลือก · ราคาอ่านจาก Quick Product ปัจจุบัน
+                </Typography>
               </Box>
-              <Stack direction="row" gap={1}>
-                <Button startIcon={<SaveRoundedIcon />} variant="outlined" disabled={saving || loading} onClick={() => void saveDraft()}>Save Draft</Button>
-                <Button startIcon={<PublishRoundedIcon />} variant="contained" disabled={saving || loading} onClick={() => void publish()}>Publish</Button>
+              <Stack direction="row" gap={1} flexWrap="wrap">
+                <Button startIcon={<SaveRoundedIcon />} variant="outlined" disabled={saving || loading} onClick={() => void saveDraft()}>
+                  Save Draft
+                </Button>
+                <Button startIcon={<PublishRoundedIcon />} variant="contained" disabled={saving || loading} onClick={() => void publish()}>
+                  Publish
+                </Button>
               </Stack>
             </Stack>
           </Box>
           <Divider />
-
-          {loading ? (
-            <Stack alignItems="center" sx={{ py: 6 }}><CircularProgress /></Stack>
-          ) : (
-            <Stack divider={<Divider flexItem />}>
-              {combinations.map(combo => {
-                const id = `${combo.workType}-${combo.size}-${combo.colorMode}`;
-                return (
-                  <Stack key={id} direction={{ xs: 'column', md: 'row' }} gap={1.5} alignItems={{ md: 'center' }} sx={{ p: 2 }}>
-                    <Box sx={{ width: { md: 210 }, flexShrink: 0 }}>
-                      <Typography fontWeight={850}>{combo.workTypeLabel} · {combo.size}</Typography>
-                      <Typography variant="body2" color="text.secondary">{combo.colorLabel}</Typography>
-                    </Box>
-                    <FormControl fullWidth size="small">
-                      <InputLabel id={`${id}-label`}>Quick Product</InputLabel>
-                      <Select
-                        labelId={`${id}-label`}
-                        label="Quick Product"
-                        value={valueFor(combo.workType, combo.size, combo.colorMode)}
-                        onChange={event => setMapping(combo.workType, combo.size, combo.colorMode, String(event.target.value))}
-                      >
-                        <MenuItem value=""><em>ยังไม่ผูก — ปิดตัวเลือกนี้</em></MenuItem>
-                        {products.map(product => (
-                          <MenuItem key={product.quickProductId || product.id} value={product.quickProductId || ''}>
-                            {productLabel(product)}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </FormControl>
-                  </Stack>
-                );
-              })}
-            </Stack>
-          )}
+          <Tabs value={tab} onChange={(_, value: number) => setTab(value)} variant="scrollable" allowScrollButtonsMobile sx={{ px: 1 }}>
+            <Tab label="จัดหน้าขาย" />
+            <Tab label="ราคาและตัวเลือก" />
+            <Tab label="Preview" />
+          </Tabs>
         </Paper>
+
+        {loading ? (
+          <Paper variant="outlined" sx={{ borderRadius: 3 }}>
+            <Stack alignItems="center" sx={{ py: 7 }}><CircularProgress /></Stack>
+          </Paper>
+        ) : null}
+
+        {!loading && tab === 0 ? (
+          <Stack spacing={1.5}>
+            <Typography fontWeight={900}>จัดหน้าขาย</Typography>
+            <Typography variant="body2" color="text.secondary">
+              Pilot นี้มี Service Family เดียว จึงล็อกลำดับไว้ที่ 1 ก่อน เมื่อเพิ่มหลาย Family ค่อยเปิด drag/drop โดยไม่เปลี่ยน contract ของ V1
+            </Typography>
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+              <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1.5} alignItems={{ sm: 'center' }}>
+                <Stack direction="row" gap={1.5} alignItems="center">
+                  <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: 'action.hover', display: 'grid', placeItems: 'center', fontWeight: 900 }}>1</Box>
+                  <Box>
+                    <Stack direction="row" gap={0.75} alignItems="center" flexWrap="wrap">
+                      <Typography fontWeight={900}>งานเอกสาร</Typography>
+                      <Chip size="small" label="Pilot" color="primary" variant="outlined" />
+                    </Stack>
+                    <Typography variant="body2" color="text.secondary">Print / Copy / Scan · A4 / A3 · ขาวดำ / สี</Typography>
+                  </Box>
+                </Stack>
+                <Stack alignItems={{ sm: 'flex-end' }} gap={0.25}>
+                  <Chip size="small" color={familyEnabled ? 'success' : 'default'} label={familyEnabled ? 'แสดงใน V2' : 'ยังไม่พร้อมแสดง'} />
+                  <Typography variant="caption" color="text.secondary">{mappedCount}/{TOTAL_DOCUMENT_COMBINATIONS} mapping</Typography>
+                </Stack>
+              </Stack>
+            </Paper>
+            <Alert severity="warning" variant="outlined">
+              การเปิด/ปิด Family แบบแยก state และการเรียงหลาย Family จะเพิ่มเมื่อมี Family ที่สอง เพื่อไม่สร้าง config field ที่ยังไม่มี consumer จริง
+            </Alert>
+          </Stack>
+        ) : null}
+
+        {!loading && tab === 1 ? (
+          <Stack spacing={1.5}>
+            <Box>
+              <Typography fontWeight={900}>ราคาและตัวเลือก · งานเอกสาร</Typography>
+              <Typography variant="body2" color="text.secondary">
+                จัด mapping เป็น matrix ตามประเภทงาน แทนรายการ SKU ยาว ๆ ราคาแสดงจาก Quick Product ที่เลือกและไม่ถูกคัดลอกมาเก็บใน V2
+              </Typography>
+            </Box>
+            {WORK_TYPES.map(workType => (
+              <Paper key={workType.value} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+                <Box sx={{ px: 2, py: 1.5, bgcolor: 'action.hover' }}>
+                  <Typography fontWeight={900}>{workType.label}</Typography>
+                </Box>
+                <Divider />
+                <Stack divider={<Divider flexItem />}>
+                  {SIZES.map(size => (
+                    <Box key={size} sx={{ p: 2 }}>
+                      <Typography fontWeight={850} sx={{ mb: 1 }}>{size}</Typography>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 1.25 }}>
+                        {COLORS.map(color => {
+                          const id = `${workType.value}-${size}-${color.value}`;
+                          return (
+                            <Stack key={id} spacing={0.5}>
+                              <Typography variant="caption" fontWeight={800} color="text.secondary">{color.label}</Typography>
+                              <MappingSelect
+                                id={id}
+                                products={products}
+                                value={valueFor(workType.value, size, color.value)}
+                                onChange={quickProductId => setMapping(workType.value, size, color.value, quickProductId)}
+                              />
+                            </Stack>
+                          );
+                        })}
+                      </Box>
+                    </Box>
+                  ))}
+                </Stack>
+              </Paper>
+            ))}
+          </Stack>
+        ) : null}
+
+        {!loading && tab === 2 ? (
+          <Stack spacing={1.5}>
+            <Box>
+              <Typography fontWeight={900}>Preview จาก Draft</Typography>
+              <Typography variant="body2" color="text.secondary">
+                ทดลองเปลี่ยน Print / Copy / Scan, ขนาด, สี และจำนวนได้จาก Draft ปัจจุบัน โดย Preview นี้จะไม่เพิ่มสินค้าเข้าตะกร้าหรือแก้ Published config
+              </Typography>
+            </Box>
+            <DocumentServiceConfigurator products={products} mappings={mappings} onAdd={() => undefined} previewOnly />
+          </Stack>
+        ) : null}
       </Stack>
     </AdminPageContainer>
   );
