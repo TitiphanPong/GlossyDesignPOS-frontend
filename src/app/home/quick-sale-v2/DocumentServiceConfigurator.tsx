@@ -10,6 +10,7 @@ import {
   type DocumentColorMode,
   type DocumentSize,
   type DocumentWorkType,
+  type QuickSaleV2DocumentDefaults,
   type QuickSaleV2DocumentMapping,
 } from '@/lib/quickSaleV2';
 
@@ -33,18 +34,27 @@ function activeVariant(product: Product) {
 export default function DocumentServiceConfigurator({
   products,
   mappings,
+  defaults,
   onAdd,
   previewOnly = false,
 }: {
   products: Product[];
   mappings: QuickSaleV2DocumentMapping[];
+  defaults: QuickSaleV2DocumentDefaults;
   onAdd: (product: Product, quantity: number) => void;
   previewOnly?: boolean;
 }) {
-  const [workType, setWorkType] = React.useState<DocumentWorkType>('print');
-  const [size, setSize] = React.useState<DocumentSize>('A4');
-  const [colorMode, setColorMode] = React.useState<DocumentColorMode>('bw');
-  const [quantity, setQuantity] = React.useState(1);
+  const [workType, setWorkType] = React.useState<DocumentWorkType>(defaults.workType);
+  const [size, setSize] = React.useState<DocumentSize>(defaults.size);
+  const [colorMode, setColorMode] = React.useState<DocumentColorMode>(defaults.colorMode);
+  const [quantity, setQuantity] = React.useState(defaults.quantity);
+
+  React.useEffect(() => {
+    setWorkType(defaults.workType);
+    setSize(defaults.size);
+    setColorMode(defaults.colorMode);
+    setQuantity(defaults.quantity);
+  }, [defaults.colorMode, defaults.quantity, defaults.size, defaults.workType]);
 
   const mapping = React.useMemo(
     () => resolveDocumentMapping(mappings, { workType, size, colorMode }),

@@ -58,7 +58,7 @@ import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
 import CustomerDisplayPairingButton from '@/components/customer-display/CustomerDisplayPairingButton';
 import { calculateAddedVat, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, validateQuickSaleBackdate, type DiscountMode } from './quickSale';
-import { fetchQuickSaleV2Published, type QuickSaleV2Config } from '@/lib/quickSaleV2';
+import { DEFAULT_QUICK_SALE_V2_DOCUMENT_DEFAULTS, fetchQuickSaleV2Published, type QuickSaleV2Config } from '@/lib/quickSaleV2';
 import DocumentServiceConfigurator from '../quick-sale-v2/DocumentServiceConfigurator';
 
 type QuickItem = QuickSaleCartItem;
@@ -102,7 +102,7 @@ export default function QuickSalePage() {
   const mobile = useMediaQuery(theme.breakpoints.down('md'));
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [products, setProducts] = React.useState<Product[]>([]);
-  const [v2Config, setV2Config] = React.useState<QuickSaleV2Config>({ mappings: [], version: 0, updatedAt: null });
+  const [v2Config, setV2Config] = React.useState<QuickSaleV2Config>({ mappings: [], defaults: { ...DEFAULT_QUICK_SALE_V2_DOCUMENT_DEFAULTS }, version: 0, updatedAt: null });
   const [v2ConfiguratorOpen, setV2ConfiguratorOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
@@ -812,6 +812,7 @@ export default function QuickSalePage() {
           <DocumentServiceConfigurator
             products={products}
             mappings={v2Config.mappings}
+            defaults={v2Config.defaults}
             onAdd={(product, quantity) => {
               addProduct(product, quantity);
               setV2ConfiguratorOpen(false);

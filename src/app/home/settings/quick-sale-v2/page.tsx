@@ -26,6 +26,7 @@ import DocumentServiceConfigurator from '../../quick-sale-v2/DocumentServiceConf
 import { fetchQuickProductsForAdmin } from '@/lib/products';
 import type { Product } from '@/lib/contracts';
 import {
+  DEFAULT_QUICK_SALE_V2_DOCUMENT_DEFAULTS,
   documentMappingKey,
   fetchQuickSaleV2Draft,
   publishQuickSaleV2Draft,
@@ -33,6 +34,7 @@ import {
   type DocumentColorMode,
   type DocumentSize,
   type DocumentWorkType,
+  type QuickSaleV2DocumentDefaults,
   type QuickSaleV2DocumentMapping,
 } from '@/lib/quickSaleV2';
 
@@ -87,6 +89,7 @@ function MappingSelect({
 export default function QuickSaleV2SettingsPage() {
   const [products, setProducts] = React.useState<Product[]>([]);
   const [mappings, setMappings] = React.useState<QuickSaleV2DocumentMapping[]>([]);
+  const [defaults, setDefaults] = React.useState<QuickSaleV2DocumentDefaults>({ ...DEFAULT_QUICK_SALE_V2_DOCUMENT_DEFAULTS });
   const [version, setVersion] = React.useState(0);
   const [updatedAt, setUpdatedAt] = React.useState<Date | null>(null);
   const [tab, setTab] = React.useState(0);
@@ -102,6 +105,7 @@ export default function QuickSaleV2SettingsPage() {
         if (!active) return;
         setProducts(nextProducts.filter(product => Boolean(product.quickProductId) && product.active));
         setMappings(config.mappings);
+        setDefaults(config.defaults);
         setVersion(config.version);
         setUpdatedAt(config.updatedAt ? new Date(config.updatedAt) : null);
       })
@@ -133,8 +137,9 @@ export default function QuickSaleV2SettingsPage() {
     setNotice(null);
     setError(null);
     try {
-      const saved = await updateQuickSaleV2Draft(mappings);
+      const saved = await updateQuickSaleV2Draft(mappings, defaults);
       setMappings(saved.mappings);
+      setDefaults(saved.defaults);
       setVersion(saved.version);
       setUpdatedAt(saved.updatedAt ? new Date(saved.updatedAt) : null);
       setNotice('บันทึก Draft แล้ว — หน้าขาย V2 ยังไม่เปลี่ยนจนกว่าจะกด Publish');
@@ -150,8 +155,9 @@ export default function QuickSaleV2SettingsPage() {
     setNotice(null);
     setError(null);
     try {
-      await updateQuickSaleV2Draft(mappings);
+      await updateQuickSaleV2Draft(mappings, defaults);
       const published = await publishQuickSaleV2Draft();
+      setDefaults(published.defaults);
       setVersion(published.version);
       setUpdatedAt(published.updatedAt ? new Date(published.updatedAt) : null);
       setNotice(`Publish V2 สำเร็จ (version ${published.version})`);
@@ -242,6 +248,41 @@ export default function QuickSaleV2SettingsPage() {
                 </Stack>
               </Stack>
             </Paper>
+            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+              <Stack spacing={1.5}>
+                <Box>
+                  <Typography fontWeight={900}>ค่าเริ่มต้นเมื่อเปิดงานเอกสาร</Typography>
+                  <Typography variant="body2" color="text.secondary">Published defaults จะถูกใช้จริงเมื่อเปิด configurator ในหน้าขาย V2 ส่วน Preview ด้านล่างใช้ค่า Draft นี้ทันที</Typography>
+                </Box>
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 1 }}>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel id="default-work-type-label">ประเภทงาน</InputLabel>
+                    <Select labelId="default-work-type-label" label="ประเภทงาน" value={defaults.workType} onChange={event => setDefaults(current => ({ ...current, workType: event.target.value as DocumentWorkType }))}>
+                      {WORK_TYPES.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel id="default-size-label">ขนาด</InputLabel>
+                    <Select labelId="default-size-label" label="ขนาด" value={defaults.size} onChange={event => setDefaults(current => ({ ...current, size: event.target.value as DocumentSize }))}>
+                      {SIZES.map(value => <MenuItem key={value} value={value}>{value}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel id="default-color-label">โหมดสี</InputLabel>
+                    <Select labelId="default-color-label" label="โหมดสี" value={defaults.colorMode} onChange={event => setDefaults(current => ({ ...current, colorMode: event.target.value as DocumentColorMode }))}>
+                      {COLORS.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                  <FormControl size="small" fullWidth>
+                    <InputLabel id="default-quantity-label">จำนวน</InputLabel>
+                    <Select labelId="default-quantity-label" label="จำนวน" value={defaults.quantity} onChange={event => setDefaults(current => ({ ...current, quantity: Number(event.target.value) }))}>
+                      {[1, 5, 10, 20, 50].map(value => <MenuItem key={value} value={value}>{value}</MenuItem>)}
+                    </Select>
+                  </FormControl>
+                </Box>
+                {!valueFor(defaults.workType, defaults.size, defaults.colorMode) ? <Alert severity="warning">ค่าเริ่มต้นนี้ยังไม่มี mapping — Save Draft ได้ แต่ Publish จะถูกปฏิเสธจนกว่าจะผูก Quick Product</Alert> : null}
+              </Stack>
+            </Paper>
             <Alert severity="warning" variant="outlined">
               การเปิด/ปิด Family แบบแยก state และการเรียงหลาย Family จะเพิ่มเมื่อมี Family ที่สอง เพื่อไม่สร้าง config field ที่ยังไม่มี consumer จริง
             </Alert>
@@ -298,7 +339,7 @@ export default function QuickSaleV2SettingsPage() {
                 ทดลองเปลี่ยน Print / Copy / Scan, ขนาด, สี และจำนวนได้จาก Draft ปัจจุบัน โดย Preview นี้จะไม่เพิ่มสินค้าเข้าตะกร้าหรือแก้ Published config
               </Typography>
             </Box>
-            <DocumentServiceConfigurator products={products} mappings={mappings} onAdd={() => undefined} previewOnly />
+            <DocumentServiceConfigurator products={products} mappings={mappings} defaults={defaults} onAdd={() => undefined} previewOnly />
           </Stack>
         ) : null}
       </Stack>
