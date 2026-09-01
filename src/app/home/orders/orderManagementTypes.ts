@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import type { OrderStatus, OrderType, PaymentMethod, ProductionWorkflowStatus } from '../../../lib/contracts';
 
 export type PaymentStatus = OrderStatus;
-export type SortOrder = 'newest' | 'oldest' | 'high' | 'low';
+export type SortOrder = 'order_number_desc' | 'newest' | 'oldest' | 'high' | 'low';
 export type OrderTypeFilter = 'all' | OrderType;
 export type ExportType = 'xlsx' | 'pdf';
 
