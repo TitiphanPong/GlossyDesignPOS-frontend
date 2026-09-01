@@ -44,6 +44,7 @@ test('protects cashier routes and restores the requested route after login', asy
 });
 
 test('opens Quick Sale V2 through a service family and uses an explicit published mapping', async ({ page }) => {
+  test.setTimeout(60_000);
   await loginAsCashier(page, '/home/quick-sale-v2');
 
   await expect(page.getByText('Quick Sale V2 · ทดลอง', { exact: true }).first()).toBeVisible();
@@ -54,7 +55,7 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
   await expect(configurator.getByText('E2E A4 Print', { exact: true })).toBeVisible();
   await expect(configurator.getByText('฿25.00 / ชิ้น', { exact: true })).toBeVisible();
 
-  await configurator.getByText('Copy', { exact: true }).click();
+  await configurator.getByText('Scan', { exact: true }).click();
   await expect(configurator.getByText('ตัวเลือกนี้ยังไม่ได้ผูก SKU ใน Settings V2 จึงยังเพิ่มลงรายการไม่ได้', { exact: true })).toBeVisible();
   await expect(configurator.getByRole('button', { name: /เพิ่มลงรายการ/ })).toBeDisabled();
   await configurator.getByText('Print', { exact: true }).click();
@@ -75,6 +76,17 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
   await expect(configurator).toBeHidden();
   await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('5');
 
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  await expect(configurator).toBeVisible();
+  await configurator.getByText('Copy', { exact: true }).click();
+  await expect(configurator.getByText('E2E A4 Copy', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('฿15.00 / ชิ้น', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+
+  await expect(configurator).toBeHidden();
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('5');
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Copy' })).toHaveValue('1');
+
   await page.getByRole('button', { name: /ชำระเงิน/ }).click();
   const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
   await expect(paymentDialog).toBeVisible();
@@ -90,10 +102,14 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
   expect(orderResponse.ok()).toBe(true);
   const orderPayload = await orderResponse.json();
   expect(orderPayload).toMatchObject({
+    cart: [
+      { quickProductId: 'product-e2e-1', quantity: 5 },
+      { quickProductId: 'product-e2e-2', quantity: 1 },
+    ],
     initialPayment: {
       method: 'promptpay',
-      amount: 125,
-      receivedAmount: 125,
+      amount: 140,
+      receivedAmount: 140,
     },
   });
 });

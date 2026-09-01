@@ -182,6 +182,19 @@ const server = http.createServer(async (request, response) => {
         quickSaleSortOrder: 1,
         variants: [{ id: 'variant-e2e-1', name: 'Default', price: 25, active: true }],
       },
+      {
+        id: 'product-e2e-2',
+        _id: 'product-e2e-2',
+        name: 'E2E A4 Copy',
+        category: 'Copy',
+        code: 'E2E-A4-COPY',
+        typeCode: 'copy',
+        active: true,
+        quickSaleEnabled: true,
+        isHotMenu: false,
+        quickSaleSortOrder: 2,
+        variants: [{ id: 'variant-e2e-2', name: 'Default', price: 15, active: true }],
+      },
     ]);
   }
 
@@ -189,6 +202,7 @@ const server = http.createServer(async (request, response) => {
     return json(response, 200, {
       mappings: [
         { workType: 'print', size: 'A4', colorMode: 'bw', quickProductId: 'product-e2e-1' },
+        { workType: 'copy', size: 'A4', colorMode: 'bw', quickProductId: 'product-e2e-2' },
       ],
       version: 1,
       updatedAt: new Date().toISOString(),
