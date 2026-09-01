@@ -34,8 +34,9 @@ export const PAYMENT_METHOD_LABELS_TH: Record<PaymentMethod, string> = {
   promptpay: 'พร้อมเพย์',
 };
 export const SORT_ORDER_LABELS: Record<SortOrder, string> = {
-  newest: 'ล่าสุด',
-  oldest: 'เก่าสุด',
+  order_number_desc: 'เลขที่งาน มาก → น้อย',
+  newest: 'วันที่รับงาน ล่าสุด',
+  oldest: 'วันที่รับงาน เก่าสุด',
   high: 'ยอดรวมสูงสุด',
   low: 'ยอดรวมต่ำสุด',
 };
@@ -127,7 +128,7 @@ export type FetchOrderRowsParams = {
   payment?: 'unpaid';
   paymentMethod?: PaymentMethod;
   taxInvoice?: 'yes' | 'no';
-  sort?: 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';
+  sort?: 'order_number_desc' | 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';
   signal?: AbortSignal;
 };
 

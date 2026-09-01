@@ -1,12 +1,17 @@
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import DashboardCustomizeRoundedIcon from '@mui/icons-material/DashboardCustomizeRounded';
+import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
 import FolderCopyRoundedIcon from '@mui/icons-material/FolderCopyRounded';
+import FormatListBulletedRoundedIcon from '@mui/icons-material/FormatListBulletedRounded';
 import HealthAndSafetyRoundedIcon from '@mui/icons-material/HealthAndSafetyRounded';
-import PrecisionManufacturingRoundedIcon from '@mui/icons-material/PrecisionManufacturingRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import ManageAccountsRoundedIcon from '@mui/icons-material/ManageAccountsRounded';
 import PeopleAltRoundedIcon from '@mui/icons-material/PeopleAltRounded';
+import PrecisionManufacturingRoundedIcon from '@mui/icons-material/PrecisionManufacturingRounded';
+import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
+import ShoppingBagRoundedIcon from '@mui/icons-material/ShoppingBagRounded';
 import SpaceDashboardRoundedIcon from '@mui/icons-material/SpaceDashboardRounded';
 import StorefrontRoundedIcon from '@mui/icons-material/StorefrontRounded';
 import type { SidebarMenuGroup, SidebarNavItem } from './sidebarTypes';
@@ -21,11 +26,11 @@ export const SIDEBAR_PRIMARY_ACTION: SidebarNavItem = {
 export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
   {
     id: 'overview',
-    label: 'OVERVIEW',
+    label: 'ภาพรวม',
     items: [
       {
         id: 'dashboard',
-        label: 'แดชบอร์ด',
+        label: 'Dashboard',
         href: '/home',
         exact: true,
         icon: SpaceDashboardRoundedIcon,
@@ -34,7 +39,7 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
   },
   {
     id: 'sales',
-    label: 'SALES',
+    label: 'ขาย',
     items: [
       {
         id: 'quick-sale-v2',
@@ -56,22 +61,54 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
         icon: ReceiptLongRoundedIcon,
       },
       {
-        id: 'customers',
-        label: 'รายชื่อลูกค้า',
-        href: '/home/customers',
-        icon: PeopleAltRoundedIcon,
+        id: 'quotations',
+        label: 'ใบเสนอราคา',
+        href: '/home/quotations',
+        icon: RequestQuoteRoundedIcon,
       },
     ],
   },
   {
     id: 'operations',
-    label: 'OPERATIONS',
+    label: 'งาน',
     items: [
       {
         id: 'production',
         label: 'งานผลิต',
         href: '/home/production',
         icon: PrecisionManufacturingRoundedIcon,
+        children: [
+          {
+            id: 'production-all',
+            label: 'ทั้งหมด',
+            href: '/home/production?stage=all',
+            icon: PrecisionManufacturingRoundedIcon,
+          },
+          {
+            id: 'production-queue',
+            label: 'Queue',
+            href: '/home/production?stage=queued',
+            icon: FormatListBulletedRoundedIcon,
+          },
+          {
+            id: 'production-proof',
+            label: 'Proof',
+            href: '/home/production?stage=file_check',
+            icon: FactCheckRoundedIcon,
+          },
+          {
+            id: 'production-running',
+            label: 'Production',
+            href: '/home/production?stage=producing',
+            icon: PrintRoundedIcon,
+          },
+          {
+            id: 'production-pickup',
+            label: 'Pickup',
+            href: '/home/production?stage=ready',
+            icon: ShoppingBagRoundedIcon,
+          },
+        ],
       },
       {
         id: 'storage',
@@ -88,12 +125,24 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
     ],
   },
   {
+    id: 'customers',
+    label: 'ลูกค้า',
+    items: [
+      {
+        id: 'customers',
+        label: 'ลูกค้าทั้งหมด',
+        href: '/home/customers',
+        icon: PeopleAltRoundedIcon,
+      },
+    ],
+  },
+  {
     id: 'management',
-    label: 'MANAGEMENT',
+    label: 'จัดการ',
     items: [
       {
         id: 'quick-menu-settings',
-        label: 'จัดการเมนูขายด่วน',
+        label: 'เมนูขายด่วน',
         href: '/home/settings/quick-menu',
         icon: DashboardCustomizeRoundedIcon,
         roles: ['manager', 'admin'],
@@ -107,7 +156,7 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
       },
       {
         id: 'staff-management',
-        label: 'สิทธิ์การใช้งานระบบ',
+        label: 'พนักงานและสิทธิ์',
         href: '/home/staff',
         icon: ManageAccountsRoundedIcon,
         roles: ['admin'],

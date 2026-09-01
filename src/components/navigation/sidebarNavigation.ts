@@ -1,19 +1,45 @@
 import type { AdminRole, SidebarMenuGroup, SidebarNavItem } from './sidebarTypes';
 
+type NavigationLocation = {
+  pathname: string;
+  searchParams: URLSearchParams;
+};
+
 function normalizePath(path: string): string {
-  const pathOnly = path.split(/[?#]/u, 1)[0] || '/';
-  if (pathOnly === '/') return pathOnly;
-  return pathOnly.replace(/\/+$/u, '') || '/';
+  if (path === '/') return path;
+  return path.replace(/\/+$/u, '') || '/';
+}
+
+function parseNavigationLocation(value: string): NavigationLocation {
+  const withoutHash = value.split('#', 1)[0] || '/';
+  const queryIndex = withoutHash.indexOf('?');
+  const pathname = queryIndex >= 0 ? withoutHash.slice(0, queryIndex) : withoutHash;
+  const search = queryIndex >= 0 ? withoutHash.slice(queryIndex + 1) : '';
+
+  return {
+    pathname: normalizePath(pathname || '/'),
+    searchParams: new URLSearchParams(search),
+  };
+}
+
+function matchesRequiredSearchParams(current: URLSearchParams, target: URLSearchParams): boolean {
+  for (const [key, value] of target.entries()) {
+    if (current.get(key) !== value) return false;
+  }
+  return true;
 }
 
 export function isRouteActive(pathname: string, menuPath: string, exact = false): boolean {
   if (!menuPath || menuPath === '#') return false;
 
-  const current = normalizePath(pathname);
-  const target = normalizePath(menuPath);
-  if (exact) return current === target;
+  const current = parseNavigationLocation(pathname);
+  const target = parseNavigationLocation(menuPath);
+  const pathMatches = exact
+    ? current.pathname === target.pathname
+    : current.pathname === target.pathname || current.pathname.startsWith(`${target.pathname}/`);
 
-  return current === target || current.startsWith(`${target}/`);
+  if (!pathMatches) return false;
+  return matchesRequiredSearchParams(current.searchParams, target.searchParams);
 }
 
 export function isSidebarItemActive(pathname: string, item: SidebarNavItem): boolean {

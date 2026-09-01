@@ -2,7 +2,7 @@
 
 import * as React from 'react';
 import { Box, Button, CircularProgress, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
-import { usePathname } from 'next/navigation';
+import { usePathname, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import AppSidebar from '@/components/navigation/AppSidebar';
 import { sidebarDimensions } from '@/components/navigation/sidebarTheme';
@@ -21,6 +21,12 @@ type AdminSessionUser = {
 
 export default function AppShell({ children }: Readonly<{ children: React.ReactNode }>) {
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const currentNavigationPath = React.useMemo(() => {
+    const currentPathname = pathname ?? '/';
+    const query = searchParams.toString();
+    return query ? `${currentPathname}?${query}` : currentPathname;
+  }, [pathname, searchParams]);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [mobileMenuOpen, setMobileMenuOpen] = React.useState(false);
@@ -167,7 +173,7 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
           variant="temporary"
           open={mobileMenuOpen}
           onClose={() => setMobileMenuOpen(false)}
-          currentPath={pathname ?? '/'}
+          currentPath={currentNavigationPath}
         />
       ) : (
         <AppSidebar
@@ -175,7 +181,7 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
           username={sessionUser?.username}
           width={sidebarDimensions.expanded}
           collapsedWidth={sidebarDimensions.collapsed}
-          currentPath={pathname ?? '/'}
+          currentPath={currentNavigationPath}
           collapsed={desktopCollapsed}
           onToggleCollapsed={handleToggleDesktopMenu}
         />

@@ -110,7 +110,7 @@ type UpdateCustomerInfoPayload = {
   itemNames?: string[];
 };
 
-export type OrderListSort = 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';
+export type OrderListSort = 'order_number_desc' | 'newest' | 'oldest' | 'amount_desc' | 'amount_asc';
 
 export type OrderListSummary = {
   sales: number;

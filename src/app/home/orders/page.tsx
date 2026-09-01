@@ -102,7 +102,7 @@ export default function OrderManagementPage() {
   const [paymentMethodFilter, setPaymentMethodFilter] = React.useState<'all' | PaymentMethod>('all');
   const [taxInvoiceFilter, setTaxInvoiceFilter] = React.useState<TaxInvoiceFilter>('all');
   const [filtersReady, setFiltersReady] = React.useState(false);
-  const [sort, setSort] = React.useState<SortOrder>('newest');
+  const [sort, setSort] = React.useState<SortOrder>('order_number_desc');
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(10);
   const [totalRows, setTotalRows] = React.useState(0);
