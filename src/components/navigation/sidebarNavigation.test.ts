@@ -6,16 +6,17 @@ import type { SidebarMenuGroup, SidebarNavItem } from './sidebarTypes';
 
 const icon = undefined as unknown as SidebarNavItem['icon'];
 
-test('quick seller is the primary action and point of sale stays in the sales group', () => {
+test('Quick Seller V1 stays the primary action while V2 is a separate pilot entry', () => {
   const salesGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'sales');
 
   assert.equal(SIDEBAR_PRIMARY_ACTION.href, '/home/quick-sale');
-  assert.equal(salesGroup?.items[0]?.href, '/home/posseller');
+  assert.equal(salesGroup?.items[0]?.href, '/home/quick-sale-v2');
+  assert.equal(salesGroup?.items[1]?.href, '/home/posseller');
 });
 
-test('customer directory follows orders in the sales group', () => {
+test('V2 does not replace the point-of-sale, orders, or customer destinations', () => {
   const salesGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'sales');
-  assert.deepEqual(salesGroup?.items.map(item => item.href), ['/home/posseller', '/home/orders', '/home/customers']);
+  assert.deepEqual(salesGroup?.items.map(item => item.href), ['/home/quick-sale-v2', '/home/posseller', '/home/orders', '/home/customers']);
 });
 
 test('production is the first operations destination before storage and stock', () => {

@@ -41,6 +41,7 @@ import ScannerRoundedIcon from '@mui/icons-material/ScannerRounded';
 import SellRoundedIcon from '@mui/icons-material/SellRounded';
 import WorkspacePremiumRoundedIcon from '@mui/icons-material/WorkspacePremiumRounded';
 import { QRCodeSVG } from 'qrcode.react';
+import { usePathname } from 'next/navigation';
 import { createOrder, getOrderTrackingAccess } from '@/lib/orders';
 import { buildSecureOrderTrackingUrl } from '@/lib/order-tracking-url';
 import { canOverridePrice, fetchCurrentAdminRole, type AdminRole } from '@/lib/admin-capabilities';
@@ -57,6 +58,8 @@ import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
 import CustomerDisplayPairingButton from '@/components/customer-display/CustomerDisplayPairingButton';
 import { calculateAddedVat, calculatePayableTotal, calculateQuickSale, isDefaultVariantName, roundMoney, validateQuickSaleBackdate, type DiscountMode } from './quickSale';
+import { fetchQuickSaleV2Published, type QuickSaleV2Config } from '@/lib/quickSaleV2';
+import DocumentServiceConfigurator from '../quick-sale-v2/DocumentServiceConfigurator';
 
 type QuickItem = QuickSaleCartItem;
 type CompletedSale = { orderId: string; orderNumber: string; grandTotal: number; changeAmount: number; trackingUrl?: string };
@@ -92,11 +95,15 @@ function getProductVisual(product: Product): { Icon: React.ElementType; backgrou
 }
 
 export default function QuickSalePage() {
+  const pathname = usePathname();
+  const v2 = pathname.startsWith('/home/quick-sale-v2');
   const theme = useTheme();
   const compact = useMediaQuery(theme.breakpoints.down('lg'));
   const mobile = useMediaQuery(theme.breakpoints.down('md'));
   const searchRef = React.useRef<HTMLInputElement>(null);
   const [products, setProducts] = React.useState<Product[]>([]);
+  const [v2Config, setV2Config] = React.useState<QuickSaleV2Config>({ mappings: [], version: 0, updatedAt: null });
+  const [v2ConfiguratorOpen, setV2ConfiguratorOpen] = React.useState(false);
   const [loading, setLoading] = React.useState(true);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [error, setError] = React.useState<string | null>(null);
@@ -168,6 +175,14 @@ export default function QuickSalePage() {
   React.useEffect(() => {
     void loadProducts();
   }, [loadProducts]);
+
+  React.useEffect(() => {
+    if (v2) {
+      void fetchQuickSaleV2Published()
+        .then(setV2Config)
+        .catch(() => setError('โหลดการตั้งค่า Quick Seller V2 ไม่สำเร็จ'));
+    }
+  }, [v2]);
 
   React.useEffect(() => {
     let active = true;
@@ -244,14 +259,14 @@ export default function QuickSalePage() {
     return visible.filter(product => !popularIds.has(product.id));
   }, [popularProducts, visible]);
 
-  const addProduct = React.useCallback((product: Product) => {
+  const addProduct = React.useCallback((product: Product, quantity = 1) => {
     const variant = firstActiveVariant(product);
     if (!variant) return;
     const quickProductId = product.quickProductId || product.id;
     const key = `${quickProductId}:${product.variantId || variant.id || variant._id || variant.name}`;
     setItems(previous =>
       previous.some(item => item.key === key)
-        ? previous.map(item => (item.key === key ? { ...item, quantity: item.quantity + 1 } : item))
+        ? previous.map(item => (item.key === key ? { ...item, quantity: item.quantity + Math.max(1, quantity) } : item))
         : [
             ...previous,
             {
@@ -264,7 +279,7 @@ export default function QuickSalePage() {
               variantName: variant.name,
               productName: !isDefaultVariantName(variant.name) ? `${product.name} — ${variant.name}` : product.name,
               category: product.category,
-              quantity: 1,
+              quantity: Math.max(1, quantity),
               unitPrice: variant.price,
               catalogUnitPrice: variant.price,
             },
@@ -279,6 +294,7 @@ export default function QuickSalePage() {
       if (event.key === 'Escape') {
         closeCheckout();
         setCustomOpen(false);
+        setV2ConfiguratorOpen(false);
         setCartOpen(false);
         return;
       }
@@ -467,10 +483,10 @@ export default function QuickSalePage() {
           <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1.25}>
             <Box sx={{ minWidth: 0 }}>
               <Typography fontSize={22} fontWeight={900} color="#0F172A" lineHeight={1.1}>
-                Quick Sale
+                {v2 ? 'Quick Sale V2' : 'Quick Sale'}
               </Typography>
               <Typography noWrap fontSize={12.5} color="#64748B" sx={{ mt: 0.45 }}>
-                เลือกรายการและรับชำระหน้าร้านได้ทันที
+                {v2 ? 'ทดลองขายแบบ Service Family โดยใช้ checkout เดิม' : 'เลือกรายการและรับชำระหน้าร้านได้ทันที'}
               </Typography>
             </Box>
             <IconButton
@@ -484,8 +500,8 @@ export default function QuickSalePage() {
         </Paper>
       ) : (
         <AdminHeroHeader
-          title="Quick Sale"
-          description="ขายสินค้าหน้าร้านอย่างรวดเร็ว เลือกรายการ รับชำระ และออกเอกสารในขั้นตอนเดียว"
+          title={v2 ? 'Quick Sale V2 · ทดลอง' : 'Quick Sale'}
+          description={v2 ? 'เลือกกลุ่มงานและรายละเอียดก่อนเพิ่มลงตะกร้า โดยใช้การชำระเงินและ Order contract เดิมทั้งหมด' : 'ขายสินค้าหน้าร้านอย่างรวดเร็ว เลือกรายการ รับชำระ และออกเอกสารในขั้นตอนเดียว'}
           lastSynced={formatAdminLastSynced(lastSyncedAt)}
           thaiDate={formatAdminThaiDate(lastSyncedAt)}
           actions={
@@ -516,6 +532,28 @@ export default function QuickSalePage() {
             borderColor: '#E2E8F0',
             boxShadow: '0 8px 24px rgba(15, 23, 42, 0.04)',
           }}>
+          {v2 ? (
+            <Stack spacing={1.5}>
+              <Alert severity="info">Pilot V2 แยกจาก V1 โดยสิ้นเชิง เลือก Service Family แล้วค่อยยืนยันรายละเอียดก่อนเพิ่มลงตะกร้า</Alert>
+              <Typography fontSize={16} fontWeight={900} color="#172033">เลือกกลุ่มงาน</Typography>
+              <Button
+                variant="outlined"
+                onClick={() => setV2ConfiguratorOpen(true)}
+                startIcon={<ArticleRoundedIcon />}
+                sx={{ minHeight: 88, borderRadius: 3, justifyContent: 'flex-start', px: 2, textTransform: 'none', fontWeight: 900 }}>
+                <Box sx={{ textAlign: 'left' }}>
+                  <Typography fontWeight={900}>งานเอกสาร</Typography>
+                  <Typography variant="body2" color="text.secondary">Print / Copy / Scan · A4 / A3 · ขาวดำ / สี</Typography>
+                </Box>
+              </Button>
+              {allowPriceOverride ? (
+                <Button variant="text" startIcon={<AddRoundedIcon />} onClick={() => setCustomOpen(true)} sx={{ alignSelf: 'flex-start', fontWeight: 800 }}>
+                  รายการอื่น / กำหนดราคาเอง
+                </Button>
+              ) : null}
+            </Stack>
+          ) : null}
+          <Box sx={{ display: v2 ? 'none' : 'block' }}>
           <Stack direction={{ xs: 'column', sm: 'row' }} gap={1} sx={{ mb: 1.25, minWidth: 0 }}>
             <TextField
               inputRef={searchRef}
@@ -637,7 +675,8 @@ export default function QuickSalePage() {
               })}
             </Box>
           )}
-          {!loading && otherProducts.length > 0 && (
+          </Box>
+          {!v2 && !loading && otherProducts.length > 0 && (
             <Box sx={{ mt: 2.25 }}>
               <Typography fontWeight={900} color="#172033" sx={{ mb: 1.1 }}>
                 สินค้าทั้งหมด
@@ -753,6 +792,33 @@ export default function QuickSalePage() {
         }}>
         {cart}
       </Drawer>
+
+      <Dialog
+        open={v2ConfiguratorOpen}
+        onClose={() => setV2ConfiguratorOpen(false)}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{ sx: { width: { xs: 'calc(100% - 20px)', sm: 620 }, m: { xs: 1.25, sm: 3 }, borderRadius: 4 } }}>
+        <DialogTitle sx={{ pb: 1 }}>
+          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
+            <Box>
+              <Typography component="h2" fontSize={21} fontWeight={900}>งานเอกสาร</Typography>
+              <Typography variant="body2" color="text.secondary">เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง</Typography>
+            </Box>
+            <IconButton aria-label="ปิดตัวเลือกงานเอกสาร" onClick={() => setV2ConfiguratorOpen(false)}><CloseRoundedIcon /></IconButton>
+          </Stack>
+        </DialogTitle>
+        <DialogContent sx={{ pt: '8px !important', pb: 2.5 }}>
+          <DocumentServiceConfigurator
+            products={products}
+            mappings={v2Config.mappings}
+            onAdd={(product, quantity) => {
+              addProduct(product, quantity);
+              setV2ConfiguratorOpen(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
 
       <Dialog
         open={customOpen}

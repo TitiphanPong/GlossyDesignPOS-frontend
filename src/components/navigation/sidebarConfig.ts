@@ -37,6 +37,12 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
     label: 'SALES',
     items: [
       {
+        id: 'quick-sale-v2',
+        label: 'ขายด่วน V2 · ทดลอง',
+        href: '/home/quick-sale-v2',
+        icon: BoltRoundedIcon,
+      },
+      {
         id: 'pos-seller',
         label: 'ขายหน้าร้าน',
         href: '/home/posseller',
@@ -89,6 +95,13 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
         id: 'quick-menu-settings',
         label: 'จัดการเมนูขายด่วน',
         href: '/home/settings/quick-menu',
+        icon: DashboardCustomizeRoundedIcon,
+        roles: ['manager', 'admin'],
+      },
+      {
+        id: 'quick-sale-v2-settings',
+        label: 'ตั้งค่า Quick Seller V2',
+        href: '/home/settings/quick-sale-v2',
         icon: DashboardCustomizeRoundedIcon,
         roles: ['manager', 'admin'],
       },

@@ -36,6 +36,22 @@ test('protects cashier routes and restores the requested route after login', asy
   await expect(page.getByText('Quick Sale', { exact: true }).first()).toBeVisible();
 });
 
+test('opens Quick Sale V2 through a service family and uses an explicit published mapping', async ({ page }) => {
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await expect(page.getByText('Quick Sale V2 · ทดลอง', { exact: true }).first()).toBeVisible();
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await expect(configurator).toBeVisible();
+  await expect(configurator.getByText('E2E A4 Print', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('฿25.00 / ชิ้น', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+
+  await expect(configurator).toBeHidden();
+  await expect(page.getByRole('button', { name: /ชำระเงิน/ })).toBeEnabled();
+});
+
 test('completes a cashier quick-sale checkout against controlled test data', async ({ page }) => {
   await loginAsCashier(page);
 

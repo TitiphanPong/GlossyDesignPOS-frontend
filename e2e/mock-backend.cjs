@@ -185,6 +185,16 @@ const server = http.createServer(async (request, response) => {
     ]);
   }
 
+  if (request.method === 'GET' && url.pathname === '/quick-sale-v2/config') {
+    return json(response, 200, {
+      mappings: [
+        { workType: 'print', size: 'A4', colorMode: 'bw', quickProductId: 'product-e2e-1' },
+      ],
+      version: 1,
+      updatedAt: new Date().toISOString(),
+    });
+  }
+
   if (request.method === 'GET' && url.pathname === '/notifications/action-center') {
     return json(response, 200, {
       summary: { total: 0, critical: 0, outstandingAmount: 0, filesWaiting: 0 },
