@@ -6,21 +6,34 @@ import type { SidebarMenuGroup, SidebarNavItem } from './sidebarTypes';
 
 const icon = undefined as unknown as SidebarNavItem['icon'];
 
-test('quick seller is the primary action and point of sale stays in the sales group', () => {
+test('quick seller stays pinned while sales contains POS, orders, and quotations', () => {
   const salesGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'sales');
 
   assert.equal(SIDEBAR_PRIMARY_ACTION.href, '/home/quick-sale');
-  assert.equal(salesGroup?.items[0]?.href, '/home/posseller');
+  assert.deepEqual(salesGroup?.items.map(item => item.href), ['/home/posseller', '/home/orders', '/home/quotations']);
 });
 
-test('customer directory follows orders in the sales group', () => {
-  const salesGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'sales');
-  assert.deepEqual(salesGroup?.items.map(item => item.href), ['/home/posseller', '/home/orders', '/home/customers']);
+test('customer directory has its own customer group', () => {
+  const customerGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'customers');
+  assert.deepEqual(customerGroup?.items.map(item => item.href), ['/home/customers']);
 });
 
-test('production is the first operations destination before storage and stock', () => {
+test('production exposes focused workflow views before storage and stock', () => {
   const operationsGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'operations');
-  assert.deepEqual(operationsGroup?.items.map(item => item.href), ['/home/production', '/home/storage', '/home/stock']);
+  const production = operationsGroup?.items[0];
+
+  assert.equal(production?.href, '/home/production');
+  assert.deepEqual(
+    production?.children?.map(item => item.href),
+    [
+      '/home/production?stage=all',
+      '/home/production?stage=queued',
+      '/home/production?stage=file_check',
+      '/home/production?stage=producing',
+      '/home/production?stage=ready',
+    ]
+  );
+  assert.deepEqual(operationsGroup?.items.slice(1).map(item => item.href), ['/home/storage', '/home/stock']);
 });
 
 test('system health is available to authenticated staff in management', () => {
@@ -41,6 +54,13 @@ test('exact routes and normalized query or trailing slash values are handled', (
   assert.equal(isRouteActive('/home/', '/home', true), true);
 });
 
+test('query-specific routes require matching query values while allowing extra filters', () => {
+  assert.equal(isRouteActive('/home/production?stage=queued', '/home/production?stage=queued'), true);
+  assert.equal(isRouteActive('/home/production?stage=queued&due=today', '/home/production?stage=queued'), true);
+  assert.equal(isRouteActive('/home/production?stage=ready', '/home/production?stage=queued'), false);
+  assert.equal(isRouteActive('/home/production?stage=queued', '/home/production'), true);
+});
+
 test('active aliases and active descendants mark their owning item active', () => {
   const parent: SidebarNavItem = {
     id: 'management',
@@ -59,6 +79,20 @@ test('active aliases and active descendants mark their owning item active', () =
 
   assert.equal(isSidebarItemActive('/home/saleListPage', parent), true);
   assert.equal(isSidebarItemActive('/home/storage', parent), false);
+});
+
+test('production child active state follows the selected stage query', () => {
+  const production = SIDEBAR_MENU_GROUPS.find(group => group.id === 'operations')?.items.find(item => item.id === 'production');
+  assert.ok(production);
+
+  const queue = production.children?.find(item => item.id === 'production-queue');
+  const pickup = production.children?.find(item => item.id === 'production-pickup');
+  assert.ok(queue);
+  assert.ok(pickup);
+
+  assert.equal(isSidebarItemActive('/home/production?stage=queued', queue), true);
+  assert.equal(isSidebarItemActive('/home/production?stage=queued', pickup), false);
+  assert.equal(isSidebarItemActive('/home/production?stage=queued', production), true);
 });
 
 test('role filtering keeps only reachable groups and children', () => {

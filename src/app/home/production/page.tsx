@@ -40,7 +40,7 @@ import {
   useTheme,
 } from '@mui/material';
 import Link from 'next/link';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
 import DataTable, { type DataTableColumn } from '../components/DataTable';
@@ -69,6 +69,11 @@ type SessionIdentity = { id: string; username: string; role: 'staff' | 'manager'
 type StageFilter = 'all' | ProductionStage;
 type PriorityFilter = 'all' | ProductionPriority;
 type ViewMode = 'board' | 'list';
+
+function parseStageFilter(value: string | null): StageFilter {
+  if (value === 'all') return 'all';
+  return value && PRODUCTION_STAGES.includes(value as ProductionStage) ? (value as ProductionStage) : 'all';
+}
 
 const stageTone: Record<ProductionStage, 'default' | 'info' | 'primary' | 'warning' | 'success'> = {
   file_check: 'default',
@@ -598,7 +603,9 @@ function CreateProductionJobDialog({
 }
 
 export default function ProductionPage() {
+  const router = useRouter();
   const searchParams = useSearchParams();
+  const routeStage = parseStageFilter(searchParams.get('stage'));
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down('md'));
   const [jobs, setJobs] = React.useState<ProductionJob[]>([]);
@@ -607,7 +614,7 @@ export default function ProductionPage() {
   const [selectedJob, setSelectedJob] = React.useState<ProductionJob | null>(null);
   const [search, setSearch] = React.useState('');
   const [searchQuery, setSearchQuery] = React.useState('');
-  const [stage, setStage] = React.useState<StageFilter>('all');
+  const [stage, setStage] = React.useState<StageFilter>(routeStage);
   const [due, setDue] = React.useState<ProductionDueFilter>(() => {
     const value = searchParams.get('due');
     return value === 'today' || value === 'overdue' ? value : 'all';
@@ -631,6 +638,18 @@ export default function ProductionPage() {
   const [error, setError] = React.useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
   const [createOpen, setCreateOpen] = React.useState(false);
+
+  React.useEffect(() => {
+    setStage(routeStage);
+  }, [routeStage]);
+
+  const handleStageChange = React.useCallback((value: StageFilter) => {
+    setStage(value);
+    const params = new URLSearchParams(searchParams.toString());
+    params.set('stage', value);
+    const query = params.toString();
+    router.replace(query ? `/home/production?${query}` : '/home/production', { scroll: false });
+  }, [router, searchParams]);
 
   React.useEffect(() => {
     const handle = window.setTimeout(() => setSearchQuery(search.trim()), 250);
@@ -853,7 +872,7 @@ export default function ProductionPage() {
               exclusive
               size="small"
               value={stage}
-              onChange={(_, value: StageFilter | null) => value && setStage(value)}
+              onChange={(_, value: StageFilter | null) => value && handleStageChange(value)}
               sx={{ whiteSpace: 'nowrap' }}
             >
               <ToggleButton value="all">ทั้งหมด</ToggleButton>
