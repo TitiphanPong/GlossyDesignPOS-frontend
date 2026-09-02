@@ -150,6 +150,19 @@ test('keeps Quick Sale V2 Scan on its explicit published mapping through checkou
   });
 });
 
+test('fails closed when a Quick Sale V2 mapping points to a disabled SKU', async ({ page }) => {
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await configurator.getByText('Scan', { exact: true }).click();
+  await configurator.getByText('A3', { exact: true }).click();
+
+  await expect(configurator.getByText('SKU ที่ผูกไว้ไม่พร้อมขายหรือหาไม่พบ กรุณาตรวจ Settings V2', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('E2E A3 Scan Disabled', { exact: true })).toHaveCount(0);
+  await expect(configurator.getByRole('button', { name: /เพิ่มลงรายการ/ })).toBeDisabled();
+});
+
 test('removes a configured Quick Sale V2 item from cart before checkout', async ({ page }) => {
   await loginAsCashier(page, '/home/quick-sale-v2');
 

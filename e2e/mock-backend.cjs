@@ -234,6 +234,19 @@ const server = http.createServer(async (request, response) => {
         quickSaleSortOrder: 5,
         variants: [{ id: 'variant-e2e-a4-scan', name: 'Default', price: 8, active: true }],
       },
+      {
+        id: 'product-e2e-a3-scan-disabled',
+        _id: 'product-e2e-a3-scan-disabled',
+        name: 'E2E A3 Scan Disabled',
+        category: 'Scan',
+        code: 'E2E-A3-SCAN-DISABLED',
+        typeCode: 'scan',
+        active: false,
+        quickSaleEnabled: true,
+        isHotMenu: false,
+        quickSaleSortOrder: 6,
+        variants: [{ id: 'variant-e2e-a3-scan-disabled', name: 'Default', price: 12, active: true }],
+      },
     ]);
   }
 
@@ -245,6 +258,7 @@ const server = http.createServer(async (request, response) => {
         { workType: 'print', size: 'A4', colorMode: 'color', quickProductId: 'product-e2e-a4-color' },
         { workType: 'print', size: 'A3', colorMode: 'color', quickProductId: 'product-e2e-a3-color' },
         { workType: 'scan', size: 'A4', colorMode: 'bw', quickProductId: 'product-e2e-a4-scan' },
+        { workType: 'scan', size: 'A3', colorMode: 'bw', quickProductId: 'product-e2e-a3-scan-disabled' },
       ],
       version: 1,
       updatedAt: new Date().toISOString(),
