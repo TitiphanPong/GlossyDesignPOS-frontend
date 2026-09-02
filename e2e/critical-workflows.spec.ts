@@ -424,6 +424,26 @@ test('completes a cashier quick-sale checkout against controlled test data', asy
   await expect(page.getByText('ORD-E2E-0001', { exact: true })).toBeVisible();
 });
 
+test('keeps a historical Quick Sale Order readable with its existing QuickProduct identity', async ({ page }) => {
+  await loginAsCashier(page, '/home/orders');
+
+  await expect(page.getByText('ORD-E2E-0001', { exact: true })).toBeVisible();
+  await expect(page.getByText('งาน Production E2E', { exact: true })).toBeVisible();
+
+  const ordersResponse = await page.request.get('/api/backend/orders?limit=10');
+  expect(ordersResponse.ok()).toBe(true);
+  const ordersPayload = await ordersResponse.json();
+  expect(ordersPayload.data[0]).toMatchObject({
+    orderNumber: 'ORD-E2E-0001',
+    cart: [
+      {
+        name: 'งาน Production E2E',
+        quickProductId: 'product-e2e-historical-1',
+      },
+    ],
+  });
+});
+
 test('links an existing customer to quick sale and mirrors the same snapshot to customer display', async ({ page }) => {
   await loginAsCashier(page);
 

@@ -294,7 +294,7 @@ const server = http.createServer(async (request, response) => {
         workflowStatus: 'pending',
         createdAt: now,
         updatedAt: now,
-        cart: [{ name: 'งาน Production E2E', quantity: 1, unitPrice: 100, totalPrice: 100 }],
+        cart: [{ name: 'งาน Production E2E', quickProductId: 'product-e2e-historical-1', quantity: 1, unitPrice: 100, totalPrice: 100 }],
         subtotal: 100,
         discount: 0,
         vatAmount: 0,
