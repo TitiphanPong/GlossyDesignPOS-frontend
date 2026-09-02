@@ -51,6 +51,7 @@ import { isMissingApiBaseError } from '../../../lib/api';
 import { type NormalizedOrder, type PaymentMethod, type ProductionWorkflowStatus } from '../../../lib/contracts';
 import { cancelOrder as cancelOrderRequest, convertOrderToTaxInvoice, downloadOrdersExport, fetchOrderById, type OrderListSummary, updateOrderCustomerInfo } from '../../../lib/orders';
 import type { ExportType, OrderRow, SortOrder } from './orderManagementTypes';
+import { getOrderKindBadge } from './orderBadge';
 import { ExportMenu, OrderDetailDrawer, RowActionsMenu, StatCard } from './orderManagementPanels';
 import { parseOrderDrilldownFilters, type OutstandingPaymentFilter } from './orderDrilldownFilters';
 import {
@@ -81,6 +82,52 @@ const TAX_INVOICE_FILTER_LABELS: Record<TaxInvoiceFilter, string> = {
   yes: 'ใบกำกับภาษี',
   no: 'ใบเสร็จทั่วไป',
 };
+
+const ORDER_KIND_BADGE_STYLES = {
+  backdated: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#C7D2FE',
+    color: '#4338CA',
+  },
+  rush: {
+    backgroundColor: '#FFF7ED',
+    borderColor: '#FED7AA',
+    color: '#C2410C',
+  },
+  normal: {
+    backgroundColor: '#F8FAFC',
+    borderColor: '#E2E8F0',
+    color: '#475569',
+  },
+} as const;
+
+function OrderKindBadge({
+  row,
+  compact = false,
+  marginLeft = 0,
+}: Readonly<{
+  row: Pick<OrderRow, 'orderType' | 'isBackdated'>;
+  compact?: boolean;
+  marginLeft?: number;
+}>) {
+  const badge = getOrderKindBadge(row);
+
+  return (
+    <Chip
+      size="small"
+      variant="outlined"
+      label={badge.label}
+      sx={{
+        ml: marginLeft,
+        height: compact ? 20 : 22,
+        fontSize: compact ? 10 : 10.5,
+        fontWeight: 700,
+        borderWidth: 1,
+        ...ORDER_KIND_BADGE_STYLES[badge.kind],
+      }}
+    />
+  );
+}
 
 export default function OrderManagementPage() {
   const router = useRouter();
@@ -452,13 +499,7 @@ export default function OrderManagementPage() {
       render: row => (
         <>
           <Typography sx={{ display: 'inline-block', fontWeight: 700, color: '#6C4DFF', fontVariantNumeric: 'tabular-nums' }}>{row.orderNumber}</Typography>
-          <Chip
-            size="small"
-            label={row.orderType === 'QUICK_SALE' ? 'งานด่วน' : 'งานปกติ'}
-            color={row.orderType === 'QUICK_SALE' ? 'warning' : 'default'}
-            sx={{ ml: 0.7, height: 20, fontSize: 10, fontWeight: 700 }}
-          />
-          {row.isBackdated ? <Chip size="small" label="ย้อนหลัง" color="warning" sx={{ ml: 0.7, height: 20, fontSize: 10, fontWeight: 700 }} /> : null}
+          <OrderKindBadge row={row} compact marginLeft={0.7} />
           <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.vat > 0 ? 'ใบกำกับภาษี' : 'ใบเสร็จทั่วไป'}</Typography>
         </>
       ),
@@ -839,12 +880,7 @@ export default function OrderManagementPage() {
                         <Stack>
                           <Stack direction="row" spacing={0.7} alignItems="center">
                             <Typography sx={{ fontWeight: 800, color: '#0F172A' }}>{row.orderNumber}</Typography>
-                            <Chip
-                              size="small"
-                              label={row.orderType === 'QUICK_SALE' ? 'งานด่วน' : 'งานปกติ'}
-                              color={row.orderType === 'QUICK_SALE' ? 'warning' : 'default'}
-                              sx={{ height: 22, fontSize: 10.5, fontWeight: 700 }}
-                            />
+                            <OrderKindBadge row={row} />
                           </Stack>
                           <Typography sx={{ color: '#64748B', fontSize: 12.5 }}>{dayjs(row.date).format('DD/MM/YYYY HH:mm')}</Typography>
                         </Stack>
