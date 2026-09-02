@@ -3,6 +3,7 @@ const http = require('node:http');
 
 const port = Number(process.env.E2E_MOCK_BACKEND_PORT || 4010);
 const accessToken = 'e2e-access-token';
+const managerAccessToken = 'e2e-manager-access-token';
 const orderId = 'order-e2e-1';
 const orderNumber = 'ORD-E2E-0001';
 const staffUserId = '64b0000000000000000000aa';
@@ -85,7 +86,13 @@ function readJson(request) {
 }
 
 function authorized(request) {
-  return request.headers.authorization === `Bearer ${accessToken}`;
+  return [accessToken, managerAccessToken].some(token => request.headers.authorization === `Bearer ${token}`);
+}
+
+function authIdentity(request) {
+  return request.headers.authorization === `Bearer ${managerAccessToken}`
+    ? { id: staffUserId, username: 'manager', role: 'manager' }
+    : { id: staffUserId, username: 'cashier', role: 'staff' };
 }
 
 const server = http.createServer(async (request, response) => {
@@ -98,13 +105,14 @@ const server = http.createServer(async (request, response) => {
   if (request.method === 'POST' && url.pathname === '/auth/login') {
     try {
       const body = await readJson(request);
-      if (body.username !== 'cashier' || body.password !== 'e2e-password') {
+      const role = body.username === 'manager' ? 'manager' : body.username === 'cashier' ? 'staff' : null;
+      if (!role || body.password !== 'e2e-password') {
         return json(response, 401, { message: 'invalid credentials' });
       }
       return json(response, 200, {
-        accessToken,
+        accessToken: role === 'manager' ? managerAccessToken : accessToken,
         expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-        user: { username: 'cashier', role: 'staff' },
+        user: { username: body.username, role },
       });
     } catch {
       return json(response, 400, { message: 'invalid payload' });
@@ -113,7 +121,7 @@ const server = http.createServer(async (request, response) => {
 
   if (request.method === 'GET' && url.pathname === '/auth/me') {
     return authorized(request)
-      ? json(response, 200, { user: { id: staffUserId, username: 'cashier', role: 'staff' } })
+      ? json(response, 200, { user: authIdentity(request) })
       : json(response, 401, { message: 'unauthorized' });
   }
 

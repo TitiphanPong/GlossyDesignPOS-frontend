@@ -17,6 +17,23 @@ async function loginAsCashier(page: Page, target = '/home/quick-sale') {
   await expect(page).toHaveURL(url => `${url.pathname}${url.search}` === target, { timeout: 30_000 });
 }
 
+async function loginAsManager(page: Page, target = '/home/quick-sale-v2') {
+  const sessionCheck = page.waitForResponse(
+    response => response.url().endsWith('/api/admin/session') && response.request().method() === 'GET'
+  );
+  await page.goto(target);
+  await expect(page).toHaveURL(url => url.pathname === '/login' && url.searchParams.get('redirectTo') === target);
+  await sessionCheck;
+  await page.getByLabel('ชื่อผู้ใช้').fill('manager');
+  await page.getByRole('textbox', { name: 'รหัสผ่าน' }).fill('e2e-password');
+  const loginResponse = page.waitForResponse(
+    response => response.url().endsWith('/api/admin/session') && response.request().method() === 'POST'
+  );
+  await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
+  expect((await loginResponse).status()).toBe(200);
+  await expect(page).toHaveURL(url => `${url.pathname}${url.search}` === target, { timeout: 30_000 });
+}
+
 test('fails closed without leaking login credentials before hydration', async ({ browser, baseURL }) => {
   const context = await browser.newContext({ javaScriptEnabled: false });
   const page = await context.newPage();
@@ -114,6 +131,48 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
       method: 'promptpay',
       amount: 140,
       receivedAmount: 140,
+    },
+  });
+});
+
+test('allows an authorized manager to add a custom-price item in Quick Sale V2 and checkout', async ({ page }) => {
+  await loginAsManager(page);
+
+  const customButton = page.getByRole('button', { name: 'รายการอื่น / กำหนดราคาเอง' });
+  await expect(customButton).toBeVisible();
+  await customButton.click();
+
+  const customDialog = page.getByRole('dialog').filter({ hasText: 'เพิ่มรายการอื่น' });
+  await expect(customDialog).toBeVisible();
+  await customDialog.getByLabel('ชื่อรายการ').fill('ค่าออกแบบ E2E');
+  await customDialog.getByRole('spinbutton', { name: 'จำนวนรายการ' }).fill('2');
+  await customDialog.getByLabel('ราคาต่อหน่วย').fill('37.5');
+  await expect(customDialog.getByText('฿75.00', { exact: true })).toBeVisible();
+  await customDialog.getByRole('button', { name: 'เพิ่มรายการ', exact: true }).click();
+  await expect(customDialog).toBeHidden();
+
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน ค่าออกแบบ E2E' })).toHaveValue('2');
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    cart: [
+      {
+        customName: 'ค่าออกแบบ E2E',
+        quantity: 2,
+        priceOverride: { unitPrice: 37.5, reason: 'quick_sale_custom_item' },
+      },
+    ],
+    initialPayment: {
+      method: 'cash',
+      amount: 75,
+      receivedAmount: 75,
     },
   });
 });
