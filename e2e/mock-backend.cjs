@@ -3,6 +3,7 @@ const http = require('node:http');
 
 const port = Number(process.env.E2E_MOCK_BACKEND_PORT || 4010);
 const accessToken = 'e2e-access-token';
+const managerAccessToken = 'e2e-manager-access-token';
 const orderId = 'order-e2e-1';
 const orderNumber = 'ORD-E2E-0001';
 const staffUserId = '64b0000000000000000000aa';
@@ -89,7 +90,13 @@ function readJson(request) {
 }
 
 function authorized(request) {
-  return request.headers.authorization === `Bearer ${accessToken}`;
+  return [accessToken, managerAccessToken].some(token => request.headers.authorization === `Bearer ${token}`);
+}
+
+function authIdentity(request) {
+  return request.headers.authorization === `Bearer ${managerAccessToken}`
+    ? { id: staffUserId, username: 'manager', role: 'manager' }
+    : { id: staffUserId, username: 'cashier', role: 'staff' };
 }
 
 const server = http.createServer(async (request, response) => {
@@ -102,13 +109,14 @@ const server = http.createServer(async (request, response) => {
   if (request.method === 'POST' && url.pathname === '/auth/login') {
     try {
       const body = await readJson(request);
-      if (body.username !== 'cashier' || body.password !== 'e2e-password') {
+      const role = body.username === 'manager' ? 'manager' : body.username === 'cashier' ? 'staff' : null;
+      if (!role || body.password !== 'e2e-password') {
         return json(response, 401, { message: 'invalid credentials' });
       }
       return json(response, 200, {
-        accessToken,
+        accessToken: role === 'manager' ? managerAccessToken : accessToken,
         expiresAt: new Date(Date.now() + 60 * 60 * 1000).toISOString(),
-        user: { username: 'cashier', role: 'staff' },
+        user: { username: body.username, role },
       });
     } catch {
       return json(response, 400, { message: 'invalid payload' });
@@ -117,7 +125,7 @@ const server = http.createServer(async (request, response) => {
 
   if (request.method === 'GET' && url.pathname === '/auth/me') {
     return authorized(request)
-      ? json(response, 200, { user: { id: staffUserId, username: 'cashier', role: 'staff' } })
+      ? json(response, 200, { user: authIdentity(request) })
       : json(response, 401, { message: 'unauthorized' });
   }
 
@@ -202,6 +210,71 @@ const server = http.createServer(async (request, response) => {
         quickSaleSortOrder: 1,
         variants: [{ id: 'variant-e2e-1', name: 'Default', price: 25, active: true }],
       },
+      {
+        id: 'product-e2e-2',
+        _id: 'product-e2e-2',
+        name: 'E2E A4 Copy',
+        category: 'Copy',
+        code: 'E2E-A4-COPY',
+        typeCode: 'copy',
+        active: true,
+        quickSaleEnabled: true,
+        isHotMenu: false,
+        quickSaleSortOrder: 2,
+        variants: [{ id: 'variant-e2e-2', name: 'Default', price: 15, active: true }],
+      },
+      {
+        id: 'product-e2e-a4-color',
+        _id: 'product-e2e-a4-color',
+        name: 'E2E A4 Color',
+        category: 'Print',
+        code: 'E2E-A4-COLOR',
+        typeCode: 'print',
+        active: true,
+        quickSaleEnabled: true,
+        isHotMenu: false,
+        quickSaleSortOrder: 3,
+        variants: [{ id: 'variant-e2e-a4-color', name: 'Default', price: 12, active: true }],
+      },
+      {
+        id: 'product-e2e-a3-color',
+        _id: 'product-e2e-a3-color',
+        name: 'E2E A3 Color',
+        category: 'Print',
+        code: 'E2E-A3-COLOR',
+        typeCode: 'print',
+        active: true,
+        quickSaleEnabled: true,
+        isHotMenu: false,
+        quickSaleSortOrder: 4,
+        variants: [{ id: 'variant-e2e-a3-color', name: 'Default', price: 25, active: true }],
+      },
+      {
+        id: 'product-e2e-a4-scan',
+        _id: 'product-e2e-a4-scan',
+        name: 'E2E A4 Scan',
+        category: 'Scan',
+        code: 'E2E-A4-SCAN',
+        typeCode: 'scan',
+        active: true,
+        quickSaleEnabled: true,
+        isHotMenu: false,
+        quickSaleSortOrder: 5,
+        variants: [{ id: 'variant-e2e-a4-scan', name: 'Default', price: 8, active: true }],
+      },
+      {
+        id: 'product-e2e-a3-scan-disabled',
+        _id: 'product-e2e-a3-scan-disabled',
+        name: 'E2E A3 Scan Disabled',
+        category: 'Scan',
+        code: 'E2E-A3-SCAN-DISABLED',
+        typeCode: 'scan',
+        active: false,
+        quickSaleEnabled: true,
+        isHotMenu: false,
+        quickSaleSortOrder: 6,
+        variants: [{ id: 'variant-e2e-a3-scan-disabled', name: 'Default', price: 12, active: true }],
+      },
     ]);
   }
 
@@ -209,6 +282,11 @@ const server = http.createServer(async (request, response) => {
     return json(response, 200, {
       mappings: [
         { workType: 'print', size: 'A4', colorMode: 'bw', quickProductId: 'product-e2e-1' },
+        { workType: 'copy', size: 'A4', colorMode: 'bw', quickProductId: 'product-e2e-2' },
+        { workType: 'print', size: 'A4', colorMode: 'color', quickProductId: 'product-e2e-a4-color' },
+        { workType: 'print', size: 'A3', colorMode: 'color', quickProductId: 'product-e2e-a3-color' },
+        { workType: 'scan', size: 'A4', colorMode: 'bw', quickProductId: 'product-e2e-a4-scan' },
+        { workType: 'scan', size: 'A3', colorMode: 'bw', quickProductId: 'product-e2e-a3-scan-disabled' },
       ],
       version: 1,
       updatedAt: new Date().toISOString(),
@@ -416,7 +494,7 @@ const server = http.createServer(async (request, response) => {
         workflowStatus: 'pending',
         createdAt: now,
         updatedAt: now,
-        cart: [{ name: 'งาน Production E2E', quantity: 1, unitPrice: 100, totalPrice: 100 }],
+        cart: [{ name: 'งาน Production E2E', quickProductId: 'product-e2e-historical-1', quantity: 1, unitPrice: 100, totalPrice: 100 }],
         subtotal: 100,
         discount: 0,
         vatAmount: 0,

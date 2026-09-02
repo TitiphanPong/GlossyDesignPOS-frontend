@@ -1,8 +1,8 @@
 import type { NextRequest } from 'next/server';
 import { NextResponse } from 'next/server';
-import { ADMIN_AUTH_COOKIE_NAME, ADMIN_GUARD_REDIRECT_PATH, ADMIN_LOGIN_REDIRECT_PATH, verifyAdminSession } from './src/lib/admin-auth';
+import { ADMIN_AUTH_COOKIE_NAME, ADMIN_GUARD_REDIRECT_PATH, ADMIN_LOGIN_REDIRECT_PATH, verifyAdminSession } from './lib/admin-auth';
 
-const PROTECTED_PREFIXES = ['/home', '/dashboard', '/orders', '/pos', '/storage', '/invoice', '/print/invoice', '/print/quotation'];
+const PROTECTED_PREFIXES = ['/home', '/dashboard', '/orders', '/pos', '/storage', '/invoice', '/print/invoice', '/print/quotation', '/artwork-poc'];
 
 function isProtectedPath(pathname: string): boolean {
   return PROTECTED_PREFIXES.some(prefix => pathname === prefix || pathname.startsWith(`${prefix}/`));
@@ -27,5 +27,5 @@ export async function proxy(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/home/:path*', '/dashboard/:path*', '/orders/:path*', '/pos/:path*', '/storage/:path*', '/invoice/:path*', '/print/invoice/:path*', '/print/quotation/:path*', '/login'],
+  matcher: ['/home/:path*', '/dashboard/:path*', '/orders/:path*', '/pos/:path*', '/storage/:path*', '/invoice/:path*', '/print/invoice/:path*', '/print/quotation/:path*', '/artwork-poc/:path*', '/login'],
 };

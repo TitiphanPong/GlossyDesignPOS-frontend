@@ -1,13 +1,37 @@
 import { expect, test, type Page } from '@playwright/test';
 
 async function loginAsCashier(page: Page, target = '/home/quick-sale') {
+  const sessionCheck = page.waitForResponse(
+    response => response.url().endsWith('/api/admin/session') && response.request().method() === 'GET'
+  );
   await page.goto(target);
   await expect(page).toHaveURL(url => url.pathname === '/login' && url.searchParams.get('redirectTo') === target);
-  await page.waitForLoadState('networkidle');
+  await sessionCheck;
   await page.getByLabel('ชื่อผู้ใช้').fill('cashier');
   await page.getByRole('textbox', { name: 'รหัสผ่าน' }).fill('e2e-password');
+  const loginResponse = page.waitForResponse(
+    response => response.url().endsWith('/api/admin/session') && response.request().method() === 'POST'
+  );
   await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
-  await expect(page).toHaveURL(url => `${url.pathname}${url.search}` === target);
+  expect((await loginResponse).status()).toBe(200);
+  await expect(page).toHaveURL(url => `${url.pathname}${url.search}` === target, { timeout: 30_000 });
+}
+
+async function loginAsManager(page: Page, target = '/home/quick-sale-v2') {
+  const sessionCheck = page.waitForResponse(
+    response => response.url().endsWith('/api/admin/session') && response.request().method() === 'GET'
+  );
+  await page.goto(target);
+  await expect(page).toHaveURL(url => url.pathname === '/login' && url.searchParams.get('redirectTo') === target);
+  await sessionCheck;
+  await page.getByLabel('ชื่อผู้ใช้').fill('manager');
+  await page.getByRole('textbox', { name: 'รหัสผ่าน' }).fill('e2e-password');
+  const loginResponse = page.waitForResponse(
+    response => response.url().endsWith('/api/admin/session') && response.request().method() === 'POST'
+  );
+  await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
+  expect((await loginResponse).status()).toBe(200);
+  await expect(page).toHaveURL(url => `${url.pathname}${url.search}` === target, { timeout: 30_000 });
 }
 
 test('fails closed without leaking login credentials before hydration', async ({ browser, baseURL }) => {
@@ -37,9 +61,11 @@ test('protects cashier routes and restores the requested route after login', asy
 });
 
 test('opens Quick Sale V2 through a service family and uses an explicit published mapping', async ({ page }) => {
+  test.setTimeout(60_000);
   await loginAsCashier(page, '/home/quick-sale-v2');
 
   await expect(page.getByText('Quick Sale V2 · ทดลอง', { exact: true }).first()).toBeVisible();
+  await expect(page.getByRole('button', { name: 'รายการอื่น / กำหนดราคาเอง' })).toHaveCount(0);
   await page.getByRole('button', { name: /งานเอกสาร/ }).click();
 
   const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
@@ -48,8 +74,11 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
   await expect(configurator.getByText('฿25.00 / ชิ้น', { exact: true })).toBeVisible();
 
   await configurator.getByText('Copy', { exact: true }).click();
+  await configurator.getByText('A3', { exact: true }).click();
   await expect(configurator.getByText('ตัวเลือกนี้ยังไม่ได้ผูก SKU ใน Settings V2 จึงยังเพิ่มลงรายการไม่ได้', { exact: true })).toBeVisible();
   await expect(configurator.getByRole('button', { name: /เพิ่มลงรายการ/ })).toBeDisabled();
+  await configurator.getByText('A4', { exact: true }).click();
+  await expect(configurator.getByText('E2E A4 Copy', { exact: true })).toBeVisible();
   await configurator.getByText('Print', { exact: true }).click();
   await expect(configurator.getByText('E2E A4 Print', { exact: true })).toBeVisible();
   await expect(configurator.getByRole('button', { name: /เพิ่มลงรายการ/ })).toBeEnabled();
@@ -67,6 +96,312 @@ test('opens Quick Sale V2 through a service family and uses an explicit publishe
 
   await expect(configurator).toBeHidden();
   await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('5');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  await expect(configurator).toBeVisible();
+  await configurator.getByText('Copy', { exact: true }).click();
+  await expect(configurator.getByText('E2E A4 Copy', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('฿15.00 / ชิ้น', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+
+  await expect(configurator).toBeHidden();
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('5');
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Copy' })).toHaveValue('1');
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await expect(paymentDialog).toBeVisible();
+  await paymentDialog.getByRole('button', { name: /โอนเงิน \/ PromptPay/ }).click();
+  await expect(paymentDialog.getByText('Glossy E2E', { exact: true })).toBeVisible();
+  await expect(paymentDialog.getByText('PromptPay ••••5678', { exact: true })).toBeVisible();
+  await paymentDialog.getByRole('button', { name: /ยืนยันว่าชำระเงินแล้ว/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+  await expect(page.getByText('ORD-E2E-0001', { exact: true })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    cart: [
+      { quickProductId: 'product-e2e-1', quantity: 5 },
+      { quickProductId: 'product-e2e-2', quantity: 1 },
+    ],
+    initialPayment: {
+      method: 'promptpay',
+      amount: 140,
+      receivedAmount: 140,
+    },
+  });
+});
+
+test('allows an authorized manager to add a custom-price item in Quick Sale V2 and checkout', async ({ page }) => {
+  await loginAsManager(page);
+
+  const customButton = page.getByRole('button', { name: 'รายการอื่น / กำหนดราคาเอง' });
+  await expect(customButton).toBeVisible();
+  await customButton.click();
+
+  const customDialog = page.getByRole('dialog').filter({ hasText: 'เพิ่มรายการอื่น' });
+  await expect(customDialog).toBeVisible();
+  await customDialog.getByLabel('ชื่อรายการ').fill('ค่าออกแบบ E2E');
+  await customDialog.getByRole('spinbutton', { name: 'จำนวนรายการ' }).fill('2');
+  await customDialog.getByLabel('ราคาต่อหน่วย').fill('37.5');
+  await expect(customDialog.getByText('฿75.00', { exact: true })).toBeVisible();
+  await customDialog.getByRole('button', { name: 'เพิ่มรายการ', exact: true }).click();
+  await expect(customDialog).toBeHidden();
+
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน ค่าออกแบบ E2E' })).toHaveValue('2');
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    cart: [
+      {
+        customName: 'ค่าออกแบบ E2E',
+        quantity: 2,
+        priceOverride: { unitPrice: 37.5, reason: 'quick_sale_custom_item' },
+      },
+    ],
+    initialPayment: {
+      method: 'cash',
+      amount: 75,
+      receivedAmount: 75,
+    },
+  });
+});
+
+test('keeps Quick Sale V2 Scan on its explicit published mapping through checkout', async ({ page }) => {
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await configurator.getByText('Scan', { exact: true }).click();
+  await expect(configurator.getByText('E2E A4 Scan', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('฿8.00 / ชิ้น', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('SCAN · A4 · ขาวดำ · 1 ชิ้น', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Scan' })).toHaveValue('1');
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    cart: [{ quickProductId: 'product-e2e-a4-scan', quantity: 1 }],
+    initialPayment: {
+      method: 'cash',
+      amount: 8,
+      receivedAmount: 8,
+    },
+  });
+});
+
+test('fails closed when a Quick Sale V2 mapping points to a disabled SKU', async ({ page }) => {
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await configurator.getByText('Scan', { exact: true }).click();
+  await configurator.getByText('A3', { exact: true }).click();
+
+  await expect(configurator.getByText('SKU ที่ผูกไว้ไม่พร้อมขายหรือหาไม่พบ กรุณาตรวจ Settings V2', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('E2E A3 Scan Disabled', { exact: true })).toHaveCount(0);
+  await expect(configurator.getByRole('button', { name: /เพิ่มลงรายการ/ })).toBeDisabled();
+});
+
+test('removes a configured Quick Sale V2 item from cart before checkout', async ({ page }) => {
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await expect(configurator.getByText('E2E A4 Print', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+
+  const checkoutButton = page.getByRole('button', { name: /ชำระเงิน/ });
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('1');
+  await expect(checkoutButton).toBeEnabled();
+
+  await page.getByRole('button', { name: 'ลบ E2E A4 Print' }).click();
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveCount(0);
+  await expect(checkoutButton).toBeDisabled();
+});
+
+test('keeps Quick Sale V2 Print A4 B&W ×50 on its explicit quantity preset and SKU mapping', async ({ page }) => {
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await expect(configurator.getByText('E2E A4 Print', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: '50', exact: true }).click();
+  await expect(configurator.getByText('PRINT · A4 · ขาวดำ · 50 ชิ้น', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('฿1,250.00', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('50');
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    cart: [{ quickProductId: 'product-e2e-1', quantity: 50 }],
+    initialPayment: {
+      method: 'cash',
+      amount: 1250,
+      receivedAmount: 1250,
+    },
+  });
+});
+
+test('keeps Quick Sale V2 A4/A3 color and quantity presets on explicit SKU mappings', async ({ page }) => {
+  test.setTimeout(60_000);
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await expect(configurator).toBeVisible();
+  await configurator.getByText('สี', { exact: true }).click();
+  await expect(configurator.getByText('E2E A4 Color', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: '50', exact: true }).click();
+  await expect(configurator.getByText('PRINT · A4 · สี · 50 ชิ้น', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('฿600.00', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Color' })).toHaveValue('50');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  await expect(configurator).toBeVisible();
+  await configurator.getByText('A3', { exact: true }).click();
+  await configurator.getByText('สี', { exact: true }).click();
+  await expect(configurator.getByText('E2E A3 Color', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('PRINT · A3 · สี · 1 ชิ้น', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('฿25.00', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await paymentDialog.getByRole('button', { name: /โอนเงิน \/ PromptPay/ }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันว่าชำระเงินแล้ว/ }).click();
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    cart: [
+      { quickProductId: 'product-e2e-a4-color', quantity: 50 },
+      { quickProductId: 'product-e2e-a3-color', quantity: 1 },
+    ],
+    initialPayment: {
+      method: 'promptpay',
+      amount: 625,
+      receivedAmount: 625,
+    },
+  });
+});
+
+test('keeps Quick Sale V2 tax-invoice checkout on the shared authoritative VAT contract', async ({ page }) => {
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await expect(paymentDialog).toBeVisible();
+
+  const customerSearch = paymentDialog.getByLabel('ค้นหาลูกค้าเดิม');
+  await customerSearch.fill('บริษัท E2E');
+  await page.getByRole('option', { name: /บริษัท E2E จำกัด/ }).click();
+  await paymentDialog.getByRole('button', { name: /ใบกำกับภาษี/ }).click();
+  await expect(paymentDialog.getByText('VAT 7%', { exact: true })).toBeVisible();
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    customerId: '64b0000000000000000000cc',
+    taxId: '0105555555555',
+    address: '99 ถนนสุขุมวิท กรุงเทพฯ',
+    taxInvoice: 'yes',
+    cart: [{ quickProductId: 'product-e2e-1', quantity: 1 }],
+    initialPayment: {
+      method: 'cash',
+      amount: 26.75,
+      receivedAmount: 26.75,
+    },
+  });
+});
+
+test('keeps Quick Sale V2 backdated checkout on the shared sale-date audit contract', async ({ page }) => {
+  test.setTimeout(60_000);
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await expect(configurator.getByText('E2E A4 Print', { exact: true })).toBeVisible();
+  await expect(configurator.getByRole('button', { name: /เพิ่มลงรายการ/ })).toBeEnabled();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await expect(paymentDialog).toBeVisible();
+  await paymentDialog.getByRole('button', { name: 'ลงรายการย้อนหลัง' }).click();
+  await expect(paymentDialog.getByText('รายละเอียดการขายย้อนหลัง', { exact: true })).toBeVisible();
+
+  const backdatedAt = new Date();
+  backdatedAt.setDate(backdatedAt.getDate() - 1);
+  const pad = (value: number) => String(value).padStart(2, '0');
+  const backdatedInput = `${pad(backdatedAt.getDate())}/${pad(backdatedAt.getMonth() + 1)}/${backdatedAt.getFullYear()} 10:00`;
+  await paymentDialog.getByRole('group', { name: 'วันที่และเวลาที่เกิดการขาย' }).locator('input').fill(backdatedInput, { force: true });
+  await paymentDialog.getByLabel('เหตุผลที่ลงรายการย้อนหลัง').fill('รายการขายตกหล่น E2E');
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    entryMode: 'backdated',
+    backdatedReason: 'รายการขายตกหล่น E2E',
+    cart: [{ quickProductId: 'product-e2e-1', quantity: 1 }],
+    initialPayment: {
+      method: 'cash',
+      amount: 25,
+      receivedAmount: 25,
+    },
+  });
+  expect(typeof orderPayload.saleDate).toBe('string');
+  expect(Number.isNaN(Date.parse(orderPayload.saleDate))).toBe(false);
 });
 
 test('completes a cashier quick-sale checkout against controlled test data', async ({ page }) => {
@@ -87,6 +422,26 @@ test('completes a cashier quick-sale checkout against controlled test data', asy
 
   await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
   await expect(page.getByText('ORD-E2E-0001', { exact: true })).toBeVisible();
+});
+
+test('keeps a historical Quick Sale Order readable with its existing QuickProduct identity', async ({ page }) => {
+  await loginAsCashier(page, '/home/orders');
+
+  await expect(page.getByText('ORD-E2E-0001', { exact: true })).toBeVisible();
+  await expect(page.getByText('งาน Production E2E', { exact: true })).toBeVisible();
+
+  const ordersResponse = await page.request.get('/api/backend/orders?limit=10');
+  expect(ordersResponse.ok()).toBe(true);
+  const ordersPayload = await ordersResponse.json();
+  expect(ordersPayload.data[0]).toMatchObject({
+    orderNumber: 'ORD-E2E-0001',
+    cart: [
+      {
+        name: 'งาน Production E2E',
+        quickProductId: 'product-e2e-historical-1',
+      },
+    ],
+  });
 });
 
 test('links an existing customer to quick sale and mirrors the same snapshot to customer display', async ({ page }) => {
