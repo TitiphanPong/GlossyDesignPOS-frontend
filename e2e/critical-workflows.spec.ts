@@ -181,6 +181,38 @@ test('removes a configured Quick Sale V2 item from cart before checkout', async 
   await expect(checkoutButton).toBeDisabled();
 });
 
+test('keeps Quick Sale V2 Print A4 B&W ×50 on its explicit quantity preset and SKU mapping', async ({ page }) => {
+  await loginAsCashier(page, '/home/quick-sale-v2');
+
+  await page.getByRole('button', { name: /งานเอกสาร/ }).click();
+  const configurator = page.getByRole('dialog').filter({ hasText: 'เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง' });
+  await expect(configurator.getByText('E2E A4 Print', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: '50', exact: true }).click();
+  await expect(configurator.getByText('PRINT · A4 · ขาวดำ · 50 ชิ้น', { exact: true })).toBeVisible();
+  await expect(configurator.getByText('฿1,250.00', { exact: true })).toBeVisible();
+  await configurator.getByRole('button', { name: /เพิ่มลงรายการ/ }).click();
+  await expect(configurator).toBeHidden();
+  await expect(page.getByRole('spinbutton', { name: 'จำนวน E2E A4 Print' })).toHaveValue('50');
+
+  await page.getByRole('button', { name: /ชำระเงิน/ }).click();
+  const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
+  await paymentDialog.getByRole('button', { name: 'พอดี' }).click();
+  await paymentDialog.getByRole('button', { name: /ยืนยันการขาย/ }).click();
+  await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
+
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  const orderPayload = await orderResponse.json();
+  expect(orderPayload).toMatchObject({
+    cart: [{ quickProductId: 'product-e2e-1', quantity: 50 }],
+    initialPayment: {
+      method: 'cash',
+      amount: 1250,
+      receivedAmount: 1250,
+    },
+  });
+});
+
 test('keeps Quick Sale V2 A4/A3 color and quantity presets on explicit SKU mappings', async ({ page }) => {
   test.setTimeout(60_000);
   await loginAsCashier(page, '/home/quick-sale-v2');
