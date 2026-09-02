@@ -23,6 +23,10 @@ const customers = [
   },
 ];
 let lastOrderCreatePayload = null;
+let quotation = null;
+const quotationId = '64b0000000000000000000ee';
+const quotationOrderId = '64b0000000000000000000ef';
+const quotationOrderNumber = 'GD-2026-009999';
 let createdProductionJob = null;
 let productionStage = 'file_check';
 let productionStageHistory = [{ stage: 'file_check', changedAt: new Date().toISOString(), changedBy: staffUserId }];
@@ -167,6 +171,22 @@ const server = http.createServer(async (request, response) => {
     return json(response, 200, lastOrderCreatePayload || {});
   }
 
+  if (request.method === 'GET' && url.pathname === '/products') {
+    return json(response, 200, [
+      {
+        id: 'catalog-product-e2e-1',
+        _id: 'catalog-product-e2e-1',
+        name: 'E2E Quotation Print',
+        category: 'Print',
+        code: 'E2E-QT-A4',
+        typeCode: 'print',
+        active: true,
+        unitLabel: 'แผ่น',
+        variants: [{ id: 'catalog-variant-e2e-1', _id: 'catalog-variant-e2e-1', name: 'A4 สี', price: 100, active: true }],
+      },
+    ]);
+  }
+
   if (request.method === 'GET' && url.pathname === '/quick-products') {
     return json(response, 200, [
       {
@@ -192,6 +212,186 @@ const server = http.createServer(async (request, response) => {
       ],
       version: 1,
       updatedAt: new Date().toISOString(),
+    });
+  }
+
+  if (request.method === 'POST' && url.pathname === '/quotations') {
+    const body = await readJson(request);
+    const now = new Date().toISOString();
+    const quantity = Number(body.items?.[0]?.quantity || 1);
+    const subtotal = quantity * 100;
+    quotation = {
+      _id: quotationId,
+      revision: 0,
+      status: 'DRAFT',
+      storedStatus: 'DRAFT',
+      version: 0,
+      createdAt: now,
+      updatedAt: now,
+      createdBy: staffUserId,
+      updatedBy: staffUserId,
+      customerSnapshot: body.customerSnapshot || {},
+      items: [{
+        productId: 'catalog-product-e2e-1',
+        variantId: 'catalog-variant-e2e-1',
+        productCode: 'E2E-QT-A4',
+        typeCode: 'print',
+        name: 'E2E Quotation Print',
+        description: body.items?.[0]?.description,
+        quantity,
+        unit: body.items?.[0]?.unit || 'แผ่น',
+        authoritativeUnitPrice: 100,
+        lineTotal: subtotal,
+        variantName: 'A4 สี',
+      }],
+      subtotal,
+      discount: 0,
+      taxableAmount: subtotal,
+      vatRate: 7,
+      vatAmount: 0,
+      grandTotal: subtotal,
+      taxInvoiceRequested: false,
+      currency: 'THB',
+      validUntil: body.validUntil ? `${body.validUntil}T16:59:59.999Z` : undefined,
+      subject: body.subject,
+      notes: body.notes,
+      termsAndConditions: body.termsAndConditions,
+      paymentTerms: body.paymentTerms,
+      deliveryTerms: body.deliveryTerms,
+      internalNote: body.internalNote,
+      statusHistory: [{ status: 'DRAFT', action: 'CREATE', actor: staffUserId, timestamp: now }],
+      revisionHistory: [],
+    };
+    return json(response, 201, quotation);
+  }
+
+  if (request.method === 'GET' && url.pathname === '/quotations') {
+    const data = quotation ? [quotation] : [];
+    return json(response, 200, {
+      data,
+      page: 1,
+      limit: Number(url.searchParams.get('limit') || 20),
+      total: data.length,
+      summary: {
+        draft: quotation?.status === 'DRAFT' ? 1 : 0,
+        sent: quotation?.status === 'SENT' ? 1 : 0,
+        approved: quotation?.status === 'APPROVED' ? 1 : 0,
+        expired: 0,
+        expiring: 0,
+        expiringOrExpired: 0,
+      },
+    });
+  }
+
+  if (request.method === 'GET' && url.pathname === `/quotations/${quotationId}`) {
+    return quotation ? json(response, 200, quotation) : json(response, 404, { message: 'Quotation not found.' });
+  }
+
+  if (request.method === 'PATCH' && url.pathname === `/quotations/${quotationId}`) {
+    if (!quotation || quotation.status !== 'DRAFT') return json(response, 409, { message: 'Only a Draft quotation can be edited.' });
+    const body = await readJson(request);
+    if (body.version !== quotation.version) return json(response, 409, { message: 'Quotation version conflict.' });
+    quotation = {
+      ...quotation,
+      ...body,
+      status: 'DRAFT',
+      storedStatus: 'DRAFT',
+      version: quotation.version + 1,
+      updatedAt: new Date().toISOString(),
+    };
+    delete quotation.quotationNumber;
+    return json(response, 200, quotation);
+  }
+
+  if (request.method === 'POST' && url.pathname === `/quotations/${quotationId}/send`) {
+    const body = await readJson(request);
+    if (!quotation || quotation.status !== 'DRAFT' || body.version !== quotation.version) return json(response, 409, { message: 'Quotation changed before send.' });
+    const now = new Date().toISOString();
+    quotation = {
+      ...quotation,
+      quotationNumber: 'QT-202609-0001',
+      status: 'SENT',
+      storedStatus: 'SENT',
+      issuedAt: now,
+      updatedAt: now,
+      version: quotation.version + 1,
+      statusHistory: [...quotation.statusHistory, { status: 'SENT', action: 'SEND', actor: staffUserId, timestamp: now }],
+    };
+    return json(response, 200, quotation);
+  }
+
+  if (request.method === 'POST' && url.pathname === `/quotations/${quotationId}/approve`) {
+    const body = await readJson(request);
+    if (!quotation || quotation.status !== 'SENT' || body.version !== quotation.version) return json(response, 409, { message: 'Quotation changed before approval.' });
+    if (!String(body.reason || '').trim()) return json(response, 400, { message: 'reason is required' });
+    const now = new Date().toISOString();
+    quotation = {
+      ...quotation,
+      status: 'APPROVED',
+      storedStatus: 'APPROVED',
+      updatedAt: now,
+      version: quotation.version + 1,
+      statusHistory: [...quotation.statusHistory, { status: 'APPROVED', action: 'APPROVE', actor: staffUserId, timestamp: now, reason: body.reason.trim() }],
+    };
+    return json(response, 200, quotation);
+  }
+
+  if (request.method === 'POST' && url.pathname === `/quotations/${quotationId}/revise`) {
+    if (!quotation || quotation.status === 'CONVERTED' || quotation.status === 'CANCELLED') {
+      return json(response, 400, { message: `Quotation in ${quotation?.status || 'UNKNOWN'} cannot be revised.` });
+    }
+    return json(response, 400, { message: 'Revision fixture only covers terminal-state rejection.' });
+  }
+
+  if (request.method === 'POST' && url.pathname === `/quotations/${quotationId}/convert-to-order`) {
+    const body = await readJson(request);
+    if (!quotation) return json(response, 404, { message: 'Quotation not found.' });
+    if (quotation.convertedOrderId) {
+      return json(response, 200, {
+        quotation,
+        order: {
+          _id: quotationOrderId,
+          orderId: quotationOrderId,
+          orderNumber: quotationOrderNumber,
+          status: 'awaiting_payment',
+          workflowStatus: 'pending',
+          grandTotal: quotation.grandTotal,
+          remainingTotal: quotation.grandTotal,
+          quotationId,
+          quotationNumber: quotation.quotationNumber,
+          quotationRevision: quotation.revision,
+        },
+        replayed: true,
+      });
+    }
+    if (quotation.status !== 'APPROVED' || body.version !== quotation.version) return json(response, 409, { message: 'Only an Approved quotation can be converted.' });
+    const now = new Date().toISOString();
+    quotation = {
+      ...quotation,
+      status: 'CONVERTED',
+      storedStatus: 'CONVERTED',
+      convertedOrderId: quotationOrderId,
+      convertedAt: now,
+      convertedBy: staffUserId,
+      updatedAt: now,
+      version: quotation.version + 1,
+      statusHistory: [...quotation.statusHistory, { status: 'CONVERTED', action: 'CONVERT_TO_ORDER', actor: staffUserId, timestamp: now }],
+    };
+    return json(response, 200, {
+      quotation,
+      order: {
+        _id: quotationOrderId,
+        orderId: quotationOrderId,
+        orderNumber: quotationOrderNumber,
+        status: 'awaiting_payment',
+        workflowStatus: 'pending',
+        grandTotal: quotation.grandTotal,
+        remainingTotal: quotation.grandTotal,
+        quotationId,
+        quotationNumber: quotation.quotationNumber,
+        quotationRevision: quotation.revision,
+      },
+      replayed: false,
     });
   }
 

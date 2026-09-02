@@ -1,220 +1,359 @@
 'use client';
 
 import * as React from 'react';
-import Link from 'next/link';
-import OpenInNewRoundedIcon from '@mui/icons-material/OpenInNewRounded';
+import AddRoundedIcon from '@mui/icons-material/AddRounded';
+import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
+import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import RequestQuoteRoundedIcon from '@mui/icons-material/RequestQuoteRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import {
   Alert,
   Box,
   Button,
   Card,
   CardContent,
-  Chip,
-  CircularProgress,
+  IconButton,
   InputAdornment,
+  Menu,
+  MenuItem,
+  Skeleton,
   Stack,
+  TablePagination,
   TextField,
   Typography,
+  useMediaQuery,
+  useTheme,
 } from '@mui/material';
-import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate } from '../components/AdminHeroHeader';
+import Link from 'next/link';
+import AdminHeroHeader, {
+  formatAdminLastSynced,
+  formatAdminThaiDate,
+  heroOutlineButtonSx,
+  heroPrimaryButtonSx,
+} from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
-import { fetchOrdersPage } from '@/lib/orders';
-import type { NormalizedOrder } from '@/lib/contracts';
+import { EmptyState } from '../components/dashboardUi';
+import { uiCardSx } from '../components/adminUi';
+import DataTable, { type DataTableColumn } from '../components/DataTable';
+import {
+  fetchQuotations,
+  type Quotation,
+  type QuotationStatus,
+  type QuotationSummary,
+} from '@/lib/quotations';
+import {
+  formatQuotationDate,
+  quotationDisplayNumber,
+  quotationMoney,
+  QuotationStatusChip,
+} from './quotationUi';
 
-const moneyFormatter = new Intl.NumberFormat('th-TH', {
-  style: 'currency',
-  currency: 'THB',
-  minimumFractionDigits: 2,
-});
+const STATUS_OPTIONS: Array<{ value: QuotationStatus | 'all'; label: string }> = [
+  { value: 'all', label: 'ทุกสถานะ' },
+  { value: 'DRAFT', label: 'ร่าง' },
+  { value: 'SENT', label: 'รอตอบรับ' },
+  { value: 'APPROVED', label: 'อนุมัติแล้ว' },
+  { value: 'REJECTED', label: 'ปฏิเสธ' },
+  { value: 'EXPIRED', label: 'หมดอายุ' },
+  { value: 'CONVERTED', label: 'สร้าง Order แล้ว' },
+  { value: 'CANCELLED', label: 'ยกเลิก' },
+];
 
-const dateFormatter = new Intl.DateTimeFormat('th-TH', {
-  timeZone: 'Asia/Bangkok',
-  dateStyle: 'medium',
-});
-
-const STATUS_LABELS: Record<string, string> = {
-  pending: 'รอดำเนินการ',
-  partial: 'ชำระบางส่วน',
-  paid: 'ชำระแล้ว',
-  producing: 'กำลังผลิต',
-  awaiting_payment: 'รอชำระเงิน',
-  ready_for_pickup: 'พร้อมรับสินค้า',
-  delivered: 'ส่งมอบแล้ว',
-  cancelled: 'ยกเลิก',
+const EMPTY_SUMMARY: QuotationSummary = {
+  draft: 0,
+  sent: 0,
+  approved: 0,
+  expired: 0,
+  expiring: 0,
+  expiringOrExpired: 0,
 };
 
-function formatDate(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? '-' : dateFormatter.format(date);
+function SummaryCard({ title, value, subtitle }: Readonly<{ title: string; value: number; subtitle: string }>) {
+  return (
+    <Card sx={uiCardSx}>
+      <CardContent sx={{ p: 2 }}>
+        <Typography variant="body2" color="text.secondary" fontWeight={700}>{title}</Typography>
+        <Typography sx={{ mt: 0.4, fontSize: 28, lineHeight: 1.1, fontWeight: 900 }}>{value.toLocaleString('th-TH')}</Typography>
+        <Typography variant="caption" color="text.secondary">{subtitle}</Typography>
+      </CardContent>
+    </Card>
+  );
 }
 
-function summarizeItems(order: NormalizedOrder): string {
-  const names = order.cart.map(item => item.name).filter(Boolean);
-  if (names.length === 0) return 'ไม่มีรายละเอียดสินค้า';
-  if (names.length <= 2) return names.join(' · ');
-  return `${names.slice(0, 2).join(' · ')} และอีก ${names.length - 2} รายการ`;
+function QuotationMobileCard({ quotation }: Readonly<{ quotation: Quotation }>) {
+  return (
+    <Card sx={uiCardSx}>
+      <CardContent sx={{ p: 1.75 }}>
+        <Stack spacing={1.2}>
+          <Stack direction="row" justifyContent="space-between" gap={1} alignItems="flex-start">
+            <Box sx={{ minWidth: 0 }}>
+              <Typography fontWeight={900} sx={{ overflowWrap: 'anywhere' }}>{quotationDisplayNumber(quotation.quotationNumber)}</Typography>
+              <Typography variant="caption" color="text.secondary">Rev.{quotation.revision}</Typography>
+            </Box>
+            <QuotationStatusChip status={quotation.status} />
+          </Stack>
+          <Box>
+            <Typography fontWeight={800}>{quotation.customerSnapshot.customerName || 'ยังไม่ระบุลูกค้า'}</Typography>
+            <Typography variant="body2" color="text.secondary">{quotation.customerSnapshot.phoneNumber || '-'}</Typography>
+          </Box>
+          {quotation.subject ? <Typography variant="body2">{quotation.subject}</Typography> : null}
+          <Stack direction="row" justifyContent="space-between" gap={1}>
+            <Box>
+              <Typography variant="caption" color="text.secondary">วันที่ออก</Typography>
+              <Typography variant="body2" fontWeight={700}>{formatQuotationDate(quotation.issuedAt)}</Typography>
+            </Box>
+            <Box sx={{ textAlign: 'right' }}>
+              <Typography variant="caption" color="text.secondary">ใช้ได้ถึง</Typography>
+              <Typography variant="body2" fontWeight={700}>{formatQuotationDate(quotation.validUntil)}</Typography>
+            </Box>
+          </Stack>
+          <Typography sx={{ fontSize: 19, fontWeight: 900, color: '#1D4ED8' }}>{quotationMoney.format(quotation.grandTotal)}</Typography>
+          <Stack direction="row" spacing={1}>
+            <Button fullWidth component={Link} href={`/home/quotations/${encodeURIComponent(quotation._id)}`} variant="outlined" startIcon={<VisibilityRoundedIcon />}>รายละเอียด</Button>
+            <Button fullWidth component={Link} href={`/print/quotation/${encodeURIComponent(quotation._id)}`} target="_blank" variant="outlined" startIcon={<PrintRoundedIcon />}>พิมพ์</Button>
+          </Stack>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
 }
 
 export default function QuotationsPage() {
-  const [orders, setOrders] = React.useState<NormalizedOrder[]>([]);
+  const theme = useTheme();
+  const mobile = useMediaQuery(theme.breakpoints.down('md'));
+  const [rows, setRows] = React.useState<Quotation[]>([]);
+  const [summary, setSummary] = React.useState<QuotationSummary>(EMPTY_SUMMARY);
+  const [page, setPage] = React.useState(0);
+  const [rowsPerPage, setRowsPerPage] = React.useState(20);
+  const [total, setTotal] = React.useState(0);
+  const [searchInput, setSearchInput] = React.useState('');
   const [search, setSearch] = React.useState('');
-  const [searchQuery, setSearchQuery] = React.useState('');
+  const [status, setStatus] = React.useState<QuotationStatus | 'all'>('all');
+  const [issuedFrom, setIssuedFrom] = React.useState('');
+  const [issuedTo, setIssuedTo] = React.useState('');
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
-  const [lastSyncedAt, setLastSyncedAt] = React.useState<Date | null>(null);
+  const [lastSynced, setLastSynced] = React.useState<Date | null>(null);
+  const [menuAnchor, setMenuAnchor] = React.useState<HTMLElement | null>(null);
+  const [menuRow, setMenuRow] = React.useState<Quotation | null>(null);
+  const requestRef = React.useRef(0);
 
   React.useEffect(() => {
-    const handle = window.setTimeout(() => setSearchQuery(search.trim()), 250);
-    return () => window.clearTimeout(handle);
-  }, [search]);
+    const timer = window.setTimeout(() => {
+      setSearch(searchInput.trim());
+      setPage(0);
+    }, 300);
+    return () => window.clearTimeout(timer);
+  }, [searchInput]);
 
   const load = React.useCallback(async () => {
+    const request = ++requestRef.current;
     setLoading(true);
     setError(null);
     try {
-      const response = await fetchOrdersPage({
-        page: 1,
-        limit: 100,
-        search: searchQuery || undefined,
+      const result = await fetchQuotations({
+        page: page + 1,
+        limit: rowsPerPage,
+        search: search || undefined,
+        status,
+        issuedFrom: issuedFrom || undefined,
+        issuedTo: issuedTo || undefined,
         sort: 'newest',
       });
-      setOrders(response.data.filter(order => order.orderType === 'NORMAL'));
-      setLastSyncedAt(new Date());
+      if (request !== requestRef.current) return;
+      setRows(result.data);
+      setTotal(result.total);
+      setSummary(result.summary);
+      setLastSynced(new Date());
     } catch (loadError) {
-      setOrders([]);
-      setError(loadError instanceof Error ? loadError.message : 'โหลดข้อมูลสำหรับใบเสนอราคาไม่สำเร็จ');
+      if (request !== requestRef.current) return;
+      setRows([]);
+      setTotal(0);
+      setError(loadError instanceof Error ? loadError.message : 'โหลดรายการใบเสนอราคาไม่สำเร็จ');
     } finally {
-      setLoading(false);
+      if (request === requestRef.current) setLoading(false);
     }
-  }, [searchQuery]);
+  }, [issuedFrom, issuedTo, page, rowsPerPage, search, status]);
 
   React.useEffect(() => {
     void load();
   }, [load]);
 
-  const totalValue = React.useMemo(
-    () => orders.reduce((sum, order) => sum + (order.status === 'cancelled' ? 0 : order.grandTotal), 0),
-    [orders]
-  );
+  const resetFilters = () => {
+    setSearchInput('');
+    setSearch('');
+    setStatus('all');
+    setIssuedFrom('');
+    setIssuedTo('');
+    setPage(0);
+  };
+
+  const quotationTableColumns: DataTableColumn<Quotation>[] = [
+    {
+      key: 'quotationNumber',
+      header: 'เลขใบเสนอราคา',
+      render: row => <Typography fontWeight={800}>{quotationDisplayNumber(row.quotationNumber)}</Typography>,
+    },
+    {
+      key: 'revision',
+      header: 'Revision',
+      render: row => `Rev.${row.revision}`,
+    },
+    {
+      key: 'customer',
+      header: 'ลูกค้า',
+      render: row => (
+        <Box>
+          <Typography fontWeight={700}>{row.customerSnapshot.customerName || '-'}</Typography>
+          <Typography variant="caption" color="text.secondary">{row.customerSnapshot.phoneNumber || '-'}</Typography>
+        </Box>
+      ),
+    },
+    {
+      key: 'issuedAt',
+      header: 'วันที่ออก',
+      render: row => formatQuotationDate(row.issuedAt),
+    },
+    {
+      key: 'validUntil',
+      header: 'วันหมดอายุ',
+      render: row => formatQuotationDate(row.validUntil),
+    },
+    {
+      key: 'grandTotal',
+      header: 'ยอดรวม',
+      align: 'right',
+      render: row => <Typography fontWeight={800}>{quotationMoney.format(row.grandTotal)}</Typography>,
+    },
+    {
+      key: 'status',
+      header: 'สถานะ',
+      render: row => <QuotationStatusChip status={row.status} />,
+    },
+    {
+      key: 'createdBy',
+      header: 'ผู้สร้าง',
+      render: row => row.createdBy || '-',
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      align: 'right',
+      width: 140,
+      render: row => (
+        <Stack direction="row" justifyContent="flex-end" spacing={0.25}>
+          <IconButton component={Link} href={`/home/quotations/${encodeURIComponent(row._id)}`} aria-label="ดูรายละเอียดใบเสนอราคา"><VisibilityRoundedIcon fontSize="small" /></IconButton>
+          <IconButton component={Link} href={`/print/quotation/${encodeURIComponent(row._id)}`} target="_blank" aria-label="พิมพ์ใบเสนอราคา"><PrintRoundedIcon fontSize="small" /></IconButton>
+          <IconButton aria-label="เมนูใบเสนอราคา" onClick={event => { setMenuAnchor(event.currentTarget); setMenuRow(row); }}><MoreHorizRoundedIcon fontSize="small" /></IconButton>
+        </Stack>
+      ),
+    },
+  ];
 
   return (
     <AdminPageContainer>
       <Stack spacing={2.25}>
         <AdminHeroHeader
           title="ใบเสนอราคา"
-          description="สร้างใบเสนอราคาจากรายการขายจริงที่มีอยู่แล้ว โดยใช้ข้อมูลลูกค้า สเปกสินค้า และราคาเดียวกับ Order"
-          lastSynced={formatAdminLastSynced(lastSyncedAt)}
-          thaiDate={formatAdminThaiDate(lastSyncedAt)}
-          actions={(
-            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading}>
-              รีเฟรช
-            </Button>
-          )}
+          description="Quotation Workspace แยกจาก Order โดยสมบูรณ์ สร้างร่าง ส่ง อนุมัติ แก้ Revision และ Convert เป็น Order ได้จากที่นี่"
+          lastSynced={formatAdminLastSynced(lastSynced)}
+          thaiDate={formatAdminThaiDate(lastSynced)}
+          mb={0}
+          notice={error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : undefined}
+          actions={
+            <>
+              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroOutlineButtonSx}>รีเฟรช</Button>
+              <Button component={Link} href="/home/quotations/new" variant="contained" startIcon={<AddRoundedIcon />} sx={heroPrimaryButtonSx}>สร้างใบเสนอราคา</Button>
+            </>
+          }
         />
 
-        <Alert severity="info" icon={<RequestQuoteRoundedIcon />} sx={{ borderRadius: 3 }}>
-          เวอร์ชันนี้เป็น Quotation Workspace จากข้อมูล Order ปัจจุบัน เพื่อให้เปิด/พิมพ์ใบเสนอราคาได้ทันที ส่วนสถานะ Sent, Approved, Rejected, Expired และ Convert to Order จะเพิ่มเมื่อมี Quotation lifecycle จริงใน Backend
-        </Alert>
-
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.25 }}>
-          <Card variant="outlined" sx={{ borderRadius: 3 }}>
-            <CardContent>
-              <Typography variant="caption" color="text.secondary" fontWeight={700}>รายการที่พร้อมสร้างใบเสนอราคา</Typography>
-              <Typography sx={{ mt: 0.35, fontSize: 28, fontWeight: 900 }}>{orders.length.toLocaleString('th-TH')}</Typography>
-              <Typography variant="caption" color="text.secondary">แสดงสูงสุด 100 รายการขายปกติล่าสุดตามคำค้น</Typography>
-            </CardContent>
-          </Card>
-          <Card variant="outlined" sx={{ borderRadius: 3 }}>
-            <CardContent>
-              <Typography variant="caption" color="text.secondary" fontWeight={700}>มูลค่ารวมของรายการที่แสดง</Typography>
-              <Typography sx={{ mt: 0.35, fontSize: 28, fontWeight: 900 }}>{moneyFormatter.format(totalValue)}</Typography>
-              <Typography variant="caption" color="text.secondary">ไม่นับรายการที่ถูกยกเลิก</Typography>
-            </CardContent>
-          </Card>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', lg: 'repeat(4, minmax(0, 1fr))' }, gap: 1.25 }}>
+          <SummaryCard title="Draft" value={summary.draft} subtitle="ร่างที่ยังแก้ไขได้" />
+          <SummaryCard title="รอตอบรับ" value={summary.sent} subtitle="ส่งแล้วและยังไม่หมดอายุ" />
+          <SummaryCard title="Approved" value={summary.approved} subtitle="พร้อม Convert เป็น Order" />
+          <SummaryCard title="ใกล้หมดอายุ / หมดอายุ" value={summary.expiringOrExpired} subtitle={`${summary.expiring} ใกล้หมดอายุ · ${summary.expired} หมดอายุ`} />
         </Box>
 
-        <Card variant="outlined" sx={{ borderRadius: 3 }}>
+        <Card sx={uiCardSx}>
           <CardContent>
-            <TextField
-              fullWidth
-              size="small"
-              value={search}
-              onChange={event => setSearch(event.target.value)}
-              placeholder="ค้นหาเลข Order, ชื่อลูกค้า หรือเบอร์โทร"
-              slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon /></InputAdornment> } }}
-            />
+            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'minmax(260px, 1.4fr) minmax(160px, .6fr) 170px 170px auto' }, gap: 1.1, alignItems: 'center' }}>
+              <TextField
+                size="small"
+                label="ค้นหาใบเสนอราคา"
+                placeholder="เลขใบเสนอราคา ลูกค้า เบอร์โทร Tax ID หรือหัวเรื่อง"
+                value={searchInput}
+                onChange={event => setSearchInput(event.target.value)}
+                slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon /></InputAdornment> } }}
+              />
+              <TextField select size="small" label="สถานะ" value={status} onChange={event => { setStatus(event.target.value as QuotationStatus | 'all'); setPage(0); }}>
+                {STATUS_OPTIONS.map(option => <MenuItem key={option.value} value={option.value}>{option.label}</MenuItem>)}
+              </TextField>
+              <TextField size="small" label="วันที่ออก จาก" type="date" value={issuedFrom} onChange={event => { setIssuedFrom(event.target.value); setPage(0); }} slotProps={{ inputLabel: { shrink: true } }} />
+              <TextField size="small" label="วันที่ออก ถึง" type="date" value={issuedTo} onChange={event => { setIssuedTo(event.target.value); setPage(0); }} slotProps={{ inputLabel: { shrink: true } }} />
+              <Button onClick={resetFilters} disabled={!searchInput && status === 'all' && !issuedFrom && !issuedTo}>ล้างตัวกรอง</Button>
+            </Box>
           </CardContent>
         </Card>
 
-        {error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : null}
-
-        {loading && orders.length === 0 ? (
-          <Box sx={{ py: 8, display: 'grid', placeItems: 'center' }}>
-            <CircularProgress />
+        <Card sx={{ ...uiCardSx, overflow: 'hidden' }}>
+          <Box sx={{ px: 2, py: 1.5, borderBottom: '1px solid', borderColor: 'divider' }}>
+            <Typography fontWeight={800}>รายการใบเสนอราคา</Typography>
+            <Typography variant="body2" color="text.secondary">{total.toLocaleString('th-TH')} รายการตามตัวกรอง</Typography>
           </Box>
-        ) : null}
 
-        {!loading && orders.length === 0 ? (
-          <Card variant="outlined" sx={{ borderRadius: 3 }}>
-            <CardContent sx={{ py: 6, textAlign: 'center' }}>
-              <Typography fontWeight={900}>ไม่พบรายการที่ใช้สร้างใบเสนอราคา</Typography>
-              <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>ลองเปลี่ยนคำค้น หรือสร้างรายการขายก่อน</Typography>
-            </CardContent>
-          </Card>
-        ) : null}
+          {loading && rows.length === 0 ? (
+            <Stack spacing={1} sx={{ p: 2 }}>
+              {Array.from({ length: 5 }, (_, index) => <Skeleton key={index} variant="rounded" height={72} />)}
+            </Stack>
+          ) : null}
 
-        <Stack spacing={1}>
-          {orders.map(order => (
-            <Card key={order._id} variant="outlined" sx={{ borderRadius: 3 }}>
-              <CardContent>
-                <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" gap={2} alignItems={{ xs: 'stretch', md: 'center' }}>
-                  <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Stack direction="row" gap={0.8} alignItems="center" flexWrap="wrap" useFlexGap>
-                      <Typography sx={{ fontSize: 16, fontWeight: 900 }}>{order.orderNumber || order.orderId}</Typography>
-                      <Chip size="small" variant="outlined" label={STATUS_LABELS[order.status] ?? order.status} />
-                    </Stack>
-                    <Typography sx={{ mt: 0.55, fontWeight: 750 }}>{order.customerName || 'ลูกค้าหน้าร้าน'}</Typography>
-                    <Typography variant="body2" color="text.secondary" sx={{ mt: 0.25, overflowWrap: 'anywhere' }}>
-                      {summarizeItems(order)}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.55 }}>
-                      วันที่ {formatDate(order.saleDate || order.createdAt)}
-                    </Typography>
-                  </Box>
+          {!loading && rows.length === 0 ? (
+            <EmptyState
+              icon={<SearchRoundedIcon />}
+              eyebrow="ใบเสนอราคา"
+              title="ยังไม่มีใบเสนอราคาที่ตรงกับเงื่อนไข"
+              subtitle="สร้างใบเสนอราคาใหม่ หรือปรับคำค้นและตัวกรองเพื่อดูรายการอื่น"
+              sx={{ m: 2 }}
+            />
+          ) : null}
 
-                  <Stack direction={{ xs: 'column', sm: 'row', md: 'column' }} gap={0.8} alignItems={{ xs: 'stretch', sm: 'center', md: 'flex-end' }}>
-                    <Typography sx={{ fontSize: 18, fontWeight: 900, whiteSpace: 'nowrap' }}>{moneyFormatter.format(order.grandTotal)}</Typography>
-                    <Stack direction="row" gap={0.75}>
-                      <Button
-                        component={Link}
-                        href={`/home/orders?focus=${encodeURIComponent(order._id)}`}
-                        variant="outlined"
-                        size="small"
-                        sx={{ whiteSpace: 'nowrap' }}>
-                        เปิด Order
-                      </Button>
-                      <Button
-                        component={Link}
-                        href={`/print/invoice/${encodeURIComponent(order._id)}?type=quotation`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        variant="contained"
-                        size="small"
-                        endIcon={<OpenInNewRoundedIcon />}
-                        sx={{ whiteSpace: 'nowrap' }}>
-                        เปิดใบเสนอราคา
-                      </Button>
-                    </Stack>
-                  </Stack>
-                </Stack>
-              </CardContent>
-            </Card>
-          ))}
-        </Stack>
+          {rows.length > 0 && mobile ? (
+            <Stack spacing={1.25} sx={{ p: 1.5 }}>
+              {rows.map(row => <QuotationMobileCard key={row._id} quotation={row} />)}
+            </Stack>
+          ) : null}
+
+          {rows.length > 0 && !mobile ? (
+            <DataTable
+              columns={quotationTableColumns}
+              rows={rows}
+              getRowKey={row => row._id}
+              minWidth={1040}
+              stickyHeader={false}
+            />
+          ) : null}
+
+          <TablePagination
+            component="div"
+            count={total}
+            page={page}
+            rowsPerPage={rowsPerPage}
+            onPageChange={(_, nextPage) => setPage(nextPage)}
+            onRowsPerPageChange={event => { setRowsPerPage(Number(event.target.value)); setPage(0); }}
+            rowsPerPageOptions={[10, 20, 50, 100]}
+            labelRowsPerPage="ต่อหน้า"
+            labelDisplayedRows={({ from, to, count }) => `${from}-${to} จาก ${count}`}
+          />
+        </Card>
       </Stack>
+
+      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={() => { setMenuAnchor(null); setMenuRow(null); }}>
+        {menuRow ? <MenuItem component={Link} href={`/home/quotations/${encodeURIComponent(menuRow._id)}`}>ดูรายละเอียด</MenuItem> : null}
+        {menuRow ? <MenuItem component={Link} href={`/print/quotation/${encodeURIComponent(menuRow._id)}`} target="_blank">พิมพ์ / PDF</MenuItem> : null}
+        {menuRow?.status === 'DRAFT' ? <MenuItem component={Link} href={`/home/quotations/${encodeURIComponent(menuRow._id)}?edit=1`}>แก้ไข Draft</MenuItem> : null}
+      </Menu>
     </AdminPageContainer>
   );
 }
