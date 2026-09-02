@@ -8,7 +8,7 @@ function source(path: string): string {
 }
 
 test('quotation print route is protected by the admin proxy', () => {
-  const proxy = source('proxy.ts');
+  const proxy = source('src/proxy.ts');
   assert.match(proxy, /'\/print\/quotation'/);
   assert.match(proxy, /'\/print\/quotation\/:path\*'/);
 });
