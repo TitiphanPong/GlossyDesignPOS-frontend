@@ -8,6 +8,9 @@ export type NotificationActionKind = 'collect_payment' | 'open_order' | 'review_
 
 export type ActionCenterSummary = {
   total: number;
+  attention: number;
+  acknowledged: number;
+  snoozed: number;
   critical: number;
   outstandingAmount: number;
   filesWaiting: number;
@@ -34,6 +37,9 @@ export type Notification = {
     href?: string;
     action?: NotificationActionKind;
   };
+  attentionState?: 'new' | 'acknowledged' | 'snoozed';
+  acknowledgedAt?: string;
+  snoozedUntil?: string;
   isRead: boolean;
   createdAt: string;
   updatedAt: string;
@@ -48,6 +54,9 @@ type ActionCenterResponse = {
 
 const EMPTY_SUMMARY: ActionCenterSummary = {
   total: 0,
+  attention: 0,
+  acknowledged: 0,
+  snoozed: 0,
   critical: 0,
   outstandingAmount: 0,
   filesWaiting: 0,
@@ -66,7 +75,15 @@ export function useNotifications() {
       const data = await fetchApiJson<ActionCenterResponse>('/notifications/action-center', { signal });
       if (signal?.aborted) return;
       setNotifications(Array.isArray(data.items) ? data.items : []);
-      setSummary(data.summary ?? EMPTY_SUMMARY);
+      const incomingSummary = data.summary ?? EMPTY_SUMMARY;
+      setSummary({
+        ...EMPTY_SUMMARY,
+        ...incomingSummary,
+        attention:
+          typeof incomingSummary.attention === 'number'
+            ? incomingSummary.attention
+            : incomingSummary.total ?? 0,
+      });
     } catch (err) {
       if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) return;
       setError(err instanceof Error ? err.message : 'Unknown error');
@@ -83,6 +100,42 @@ export function useNotifications() {
     }
     await fetchActionCenter();
   }, [fetchActionCenter]);
+
+  const updateActionCenterState = useCallback(
+    async (
+      notificationIds: string[],
+      action: 'acknowledge' | 'unacknowledge' | 'snooze' | 'dismiss',
+      snoozeMinutes?: number
+    ): Promise<void> => {
+      if (notificationIds.length === 0) return;
+      await fetchApiJson<{ updated: number }>('/notifications/action-center/state', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          notificationIds,
+          action,
+          ...(action === 'snooze' ? { snoozeMinutes: snoozeMinutes ?? 60 } : {}),
+        }),
+      });
+      await refetchActionCenter();
+    },
+    [refetchActionCenter]
+  );
+
+  const acknowledgeNotifications = useCallback(
+    (notificationIds: string[]) => updateActionCenterState(notificationIds, 'acknowledge'),
+    [updateActionCenterState]
+  );
+
+  const unacknowledgeNotifications = useCallback(
+    (notificationIds: string[]) => updateActionCenterState(notificationIds, 'unacknowledge'),
+    [updateActionCenterState]
+  );
+
+  const snoozeNotifications = useCallback(
+    (notificationIds: string[], minutes = 60) => updateActionCenterState(notificationIds, 'snooze', minutes),
+    [updateActionCenterState]
+  );
 
   const resolveNotification = useCallback(
     async (notificationId: string): Promise<void> => {
@@ -149,10 +202,10 @@ export function useNotifications() {
     return {
       total: summary.total,
       active: summary.total,
-      actionRequired: summary.total,
+      actionRequired: summary.attention,
       byPriority,
     };
-  }, [notifications, summary.total]);
+  }, [notifications, summary.attention, summary.total]);
 
   return {
     notifications,
@@ -161,6 +214,9 @@ export function useNotifications() {
     isLoading,
     error,
     refetch: refetchActionCenter,
+    acknowledgeNotifications,
+    unacknowledgeNotifications,
+    snoozeNotifications,
     resolveNotification,
     dismissNotification,
     markAsRead,

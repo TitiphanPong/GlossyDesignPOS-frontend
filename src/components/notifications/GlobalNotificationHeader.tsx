@@ -9,7 +9,15 @@ import { sidebarTokens } from '@/components/navigation/sidebarTheme';
 
 export function GlobalNotificationHeader() {
   const [drawerOpen, setDrawerOpen] = useState(false);
-  const { notifications, summary, count, isLoading } = useNotifications();
+  const {
+    notifications,
+    summary,
+    count,
+    isLoading,
+    acknowledgeNotifications,
+    snoozeNotifications,
+    unacknowledgeNotifications,
+  } = useNotifications();
 
   return (
     <>
@@ -68,6 +76,9 @@ export function GlobalNotificationHeader() {
         notifications={notifications}
         summary={summary}
         isLoading={isLoading}
+        onAcknowledge={acknowledgeNotifications}
+        onSnooze={snoozeNotifications}
+        onUnacknowledge={unacknowledgeNotifications}
       />
     </>
   );
