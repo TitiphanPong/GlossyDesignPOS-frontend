@@ -39,8 +39,11 @@ export type InvoiceData = {
   customer: CustomerInfo;
   items: InvoiceItem[];
   subtotal: number;
+  discount: number;
+  netAmount: number;
   vat: number;
   totalAmount: number;
+  isCancelled: boolean;
   amountInWords: string;
   paymentMethod: 'cash' | 'transfer';
   bankTransferInfo: string;
@@ -183,11 +186,14 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
   const issuedAt = order.issueDate || order.orderDate;
   const issuedDate = formatThaiTaxDate(issuedAt);
   const issuedTime = formatThaiTaxTime(issuedAt);
-  const taxableAmount = Math.max(0, order.subtotal);
-  const expectedVat = Math.round(taxableAmount * 0.07 * 100) / 100;
-  const shouldAddVat = documentType === 'tax-invoice' && order.grandTotal <= taxableAmount;
-  const vat = shouldAddVat ? expectedVat : order.vatAmount;
-  const totalAmount = shouldAddVat ? Math.round((taxableAmount + vat) * 100) / 100 : order.grandTotal;
+  const roundMoney = (value: number) => Math.round(Math.max(0, value) * 100) / 100;
+  const subtotal = roundMoney(order.subtotal);
+  const discount = Math.min(subtotal, roundMoney(order.discount));
+  const netAmount = roundMoney(subtotal - discount);
+  // Issued documents must render the persisted backend totals. Re-pricing historical
+  // invoices in the browser could silently change VAT/grand totals after issuance.
+  const vat = roundMoney(order.vatAmount);
+  const totalAmount = roundMoney(order.grandTotal);
   const customerAddress = formatCustomerAddress(order.customerInfo) || order.address;
   const items = order.cart.map(item => ({
     quantity: item.quantity,
@@ -208,9 +214,12 @@ export function buildInvoiceDataFromOrder(order: NormalizedInvoiceOrder, documen
       address: customerAddress,
     },
     items,
-    subtotal: order.subtotal,
+    subtotal,
+    discount,
+    netAmount,
     vat,
     totalAmount,
+    isCancelled: order.status === 'cancelled',
     amountInWords: convertAmountToThaiText(totalAmount),
     paymentMethod: normalizePrintablePaymentMethod(order.paymentMethod),
     bankTransferInfo: readEnv(process.env.NEXT_PUBLIC_COMPANY_BANK_INFO, '-'),
@@ -257,6 +266,38 @@ function TrackingQr({ trackingUrl, compact = false }: Readonly<{ trackingUrl?: s
       </Box>
       <Typography sx={{ fontSize: compact ? '2.3mm' : '2.35mm', fontWeight: 600, lineHeight: 1.15 }}>ติดตามสถานะงาน</Typography>
     </Stack>
+  );
+}
+
+function CancellationMark({ compact = false }: Readonly<{ compact?: boolean }>) {
+  return (
+    <>
+      <Box
+        data-invoice-cancelled-watermark="true"
+        aria-label="ยกเลิก / CANCELLED"
+        sx={{
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%) rotate(-28deg)',
+          zIndex: 6,
+          px: compact ? '4mm' : '7mm',
+          py: compact ? '2mm' : '3mm',
+          border: compact ? '0.5mm solid rgba(185, 28, 28, 0.2)' : '0.7mm solid rgba(185, 28, 28, 0.2)',
+          color: 'rgba(185, 28, 28, 0.18)',
+          fontSize: compact ? '7mm' : '11mm',
+          fontWeight: 900,
+          lineHeight: 1,
+          letterSpacing: '0.04em',
+          whiteSpace: 'nowrap',
+          pointerEvents: 'none',
+          userSelect: 'none',
+          printColorAdjust: 'exact',
+          WebkitPrintColorAdjust: 'exact',
+        }}>
+        ยกเลิก / CANCELLED
+      </Box>
+    </>
   );
 }
 
@@ -310,6 +351,8 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
       sx={{
         width: `${COPY_WIDTH_MM}mm`,
         height: `${PAGE_HEIGHT_MM}mm`,
+        position: 'relative',
+        overflow: 'hidden',
         boxSizing: 'border-box',
         px: '2mm',
         py: '1.8mm',
@@ -323,6 +366,7 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
         WebkitPrintColorAdjust: 'exact',
         breakInside: 'avoid',
       }}>
+      {invoiceData.isCancelled ? <CancellationMark /> : null}
       <Stack spacing="0.8mm">
         <Box sx={{ display: 'grid', gridTemplateColumns: trackingUrl ? '1fr 40mm' : '56% 44%' }}>
           <Box sx={{ px: '1.4mm', py: '1.1mm' }}>
@@ -485,9 +529,23 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
       <Box sx={{ bgcolor: '#fff' }}>
         <Stack spacing={0}>
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: '1.8mm', py: '1.1mm', borderBottom: DOTTED_BORDER }}>
-            <Typography sx={{ fontSize: '3mm', fontWeight: 400, lineHeight: 1.2 }}>รวมมูลค่าสินค้า / TOTAL</Typography>
+            <Typography sx={{ fontSize: '3mm', fontWeight: 400, lineHeight: 1.2 }}>
+              {invoiceData.discount > 0 ? 'รวมมูลค่าสินค้า / SUBTOTAL' : 'รวมมูลค่าสินค้า / TOTAL'}
+            </Typography>
             <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(invoiceData.subtotal)}</Typography>
           </Stack>
+          {invoiceData.discount > 0 ? (
+            <>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: '1.8mm', py: '1.1mm', borderBottom: DOTTED_BORDER }}>
+                <Typography sx={{ fontSize: '3mm', fontWeight: 400, lineHeight: 1.2 }}>ส่วนลด / DISCOUNT</Typography>
+                <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>-{formatCurrency(invoiceData.discount)}</Typography>
+              </Stack>
+              <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: '1.8mm', py: '1.1mm', borderBottom: DOTTED_BORDER }}>
+                <Typography sx={{ fontSize: '3mm', fontWeight: 400, lineHeight: 1.2 }}>ยอดหลังหักส่วนลด / NET AMOUNT</Typography>
+                <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(invoiceData.netAmount)}</Typography>
+              </Stack>
+            </>
+          ) : null}
           <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: '1.8mm', py: '1.1mm', borderBottom: DOTTED_BORDER }}>
             <Typography sx={{ fontSize: '3mm', fontWeight: 400, lineHeight: 1.2 }}>ภาษีมูลค่าเพิ่ม 7% / VALUE ADDED TAX</Typography>
             <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2, fontVariantNumeric: 'tabular-nums' }}>{formatCurrency(invoiceData.vat)}</Typography>
@@ -585,6 +643,8 @@ export function ReceiptTemplate({ invoiceData, trackingUrl }: Readonly<{ invoice
         width: '100%',
         maxWidth: '80mm',
         minHeight: '110mm',
+        position: 'relative',
+        overflow: 'hidden',
         boxSizing: 'border-box',
         px: '4mm',
         py: '5mm',
@@ -594,6 +654,7 @@ export function ReceiptTemplate({ invoiceData, trackingUrl }: Readonly<{ invoice
         printColorAdjust: 'exact',
         WebkitPrintColorAdjust: 'exact',
       }}>
+      {invoiceData.isCancelled ? <CancellationMark compact /> : null}
       <Stack spacing="3mm">
         <Stack spacing="1mm" alignItems="center" textAlign="center">
           <Typography sx={{ fontSize: '4.5mm', fontWeight: 800, lineHeight: 1.15 }}>{invoiceData.company.thaiName}</Typography>

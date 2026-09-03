@@ -128,3 +128,76 @@ test('customer documents remain printable when tracking QR generation is unavail
   assert.match(html, /ใบแจ้งราคาสินค้า \/ ใบส่งของ/);
   assert.doesNotMatch(html, /Order tracking QR/);
 });
+
+test('normal tax invoice has no cancellation watermark and keeps the compact summary', () => {
+  const html = renderToStaticMarkup(InvoiceDocument({ documentType: 'tax-invoice', order: sampleOrder }));
+
+  assert.doesNotMatch(html, /data-invoice-cancelled-watermark="true"/);
+  assert.doesNotMatch(html, /ส่วนลด \/ DISCOUNT/);
+  assert.doesNotMatch(html, /ยอดหลังหักส่วนลด \/ NET AMOUNT/);
+});
+
+test('tax invoice renders persisted fixed discount totals before VAT without browser re-pricing', () => {
+  const order: NormalizedInvoiceOrder = {
+    ...sampleOrder,
+    subtotal: 700,
+    discount: 100,
+    finalTotal: 600,
+    vatAmount: 42,
+    grandTotal: 642,
+  };
+  const data = buildInvoiceDataFromOrder(order, 'tax-invoice');
+  const html = renderToStaticMarkup(InvoiceDocument({ documentType: 'tax-invoice', order }));
+
+  assert.equal(data.subtotal, 700);
+  assert.equal(data.discount, 100);
+  assert.equal(data.netAmount, 600);
+  assert.equal(data.vat, 42);
+  assert.equal(data.totalAmount, 642);
+  assert.equal(data.amountInWords, 'หกร้อยสี่สิบสองบาทถ้วน');
+  assert.match(html, /รวมมูลค่าสินค้า \/ SUBTOTAL/);
+  assert.match(html, /ส่วนลด \/ DISCOUNT/);
+  assert.match(html, /ยอดหลังหักส่วนลด \/ NET AMOUNT/);
+});
+
+test('tax invoice renders persisted percentage discount result and VAT from the discounted net', () => {
+  const order: NormalizedInvoiceOrder = {
+    ...sampleOrder,
+    subtotal: 700,
+    discount: 70,
+    finalTotal: 630,
+    vatAmount: 44.1,
+    grandTotal: 674.1,
+  };
+  const data = buildInvoiceDataFromOrder(order, 'tax-invoice');
+
+  assert.equal(data.discount, 70);
+  assert.equal(data.netAmount, 630);
+  assert.equal(data.vat, 44.1);
+  assert.equal(data.totalAmount, 674.1);
+});
+
+test('cancelled tax invoice preview renders one cancellation mark', () => {
+  const cancelledOrder: NormalizedInvoiceOrder = { ...sampleOrder, status: 'cancelled' };
+  const html = renderToStaticMarkup(InvoiceMobilePreview({ documentType: 'tax-invoice', order: cancelledOrder }));
+
+  assert.equal(html.match(/data-invoice-cancelled-watermark="true"/g)?.length, 1);
+  assert.doesNotMatch(html, /data-invoice-cancelled-badge="true"/);
+  assert.match(html, /ยกเลิก \/ CANCELLED/);
+});
+
+test('cancelled tax invoice print and PDF document carries watermark on original and copy', () => {
+  const cancelledOrder: NormalizedInvoiceOrder = { ...sampleOrder, status: 'cancelled' };
+  const html = renderToStaticMarkup(InvoiceDocument({ documentType: 'tax-invoice', order: cancelledOrder }));
+
+  assert.equal(html.match(/data-invoice-cancelled-watermark="true"/g)?.length, 2);
+  assert.doesNotMatch(html, /data-invoice-cancelled-badge="true"/);
+});
+
+test('cancelled receipt also carries its cancellation watermark', () => {
+  const cancelledOrder: NormalizedInvoiceOrder = { ...sampleOrder, status: 'cancelled' };
+  const html = renderToStaticMarkup(InvoiceDocument({ documentType: 'receipt', order: cancelledOrder }));
+
+  assert.equal(html.match(/data-invoice-cancelled-watermark="true"/g)?.length, 1);
+  assert.doesNotMatch(html, /data-invoice-cancelled-badge="true"/);
+});
