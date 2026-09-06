@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Alert,
   Box,
@@ -224,6 +225,7 @@ export function NotificationDrawer({
   onSnooze,
   onUnacknowledge,
 }: Readonly<NotificationDrawerProps>) {
+  const router = useRouter();
   const [selectedTab, setSelectedTab] = useState<ActionCenterTab>('attention');
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [mutationError, setMutationError] = useState<string | null>(null);
@@ -233,14 +235,14 @@ export function NotificationDrawer({
   const openAction = (row: ActionCenterDisplayRow) => {
     if (row.kind === 'upload_group') {
       onClose();
-      window.location.assign('/home/storage');
+      router.push('/home/storage');
       return;
     }
     const href = getNotificationActionHref(row.notification);
     onNotificationClick?.(row.notification);
     if (!href) return;
     onClose();
-    window.location.assign(href);
+    router.push(href);
   };
 
   const runMutation = async (row: ActionCenterDisplayRow, action: () => Promise<void>) => {
