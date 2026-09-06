@@ -2,6 +2,7 @@
 node_modules/
 
 # build
+/next-env.d.ts
 .next/
 .next-dev/
 .next-e2e/
