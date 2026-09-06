@@ -1,0 +1,56 @@
+import { expect, test, type Page } from '@playwright/test';
+
+const reportTarget = '/home/reports/tax-invoices';
+
+async function loginForReport(page: Page) {
+  await page.goto(`/login?redirectTo=${encodeURIComponent(reportTarget)}`);
+  await page.getByLabel('ชื่อผู้ใช้').fill('cashier');
+  await page.getByRole('textbox', { name: 'รหัสผ่าน' }).fill('e2e-password');
+  await page.getByRole('button', { name: 'เข้าสู่ระบบ' }).click();
+  await expect(page).toHaveURL(url => url.pathname === reportTarget);
+}
+
+test('defaults to previous Bangkok month, changes period, and downloads the whole selected month', async ({ page }) => {
+  await page.clock.setFixedTime(new Date('2026-09-06T10:00:00.000Z'));
+  await loginForReport(page);
+
+  await expect(page.getByText('ใบกำกับภาษีรายเดือน', { exact: true }).last()).toBeVisible();
+  await expect(page.getByText('งวดรายงาน สิงหาคม 2569')).toBeVisible();
+  await expect(page.getByText('INV-202608-001-001')).toBeVisible();
+  await expect(page.getByText('INV-202607-001-099')).toBeVisible();
+  await expect(page.getByText(/ปุ่มดาวน์โหลดทุกปุ่มส่งออก/)).toContainText('ทั้งเดือนที่เลือก');
+
+  const search = page.getByPlaceholder('ค้นหาเลขใบกำกับ เลขที่งาน ลูกค้า หรือเลขผู้เสียภาษี');
+  await search.fill('ไม่มีรายการนี้');
+  await expect(page.getByText('ไม่พบเอกสารที่ตรงกับคำค้น')).toBeVisible();
+
+  const excelDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'ดาวน์โหลด Excel' }).click();
+  const excel = await excelDownload;
+  expect(excel.suggestedFilename()).toContain('202608');
+
+  await search.clear();
+  await page.getByLabel('เดือน').click();
+  await page.getByRole('option', { name: 'กันยายน' }).click();
+  await expect(page.getByText('งวดรายงาน กันยายน 2569')).toBeVisible();
+  await expect(page.getByText('INV-202609-001-001')).toBeVisible();
+  await expect(page.getByText('ไม่พบการยกเลิกใบกำกับจากงวดก่อน')).toBeVisible();
+
+  const summaryDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'ดาวน์โหลด PDF สรุป' }).click();
+  const summary = await summaryDownload;
+  expect(summary.suggestedFilename()).toContain('202609');
+
+  const invoicesDownload = page.waitForEvent('download');
+  await page.getByRole('button', { name: 'ดาวน์โหลดใบกำกับทั้งเดือน' }).click();
+  const invoices = await invoicesDownload;
+  expect(invoices.suggestedFilename()).toContain('202609');
+});
+
+test('requires authentication for report page and backend report data', async ({ page, request }) => {
+  const response = await request.get('/api/backend/reports/tax-invoices?period=202608');
+  expect(response.status()).toBe(401);
+
+  await page.goto(reportTarget);
+  await expect(page).toHaveURL(url => url.pathname === '/login' && url.searchParams.get('redirectTo') === reportTarget);
+});

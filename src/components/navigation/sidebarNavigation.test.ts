@@ -44,6 +44,13 @@ test('production exposes focused workflow views before storage and stock', () =>
   assert.deepEqual(operationsGroup?.items.slice(1).map(item => item.href), ['/home/storage', '/home/stock']);
 });
 
+test('monthly tax invoice report is available to every authenticated role', () => {
+  for (const role of ['staff', 'manager', 'admin'] as const) {
+    const reportGroup = filterSidebarGroups(SIDEBAR_MENU_GROUPS, role).find(group => group.id === 'reports');
+    assert.deepEqual(reportGroup?.items.map(item => item.href), ['/home/reports/tax-invoices']);
+  }
+});
+
 test('system health is available to authenticated staff in management', () => {
   const staffGroups = filterSidebarGroups(SIDEBAR_MENU_GROUPS, 'staff');
   const managementGroup = staffGroups.find(group => group.id === 'management');

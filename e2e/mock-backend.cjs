@@ -480,6 +480,91 @@ const server = http.createServer(async (request, response) => {
     });
   }
 
+  if (request.method === 'GET' && url.pathname === '/reports/tax-invoices') {
+    const period = url.searchParams.get('period') || '202608';
+    const periodLabel = period === '202609' ? 'กันยายน 2569' : period === '202608' ? 'สิงหาคม 2569' : period;
+    const invoiceNumber = `INV-${period}-001-001`;
+    return json(response, 200, {
+      period,
+      periodLabel,
+      generatedAt: '2026-09-06T16:00:00.000Z',
+      timezone: 'Asia/Bangkok',
+      summary: {
+        documentCount: 1,
+        taxableBase: 100,
+        vatAmount: 7,
+        grandTotal: 107,
+        cancelledCount: 0,
+        cancelledOriginalTotals: { taxableBase: 0, vatAmount: 0, grandTotal: 0 },
+        reviewCount: 0,
+        crossPeriodCancellationCount: period === '202608' ? 1 : 0,
+      },
+      documents: [{
+        id: orderId,
+        orderId,
+        orderNumber,
+        documentDate: period === '202609' ? '2026-09-03T05:00:00.000Z' : '2026-08-10T05:00:00.000Z',
+        invoicePeriod: period,
+        invoicePeriodSource: 'invoicePeriod',
+        invoiceNumber,
+        bookNo: '001',
+        invoiceSequence: '001',
+        customerName: 'ลูกค้า Report E2E',
+        customerAddress: '99 ถนนทดสอบ กรุงเทพมหานคร 10250',
+        taxId: '0012345678901',
+        branch: '00001',
+        subtotal: 100,
+        discount: 0,
+        taxableBase: 100,
+        vatAmount: 7,
+        grandTotal: 107,
+        paymentMethod: 'cash',
+        note: '',
+        status: 'paid',
+        reportStatus: 'issued',
+        reviewReasons: [],
+        items: [{ name: 'งานพิมพ์ Report E2E', quantity: 1, unitPrice: 100, amount: 100 }],
+      }],
+      crossPeriodCancellations: period === '202608' ? [{
+        id: 'cross-period-e2e',
+        orderId: 'cross-period-e2e',
+        orderNumber: 'ORD-E2E-PREV',
+        invoicePeriod: '202607',
+        invoiceNumber: 'INV-202607-001-099',
+        bookNo: '001',
+        invoiceSequence: '099',
+        customerName: 'ลูกค้าเดือนก่อน',
+        taxId: '0000000000001',
+        branch: '00000',
+        taxableBase: 50,
+        vatAmount: 3.5,
+        grandTotal: 53.5,
+        cancellation: {
+          cancelledAt: '2026-08-05T05:00:00.000Z',
+          reason: 'ยกเลิกข้ามงวด E2E',
+          correctiveDocumentRequired: true,
+          correctiveDocumentStatus: 'required',
+        },
+      }] : [],
+    });
+  }
+
+  if (request.method === 'GET' && url.pathname.startsWith('/reports/tax-invoices/export/')) {
+    const period = url.searchParams.get('period') || '202608';
+    const kind = url.pathname.split('/').at(-1);
+    const excel = kind === 'excel';
+    const extension = excel ? 'xlsx' : 'pdf';
+    const payload = Buffer.from(excel ? 'E2E-XLSX' : '%PDF-E2E');
+    response.writeHead(200, {
+      'content-type': excel ? 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' : 'application/pdf',
+      'content-disposition': `attachment; filename="tax-invoices-${kind}-${period}.${extension}"`,
+      'content-length': String(payload.length),
+      'cache-control': 'no-store',
+    });
+    response.end(payload);
+    return;
+  }
+
   if (request.method === 'GET' && url.pathname === '/orders') {
     const now = new Date().toISOString();
     return json(response, 200, {

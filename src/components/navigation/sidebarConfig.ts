@@ -1,3 +1,4 @@
+import AssessmentRoundedIcon from '@mui/icons-material/AssessmentRounded';
 import BoltRoundedIcon from '@mui/icons-material/BoltRounded';
 import DashboardCustomizeRoundedIcon from '@mui/icons-material/DashboardCustomizeRounded';
 import FactCheckRoundedIcon from '@mui/icons-material/FactCheckRounded';
@@ -133,6 +134,18 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
         label: 'ลูกค้าทั้งหมด',
         href: '/home/customers',
         icon: PeopleAltRoundedIcon,
+      },
+    ],
+  },
+  {
+    id: 'reports',
+    label: 'รายงาน',
+    items: [
+      {
+        id: 'monthly-tax-invoices',
+        label: 'ใบกำกับภาษีรายเดือน',
+        href: '/home/reports/tax-invoices',
+        icon: AssessmentRoundedIcon,
       },
     ],
   },
