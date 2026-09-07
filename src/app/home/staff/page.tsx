@@ -405,7 +405,7 @@ export default function StaffManagementPage() {
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" spacing={0.5}>
                             <Box>
-                              <Typography fontWeight={900}>{presentation.title}</Typography>
+                              <Typography fontWeight={800}>{presentation.title}</Typography>
                               <Typography variant="body2" color="text.secondary">
                                 {presentation.description}
                               </Typography>
@@ -456,7 +456,7 @@ export default function StaffManagementPage() {
                 <AddRoundedIcon />
               </Box>
               <Box>
-                <Typography sx={{ fontSize: { xs: 21, sm: 24 }, lineHeight: 1.2, fontWeight: 900, color: '#0F172A' }}>เพิ่มบัญชีพนักงาน</Typography>
+                <Typography sx={{ fontSize: { xs: 21, sm: 24 }, lineHeight: 1.2, fontWeight: 800, color: '#0F172A' }}>เพิ่มบัญชีพนักงาน</Typography>
                 <Typography sx={{ mt: 0.5, color: '#64748B', fontSize: 13.5 }}>สร้างข้อมูลเข้าสู่ระบบและกำหนดสิทธิ์การใช้งานเริ่มต้น</Typography>
               </Box>
             </Stack>
@@ -465,7 +465,7 @@ export default function StaffManagementPage() {
         <DialogContent sx={{ p: { xs: 2.25, sm: 3 } }}>
           <Stack spacing={2.5}>
             <Box>
-              <Typography sx={{ mb: 1.25, color: '#334155', fontSize: 13, fontWeight: 850 }}>ข้อมูลบัญชี</Typography>
+              <Typography sx={{ mb: 1.25, color: '#334155', fontSize: 13, fontWeight: 800 }}>ข้อมูลบัญชี</Typography>
               <TextField
                 label="ชื่อผู้ใช้งาน"
                 placeholder="เช่น glossy.staff"
@@ -546,7 +546,7 @@ export default function StaffManagementPage() {
       </Dialog>
 
       <Dialog open={Boolean(passwordUser)} onClose={() => !saving && setPasswordUser(null)} fullWidth maxWidth="xs">
-        <DialogTitle fontWeight={900}>เปลี่ยนรหัสผ่าน</DialogTitle>
+        <DialogTitle fontWeight={800}>เปลี่ยนรหัสผ่าน</DialogTitle>
         <DialogContent>
           <Alert severity="info" icon={<KeyRoundedIcon />} sx={{ mb: 2 }}>
             กำลังเปลี่ยนรหัสผ่านของ <strong>{passwordUser?.username}</strong>

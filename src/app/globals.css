@@ -3,6 +3,8 @@
 :root {
   --background: #ffffff;
   --foreground: #071c35;
+  --font-ui: var(--font-sans), 'Prompt', 'Noto Sans Thai', 'Segoe UI', Tahoma, Arial, sans-serif;
+  --font-document: var(--font-document-thai), 'Noto Sans Thai', Tahoma, sans-serif;
 }
 
 html {
@@ -13,10 +15,17 @@ body {
   min-height: 100vh;
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-sans), 'Prompt', 'Noto Sans Thai', 'Sarabun', 'Kanit', 'Segoe UI', Tahoma, Arial, sans-serif;
+  font-family: var(--font-ui);
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
 }
 
 @media (prefers-reduced-motion: reduce) {

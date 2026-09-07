@@ -119,7 +119,7 @@ export default function PayRemainingModal({ open, orderId, remaining, onClose, o
               <AccountBalanceWalletRoundedIcon />
             </Box>
             <Box>
-              <Typography sx={{ color: '#0F172A', fontSize: 19, fontWeight: 800 }}>รับชำระยอดคงเหลือ</Typography>
+              <Typography sx={{ color: '#0F172A', fontSize: 19, fontWeight: 700 }}>รับชำระยอดคงเหลือ</Typography>
               <Typography sx={{ color: '#64748B', fontSize: 12.5, fontWeight: 400 }}>ระบุยอดและช่องทางการรับชำระ</Typography>
             </Box>
           </Stack>

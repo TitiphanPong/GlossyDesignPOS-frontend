@@ -105,7 +105,7 @@ export default function CustomerPicker({ active, value, taxInvoice, onChange, on
       <Stack gap={1.4}>
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1}>
           <Box>
-            <Typography fontWeight={900} color="#172033">
+            <Typography fontWeight={800} color="#172033">
               ลูกค้า
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -243,7 +243,7 @@ export default function CustomerPicker({ active, value, taxInvoice, onChange, on
 
         {!value && query.trim().length < 2 && recentCustomers.length > 0 ? (
           <Box>
-            <Typography fontSize={11.75} fontWeight={800} color="#64748B" sx={{ mb: 0.75 }}>
+            <Typography fontSize={11.75} fontWeight={700} color="#64748B" sx={{ mb: 0.75 }}>
               ลูกค้าล่าสุด
             </Typography>
             <Stack direction="row" gap={0.75} sx={{ overflowX: 'auto', pb: 0.25, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>

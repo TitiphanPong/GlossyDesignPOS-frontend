@@ -999,7 +999,7 @@ export default function OrderManagementPage() {
         }}
       />
       <Dialog open={Boolean(cancelTarget)} onClose={() => (updatingOrderId ? undefined : setCancelTarget(null))} fullWidth maxWidth="xs">
-        <DialogTitle sx={{ fontWeight: 800, color: '#B42318' }}>ยืนยันการยกเลิกงาน</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700, color: '#B42318' }}>ยืนยันการยกเลิกงาน</DialogTitle>
         <DialogContent>
           <Typography sx={{ mb: 2 }}>
             ต้องการยกเลิกงาน <strong>{cancelTarget?.orderNumber}</strong> ใช่หรือไม่? ระบบจะเก็บประวัติรายการและการชำระเงินเดิมไว้ และบันทึกรายการคืนเงิน/ปรับปรุงทางการเงินแทนการลบข้อมูล

@@ -314,7 +314,7 @@ export default function StockPage() {
 
         <Card variant="outlined" sx={{ borderRadius: 3 }}>
           <CardContent>
-            <Typography variant="h6" fontWeight={900}>วัสดุที่เคลื่อนไหวล่าสุด</Typography>
+            <Typography variant="h6" fontWeight={800}>วัสดุที่เคลื่อนไหวล่าสุด</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>ดูว่าวัสดุใดมีการรับเข้า เบิกใช้ หรือปรับยอดล่าสุด</Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2,minmax(0,1fr))' }, gap: 1.5 }}>
               {(overview?.recentlyMovedItems ?? []).map(entry => (

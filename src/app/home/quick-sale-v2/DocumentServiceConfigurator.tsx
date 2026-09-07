@@ -75,7 +75,7 @@ export default function DocumentServiceConfigurator({
     <Paper variant="outlined" sx={{ borderRadius: 3, p: { xs: 1.5, sm: 2 }, borderColor: '#DCE4EF' }}>
       <Stack spacing={2}>
         <Box>
-          <Typography fontSize={18} fontWeight={900} color="#0F172A">
+          <Typography fontSize={18} fontWeight={800} color="#0F172A">
             งานเอกสาร
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -84,7 +84,7 @@ export default function DocumentServiceConfigurator({
         </Box>
 
         <Box>
-          <Typography fontWeight={800} sx={{ mb: 0.75 }}>ประเภทงาน</Typography>
+          <Typography fontWeight={700} sx={{ mb: 0.75 }}>ประเภทงาน</Typography>
           <Stack direction="row" gap={0.75} flexWrap="wrap">
             {WORK_TYPES.map(option => (
               <Chip key={option.value} label={option.label} clickable color={workType === option.value ? 'primary' : 'default'} variant={workType === option.value ? 'filled' : 'outlined'} onClick={() => setWorkType(option.value)} />
@@ -93,7 +93,7 @@ export default function DocumentServiceConfigurator({
         </Box>
 
         <Box>
-          <Typography fontWeight={800} sx={{ mb: 0.75 }}>ขนาด</Typography>
+          <Typography fontWeight={700} sx={{ mb: 0.75 }}>ขนาด</Typography>
           <Stack direction="row" gap={0.75}>
             {SIZES.map(value => (
               <Chip key={value} label={value} clickable color={size === value ? 'primary' : 'default'} variant={size === value ? 'filled' : 'outlined'} onClick={() => setSize(value)} />
@@ -102,7 +102,7 @@ export default function DocumentServiceConfigurator({
         </Box>
 
         <Box>
-          <Typography fontWeight={800} sx={{ mb: 0.75 }}>โหมดสี</Typography>
+          <Typography fontWeight={700} sx={{ mb: 0.75 }}>โหมดสี</Typography>
           <Stack direction="row" gap={0.75}>
             {COLORS.map(option => (
               <Chip key={option.value} label={option.label} clickable color={colorMode === option.value ? 'primary' : 'default'} variant={colorMode === option.value ? 'filled' : 'outlined'} onClick={() => setColorMode(option.value)} />
@@ -113,7 +113,7 @@ export default function DocumentServiceConfigurator({
         <Divider />
 
         <Box>
-          <Typography fontWeight={800} sx={{ mb: 0.75 }}>จำนวน</Typography>
+          <Typography fontWeight={700} sx={{ mb: 0.75 }}>จำนวน</Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} gap={1} alignItems={{ sm: 'center' }}>
             <ButtonGroup variant="outlined" aria-label="จำนวน">
               <Button aria-label="ลดจำนวน" onClick={() => setQuantity(value => Math.max(1, value - 1))}><RemoveRoundedIcon /></Button>

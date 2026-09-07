@@ -531,7 +531,7 @@ export default function QuickSalePage() {
           }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1.25}>
             <Box sx={{ minWidth: 0 }}>
-              <Typography fontSize={22} fontWeight={900} color="#0F172A" lineHeight={1.1}>
+              <Typography fontSize={22} fontWeight={800} color="#0F172A" lineHeight={1.1}>
                 {v2 ? 'Quick Sale V2' : 'Quick Sale'}
               </Typography>
               <Typography noWrap fontSize={12.5} color="#64748B" sx={{ mt: 0.45 }}>
@@ -583,7 +583,7 @@ export default function QuickSalePage() {
           {v2 ? (
             <Stack spacing={1.5}>
               <Alert severity="info">Pilot V2 แยกจาก V1 โดยสิ้นเชิง เลือก Service Family แล้วค่อยยืนยันรายละเอียดก่อนเพิ่มลงตะกร้า</Alert>
-              <Typography fontSize={16} fontWeight={900} color="#172033">เลือกกลุ่มงาน</Typography>
+              <Typography fontSize={16} fontWeight={800} color="#172033">เลือกกลุ่มงาน</Typography>
               <Button
                 variant="outlined"
                 onClick={() => {
@@ -593,7 +593,7 @@ export default function QuickSalePage() {
                 startIcon={<ArticleRoundedIcon />}
                 sx={{ minHeight: 88, borderRadius: 3, justifyContent: 'flex-start', px: 2, textTransform: 'none', fontWeight: 900 }}>
                 <Box sx={{ textAlign: 'left' }}>
-                  <Typography fontWeight={900}>งานเอกสาร</Typography>
+                  <Typography fontWeight={800}>งานเอกสาร</Typography>
                   <Typography variant="body2" color="text.secondary">Print / Copy / Scan · A4 / A3 · ขาวดำ / สี</Typography>
                 </Box>
               </Button>
@@ -651,7 +651,7 @@ export default function QuickSalePage() {
           </Stack>
           <Stack direction="row" alignItems="center" gap={0.75} sx={{ mb: 1.1, minWidth: 0 }}>
             <LocalFireDepartmentRoundedIcon sx={{ color: '#F97316', fontSize: { xs: 20, sm: 22 }, flexShrink: 0 }} />
-            <Typography fontSize={{ xs: 15, sm: 16 }} fontWeight={900} color="#172033">
+            <Typography fontSize={{ xs: 15, sm: 16 }} fontWeight={800} color="#172033">
               สินค้ายอดนิยม
             </Typography>
             {!mobile ? (
@@ -729,7 +729,7 @@ export default function QuickSalePage() {
           </Box>
           {!v2 && !loading && otherProducts.length > 0 && (
             <Box sx={{ mt: 2.25 }}>
-              <Typography fontWeight={900} color="#172033" sx={{ mb: 1.1 }}>
+              <Typography fontWeight={800} color="#172033" sx={{ mb: 1.1 }}>
                 สินค้าทั้งหมด
               </Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1, minWidth: 0 }}>
@@ -856,7 +856,7 @@ export default function QuickSalePage() {
         <DialogTitle sx={{ pb: 1 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1}>
             <Box>
-              <Typography component="h2" fontSize={21} fontWeight={900}>งานเอกสาร</Typography>
+              <Typography component="h2" fontSize={21} fontWeight={800}>งานเอกสาร</Typography>
               <Typography variant="body2" color="text.secondary">เลือกตัวเลือกให้ครบแล้วกดเพิ่มลงรายการหนึ่งครั้ง</Typography>
             </Box>
             <IconButton aria-label="ปิดตัวเลือกงานเอกสาร" onClick={() => setV2ConfiguratorOpen(false)}><CloseRoundedIcon /></IconButton>
@@ -889,7 +889,7 @@ export default function QuickSalePage() {
         <DialogTitle sx={{ px: { xs: 2.5, sm: 3 }, pt: 2.75, pb: 1 }}>
           <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={2}>
             <Box>
-              <Typography component="h2" fontSize={21} fontWeight={900} color="#172033">
+              <Typography component="h2" fontSize={21} fontWeight={800} color="#172033">
                 เพิ่มรายการอื่น
               </Typography>
               <Typography fontSize={13.5} color="#64748B" sx={{ mt: 0.5 }}>
@@ -1038,7 +1038,7 @@ export default function QuickSalePage() {
               }}>
               <CheckRoundedIcon sx={{ fontSize: 44 }} />
             </Box>
-            <Typography component="h2" fontSize={25} fontWeight={900} color="#172033">
+            <Typography component="h2" fontSize={25} fontWeight={800} color="#172033">
               ขายสำเร็จ
             </Typography>
             <Typography fontSize={14} color="#64748B" sx={{ mt: 0.5 }}>

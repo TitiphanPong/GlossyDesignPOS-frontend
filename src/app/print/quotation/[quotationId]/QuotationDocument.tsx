@@ -3,6 +3,7 @@
 import { Box, Stack, Typography } from '@mui/material';
 import type { Quotation } from '@/lib/quotations';
 import { formatQuotationDate, quotationMoney } from '@/app/home/quotations/quotationUi';
+import { DOCUMENT_FONT_FAMILY, DOCUMENT_TYPOGRAPHY_INHERIT_SX } from '../../../font-tokens';
 
 const readEnv = (value: string | undefined, fallback = '-') => value?.trim() || fallback;
 
@@ -110,13 +111,14 @@ export function QuotationDocument({ quotation }: Readonly<{ quotation: Quotation
           py: '13mm',
           border: '1px solid #E2E8F0',
           boxShadow: '0 18px 48px rgba(15, 23, 42, 0.12)',
-          fontFamily: 'var(--font-geist-sans), "Noto Sans Thai", Tahoma, sans-serif',
+          fontFamily: DOCUMENT_FONT_FAMILY,
+          ...DOCUMENT_TYPOGRAPHY_INHERIT_SX,
         }}
       >
         <Stack spacing="6mm">
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 62mm', gap: '8mm', alignItems: 'start' }}>
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontSize: '5.2mm', fontWeight: 900, lineHeight: 1.15 }}>{companyName}</Typography>
+              <Typography sx={{ fontSize: '5.2mm', fontWeight: 800, lineHeight: 1.15 }}>{companyName}</Typography>
               {companyEnglishName !== '-' && companyEnglishName !== companyName ? (
                 <Typography sx={{ mt: '0.8mm', fontSize: '2.8mm', fontWeight: 700, color: '#475569' }}>
                   {companyEnglishName}
@@ -134,10 +136,10 @@ export function QuotationDocument({ quotation }: Readonly<{ quotation: Quotation
             </Box>
 
             <Box sx={{ textAlign: 'right' }}>
-              <Typography sx={{ fontSize: '6mm', fontWeight: 900, color: '#1D4ED8', lineHeight: 1.1 }}>
+              <Typography sx={{ fontSize: '6mm', fontWeight: 800, color: '#1D4ED8', lineHeight: 1.1 }}>
                 ใบเสนอราคา
               </Typography>
-              <Typography sx={{ fontSize: '3.2mm', fontWeight: 800, color: '#64748B', letterSpacing: '0.08em' }}>
+              <Typography sx={{ fontSize: '3.2mm', fontWeight: 700, color: '#64748B', letterSpacing: '0.08em' }}>
                 QUOTATION
               </Typography>
               <Box sx={{ mt: '3.5mm', display: 'grid', gridTemplateColumns: 'auto 1fr', gap: '1.2mm 3mm', textAlign: 'left' }}>
@@ -157,7 +159,7 @@ export function QuotationDocument({ quotation }: Readonly<{ quotation: Quotation
 
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8mm' }}>
             <Box>
-              <Typography sx={{ mb: '1.6mm', fontSize: '2.65mm', fontWeight: 900, color: '#1D4ED8', letterSpacing: '0.08em' }}>
+              <Typography sx={{ mb: '1.6mm', fontSize: '2.65mm', fontWeight: 800, color: '#1D4ED8', letterSpacing: '0.08em' }}>
                 ลูกค้า / CUSTOMER
               </Typography>
               <Typography sx={{ fontSize: '3.25mm', fontWeight: 800 }}>{customer.customerName || '-'}</Typography>
@@ -172,7 +174,7 @@ export function QuotationDocument({ quotation }: Readonly<{ quotation: Quotation
               ) : null}
             </Box>
             <Box>
-              <Typography sx={{ mb: '1.6mm', fontSize: '2.65mm', fontWeight: 900, color: '#1D4ED8', letterSpacing: '0.08em' }}>
+              <Typography sx={{ mb: '1.6mm', fontSize: '2.65mm', fontWeight: 800, color: '#1D4ED8', letterSpacing: '0.08em' }}>
                 เรื่อง / SUBJECT
               </Typography>
               <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.5 }}>{quotation.subject || '-'}</Typography>
@@ -198,7 +200,7 @@ export function QuotationDocument({ quotation }: Readonly<{ quotation: Quotation
                       borderBottom: '0.35mm solid #93C5FD',
                       textAlign: align,
                       fontSize: '2.55mm',
-                      fontWeight: 900,
+                      fontWeight: 800,
                       color: '#1E3A8A',
                     }}
                   >
@@ -242,13 +244,13 @@ export function QuotationDocument({ quotation }: Readonly<{ quotation: Quotation
             <Box>
               {quotation.paymentTerms ? (
                 <Box sx={{ mb: '3mm' }}>
-                  <Typography sx={{ fontSize: '2.65mm', fontWeight: 900 }}>เงื่อนไขการชำระเงิน</Typography>
+                  <Typography sx={{ fontSize: '2.65mm', fontWeight: 800 }}>เงื่อนไขการชำระเงิน</Typography>
                   <Typography sx={{ mt: '1mm', fontSize: '2.6mm', lineHeight: 1.55, whiteSpace: 'pre-line' }}>{quotation.paymentTerms}</Typography>
                 </Box>
               ) : null}
               {quotation.deliveryTerms ? (
                 <Box>
-                  <Typography sx={{ fontSize: '2.65mm', fontWeight: 900 }}>เงื่อนไขการส่งมอบ</Typography>
+                  <Typography sx={{ fontSize: '2.65mm', fontWeight: 800 }}>เงื่อนไขการส่งมอบ</Typography>
                   <Typography sx={{ mt: '1mm', fontSize: '2.6mm', lineHeight: 1.55, whiteSpace: 'pre-line' }}>{quotation.deliveryTerms}</Typography>
                 </Box>
               ) : null}
@@ -273,7 +275,7 @@ export function QuotationDocument({ quotation }: Readonly<{ quotation: Quotation
 
           {quotation.termsAndConditions ? (
             <Box sx={{ pt: '2mm', borderTop: '0.2mm solid #CBD5E1' }}>
-              <Typography sx={{ fontSize: '2.7mm', fontWeight: 900 }}>ข้อตกลงและเงื่อนไข</Typography>
+              <Typography sx={{ fontSize: '2.7mm', fontWeight: 800 }}>ข้อตกลงและเงื่อนไข</Typography>
               <Typography sx={{ mt: '1.2mm', fontSize: '2.55mm', lineHeight: 1.65, color: '#334155', whiteSpace: 'pre-line' }}>
                 {quotation.termsAndConditions}
               </Typography>

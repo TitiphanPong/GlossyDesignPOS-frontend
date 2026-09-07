@@ -13,7 +13,7 @@ export default function TermsPage() {
       <Container maxWidth="md" sx={{ py: { xs: 6, md: 10 } }}>
         <Stack spacing={2.2}>
           <Typography sx={{ color: 'rgba(163, 236, 255, 0.95)', letterSpacing: '0.06em', fontSize: 12 }}>เอกสารทางกฎหมาย</Typography>
-          <Typography sx={{ fontSize: { xs: '2rem', md: '2.8rem' }, fontWeight: 800, lineHeight: 1.05 }}>เงื่อนไขการใช้งาน</Typography>
+          <Typography sx={{ fontSize: { xs: '2rem', md: '2.8rem' }, fontWeight: 700, lineHeight: 1.05 }}>เงื่อนไขการใช้งาน</Typography>
           <Typography sx={{ color: 'rgba(232, 239, 255, 0.72)', fontSize: 14 }}>มีผลบังคับใช้: 13 พฤษภาคม 2026</Typography>
 
           <Box sx={{ mt: 1, p: { xs: 2, md: 2.8 }, borderRadius: 4, bgcolor: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)' }}>

@@ -678,7 +678,7 @@ export default function StoragePage() {
         py: { xs: 2.5, md: 3.5 },
         minHeight: '100vh',
         background: 'radial-gradient(circle at 10% 6%, #EEF4FF 0%, #F7FAFF 40%, #FBFCFF 100%)',
-        fontFamily: 'var(--font-sans), "Prompt", "Noto Sans Thai", sans-serif',
+        fontFamily: 'var(--font-ui)',
       }}>
       <Stack spacing={2.5}>
         <StorageOverview
@@ -814,7 +814,7 @@ export default function StoragePage() {
       </Menu>
 
       <Dialog open={Boolean(deleteTarget)} onClose={() => !deleteBusy && setDeleteTarget(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800 }}>ยืนยันการลบรายการ</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>ยืนยันการลบรายการ</DialogTitle>
         <DialogContent>
           <Stack spacing={1.25}>
             <Typography color="text.secondary">

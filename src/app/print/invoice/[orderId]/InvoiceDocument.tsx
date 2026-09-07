@@ -2,6 +2,7 @@
 
 import { Box, Stack, Typography } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
+import { DOCUMENT_FONT_FAMILY, DOCUMENT_TYPOGRAPHY_INHERIT_SX } from '../../../font-tokens';
 import { formatCustomerAddress, type NormalizedInvoiceOrder, type PaymentMethod } from '../../../../lib/contracts';
 import { buildSecureOrderTrackingUrl } from '../../../../lib/order-tracking-url';
 import { convertAmountToThaiText, formatCurrency, resolveInvoiceDocumentType, type InvoiceDocumentType } from '../../../home/invoice/[orderId]/invoice-utils';
@@ -361,7 +362,8 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
         display: 'flex',
         flexDirection: 'column',
         gap: `${SECTION_GAP_MM}mm`,
-        fontFamily: '"Noto Sans Thai", Tahoma, sans-serif',
+        fontFamily: DOCUMENT_FONT_FAMILY,
+        ...DOCUMENT_TYPOGRAPHY_INHERIT_SX,
         printColorAdjust: 'exact',
         WebkitPrintColorAdjust: 'exact',
         breakInside: 'avoid',
@@ -401,13 +403,13 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
                 px: '1mm',
                 py: '0.8mm',
               }}>
-              <Typography sx={{ fontSize: '3.45mm', fontWeight: 800, lineHeight: 1.1, color: '#000' }}>
+              <Typography sx={{ fontSize: '3.45mm', fontWeight: 700, lineHeight: 1.1, color: '#000' }}>
                 {invoiceData.company.thaiName}{' '}
                 <Box component="span" sx={{ fontSize: '2.7mm', fontWeight: 400 }}>
                   (สาขา {invoiceData.company.branchNumber})
                 </Box>
               </Typography>
-              <Typography sx={{ mt: '0.7mm', fontSize: '3.45mm', fontWeight: 700, lineHeight: 1.1, color: '#000' }}>
+              <Typography sx={{ mt: '0.7mm', fontSize: '3.45mm', fontWeight: 600, lineHeight: 1.1, color: '#000' }}>
                 {invoiceData.company.englishName}{' '}
                 <Box component="span" sx={{ fontSize: '2.7mm', fontWeight: 400 }}>
                   (Branch {invoiceData.company.branchNumber})
@@ -436,7 +438,7 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
               width: '100%',
               px: '20mm',
               fontSize: '5.6mm',
-              fontWeight: 700,
+              fontWeight: 600,
               lineHeight: 1.2,
               textAlign: 'center',
             }}>
@@ -480,19 +482,19 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
             bgcolor: '#fff',
           }}>
           <Box sx={{ px: '1mm', py: '1mm', borderRight: BORDER, textAlign: 'center' }}>
-            <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2 }}>จำนวน</Typography>
+            <Typography sx={{ fontSize: '3mm', fontWeight: 600, lineHeight: 1.2 }}>จำนวน</Typography>
             <Typography sx={{ fontSize: '3mm', lineHeight: 1.1 }}>Quantity</Typography>
           </Box>
           <Box sx={{ px: '1mm', py: '1mm', borderRight: BORDER, textAlign: 'center' }}>
-            <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2 }}>รายการ</Typography>
+            <Typography sx={{ fontSize: '3mm', fontWeight: 600, lineHeight: 1.2 }}>รายการ</Typography>
             <Typography sx={{ fontSize: '3mm', lineHeight: 1.1 }}>Description</Typography>
           </Box>
           <Box sx={{ px: '1mm', py: '1mm', borderRight: BORDER, textAlign: 'center' }}>
-            <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2 }}>ราคาต่อหน่วย</Typography>
+            <Typography sx={{ fontSize: '3mm', fontWeight: 600, lineHeight: 1.2 }}>ราคาต่อหน่วย</Typography>
             <Typography sx={{ fontSize: '3mm', lineHeight: 1.1 }}>Price / Unit</Typography>
           </Box>
           <Box sx={{ px: '1mm', py: '1mm', textAlign: 'center' }}>
-            <Typography sx={{ fontSize: '3mm', fontWeight: 700, lineHeight: 1.2 }}>บาท / สต.</Typography>
+            <Typography sx={{ fontSize: '3mm', fontWeight: 600, lineHeight: 1.2 }}>บาท / สต.</Typography>
             <Typography sx={{ fontSize: '3mm', lineHeight: 1.1 }}>Bahe / Stg.</Typography>
           </Box>
         </Box>
@@ -569,7 +571,7 @@ export function InvoiceCopy({ invoiceData, minItemRows = MIN_ITEM_ROWS, copyInde
       <Box sx={{ mt: 'auto', bgcolor: '#fff', borderTop: BORDER, pt: '1.2mm' }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: '1.15fr 0.925fr 0.925fr', gap: '1.4mm', alignItems: 'stretch' }}>
           <Stack spacing="1mm" sx={{ minWidth: 0, minHeight: '15mm', border: BORDER, px: '1.5mm', py: '1.1mm', bgcolor: '#fafafa' }}>
-            <Typography sx={{ pb: '0.8mm', borderBottom: BORDER, fontSize: '2.7mm', fontWeight: 700, lineHeight: 1.2 }}>การชำระเงิน / Payment</Typography>
+            <Typography sx={{ pb: '0.8mm', borderBottom: BORDER, fontSize: '2.7mm', fontWeight: 600, lineHeight: 1.2 }}>การชำระเงิน / Payment</Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, auto)', justifyContent: 'space-between', gap: '1mm', alignItems: 'center' }}>
               <CheckboxField label="เงินสด" checked={invoiceData.paymentMethod === 'cash'} />
               <CheckboxField label="โอนเงิน" checked={invoiceData.paymentMethod === 'transfer'} />
@@ -650,19 +652,20 @@ export function ReceiptTemplate({ invoiceData, trackingUrl }: Readonly<{ invoice
         py: '5mm',
         color: '#111827',
         bgcolor: '#fff',
-        fontFamily: '"Noto Sans Thai", Tahoma, sans-serif',
+        fontFamily: DOCUMENT_FONT_FAMILY,
+        ...DOCUMENT_TYPOGRAPHY_INHERIT_SX,
         printColorAdjust: 'exact',
         WebkitPrintColorAdjust: 'exact',
       }}>
       {invoiceData.isCancelled ? <CancellationMark compact /> : null}
       <Stack spacing="3mm">
         <Stack spacing="1mm" alignItems="center" textAlign="center">
-          <Typography sx={{ fontSize: '4.5mm', fontWeight: 800, lineHeight: 1.15 }}>{invoiceData.company.thaiName}</Typography>
+          <Typography sx={{ fontSize: '4.5mm', fontWeight: 700, lineHeight: 1.15 }}>{invoiceData.company.thaiName}</Typography>
           {invoiceData.company.englishName !== '-' ? <Typography sx={{ fontSize: '2.7mm', lineHeight: 1.2 }}>{invoiceData.company.englishName}</Typography> : null}
         </Stack>
 
         <Box sx={{ borderTop: '0.3mm dashed #111827', borderBottom: '0.3mm dashed #111827', py: '2.5mm', textAlign: 'center' }}>
-          <Typography sx={{ fontSize: '3.8mm', fontWeight: 800, lineHeight: 1.2 }}>ใบแจ้งราคาสินค้า / ใบส่งของ</Typography>
+          <Typography sx={{ fontSize: '3.8mm', fontWeight: 700, lineHeight: 1.2 }}>ใบแจ้งราคาสินค้า / ใบส่งของ</Typography>
           <Typography sx={{ mt: '0.5mm', fontSize: '2.35mm', letterSpacing: '0.06em', lineHeight: 1.2 }}>INVOICE / DELIVERY NOTE</Typography>
         </Box>
 
@@ -687,9 +690,9 @@ export function ReceiptTemplate({ invoiceData, trackingUrl }: Readonly<{ invoice
 
         <Box sx={{ borderTop: '0.3mm dashed #111827', pt: '2mm' }}>
           <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 10mm 17mm', columnGap: '1.5mm', pb: '1.5mm', borderBottom: '0.2mm solid #111827' }}>
-            <Typography sx={{ fontSize: '2.5mm', fontWeight: 800 }}>รายการ</Typography>
-            <Typography sx={{ fontSize: '2.5mm', fontWeight: 800, textAlign: 'right' }}>จำนวน</Typography>
-            <Typography sx={{ fontSize: '2.5mm', fontWeight: 800, textAlign: 'right' }}>รวม</Typography>
+            <Typography sx={{ fontSize: '2.5mm', fontWeight: 700 }}>รายการ</Typography>
+            <Typography sx={{ fontSize: '2.5mm', fontWeight: 700, textAlign: 'right' }}>จำนวน</Typography>
+            <Typography sx={{ fontSize: '2.5mm', fontWeight: 700, textAlign: 'right' }}>รวม</Typography>
           </Box>
           <Stack spacing="1.8mm" sx={{ pt: '2mm' }}>
             {invoiceData.items.map((item, itemIndex) => (
@@ -726,7 +729,7 @@ export function ReceiptTemplate({ invoiceData, trackingUrl }: Readonly<{ invoice
         <Stack spacing="1.5mm" alignItems="center" sx={{ borderTop: '0.3mm dashed #111827', pt: '3mm', textAlign: 'center' }}>
           {invoiceData.notes ? <Typography sx={{ fontSize: '2.35mm', lineHeight: 1.35 }}>{invoiceData.notes}</Typography> : null}
           <TrackingQr trackingUrl={trackingUrl} />
-          <Typography sx={{ fontSize: '2.8mm', fontWeight: 700, lineHeight: 1.3 }}>ขอบคุณที่ใช้บริการ</Typography>
+          <Typography sx={{ fontSize: '2.8mm', fontWeight: 600, lineHeight: 1.3 }}>ขอบคุณที่ใช้บริการ</Typography>
         </Stack>
       </Stack>
     </Box>

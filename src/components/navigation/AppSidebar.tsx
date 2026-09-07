@@ -94,7 +94,7 @@ export default function AppSidebar({
           bgcolor: sidebarTokens.background,
           backgroundImage: 'none',
           boxShadow: mobile ? sidebarTokens.floatingShadow : sidebarTokens.shadow,
-          fontFamily: 'var(--font-sans), Prompt, "Noto Sans Thai", sans-serif',
+          fontFamily: 'var(--font-ui)',
           transition: `width ${sidebarMotion.drawer}`,
         },
         '@media (prefers-reduced-motion: reduce)': {

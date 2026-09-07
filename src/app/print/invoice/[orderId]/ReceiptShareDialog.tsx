@@ -61,7 +61,7 @@ export default function ReceiptShareDialog({
         <Stack spacing={0}>
           <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={2} sx={{ px: 2.25, pt: 2.2, pb: 1.7, bgcolor: '#FFFFFF', borderBottom: '1px solid #E8EEF5' }}>
             <Box sx={{ minWidth: 0 }}>
-              <Typography sx={{ fontSize: 20, fontWeight: 900, color: '#0F172A', lineHeight: 1.1 }}>
+              <Typography sx={{ fontSize: 20, fontWeight: 800, color: '#0F172A', lineHeight: 1.1 }}>
                 บันทึก / แชร์ใบเสร็จ
               </Typography>
               <Typography sx={{ mt: 0.55, fontSize: 12.5, color: '#64748B', overflowWrap: 'anywhere' }}>

@@ -75,7 +75,7 @@ export default function GlossyDetailDrawer({
                   component="div"
                   sx={{
                     fontSize: 20,
-                    fontWeight: 800,
+                    fontWeight: 700,
                     color: '#0F172A',
                     lineHeight: 1.25,
                     overflowWrap: 'anywhere',

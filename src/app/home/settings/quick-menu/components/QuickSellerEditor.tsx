@@ -13,7 +13,7 @@ import { commonButtonSx, uiCardSx } from '../../../components/adminUi';
 type Props = { open: boolean; initial: QuickProductPayload; editing: Product | null; canonicalProducts: Product[]; busy: boolean; onClose: () => void; onSave: (value: QuickProductPayload) => Promise<void> };
 
 const Section = ({ title, description, children }: Readonly<{ title: string; description: string; children: React.ReactNode }>) => (
-  <Card sx={uiCardSx}><CardContent sx={{ p: { xs: 2, md: 2.5 } }}><Typography variant="h6" fontWeight={800}>{title}</Typography><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{description}</Typography>{children}</CardContent></Card>
+  <Card sx={uiCardSx}><CardContent sx={{ p: { xs: 2, md: 2.5 } }}><Typography variant="h6" fontWeight={700}>{title}</Typography><Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>{description}</Typography>{children}</CardContent></Card>
 );
 
 export default function QuickSellerEditor({ open, initial, editing, canonicalProducts, busy, onClose, onSave }: Readonly<Props>) {
@@ -48,7 +48,7 @@ export default function QuickSellerEditor({ open, initial, editing, canonicalPro
   return <>
     <Dialog open={open} onClose={(_, reason) => reason !== 'backdropClick' && close()} fullScreen={fullScreen} fullWidth maxWidth="lg" PaperProps={{ sx: { borderRadius: { xs: 0, md: 4 }, bgcolor: '#F7F9FC' } }}>
       <DialogTitle sx={{ bgcolor: 'background.paper', borderBottom: '1px solid', borderColor: 'divider', px: { xs: 2, md: 3 } }}>
-        <Stack direction="row" alignItems="center" gap={1.5}><IconButton onClick={close} aria-label="ย้อนกลับ"><ArrowBackRoundedIcon /></IconButton><Box flex={1}><Typography variant="h6" fontWeight={900}>{editing ? 'แก้ไขรายการขายด่วน' : 'เพิ่มรายการขายด่วน'}</Typography><Typography variant="caption" color="text.secondary">จัดข้อมูลเป็นหมวดหมู่และตรวจสอบตัวอย่างก่อนบันทึก</Typography></Box><QuickSellerStatusChip active={form.active !== false} /></Stack>
+        <Stack direction="row" alignItems="center" gap={1.5}><IconButton onClick={close} aria-label="ย้อนกลับ"><ArrowBackRoundedIcon /></IconButton><Box flex={1}><Typography variant="h6" fontWeight={800}>{editing ? 'แก้ไขรายการขายด่วน' : 'เพิ่มรายการขายด่วน'}</Typography><Typography variant="caption" color="text.secondary">จัดข้อมูลเป็นหมวดหมู่และตรวจสอบตัวอย่างก่อนบันทึก</Typography></Box><QuickSellerStatusChip active={form.active !== false} /></Stack>
       </DialogTitle>
       <DialogContent sx={{ p: { xs: 2, md: 3 } }}>
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'minmax(0, 1.7fr) minmax(280px, .8fr)' }, gap: 2.5 }}>
@@ -78,7 +78,7 @@ export default function QuickSellerEditor({ open, initial, editing, canonicalPro
               <Stack spacing={1.5}><FormControlLabel control={<Switch checked={form.active !== false} onChange={e => field('active', e.target.checked)} />} label="เปิดใช้งานใน Quick Seller" /><FormControlLabel control={<Switch checked={Boolean(form.isHotMenu)} onChange={e => field('isHotMenu', e.target.checked)} />} label="เมนูแนะนำ" /><Divider /><Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}><TextField label="ลำดับการแสดงผล" type="number" value={form.quickSaleSortOrder ?? 0} inputProps={{ min: 0 }} onChange={e => field('quickSaleSortOrder', Number(e.target.value))} helperText="เลขน้อยแสดงก่อน" /><TextField label="สีพื้นไอคอน" type="color" value={form.tint || '#E2E8F0'} onChange={e => field('tint', e.target.value)} /></Box></Stack>
             </Section>
           </Stack>
-          <Box sx={{ minWidth: 0 }}><Box sx={{ position: { lg: 'sticky' }, top: 0 }}><Typography fontWeight={800} sx={{ mb: .5 }}>ตัวอย่างบนหน้าขายด่วน</Typography><Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>ตัวอย่างจะเปลี่ยนตามข้อมูลที่กรอกทันที</Typography><QuickSellerProductTile product={preview} disabled={!preview.active} /></Box></Box>
+          <Box sx={{ minWidth: 0 }}><Box sx={{ position: { lg: 'sticky' }, top: 0 }}><Typography fontWeight={700} sx={{ mb: .5 }}>ตัวอย่างบนหน้าขายด่วน</Typography><Typography variant="body2" color="text.secondary" sx={{ mb: 1.5 }}>ตัวอย่างจะเปลี่ยนตามข้อมูลที่กรอกทันที</Typography><QuickSellerProductTile product={preview} disabled={!preview.active} /></Box></Box>
         </Box>
       </DialogContent>
       <DialogActions sx={{ position: { xs: 'sticky', md: 'static' }, bottom: 0, bgcolor: 'background.paper', borderTop: '1px solid', borderColor: 'divider', p: 2 }}><Button onClick={close} disabled={busy} sx={commonButtonSx}>ยกเลิก</Button><Button variant="contained" startIcon={<SaveRoundedIcon />} disabled={busy || !valid} onClick={() => void onSave(form)} sx={commonButtonSx}>{busy ? 'กำลังบันทึก...' : 'บันทึกการเปลี่ยนแปลง'}</Button></DialogActions>

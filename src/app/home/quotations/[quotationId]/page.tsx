@@ -289,7 +289,7 @@ export default function QuotationDetailPage() {
           <Stack spacing={2}>
             <Card sx={uiCardSx}>
               <CardContent>
-                <Typography variant="h6" fontWeight={800}>ข้อมูลลูกค้า</Typography>
+                <Typography variant="h6" fontWeight={700}>ข้อมูลลูกค้า</Typography>
                 <Box sx={{ mt: 1.5, display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.5 }}>
                   <LabelValue label="ชื่อลูกค้า" value={quotation.customerSnapshot.customerName} />
                   <LabelValue label="เบอร์โทรศัพท์" value={quotation.customerSnapshot.phoneNumber} />
@@ -315,7 +315,7 @@ export default function QuotationDetailPage() {
 
             <Card sx={uiCardSx}>
               <CardContent>
-                <Typography variant="h6" fontWeight={800}>เงื่อนไขและหมายเหตุ</Typography>
+                <Typography variant="h6" fontWeight={700}>เงื่อนไขและหมายเหตุ</Typography>
                 <Stack spacing={1.5} sx={{ mt: 1.5 }}>
                   <LabelValue label="หัวเรื่อง" value={quotation.subject} />
                   <LabelValue label="หมายเหตุ" value={quotation.notes} />
@@ -328,7 +328,7 @@ export default function QuotationDetailPage() {
 
             <Card sx={uiCardSx}>
               <CardContent>
-                <Typography variant="h6" fontWeight={800}>Timeline</Typography>
+                <Typography variant="h6" fontWeight={700}>Timeline</Typography>
                 <Stack spacing={1.4} sx={{ mt: 1.5 }}>
                   {[...quotation.statusHistory].reverse().map((entry, index) => (
                     <Stack key={`${entry.timestamp}-${entry.action}-${index}`} direction="row" spacing={1.25} alignItems="flex-start">
@@ -347,7 +347,7 @@ export default function QuotationDetailPage() {
           <Card sx={{ ...uiCardSx, position: { lg: 'sticky' }, top: { lg: 20 } }}>
             <CardContent>
               <Stack spacing={1.4}>
-                <Typography variant="h6" fontWeight={800}>สรุปยอด</Typography>
+                <Typography variant="h6" fontWeight={700}>สรุปยอด</Typography>
                 <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 0.8 }}>
                   <Typography color="text.secondary">Subtotal</Typography><Typography>{quotationMoney.format(quotation.subtotal)}</Typography>
                   <Typography color="text.secondary">ส่วนลด</Typography><Typography>-{quotationMoney.format(quotation.discount)}</Typography>

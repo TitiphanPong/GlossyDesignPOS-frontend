@@ -149,7 +149,7 @@ export default function TrackPage() {
             </Stack>
 
             <Box sx={{ position: 'relative', zIndex: 1, maxWidth: 560 }}>
-              <Typography component="h1" sx={{ fontSize: { xs: 28, sm: 36 }, fontWeight: 900, letterSpacing: '-0.035em', lineHeight: 1.15 }}>
+              <Typography component="h1" sx={{ fontSize: { xs: 28, sm: 36 }, fontWeight: 800, letterSpacing: '-0.035em', lineHeight: 1.15 }}>
                 เช็กสถานะงานของคุณ
               </Typography>
               <Typography sx={{ mt: 1, color: 'rgba(255,255,255,0.82)', fontSize: { xs: 14, sm: 15.5 }, lineHeight: 1.65 }}>ดูความคืบหน้าล่าสุด ตั้งแต่ร้านรับออเดอร์จนพร้อมรับงาน</Typography>

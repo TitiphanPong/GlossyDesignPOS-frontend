@@ -248,7 +248,7 @@ export default function CustomerCreateDialog({ open, onClose, customer, onCreate
       <DialogTitle sx={{ px: { xs: 2.25, sm: 3 }, py: { xs: 2, sm: 2.6 }, borderBottom: '1px solid #E9EFF7' }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start" spacing={1.5}>
           <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: { xs: 22, sm: 24 }, fontWeight: 800, color: '#112033', lineHeight: 1.08 }}>
+            <Typography sx={{ fontSize: { xs: 22, sm: 24 }, fontWeight: 700, color: '#112033', lineHeight: 1.08 }}>
               {editing ? 'แก้ไขข้อมูลลูกค้า' : 'เพิ่มลูกค้า'}
             </Typography>
             <Typography sx={{ mt: 0.65, fontSize: { xs: 12.5, sm: 13.5 }, color: '#61758A', lineHeight: 1.45 }}>
@@ -268,7 +268,7 @@ export default function CustomerCreateDialog({ open, onClose, customer, onCreate
           </Box>
 
           <Stack spacing={1.45}>
-            <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#2C4258', letterSpacing: '0.02em' }}>ข้อมูลทั่วไป</Typography>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#2C4258', letterSpacing: '0.02em' }}>ข้อมูลทั่วไป</Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.4 }}>
               <TextField
                 required
@@ -317,7 +317,7 @@ export default function CustomerCreateDialog({ open, onClose, customer, onCreate
 
           <Stack spacing={1.45}>
             <Stack direction="row" justifyContent="space-between" alignItems="center" gap={1}>
-              <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#2C4258', letterSpacing: '0.02em' }}>ข้อมูลติดต่อ</Typography>
+              <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#2C4258', letterSpacing: '0.02em' }}>ข้อมูลติดต่อ</Typography>
               <Button size="small" startIcon={<AddRoundedIcon />} onClick={addPhone} sx={{ textTransform: 'none', fontWeight: 700 }}>เพิ่มเบอร์</Button>
             </Stack>
             <Stack spacing={1.1}>
@@ -349,7 +349,7 @@ export default function CustomerCreateDialog({ open, onClose, customer, onCreate
           </Stack>
 
           <Stack spacing={1.45}>
-            <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#2C4258', letterSpacing: '0.02em' }}>ข้อมูลออกเอกสาร / ภาษี</Typography>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#2C4258', letterSpacing: '0.02em' }}>ข้อมูลออกเอกสาร / ภาษี</Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'minmax(0, 1.3fr) minmax(0, 1fr)' }, gap: 1.4 }}>
               <TextField
                 fullWidth
@@ -386,7 +386,7 @@ export default function CustomerCreateDialog({ open, onClose, customer, onCreate
           </Stack>
 
           <Stack spacing={1.45}>
-            <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#2C4258', letterSpacing: '0.02em' }}>ที่อยู่</Typography>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#2C4258', letterSpacing: '0.02em' }}>ที่อยู่</Typography>
             <TextField
               fullWidth
               label="ที่อยู่"
@@ -406,7 +406,7 @@ export default function CustomerCreateDialog({ open, onClose, customer, onCreate
           </Stack>
 
           <Stack spacing={1.1}>
-            <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#2C4258', letterSpacing: '0.02em' }}>ที่อยู่จัดส่ง</Typography>
+            <Typography sx={{ fontSize: 13, fontWeight: 700, color: '#2C4258', letterSpacing: '0.02em' }}>ที่อยู่จัดส่ง</Typography>
             <FormControlLabel
               control={<Checkbox checked={sameShippingAddress} onChange={event => setSameShippingAddress(event.target.checked)} />}
               label={<Typography fontSize={13}>ใช้ที่อยู่เดียวกับข้อมูลด้านบน</Typography>}

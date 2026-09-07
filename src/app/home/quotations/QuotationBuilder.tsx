@@ -425,7 +425,7 @@ export default function QuotationBuilder({ quotation, onSaved, onCancel }: Build
               <Stack spacing={1.5}>
                 <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1}>
                   <Box>
-                    <Typography variant="h6" fontWeight={800}>ลูกค้า</Typography>
+                    <Typography variant="h6" fontWeight={700}>ลูกค้า</Typography>
                     <Typography variant="body2" color="text.secondary">เลือกจากฐานลูกค้า หรือกรอก Snapshot สำหรับเอกสารนี้</Typography>
                   </Box>
                   <Button startIcon={<PersonAddAltRoundedIcon />} onClick={() => setCustomerDialog(true)} sx={commonButtonSx}>สร้างลูกค้าใหม่</Button>
@@ -455,7 +455,7 @@ export default function QuotationBuilder({ quotation, onSaved, onCancel }: Build
               <Stack spacing={1.5}>
                 <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1}>
                   <Box>
-                    <Typography variant="h6" fontWeight={800}>รายการสินค้าและสเปก</Typography>
+                    <Typography variant="h6" fontWeight={700}>รายการสินค้าและสเปก</Typography>
                     <Typography variant="body2" color="text.secondary">ราคาที่เห็นระหว่างแก้เป็น Preview; Backend จะ resolve ราคาใหม่ตอนบันทึก</Typography>
                   </Box>
                   <Stack direction="row" spacing={1}>
@@ -476,7 +476,7 @@ export default function QuotationBuilder({ quotation, onSaved, onCancel }: Build
                     <Box key={item.key} sx={{ border: '1px solid #E2E8F0', borderRadius: 3, p: { xs: 1.5, sm: 2 } }}>
                       <Stack spacing={1.25}>
                         <Stack direction="row" justifyContent="space-between" alignItems="center">
-                          <Typography fontWeight={800}>รายการที่ {index + 1}</Typography>
+                          <Typography fontWeight={700}>รายการที่ {index + 1}</Typography>
                           <IconButton aria-label={`ลบรายการที่ ${index + 1}`} onClick={() => { setItems(current => current.filter(row => row.key !== item.key)); markDirty(); }}><DeleteOutlineRoundedIcon /></IconButton>
                         </Stack>
                         {item.customName ? (
@@ -512,7 +512,7 @@ export default function QuotationBuilder({ quotation, onSaved, onCancel }: Build
           <Card sx={uiCardSx}>
             <CardContent>
               <Stack spacing={1.5}>
-                <Typography variant="h6" fontWeight={800}>รายละเอียดเอกสารและเงื่อนไข</Typography>
+                <Typography variant="h6" fontWeight={700}>รายละเอียดเอกสารและเงื่อนไข</Typography>
                 <TextField label="หัวเรื่อง / Subject" value={subject} onChange={event => { setSubject(event.target.value); markDirty(); }} />
                 <TextField label="ใช้ได้ถึงวันที่" type="date" value={validUntil} onChange={event => { setValidUntil(event.target.value); markDirty(); }} slotProps={{ inputLabel: { shrink: true } }} />
                 <TextField label="หมายเหตุ" multiline minRows={2} value={notes} onChange={event => { setNotes(event.target.value); markDirty(); }} />
@@ -543,7 +543,7 @@ export default function QuotationBuilder({ quotation, onSaved, onCancel }: Build
                 <Typography variant="body2" color="text.secondary">Revision {backendSummary?.revision ?? 0}</Typography>
               </Box>
               <Divider />
-              <Typography fontWeight={800}>การเงิน</Typography>
+              <Typography fontWeight={700}>การเงิน</Typography>
               <Box sx={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 0.75 }}>
                 <Typography color="text.secondary">Subtotal</Typography><Typography>{backendSummary ? quotationMoney.format(backendSummary.subtotal) : 'ยืนยันหลังบันทึก'}</Typography>
                 <Typography color="text.secondary">ส่วนลด</Typography><Typography>{backendSummary ? quotationMoney.format(backendSummary.discount) : '-'}</Typography>

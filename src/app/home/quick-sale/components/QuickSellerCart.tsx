@@ -149,7 +149,7 @@ function PriceEditor({ item, onCommit }: Readonly<{ item: QuickSaleCartItem; onC
         slotProps={{ paper: { sx: { width: 286, mt: 0.75, p: 1.75, borderRadius: 3, border: '1px solid #DCE4EF', boxShadow: '0 16px 42px rgba(15, 23, 42, 0.16)' } } }}>
         <Stack gap={1.25}>
           <Box>
-            <Typography fontSize={14} fontWeight={900} color="#172033">แก้ไขราคาต่อหน่วย</Typography>
+            <Typography fontSize={14} fontWeight={800} color="#172033">แก้ไขราคาต่อหน่วย</Typography>
             <Typography variant="caption" color="text.secondary">{item.productName}</Typography>
           </Box>
           <TextField

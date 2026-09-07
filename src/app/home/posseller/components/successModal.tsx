@@ -296,7 +296,7 @@ export default function SuccessModal({ open, payment, onClose, onPaid, onNewOrde
           ) : (
             <HourglassEmptyIcon color={isSubmitting ? 'info' : 'warning'} fontSize="large" />
           )}
-          <Typography variant="h6" fontWeight={800}>
+          <Typography variant="h6" fontWeight={700}>
             {getDialogHeading(isPaid, isSubmitting)}
           </Typography>
         </Stack>

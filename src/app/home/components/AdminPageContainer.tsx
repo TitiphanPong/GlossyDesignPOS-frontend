@@ -37,7 +37,7 @@ export default function AdminPageContainer({ title, subtitle, headerActions, chi
             <Typography
               variant="h4"
               sx={{
-                fontWeight: 800,
+                fontWeight: 700,
                 fontSize: { xs: '2rem', md: '2.35rem' },
                 lineHeight: 1.2,
                 color: '#000',

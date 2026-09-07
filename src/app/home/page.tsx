@@ -33,7 +33,7 @@ function SectionTitle({ title, helper, action }: Readonly<{ title: string; helpe
   return (
     <Stack direction={{ xs: 'column', sm: 'row' }} alignItems={{ xs: 'flex-start', sm: 'center' }} justifyContent="space-between" spacing={1} sx={{ mb: 2 }}>
       <Box>
-        <Typography variant="h6" sx={{ fontWeight: 800, color: '#0F172A' }}>
+        <Typography variant="h6" sx={{ fontWeight: 700, color: '#0F172A' }}>
           {title}
         </Typography>
         {helper ? <Typography sx={{ mt: 0.25, color: '#64748B', fontSize: 13 }}>{helper}</Typography> : null}

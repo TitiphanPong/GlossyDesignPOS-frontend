@@ -95,9 +95,9 @@ export default function StickerPVCModal({ open, onClose, onSelect, productName, 
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
-      <DialogTitle sx={{ fontWeight: 700 }}>{productName}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 600 }}>{productName}</DialogTitle>
       <DialogContent dividers>
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.stickerPVC.sizeCardsTitle}
         </Typography>
         <DialogContent>
@@ -154,7 +154,7 @@ export default function StickerPVCModal({ open, onClose, onSelect, productName, 
         </DialogContent>
 
         <Divider sx={{ my: 2 }} />
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.kindTitle}
         </Typography>
 
@@ -173,7 +173,7 @@ export default function StickerPVCModal({ open, onClose, onSelect, productName, 
 
         <Divider sx={{ my: 2 }} />
 
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.stickerPVC.quantityAndPriceTitle}
         </Typography>
 
@@ -204,13 +204,13 @@ export default function StickerPVCModal({ open, onClose, onSelect, productName, 
           </Box>
         </Stack>
         <Divider sx={{ my: 2 }} />
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.detailsTitle}
         </Typography>
         <TextField label={posSellerLocale.common.detailsField} value={productNote} onChange={e => setProductNote(e.target.value)} fullWidth sx={{ mb: 2 }} />
         <Divider sx={{ my: 2 }} />
 
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.priceSummaryTitle}
         </Typography>
         <RadioGroup row value={fullPayment ? 'full' : 'deposit'} onChange={e => setFullPayment(e.target.value === 'full')} sx={{ width: '100%' }}>
@@ -314,7 +314,7 @@ export default function StickerPVCModal({ open, onClose, onSelect, productName, 
       </DialogContent>
 
       <Box sx={{ mt: 2, textAlign: 'right' }}>
-        <Typography variant="h6" sx={{ color: 'green', fontWeight: 700, px: 3 }}>
+        <Typography variant="h6" sx={{ color: 'green', fontWeight: 600, px: 3 }}>
           {formatMoneySummary(fullPayment ? 'full' : 'deposit', fullPayment ? total : deposit)}
         </Typography>
       </Box>

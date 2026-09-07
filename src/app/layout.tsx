@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import { prompt } from './home/fonts';
+import AppThemeProvider from './AppThemeProvider';
+import { documentThai, prompt } from './home/fonts';
 
 export const metadata: Metadata = {
   title: 'Glossy Design | Premium Printing & Branding',
@@ -19,7 +20,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="th">
-      <body className={`${prompt.variable} ${prompt.className} antialiased`}>{children}</body>
+      <body className={`${prompt.variable} ${documentThai.variable} ${prompt.className} antialiased`}>
+        <AppThemeProvider>{children}</AppThemeProvider>
+      </body>
     </html>
   );
 }

@@ -11,7 +11,7 @@
     radial-gradient(circle at 82% 10%, rgba(38, 121, 240, 0.12), transparent 23%),
     linear-gradient(145deg, #ffffff 0%, #f6f9ff 48%, #eef4fb 100%);
   color: var(--ink);
-  font-family: var(--font-sans), Prompt, sans-serif;
+  font-family: var(--font-ui);
   box-shadow: 0 30px 80px rgba(4, 31, 76, 0.16);
 }
 

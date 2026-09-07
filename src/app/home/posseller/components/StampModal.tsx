@@ -57,9 +57,9 @@ export default function StampModal({ open, onClose, onSelect, productName, initi
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
-      <DialogTitle sx={{ fontWeight: 700 }}>{productName}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 600 }}>{productName}</DialogTitle>
       <DialogContent dividers>
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.typeTitle}
         </Typography>
         <Stack direction="row" spacing={2} justifyContent="center" flexWrap="wrap">
@@ -106,7 +106,7 @@ export default function StampModal({ open, onClose, onSelect, productName, initi
 
         <Divider sx={{ my: 2 }} />
 
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.kindTitle}
         </Typography>
 
@@ -150,7 +150,7 @@ export default function StampModal({ open, onClose, onSelect, productName, initi
 
         <Divider sx={{ my: 2 }} />
 
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.detailsTitle}
         </Typography>
 
@@ -158,7 +158,7 @@ export default function StampModal({ open, onClose, onSelect, productName, initi
 
         <Divider sx={{ my: 2 }} />
 
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.optionsTitle}
         </Typography>
         <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ mb: 2 }}>
@@ -169,7 +169,7 @@ export default function StampModal({ open, onClose, onSelect, productName, initi
 
         <Divider sx={{ my: 2 }} />
 
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.priceSummaryTitle}
         </Typography>
         <PosPaymentSummaryFields
@@ -184,7 +184,7 @@ export default function StampModal({ open, onClose, onSelect, productName, initi
       </DialogContent>
 
       <Box sx={{ mt: 2, textAlign: 'right' }}>
-        <Typography variant="h6" sx={{ color: 'green', fontWeight: 700, px: 3 }}>
+        <Typography variant="h6" sx={{ color: 'green', fontWeight: 600, px: 3 }}>
           {formatMoneySummary(fullPayment ? 'full' : 'deposit', fullPayment ? total : deposit)}
         </Typography>
       </Box>

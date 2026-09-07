@@ -67,7 +67,7 @@ export function DataTableSectionHeader({ title, subtitle, countLabel }: Readonly
   return (
     <Box sx={{ px: { xs: 2, md: 3 }, py: { xs: 2, md: 2.6 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, borderBottom: '1px solid #F3F4F6', bgcolor: '#FFFFFF' }}>
       <Box>
-        <Typography sx={{ fontSize: 16, fontWeight: 800, color: '#1A1035', letterSpacing: '-0.2px' }}>{title}</Typography>
+        <Typography sx={{ fontSize: 16, fontWeight: 700, color: '#1A1035', letterSpacing: '-0.2px' }}>{title}</Typography>
         {subtitle ? <Typography sx={{ mt: 0.35, fontSize: 12, color: '#9CA3AF', fontWeight: 500 }}>{subtitle}</Typography> : null}
       </Box>
       {countLabel ? <Chip label={countLabel} sx={{ borderRadius: '999px', bgcolor: '#F5F0FF', color: '#6C4DFF', fontWeight: 700 }} /> : null}

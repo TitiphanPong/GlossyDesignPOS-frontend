@@ -61,7 +61,7 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="md" slotProps={{ paper: { sx: { borderRadius: 3 } } }}>
-      <DialogTitle sx={{ fontWeight: 700 }}>{productName}</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 600 }}>{productName}</DialogTitle>
       <DialogContent dividers>
         <Stack direction="row" spacing={0} justifyContent="center" mb={3} flexWrap="wrap" sx={{ gap: 2 }}>
           {variantList.map((v) => {
@@ -190,14 +190,14 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
           })}
         </Stack>
 
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.detailsTitle}
         </Typography>
         <TextField label={posSellerLocale.common.detailsField} value={productNote} onChange={e => setProductNote(e.target.value)} fullWidth sx={{ mb: 2 }} />
 
         <Divider sx={{ my: 2 }} />
 
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.optionsTitle}
         </Typography>
 
@@ -248,7 +248,7 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
 
         <Divider sx={{ my: 2 }} />
 
-        <Typography variant="h6" fontWeight={700} gutterBottom>
+        <Typography variant="h6" fontWeight={600} gutterBottom>
           {posSellerLocale.common.paperTypeTitle}
         </Typography>
         <RadioGroup row value={material} onChange={e => setMaterial(e.target.value)} sx={{ justifyContent: 'center', gap: 3 }}>
@@ -262,7 +262,7 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
         <Divider sx={{ my: 2 }} />
 
         <Box sx={{ mt: 3 }}>
-          <Typography variant="h6" fontWeight={700} gutterBottom>
+          <Typography variant="h6" fontWeight={600} gutterBottom>
             {posSellerLocale.common.priceSummaryTitle}
           </Typography>
           <PosPaymentSummaryFields
@@ -280,7 +280,7 @@ export default function DocumentPrintModal({ open, onClose, onSelect, productNam
       </DialogContent>
 
       <Box sx={{ mt: 2, textAlign: 'right' }}>
-        <Typography variant="h6" sx={{ color: 'green', fontWeight: 700, px: 3 }}>
+        <Typography variant="h6" sx={{ color: 'green', fontWeight: 600, px: 3 }}>
           {formatMoneySummary(fullPayment ? 'full' : 'deposit', fullPayment ? total : deposit)}
         </Typography>
       </Box>

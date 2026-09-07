@@ -184,7 +184,7 @@ function StageColumn({
   return (
     <Box sx={{ minWidth: 0 }}>
       <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 1 }}>
-        <Typography fontWeight={900}>{PRODUCTION_STAGE_META[stage].label}</Typography>
+        <Typography fontWeight={800}>{PRODUCTION_STAGE_META[stage].label}</Typography>
         <Chip size="small" label={jobs.length === total ? total : `${jobs.length}/${total}`} />
       </Stack>
       <Stack spacing={1.25}>
@@ -294,7 +294,7 @@ function JobTicketDrawer({
             <Card variant="outlined" sx={{ borderRadius: 3 }}>
               <CardContent>
                 <Stack spacing={1}>
-                  <Typography fontWeight={900}>สเปกงานผลิต</Typography>
+                  <Typography fontWeight={800}>สเปกงานผลิต</Typography>
                   <Typography>{job.workSummary}</Typography>
                   <Stack direction="row" gap={1} flexWrap="wrap" useFlexGap>
                     <Chip size="small" label={job.jobType || 'ไม่ระบุประเภทงาน'} variant="outlined" />
@@ -309,7 +309,7 @@ function JobTicketDrawer({
             <Card variant="outlined" sx={{ borderRadius: 3 }}>
               <CardContent>
                 <Stack spacing={1.25}>
-                  <Typography fontWeight={900}>ผู้รับผิดชอบ</Typography>
+                  <Typography fontWeight={800}>ผู้รับผิดชอบ</Typography>
                   <TextField
                     select
                     size="small"
@@ -333,7 +333,7 @@ function JobTicketDrawer({
             <Card variant="outlined" sx={{ borderRadius: 3 }}>
               <CardContent>
                 <Stack spacing={1.25}>
-                  <Typography fontWeight={900}>ไฟล์ลูกค้า</Typography>
+                  <Typography fontWeight={800}>ไฟล์ลูกค้า</Typography>
                   {job.linkedUploadIds.length ? job.linkedUploadIds.map(uploadId => (
                     <Button
                       key={uploadId}
@@ -355,7 +355,7 @@ function JobTicketDrawer({
             <Card variant="outlined" sx={{ borderRadius: 3 }}>
               <CardContent>
                 <Stack spacing={1.25}>
-                  <Typography fontWeight={900}>โน้ตภายใน</Typography>
+                  <Typography fontWeight={800}>โน้ตภายใน</Typography>
                   <TextField multiline minRows={3} value={note} onChange={event => setNote(event.target.value)} placeholder="รายละเอียดสำหรับทีมผลิต" />
                   <Button variant="outlined" onClick={() => void saveNote()} disabled={savingNote || note === (job.internalNote ?? '')}>
                     {savingNote ? 'กำลังบันทึก...' : 'บันทึกโน้ต'}
@@ -366,7 +366,7 @@ function JobTicketDrawer({
 
             <Card variant="outlined" sx={{ borderRadius: 3 }}>
               <CardContent>
-                <Typography fontWeight={900} sx={{ mb: 1.25 }}>ประวัติขั้นตอน</Typography>
+                <Typography fontWeight={800} sx={{ mb: 1.25 }}>ประวัติขั้นตอน</Typography>
                 <Stack spacing={1} divider={<Divider flexItem />}>
                   {[...job.stageHistory].reverse().map((entry, index) => (
                     <Box key={`${entry.stage}-${entry.changedAt}-${index}`}>
@@ -381,7 +381,7 @@ function JobTicketDrawer({
             <Card variant="outlined" sx={{ borderRadius: 3 }}>
               <CardContent>
                 <Stack spacing={1}>
-                  <Typography fontWeight={900}>วัสดุ / BOM</Typography>
+                  <Typography fontWeight={800}>วัสดุ / BOM</Typography>
                   <Stack direction="row" gap={0.75} flexWrap="wrap" useFlexGap>
                     <Chip
                       size="small"

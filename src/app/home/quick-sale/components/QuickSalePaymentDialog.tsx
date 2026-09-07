@@ -182,7 +182,7 @@ export default function QuickSalePaymentDialog({
             <PaymentsOutlinedIcon />
           </Box>
           <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Typography variant="h6" fontWeight={900}>
+            <Typography variant="h6" fontWeight={800}>
               ชำระเงิน
             </Typography>
             <Typography variant="body2" color="text.secondary">
@@ -259,7 +259,7 @@ export default function QuickSalePaymentDialog({
           <Box sx={{ p: { xs: 1.5, sm: 1.75 }, border: '1px solid #E5EAF2', borderRadius: 3.5, bgcolor: '#FBFCFE' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} sx={{ mb: 1.25 }}>
               <Box>
-                <Typography fontWeight={900} color="#172033">
+                <Typography fontWeight={800} color="#172033">
                   ประเภทการบันทึก
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -309,7 +309,7 @@ export default function QuickSalePaymentDialog({
                     <HistoryRoundedIcon sx={{ fontSize: 21 }} />
                   </Box>
                   <Box sx={{ minWidth: 0, flex: 1 }}>
-                    <Typography fontWeight={900} color="#3A2A10">
+                    <Typography fontWeight={800} color="#3A2A10">
                       รายละเอียดการขายย้อนหลัง
                     </Typography>
                     <Typography variant="caption" color="text.secondary">
@@ -391,7 +391,7 @@ export default function QuickSalePaymentDialog({
           <Box sx={{ p: { xs: 1.5, sm: 1.75 }, border: '1px solid #E5EAF2', borderRadius: 3.5, bgcolor: '#FBFCFE' }}>
             <Stack direction="row" alignItems="center" justifyContent="space-between" gap={1} sx={{ mb: 1.25 }}>
               <Box>
-                <Typography fontWeight={900} color="#172033">
+                <Typography fontWeight={800} color="#172033">
                   ประเภทเอกสาร
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -407,7 +407,7 @@ export default function QuickSalePaymentDialog({
           </Box>
 
           <Box sx={{ p: { xs: 1.5, sm: 1.75 }, border: '1px solid #E5EAF2', borderRadius: 3.5, bgcolor: '#FBFCFE' }}>
-            <Typography fontWeight={900} color="#172033" sx={{ mb: 1.25 }}>
+            <Typography fontWeight={800} color="#172033" sx={{ mb: 1.25 }}>
               วิธีชำระเงิน
             </Typography>
             <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))' }, gap: 1.25 }}>
@@ -425,7 +425,7 @@ export default function QuickSalePaymentDialog({
           {paymentMethod === 'cash' ? (
             <Stack gap={1.5} sx={{ p: { xs: 1.5, sm: 1.75 }, borderRadius: 3.5, border: '1px solid', borderColor: 'divider', bgcolor: '#FAFBFC' }}>
               <Box>
-                <Typography fontWeight={800} sx={{ mb: 1 }}>
+                <Typography fontWeight={700} sx={{ mb: 1 }}>
                   จำนวนเงินที่รับ
                 </Typography>
                 <TextField
@@ -509,7 +509,7 @@ export default function QuickSalePaymentDialog({
                   bgcolor: theme => alpha(theme.palette.primary.main, 0.055),
                   textAlign: 'center',
                 }}>
-                <Typography fontWeight={900}>สแกนเพื่อชำระเงิน</Typography>
+                <Typography fontWeight={800}>สแกนเพื่อชำระเงิน</Typography>
                 <Typography variant="body2" color="text.secondary" sx={{ mb: 1.75 }}>
                   ให้ลูกค้าสแกน QR Code เพื่อชำระเงิน
                 </Typography>

@@ -154,7 +154,7 @@ function CompactActionRow({ row, busy, onOpen, onAcknowledge, onSnooze, onUnackn
 
         <Box sx={{ minWidth: 0, flex: 1 }}>
           <Stack direction="row" alignItems="center" gap={0.6} flexWrap="wrap">
-            <Typography sx={{ color: '#0F172A', fontSize: 13.75, fontWeight: 900, lineHeight: 1.3 }}>{title}</Typography>
+            <Typography sx={{ color: '#0F172A', fontSize: 13.75, fontWeight: 800, lineHeight: 1.3 }}>{title}</Typography>
             {row.kind === 'upload_group' ? (
               <Chip label="งาน / ไฟล์" size="small" sx={{ height: 19, fontSize: 10, fontWeight: 800, bgcolor: '#F1F5F9', color: '#475569' }} />
             ) : (
@@ -269,7 +269,7 @@ export function NotificationDrawer({
           <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1.2}>
             <Box sx={{ minWidth: 0 }}>
               <Stack direction="row" alignItems="center" gap={0.7}>
-                <Typography fontSize={19} fontWeight={900} color="#0F172A">ศูนย์งาน</Typography>
+                <Typography fontSize={19} fontWeight={800} color="#0F172A">ศูนย์งาน</Typography>
                 <Chip label={summary.attention} size="small" sx={{ height: 22, bgcolor: summary.attention ? '#DBEAFE' : '#ECFDF5', color: summary.attention ? '#1D4ED8' : '#047857', fontWeight: 900 }} />
               </Stack>
               <Typography sx={{ mt: 0.25, color: '#64748B', fontSize: 11.5 }}>
@@ -301,7 +301,7 @@ export function NotificationDrawer({
         ) : visible.length === 0 ? (
           <Stack flex={1} alignItems="center" justifyContent="center" textAlign="center" gap={0.8} sx={{ px: 4 }}>
             <Box sx={{ width: 52, height: 52, borderRadius: 2.75, display: 'grid', placeItems: 'center', bgcolor: '#ECFDF5', color: '#059669' }}><CheckCircleRoundedIcon sx={{ fontSize: 30 }} /></Box>
-            <Typography fontSize={15.5} fontWeight={900} color="#0F172A">ไม่มีงานในกลุ่มนี้</Typography>
+            <Typography fontSize={15.5} fontWeight={800} color="#0F172A">ไม่มีงานในกลุ่มนี้</Typography>
             <Typography fontSize={12} color="#64748B">รายการที่รับทราบหรือซ่อนยังไม่ถูกลบ งานจริงจะหายเมื่อสถานะต้นทางได้รับการจัดการ</Typography>
           </Stack>
         ) : (

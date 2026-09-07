@@ -697,7 +697,7 @@ function TaxInvoiceConfirmDialog({
 }>) {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth>
-      <DialogTitle sx={{ fontWeight: 800 }}>ยืนยันออกใบกำกับภาษี</DialogTitle>
+      <DialogTitle sx={{ fontWeight: 700 }}>ยืนยันออกใบกำกับภาษี</DialogTitle>
       <DialogContent>
         <Stack spacing={1.5}>
           <Typography color="text.secondary">ระบบจะสร้างเลขที่ใบกำกับภาษีและบวก VAT 7% เพิ่มจากยอดเดิม ยอดรวมและยอดคงเหลือจะเพิ่มขึ้นตามภาษี</Typography>
@@ -1058,7 +1058,7 @@ export function OrderDetailDrawer({
       </GlossyDetailDrawer>
       {/*
       <Dialog open={taxInvoiceConfirmOpen} onClose={() => setTaxInvoiceConfirmOpen(false)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800 }}>ยืนยันออกใบกำกับภาษี</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 700 }}>ยืนยันออกใบกำกับภาษี</DialogTitle>
         <DialogContent>
           <Stack spacing={1.5}>
             <Typography color="text.secondary">ระบบจะสร้างเลขที่ใบกำกับภาษีและบวก VAT 7% เพิ่มจากยอดเดิม ยอดรวมและยอดคงเหลือจะเพิ่มขึ้นตามภาษี</Typography>

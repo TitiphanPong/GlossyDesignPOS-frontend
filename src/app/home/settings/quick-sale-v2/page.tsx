@@ -191,7 +191,7 @@ export default function QuickSaleV2SettingsPage() {
             <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" gap={1.5} alignItems={{ md: 'center' }}>
               <Box>
                 <Stack direction="row" gap={1} alignItems="center" flexWrap="wrap">
-                  <Typography fontWeight={900}>V2 Layout Draft</Typography>
+                  <Typography fontWeight={800}>V2 Layout Draft</Typography>
                   <Chip size="small" label={`Published v${version}`} variant="outlined" />
                   <Chip size="small" color={familyEnabled ? 'success' : 'default'} label={familyEnabled ? 'งานเอกสารพร้อมแสดง' : 'งานเอกสารยังไม่มี mapping'} />
                 </Stack>
@@ -225,7 +225,7 @@ export default function QuickSaleV2SettingsPage() {
 
         {!loading && tab === 0 ? (
           <Stack spacing={1.5}>
-            <Typography fontWeight={900}>จัดหน้าขาย</Typography>
+            <Typography fontWeight={800}>จัดหน้าขาย</Typography>
             <Typography variant="body2" color="text.secondary">
               Pilot นี้มี Service Family เดียว จึงล็อกลำดับไว้ที่ 1 ก่อน เมื่อเพิ่มหลาย Family ค่อยเปิด drag/drop โดยไม่เปลี่ยน contract ของ V1
             </Typography>
@@ -235,7 +235,7 @@ export default function QuickSaleV2SettingsPage() {
                   <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: 'action.hover', display: 'grid', placeItems: 'center', fontWeight: 900 }}>1</Box>
                   <Box>
                     <Stack direction="row" gap={0.75} alignItems="center" flexWrap="wrap">
-                      <Typography fontWeight={900}>งานเอกสาร</Typography>
+                      <Typography fontWeight={800}>งานเอกสาร</Typography>
                       <Chip size="small" label="Pilot" color="primary" variant="outlined" />
                     </Stack>
                     <Typography variant="body2" color="text.secondary">Print / Copy / Scan · A4 / A3 · ขาวดำ / สี</Typography>
@@ -250,7 +250,7 @@ export default function QuickSaleV2SettingsPage() {
             <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
               <Stack spacing={1.5}>
                 <Box>
-                  <Typography fontWeight={900}>ค่าเริ่มต้นเมื่อเปิดงานเอกสาร</Typography>
+                  <Typography fontWeight={800}>ค่าเริ่มต้นเมื่อเปิดงานเอกสาร</Typography>
                   <Typography variant="body2" color="text.secondary">Published defaults จะถูกใช้จริงเมื่อเปิด configurator ในหน้าขาย V2 ส่วน Preview ด้านล่างใช้ค่า Draft นี้ทันที</Typography>
                 </Box>
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', lg: 'repeat(4, 1fr)' }, gap: 1 }}>
@@ -291,7 +291,7 @@ export default function QuickSaleV2SettingsPage() {
         {!loading && tab === 1 ? (
           <Stack spacing={1.5}>
             <Box>
-              <Typography fontWeight={900}>ราคาและตัวเลือก · งานเอกสาร</Typography>
+              <Typography fontWeight={800}>ราคาและตัวเลือก · งานเอกสาร</Typography>
               <Typography variant="body2" color="text.secondary">
                 จัด mapping เป็น matrix ตามประเภทงาน แทนรายการ SKU ยาว ๆ ราคาแสดงจาก Quick Product ที่เลือกและไม่ถูกคัดลอกมาเก็บใน V2
               </Typography>
@@ -299,7 +299,7 @@ export default function QuickSaleV2SettingsPage() {
             {WORK_TYPES.map(workType => (
               <Paper key={workType.value} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
                 <Box sx={{ px: 2, py: 1.5, bgcolor: 'action.hover' }}>
-                  <Typography fontWeight={900}>{workType.label}</Typography>
+                  <Typography fontWeight={800}>{workType.label}</Typography>
                 </Box>
                 <Divider />
                 <Stack divider={<Divider flexItem />}>
@@ -333,7 +333,7 @@ export default function QuickSaleV2SettingsPage() {
         {!loading && tab === 2 ? (
           <Stack spacing={1.5}>
             <Box>
-              <Typography fontWeight={900}>Preview จาก Draft</Typography>
+              <Typography fontWeight={800}>Preview จาก Draft</Typography>
               <Typography variant="body2" color="text.secondary">
                 ทดลองเปลี่ยน Print / Copy / Scan, ขนาด, สี และจำนวนได้จาก Draft ปัจจุบัน โดย Preview นี้จะไม่เพิ่มสินค้าเข้าตะกร้าหรือแก้ Published config
               </Typography>

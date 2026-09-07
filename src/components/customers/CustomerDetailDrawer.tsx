@@ -80,7 +80,7 @@ function buildAddress(customer: CustomerDetail['customer']): string | null {
 function Section({ title, children }: Readonly<{ title: string; children: React.ReactNode }>) {
   return (
     <Box>
-      <Typography sx={{ mb: 1.2, fontSize: 13, fontWeight: 900, color: '#334155', letterSpacing: '0.02em' }}>{title}</Typography>
+      <Typography sx={{ mb: 1.2, fontSize: 13, fontWeight: 800, color: '#334155', letterSpacing: '0.02em' }}>{title}</Typography>
       {children}
     </Box>
   );
