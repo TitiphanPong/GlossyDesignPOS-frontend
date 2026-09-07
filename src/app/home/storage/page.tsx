@@ -2,6 +2,7 @@
 
 import * as React from 'react';
 import { createExcelCompatibleCsv, downloadCsvFile } from '@/lib/csv';
+import { buildDateRangeScope, buildExportFilename } from '@/lib/export-filename';
 import {
   alpha,
   Avatar,
@@ -500,8 +501,15 @@ export default function StoragePage() {
 
   const exportFiltered = React.useCallback(() => {
     const csv = toCsv(filteredRows);
-    downloadCsvFile(csv, `storage-export-${new Date().toISOString().slice(0, 10)}.csv`);
-  }, [filteredRows]);
+    const scope = buildDateRangeScope(
+      dateRange.startDate?.format('YYYY-MM-DD'),
+      dateRange.endDate?.format('YYYY-MM-DD')
+    );
+    downloadCsvFile(
+      csv,
+      buildExportFilename({ artifact: 'storage', scope, extension: 'csv' })
+    );
+  }, [dateRange.endDate, dateRange.startDate, filteredRows]);
 
   const handleDeleteConfirmed = React.useCallback(async () => {
     if (!deleteTarget) return;

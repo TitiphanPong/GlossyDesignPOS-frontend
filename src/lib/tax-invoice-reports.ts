@@ -1,3 +1,5 @@
+import { buildExportFilename, normalizeMonthScope } from './export-filename';
+
 export type TaxInvoiceReviewReason = {
   code: string;
   label: string;
@@ -227,7 +229,12 @@ export async function downloadTaxInvoiceMonthlyExport(
     );
   }
   const blob = await response.blob();
-  const fallback = `tax-invoices-${period}.${kind === 'excel' ? 'xlsx' : 'pdf'}`;
+  const fallback = buildExportFilename({
+    artifact: 'tax-invoices',
+    variant: kind === 'summary-pdf' ? 'summary' : undefined,
+    scope: normalizeMonthScope(period),
+    extension: kind === 'excel' ? 'xlsx' : 'pdf',
+  });
   const filename = filenameFromDisposition(response.headers.get('content-disposition'), fallback);
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
