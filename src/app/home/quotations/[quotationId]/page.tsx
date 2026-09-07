@@ -196,8 +196,7 @@ export default function QuotationDetailPage() {
           <AdminHeroHeader
             title={`แก้ไข ${quotationDisplayNumber(quotation.quotationNumber)}`}
             description={`Revision ${quotation.revision} · Draft แก้ไขได้จนกว่าจะส่ง`}
-            lastSynced={formatQuotationDateTime(quotation.updatedAt)}
-            thaiDate="ยอดเงินจะถูก Backend resolve ใหม่ทุกครั้งที่บันทึก"
+            lastSyncedAt={quotation.updatedAt}
             mb={0}
             actions={<Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} onClick={() => router.replace(`/home/quotations/${encodeURIComponent(quotation._id)}`)} sx={heroOutlineButtonSx}>กลับรายละเอียด</Button>}
           />
@@ -255,9 +254,8 @@ export default function QuotationDetailPage() {
       <Stack spacing={2.25}>
         <AdminHeroHeader
           title={quotationDisplayNumber(quotation.quotationNumber)}
-          description={`Revision ${quotation.revision}`}
-          lastSynced={formatQuotationDateTime(quotation.updatedAt)}
-          thaiDate={`ออก ${formatQuotationDate(quotation.issuedAt)} · ใช้ได้ถึง ${formatQuotationDate(quotation.validUntil)}`}
+          description={`Revision ${quotation.revision} · ออก ${formatQuotationDate(quotation.issuedAt)} · ใช้ได้ถึง ${formatQuotationDate(quotation.validUntil)}`}
+          lastSyncedAt={quotation.updatedAt}
           mb={0}
           notice={error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : undefined}
           actions={

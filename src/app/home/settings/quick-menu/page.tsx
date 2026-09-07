@@ -6,7 +6,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import AdminPageContainer from '../../components/AdminPageContainer';
-import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx, heroPrimaryButtonSx } from '../../components/AdminHeroHeader';
+import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../../components/AdminHeroHeader';
 import type { Product } from '@/lib/contracts';
 import {
   createQuickProduct,
@@ -268,8 +268,7 @@ export default function QuickMenuSettingsPage() {
         <AdminHeroHeader
           title="จัดการเมนู Quick Seller"
           description="ตั้งค่าสินค้า ราคา สถานะ และลำดับการแสดงผลสำหรับหน้าขายด่วนจากจุดเดียว"
-          lastSynced={formatAdminLastSynced(lastSyncedAt)}
-          thaiDate={formatAdminThaiDate(lastSyncedAt)}
+          lastSyncedAt={lastSyncedAt}
           mb={0}
           actions={
             <>

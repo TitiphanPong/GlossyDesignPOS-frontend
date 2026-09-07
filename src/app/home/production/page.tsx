@@ -41,7 +41,7 @@ import {
 } from '@mui/material';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate } from '../components/AdminHeroHeader';
+import AdminHeroHeader from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
 import DataTable, { type DataTableColumn } from '../components/DataTable';
 import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
@@ -819,8 +819,7 @@ export default function ProductionPage() {
         <AdminHeroHeader
           title="Production Board"
           description="คุมคิวงานผลิตจากไฟล์เข้า → ผลิต → QC → พร้อมส่งมอบ โดยแยกจากสถานะการชำระเงิน"
-          lastSynced={formatAdminLastSynced(lastSyncedAt)}
-          thaiDate={formatAdminThaiDate(lastSyncedAt)}
+          lastSyncedAt={lastSyncedAt}
           actions={(
             <Stack direction="row" spacing={1}>
               <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)}>สร้าง Production Job</Button>

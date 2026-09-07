@@ -42,7 +42,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import AdminPageContainer from '../components/AdminPageContainer';
-import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
+import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
 import { fetchApiJson } from '@/lib/api';
 import { normalizeStaffUsers, type StaffRole as Role, type StaffUser } from './staffUsers';
 
@@ -217,8 +217,7 @@ export default function StaffManagementPage() {
         <AdminHeroHeader
           title="Management Accounts"
           description="จัดการบัญชี สิทธิ์การใช้งาน และตรวจสอบกิจกรรมสำคัญในระบบ"
-          lastSynced={formatAdminLastSynced(lastSyncedAt)}
-          thaiDate={formatAdminThaiDate(lastSyncedAt)}
+          lastSyncedAt={lastSyncedAt}
           actions={
             <>
               <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroOutlineButtonSx}>

@@ -31,9 +31,6 @@ import CustomerDisplayPairingButton from '@/components/customer-display/Customer
 
 type CustomerInfo = { customerId?: string; customerName: string; phoneNumber: string; taxId: string; address: string; note: string };
 
-const DAYS_TH = ['อาทิตย์', 'จันทร์', 'อังคาร', 'พุธ', 'พฤหัสบดี', 'ศุกร์', 'เสาร์'];
-const MONTHS_TH = ['มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน', 'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม'];
-
 const toActiveProduct = (product: Product): ActiveProduct => ({
   id: product.id,
   name: product.name,
@@ -93,21 +90,6 @@ function createDraftId(): string {
   const bytes = new Uint8Array(8);
   globalThis.crypto?.getRandomValues(bytes);
   return `draft-${Date.now()}-${Array.from(bytes, byte => byte.toString(16).padStart(2, '0')).join('')}`;
-}
-
-function formatLastSynced(date: Date | null) {
-  if (!date) return '-';
-  const day = date.getDate().toString().padStart(2, '0');
-  const month = (date.getMonth() + 1).toString().padStart(2, '0');
-  const year = date.getFullYear() + 543;
-  const hours = date.getHours().toString().padStart(2, '0');
-  const minutes = date.getMinutes().toString().padStart(2, '0');
-  return `${day}/${month}/${year} ${hours}:${minutes}`;
-}
-
-function formatThaiFullDate(date: Date | null) {
-  if (!date) return 'กำลังโหลดวันที่';
-  return `วัน${DAYS_TH[date.getDay()]}ที่ ${date.getDate()} ${MONTHS_TH[date.getMonth()]} พ.ศ. ${date.getFullYear() + 543}`;
 }
 
 type PosStatCardProps = {
@@ -284,8 +266,7 @@ export default function SellPage() {
       <AdminHeroHeader
         title="Cashier"
         description="หน้าขายหน้าร้านสำหรับแคชเชียร์ ใช้งานเร็ว และจัดการคำสั่งซื้ออย่างเป็นระบบ"
-        lastSynced={formatLastSynced(lastSyncedAt)}
-        thaiDate={formatThaiFullDate(lastSyncedAt)}
+        lastSyncedAt={lastSyncedAt}
         actions={
           <>
             <Button onClick={() => void loadProducts(true)} startIcon={<RefreshRoundedIcon />} variant="outlined" disabled={loading} sx={heroOutlineButtonSx}>

@@ -51,7 +51,7 @@ import type { CustomerProfile } from '@/lib/customers';
 import { buildOrderCustomerSnapshot } from '@/lib/customer-order';
 import { buildPendingOrderDraft, PENDING_ORDER_KEY, persistPendingOrderDraft, type StoredPendingOrderDraft } from '@/lib/pending-order';
 import AdminPageContainer from '../components/AdminPageContainer';
-import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx } from '../components/AdminHeroHeader';
+import AdminHeroHeader, { heroOutlineButtonSx } from '../components/AdminHeroHeader';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import QuickSellerCart, { type QuickSaleCartItem } from './components/QuickSellerCart';
 import QuickSalePaymentDialog from './components/QuickSalePaymentDialog';
@@ -551,8 +551,7 @@ export default function QuickSalePage() {
         <AdminHeroHeader
           title={v2 ? 'Quick Sale V2 · ทดลอง' : 'Quick Sale'}
           description={v2 ? 'เลือกกลุ่มงานและรายละเอียดก่อนเพิ่มลงตะกร้า โดยใช้การชำระเงินและ Order contract เดิมทั้งหมด' : 'ขายสินค้าหน้าร้านอย่างรวดเร็ว เลือกรายการ รับชำระ และออกเอกสารในขั้นตอนเดียว'}
-          lastSynced={formatAdminLastSynced(lastSyncedAt)}
-          thaiDate={formatAdminThaiDate(lastSyncedAt)}
+          lastSyncedAt={lastSyncedAt}
           actions={
             <>
               <CustomerDisplayPairingButton />

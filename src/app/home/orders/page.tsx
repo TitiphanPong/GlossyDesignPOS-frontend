@@ -66,7 +66,6 @@ import {
   formatMonthFilterLabel,
   formatOrderRowTime,
   formatTableCurrency,
-  formatThaiFullDate,
   getCustomerInitial,
   getLoadOrdersErrorMessage,
   getPrintDocumentPath,
@@ -650,8 +649,7 @@ export default function OrderManagementPage() {
           <AdminHeroHeader
             title="Orders"
             description="ติดตามรายการงานลูกค้า สถานะการชำระเงิน งานพิมพ์ และเอกสารการขายได้ในหน้าจอเดียว"
-            lastSynced={lastUpdated ? lastUpdated.format('DD/MM/YYYY HH:mm') : '-'}
-            thaiDate={formatThaiFullDate(lastUpdated)}
+            lastSyncedAt={lastUpdated?.toDate()}
             notice={
               missingApiBase || loadError ? (
                 <Stack spacing={1}>

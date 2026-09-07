@@ -22,7 +22,7 @@ import {
   Typography,
 } from '@mui/material';
 import AdminPageContainer from '../components/AdminPageContainer';
-import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
+import AdminHeroHeader, { heroPrimaryButtonSx } from '../components/AdminHeroHeader';
 import DataTable, { type DataTableColumn } from '../components/DataTable';
 import { fetchCustomerDetail, fetchCustomersPage, getCustomerPhoneNumbers, type CustomerDetail, type CustomerProfile } from '@/lib/customers';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
@@ -238,8 +238,7 @@ export default function CustomersPage() {
       <AdminHeroHeader
         title="ฐานลูกค้า"
         description="จัดการข้อมูลลูกค้า ประวัติการสั่งซื้อ ยอดค้าง และข้อมูลสำหรับออกเอกสาร"
-        lastSynced={formatAdminLastSynced(lastSyncedAt)}
-        thaiDate={formatAdminThaiDate(lastSyncedAt)}
+        lastSyncedAt={lastSyncedAt}
         actions={
           <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} sx={heroPrimaryButtonSx}>
             เพิ่มลูกค้า

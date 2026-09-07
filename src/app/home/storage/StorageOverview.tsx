@@ -6,7 +6,7 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import PendingActionsRoundedIcon from '@mui/icons-material/PendingActionsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
-import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate, heroOutlineButtonSx } from '../components/AdminHeroHeader';
+import AdminHeroHeader, { heroOutlineButtonSx } from '../components/AdminHeroHeader';
 import { MissingApiConfigState } from '../components/dashboardUi';
 
 export type StorageStats = {
@@ -59,8 +59,7 @@ export default function StorageOverview(props: Readonly<StorageOverviewProps>) {
       <AdminHeroHeader
         title="Storage"
         description="จัดการไฟล์ลูกค้าและสถานะงานพิมพ์ในระบบคลังเอกสาร"
-        lastSynced={formatAdminLastSynced(lastSyncedAt)}
-        thaiDate={formatAdminThaiDate(lastSyncedAt)}
+        lastSyncedAt={lastSyncedAt}
         notice={
           missingApiBase || errorMessage || actionMessage ? (
             <Stack spacing={1}>
