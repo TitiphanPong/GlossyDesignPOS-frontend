@@ -14,9 +14,8 @@ export default function NewQuotationPage() {
       <Stack spacing={2}>
         <AdminHeroHeader
           title="สร้างใบเสนอราคา"
-          description="สร้างเอกสารได้โดยไม่ต้องมี Order ก่อน ระบบหลังบ้านจะยืนยันราคา ส่วนลด VAT และยอดรวมทุกครั้งที่บันทึก"
-          lastSynced="-"
-          thaiDate="Draft ยังไม่มีเลขใบเสนอราคาจริง จนกว่าจะส่งครั้งแรก"
+          description="สร้างเอกสารได้โดยไม่ต้องมี Order ก่อน ระบบหลังบ้านจะยืนยันราคา ส่วนลด VAT และยอดรวมทุกครั้งที่บันทึก ร่างจะได้รับเลขใบเสนอราคาเมื่อส่งครั้งแรก"
+          lastSyncedAt={null}
           mb={0}
           actions={
             <Button component={Link} href="/home/quotations" variant="outlined" startIcon={<ArrowBackRoundedIcon />} sx={heroOutlineButtonSx}>

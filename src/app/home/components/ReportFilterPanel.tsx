@@ -277,6 +277,7 @@ export default function ReportFilterPanel({
               onChange={event => onSearchChange(event.target.value)}
               placeholder={searchPlaceholder}
               slotProps={{
+                htmlInput: { 'aria-label': searchPlaceholder },
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
@@ -320,7 +321,7 @@ export default function ReportFilterPanel({
                 }}>
                 {filters.map(filter => (
                   <FormControl key={filter.id} size="small" sx={{ minWidth: { xs: '100%', sm: filter.minWidth ?? 190 } }}>
-                    <Typography sx={{ mb: 0.4, color: '#475569', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>{filter.label}</Typography>
+                    <Typography id={`${filter.id}-label`} sx={{ mb: 0.4, color: '#475569', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>{filter.label}</Typography>
                     <Select<string>
                       labelId={`${filter.id}-label`}
                       value={filter.value}

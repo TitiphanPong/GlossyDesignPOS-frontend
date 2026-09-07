@@ -24,7 +24,7 @@ import {
   Typography,
 } from '@mui/material';
 import AdminPageContainer from '../components/AdminPageContainer';
-import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate } from '../components/AdminHeroHeader';
+import AdminHeroHeader from '../components/AdminHeroHeader';
 import DataTable, { DataTableSectionHeader, type DataTableColumn } from '../components/DataTable';
 import { fetchCurrentAdminRole, type AdminRole } from '@/lib/admin-capabilities';
 import { fetchApiJson } from '@/lib/api';
@@ -250,8 +250,7 @@ export default function StockPage() {
         <AdminHeroHeader
           title="Stock Management"
           description="จัดการวัสดุคงคลัง รับเข้า เบิกใช้ และปรับยอดโดยมีหลักฐานทุกครั้ง"
-          lastSynced={formatAdminLastSynced(lastSyncedAt)}
-          thaiDate={formatAdminThaiDate(lastSyncedAt)}
+          lastSyncedAt={lastSyncedAt}
           actions={privileged ? <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)}>เพิ่มวัสดุ</Button> : undefined}
         />
 

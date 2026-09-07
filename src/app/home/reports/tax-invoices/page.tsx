@@ -8,13 +8,7 @@ import {
   Card,
   CardContent,
   Chip,
-  FormControl,
-  InputAdornment,
-  InputLabel,
-  MenuItem,
-  Select,
   Stack,
-  TextField,
   Tooltip,
   Typography,
 } from '@mui/material';
@@ -23,12 +17,12 @@ import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
-import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import AdminPageContainer from '../../components/AdminPageContainer';
 import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../../components/AdminHeroHeader';
 import DataTable, { type DataTableColumn } from '../../components/DataTable';
+import ReportFilterPanel from '../../components/ReportFilterPanel';
 import { uiCardSx } from '../../components/adminUi';
 import {
   CrossPeriodCancellation,
@@ -41,7 +35,6 @@ import {
   fetchTaxInvoiceMonthlyReport,
   filterTaxInvoiceDocuments,
   formatTaxReportDate,
-  formatTaxReportDateTime,
   formatTaxReportMoney,
   getPreviousBangkokPeriod,
 } from '@/lib/tax-invoice-reports';
@@ -106,7 +99,12 @@ function reportColumns(onOpen: (row: TaxInvoiceReportItem) => void): DataTableCo
       width: 190,
       render: row => <Typography sx={{ fontSize: 13, fontWeight: 700, whiteSpace: 'nowrap' }}>{row.invoiceNumber || '-'}</Typography>,
     },
-    { key: 'order', header: 'เลขที่งาน', width: 150, render: row => row.orderNumber || '-' },
+    {
+      key: 'order',
+      header: 'เลขที่งาน',
+      width: 190,
+      render: row => <Typography sx={{ fontSize: 13, minWidth: 150, whiteSpace: 'nowrap' }}>{row.orderNumber || '-'}</Typography>,
+    },
     {
       key: 'customer',
       header: 'ลูกค้า / บริษัท',
@@ -114,7 +112,6 @@ function reportColumns(onOpen: (row: TaxInvoiceReportItem) => void): DataTableCo
       render: row => <Typography sx={{ fontSize: 13, minWidth: 160 }}>{row.customerName || '-'}</Typography>,
     },
     { key: 'taxId', header: 'เลขผู้เสียภาษี', width: 150, render: row => row.taxId || '-' },
-    { key: 'branch', header: 'สาขา', width: 100, render: row => row.branch || '-' },
     {
       key: 'base',
       header: 'ก่อน VAT หลังส่วนลด',
@@ -162,7 +159,12 @@ const crossPeriodColumns: DataTableColumn<CrossPeriodCancellation>[] = [
   { key: 'period', header: 'งวดเดิม', width: 100, render: row => row.invoicePeriod },
   { key: 'book', header: 'เล่มที่', width: 80, render: row => row.bookNo || '-' },
   { key: 'invoice', header: 'เลขที่ใบกำกับ', width: 190, render: row => row.invoiceNumber || '-' },
-  { key: 'order', header: 'เลขที่งาน', width: 150, render: row => row.orderNumber },
+  {
+    key: 'order',
+    header: 'เลขที่งาน',
+    width: 190,
+    render: row => <Typography sx={{ fontSize: 13, minWidth: 150, whiteSpace: 'nowrap' }}>{row.orderNumber}</Typography>,
+  },
   { key: 'customer', header: 'ลูกค้า / บริษัท', width: 220, render: row => row.customerName },
   { key: 'vat', header: 'VAT เดิม', width: 110, align: 'right', render: row => formatTaxReportMoney(row.vatAmount) },
   { key: 'total', header: 'ยอดรวมเดิม', width: 130, align: 'right', render: row => formatTaxReportMoney(row.grandTotal) },
@@ -261,10 +263,9 @@ export default function TaxInvoiceMonthlyReportPage() {
       <AdminHeroHeader
         title="ใบกำกับภาษีรายเดือน"
         description="ตรวจความครบถ้วนของใบกำกับภาษีและรวบรวมเอกสารทั้งเดือนเพื่อส่งสำนักงานบัญชี"
-        lastSynced={report ? formatTaxReportDateTime(report.generatedAt) : '-'}
-        thaiDate={report ? `งวดรายงาน ${report.periodLabel} · อ้างอิงเวลา Asia/Bangkok` : `งวด ${period}`}
+        lastSyncedAt={report?.generatedAt}
         actions={
-          <>
+          <Stack direction={{ xs: 'column', sm: 'row', md: 'column', xl: 'row' }} spacing={1.1} useFlexGap sx={{ flexWrap: 'wrap', width: { xs: '100%', md: 280, xl: 'auto' } }}>
             <Button
               variant="outlined"
               startIcon={<DescriptionRoundedIcon />}
@@ -289,51 +290,46 @@ export default function TaxInvoiceMonthlyReportPage() {
               onClick={() => void handleDownload('invoices-pdf')}>
               {downloading === 'invoices-pdf' ? 'กำลังสร้าง…' : 'ดาวน์โหลดใบกำกับทั้งเดือน'}
             </Button>
-          </>
+          </Stack>
         }
       />
 
       <Stack spacing={2.2}>
-        <Card sx={{ ...uiCardSx, boxShadow: 'none' }}>
-          <CardContent sx={{ p: { xs: 2, md: 2.4 }, '&:last-child': { pb: { xs: 2, md: 2.4 } } }}>
-            <Stack direction={{ xs: 'column', lg: 'row' }} spacing={1.5} alignItems={{ xs: 'stretch', lg: 'center' }}>
-              <FormControl size="small" sx={{ minWidth: 170 }}>
-                <InputLabel id="tax-report-month-label">เดือน</InputLabel>
-                <Select
-                  labelId="tax-report-month-label"
-                  label="เดือน"
-                  value={selectedMonth}
-                  onChange={event => setPeriod(createTaxInvoicePeriod(selectedYear, Number(event.target.value)))}>
-                  {MONTHS.map((month, index) => <MenuItem key={month} value={index + 1}>{month}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <FormControl size="small" sx={{ minWidth: 145 }}>
-                <InputLabel id="tax-report-year-label">ปี พ.ศ.</InputLabel>
-                <Select
-                  labelId="tax-report-year-label"
-                  label="ปี พ.ศ."
-                  value={selectedYear}
-                  onChange={event => setPeriod(createTaxInvoicePeriod(Number(event.target.value), selectedMonth))}>
-                  {yearOptions.map(year => <MenuItem key={year} value={year}>{year + 543}</MenuItem>)}
-                </Select>
-              </FormControl>
-              <TextField
-                size="small"
-                value={query}
-                onChange={event => setQuery(event.target.value)}
-                placeholder="ค้นหาเลขใบกำกับ เลขที่งาน ลูกค้า หรือเลขผู้เสียภาษี"
-                sx={{ flex: 1, minWidth: { md: 360 } }}
-                InputProps={{ startAdornment: <InputAdornment position="start"><SearchRoundedIcon fontSize="small" /></InputAdornment> }}
-              />
-              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => setReloadKey(value => value + 1)} disabled={loading}>
-                โหลดใหม่
-              </Button>
-            </Stack>
-            <Alert severity="info" sx={{ mt: 1.8 }}>
-              ปุ่มดาวน์โหลดทุกปุ่มส่งออก <strong>ทั้งเดือนที่เลือก</strong> เสมอ ไม่จำกัดตามหน้าตาราง คำค้น หรือจำนวนแถวที่กำลังแสดง
-            </Alert>
-          </CardContent>
-        </Card>
+        <ReportFilterPanel
+          subtitle={report ? `งวดรายงาน ${report.periodLabel} · ค้นหาใบกำกับภาษีในเดือนที่เลือก` : 'เลือกงวดรายงานและค้นหาใบกำกับภาษีในเดือนที่เลือก'}
+          searchValue={query}
+          onSearchChange={setQuery}
+          searchPlaceholder="ค้นหาเลขใบกำกับ เลขที่งาน ลูกค้า หรือเลขผู้เสียภาษี"
+          onReset={() => setQuery('')}
+          resetDisabled={!query}
+          resetLabel="ล้างคำค้น"
+          filters={[
+            {
+              id: 'tax-report-month',
+              label: 'เดือน',
+              value: String(selectedMonth),
+              options: MONTHS.map((month, index) => ({ value: String(index + 1), label: month })),
+              onChange: value => setPeriod(createTaxInvoicePeriod(selectedYear, Number(value))),
+              minWidth: 170,
+            },
+            {
+              id: 'tax-report-year',
+              label: 'ปี พ.ศ.',
+              value: String(selectedYear),
+              options: yearOptions.map(year => ({ value: String(year), label: String(year + 543) })),
+              onChange: value => setPeriod(createTaxInvoicePeriod(Number(value), selectedMonth)),
+              minWidth: 145,
+            },
+          ]}
+          extraFilters={
+            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => setReloadKey(value => value + 1)} disabled={loading} sx={{ alignSelf: 'flex-end', minHeight: 48, width: { xs: '100%', sm: 'auto' } }}>
+              โหลดใหม่
+            </Button>
+          }>
+          <Alert severity="info">
+            ปุ่มดาวน์โหลดทุกปุ่มส่งออก <strong>ทั้งเดือนที่เลือก</strong> เสมอ ไม่จำกัดตามหน้าตาราง คำค้น หรือจำนวนแถวที่กำลังแสดง
+          </Alert>
+        </ReportFilterPanel>
 
         {loadError ? (
           <Alert severity="error" action={<Button color="inherit" size="small" onClick={() => setReloadKey(value => value + 1)}>ลองใหม่</Button>}>
@@ -364,7 +360,7 @@ export default function TaxInvoiceMonthlyReportPage() {
             rows={pagedDocuments}
             getRowKey={row => row.id}
             onRowClick={openInvoice}
-            minWidth={1450}
+            minWidth={1390}
             maxHeight="64vh"
             loading={loading}
             skeletonRowCount={8}

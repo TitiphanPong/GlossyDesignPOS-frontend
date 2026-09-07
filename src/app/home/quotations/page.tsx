@@ -27,8 +27,6 @@ import {
 } from '@mui/material';
 import Link from 'next/link';
 import AdminHeroHeader, {
-  formatAdminLastSynced,
-  formatAdminThaiDate,
   heroOutlineButtonSx,
   heroPrimaryButtonSx,
 } from '../components/AdminHeroHeader';
@@ -257,8 +255,7 @@ export default function QuotationsPage() {
         <AdminHeroHeader
           title="ใบเสนอราคา"
           description="Quotation Workspace แยกจาก Order โดยสมบูรณ์ สร้างร่าง ส่ง อนุมัติ แก้ Revision และ Convert เป็น Order ได้จากที่นี่"
-          lastSynced={formatAdminLastSynced(lastSynced)}
-          thaiDate={formatAdminThaiDate(lastSynced)}
+          lastSyncedAt={lastSynced}
           mb={0}
           notice={error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : undefined}
           actions={

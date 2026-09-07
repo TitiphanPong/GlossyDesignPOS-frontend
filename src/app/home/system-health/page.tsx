@@ -17,8 +17,6 @@ import {
   Typography,
 } from '@mui/material';
 import AdminHeroHeader, {
-  formatAdminLastSynced,
-  formatAdminThaiDate,
   heroOutlineButtonSx,
 } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
@@ -169,8 +167,7 @@ export default function SystemHealthPage() {
       <AdminHeroHeader
         title="System Health"
         description="ตรวจสอบการเชื่อมต่อ Frontend → Backend และ dependency ที่จำเป็น โดยไม่แสดงค่าเชื่อมต่อหรือข้อมูลลับ"
-        lastSynced={formatAdminLastSynced(lastCheckedAt)}
-        thaiDate={formatAdminThaiDate(lastCheckedAt)}
+        lastSyncedAt={lastCheckedAt}
         actions={
           <Button
             variant="outlined"

@@ -21,7 +21,7 @@ import {
 import PublishRoundedIcon from '@mui/icons-material/PublishRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import AdminPageContainer from '@/app/home/components/AdminPageContainer';
-import AdminHeroHeader, { formatAdminLastSynced, formatAdminThaiDate } from '@/app/home/components/AdminHeroHeader';
+import AdminHeroHeader from '@/app/home/components/AdminHeroHeader';
 import DocumentServiceConfigurator from '../../quick-sale-v2/DocumentServiceConfigurator';
 import { fetchQuickProductsForAdmin } from '@/lib/products';
 import type { Product } from '@/lib/contracts';
@@ -176,8 +176,7 @@ export default function QuickSaleV2SettingsPage() {
       <AdminHeroHeader
         title="Quick Seller V2 Settings"
         description="จัดหน้าขาย ราคา/ตัวเลือก และ Preview จาก Draft เดียวกัน โดยไม่กระทบ Quick Seller V1"
-        lastSynced={formatAdminLastSynced(updatedAt)}
-        thaiDate={formatAdminThaiDate(updatedAt ?? new Date())}
+        lastSyncedAt={updatedAt}
       />
 
       <Stack spacing={2}>
