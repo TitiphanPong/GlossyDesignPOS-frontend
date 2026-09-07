@@ -14,8 +14,8 @@ test('prefersReceiptShare keeps desktop clients on direct download', () => {
   assert.equal(prefersReceiptShare(undefined), false);
 });
 
-test('buildReceiptFileName removes display hash and keeps the order number', () => {
-  assert.equal(buildReceiptFileName('#GD-2026-000245'), 'receipt-GD-2026-000245.png');
+test('buildReceiptFileName uses the shared export standard and keeps the document number', () => {
+  assert.equal(buildReceiptFileName('#GD-2026-000245'), 'glossy-receipt-GD-2026-000245.png');
 });
 
 test('isShareCancelled recognizes the native share cancel signal', () => {

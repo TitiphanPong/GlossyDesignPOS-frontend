@@ -1,3 +1,5 @@
+import { buildExportFilename } from './export-filename';
+
 export type ReceiptShareClientInfo = Pick<Navigator, 'userAgent' | 'maxTouchPoints'>;
 
 export function prefersReceiptShare(client: ReceiptShareClientInfo | undefined): boolean {
@@ -17,5 +19,9 @@ export function isShareCancelled(error: unknown): boolean {
 
 export function buildReceiptFileName(invoiceNumber: string): string {
   const normalizedNumber = invoiceNumber.replace(/^#/u, '').trim() || 'receipt';
-  return `receipt-${normalizedNumber}.png`;
+  return buildExportFilename({
+    artifact: 'receipt',
+    scope: normalizedNumber,
+    extension: 'png',
+  });
 }

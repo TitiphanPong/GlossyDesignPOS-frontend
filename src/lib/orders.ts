@@ -1,5 +1,6 @@
 import { fetchApi, fetchApiJson } from './api';
 import { normalizeApiOrder, type ApiOrder, type CreateOrderRequest, type NormalizedOrder, type ProductionWorkflowStatus } from './contracts';
+import { buildExportFilename, resolveOrderExportDateScope } from './export-filename';
 
 type ApiOrderLike = Partial<ApiOrder> & {
   id?: string;
@@ -322,7 +323,12 @@ export async function downloadOrdersExport(
   const response = await fetchApi(`/orders/export?${query.toString()}`, { cache: 'no-store' });
   const blob = await response.blob();
   const disposition = response.headers.get('content-disposition') ?? '';
-  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] ?? `orders-${params.saleMonth ?? 'all'}.${format}`;
+  const fallbackFilename = buildExportFilename({
+    artifact: 'orders',
+    scope: resolveOrderExportDateScope(params),
+    extension: format,
+  });
+  const filename = disposition.match(/filename="?([^";]+)"?/i)?.[1] ?? fallbackFilename;
   const url = URL.createObjectURL(blob);
   const anchor = document.createElement('a');
   anchor.href = url;
