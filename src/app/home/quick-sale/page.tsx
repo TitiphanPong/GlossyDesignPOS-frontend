@@ -549,7 +549,7 @@ export default function QuickSalePage() {
         </Paper>
       ) : (
         <AdminHeroHeader
-          title={v2 ? 'Quick Sale V2 · ทดลอง' : 'Quick Sale'}
+          title={v2 ? 'Quick Sale V2 · Preview' : 'Quick Sale'}
           description={v2 ? 'เลือกกลุ่มงานและรายละเอียดก่อนเพิ่มลงตะกร้า โดยใช้การชำระเงินและ Order contract เดิมทั้งหมด' : 'ขายสินค้าหน้าร้านอย่างรวดเร็ว เลือกรายการ รับชำระ และออกเอกสารในขั้นตอนเดียว'}
           lastSyncedAt={lastSyncedAt}
           utilityActions={

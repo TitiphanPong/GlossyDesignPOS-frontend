@@ -253,7 +253,7 @@ export default function QuotationsPage() {
     <AdminPageContainer>
       <Stack spacing={2.25}>
         <AdminHeroHeader
-          title="ใบเสนอราคา"
+          title="Quotations"
           description="Quotation Workspace แยกจาก Order โดยสมบูรณ์ สร้างร่าง ส่ง อนุมัติ แก้ Revision และ Convert เป็น Order ได้จากที่นี่"
           lastSyncedAt={lastSynced}
           mb={0}

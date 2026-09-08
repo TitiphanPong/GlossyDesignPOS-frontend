@@ -194,7 +194,7 @@ export default function QuotationDetailPage() {
       <AdminPageContainer>
         <Stack spacing={2}>
           <AdminHeroHeader
-            title={`แก้ไข ${quotationDisplayNumber(quotation.quotationNumber)}`}
+            title={`Edit ${quotationDisplayNumber(quotation.quotationNumber)}`}
             description={`Revision ${quotation.revision} · Draft แก้ไขได้จนกว่าจะส่ง`}
             lastSyncedAt={quotation.updatedAt}
             mb={0}
@@ -253,7 +253,7 @@ export default function QuotationDetailPage() {
     <AdminPageContainer>
       <Stack spacing={2.25}>
         <AdminHeroHeader
-          title={quotationDisplayNumber(quotation.quotationNumber)}
+            title={`Quotation ${quotationDisplayNumber(quotation.quotationNumber)}`}
           description={`Revision ${quotation.revision} · ออก ${formatQuotationDate(quotation.issuedAt)} · ใช้ได้ถึง ${formatQuotationDate(quotation.validUntil)}`}
           lastSyncedAt={quotation.updatedAt}
           mb={0}

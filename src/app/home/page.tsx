@@ -97,7 +97,13 @@ function PeriodFilterCard({
   return (
     <Card sx={{ ...cardSx, mb: 2.5 }}>
       <CardContent sx={{ p: { xs: 1.75, md: 2.25 } }}>
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: period === 'custom' ? 'auto minmax(360px, 1fr) minmax(360px, 1fr)' : 'auto minmax(360px, 1fr)' }, alignItems: 'center', gap: 1.5 }}>
+        <Box
+          sx={{
+            display: 'grid',
+            gridTemplateColumns: { xs: '1fr', lg: period === 'custom' ? 'auto minmax(360px, 1fr) minmax(360px, 1fr)' : 'auto minmax(360px, 1fr)' },
+            alignItems: 'center',
+            gap: 1.5,
+          }}>
           <Stack direction="row" alignItems="center" spacing={1}>
             <Box sx={{ width: 36, height: 36, borderRadius: 1.75, display: 'grid', placeItems: 'center', bgcolor: '#EFF6FF', color: '#2563EB' }}>
               <CalendarMonthRoundedIcon sx={{ fontSize: 19 }} />
@@ -131,7 +137,16 @@ function PeriodFilterCard({
               variant="text"
               onClick={onCustomClick}
               aria-pressed={period === 'custom'}
-              sx={{ minWidth: 0, minHeight: 38, px: 0.5, borderRadius: 1.25, color: period === 'custom' ? '#1D4ED8' : '#64748B', bgcolor: period === 'custom' ? '#EFF6FF' : 'transparent', fontSize: 12.5, fontWeight: period === 'custom' ? 700 : 600 }}>
+              sx={{
+                minWidth: 0,
+                minHeight: 38,
+                px: 0.5,
+                borderRadius: 1.25,
+                color: period === 'custom' ? '#1D4ED8' : '#64748B',
+                bgcolor: period === 'custom' ? '#EFF6FF' : 'transparent',
+                fontSize: 12.5,
+                fontWeight: period === 'custom' ? 700 : 600,
+              }}>
               กำหนดช่วงเวลา
             </Button>
           </Box>
@@ -220,8 +235,24 @@ function FollowUpRow({ item }: Readonly<{ item: FollowUpItem }>) {
 function FollowUpPanel({ summary }: Readonly<{ summary: DashboardSummary }>) {
   const operations = summary.operations;
   const items: FollowUpItem[] = [
-    { label: 'งานเกินกำหนด', helper: 'Production Job ที่ยังไม่จบ', value: operations.production.overdue, icon: ScheduleRoundedIcon, color: '#DC2626', href: buildDashboardProductionHref('overdue'), actionLabel: 'เปิดงานผลิต' },
-    { label: 'พร้อมรับงาน', helper: 'ออเดอร์ที่พร้อมส่งมอบ', value: operations.workflow.ready_for_pickup, icon: TaskAltRoundedIcon, color: '#059669', href: '/home/orders?workflowStatus=ready_for_pickup', actionLabel: 'เปิดออเดอร์' },
+    {
+      label: 'งานเกินกำหนด',
+      helper: 'Production Job ที่ยังไม่จบ',
+      value: operations.production.overdue,
+      icon: ScheduleRoundedIcon,
+      color: '#DC2626',
+      href: buildDashboardProductionHref('overdue'),
+      actionLabel: 'เปิดงานผลิต',
+    },
+    {
+      label: 'พร้อมรับงาน',
+      helper: 'ออเดอร์ที่พร้อมส่งมอบ',
+      value: operations.workflow.ready_for_pickup,
+      icon: TaskAltRoundedIcon,
+      color: '#059669',
+      href: '/home/orders?workflowStatus=ready_for_pickup',
+      actionLabel: 'เปิดออเดอร์',
+    },
     { label: 'สต็อกต่ำ', helper: 'รายการที่ต่ำกว่าระดับขั้นต่ำ', value: operations.lowStock, icon: Inventory2RoundedIcon, color: '#7C3AED', href: '/home/stock', actionLabel: 'เปิด Stock' },
   ].filter(item => item.value > 0);
 
@@ -321,13 +352,26 @@ function ProductDetails({ summary }: Readonly<{ summary: DashboardSummary }>) {
           {summary.topProducts.length ? (
             summary.topProducts.slice(0, 5).map((item: DashboardProduct, index) => (
               <Stack key={`${item.name}-${index}`} direction="row" alignItems="center" spacing={1} sx={{ py: 1 }}>
-                <Box sx={{ width: 24, height: 24, borderRadius: 1.25, bgcolor: index === 0 ? '#FEF3C7' : '#F1F5F9', color: '#475569', display: 'grid', placeItems: 'center', fontSize: 11, fontWeight: 900 }}>
+                <Box
+                  sx={{
+                    width: 24,
+                    height: 24,
+                    borderRadius: 1.25,
+                    bgcolor: index === 0 ? '#FEF3C7' : '#F1F5F9',
+                    color: '#475569',
+                    display: 'grid',
+                    placeItems: 'center',
+                    fontSize: 11,
+                    fontWeight: 900,
+                  }}>
                   {index + 1}
                 </Box>
                 <Typography noWrap sx={{ minWidth: 0, flex: 1, color: '#334155', fontSize: 13, fontWeight: 700 }}>
                   {item.name}
                 </Typography>
-                <Typography sx={{ color: '#64748B', fontSize: 12, flex: '0 0 auto' }}>{integer(item.quantity)} ชิ้น · {money(item.revenue)}</Typography>
+                <Typography sx={{ color: '#64748B', fontSize: 12, flex: '0 0 auto' }}>
+                  {integer(item.quantity)} ชิ้น · {money(item.revenue)}
+                </Typography>
               </Stack>
             ))
           ) : (
@@ -351,10 +395,22 @@ function WorkflowDetails({ summary }: Readonly<{ summary: DashboardSummary }>) {
   const operations = summary.operations;
   return (
     <Stack divider={<Divider flexItem />}>
-      <DetailRow label="รอเริ่มงาน" value={integer(operations.workflow.pending)} helper={operations.unclassifiedWorkflow > 0 ? `${integer(operations.unclassifiedWorkflow)} รายการยังไม่ระบุขั้นตอน` : undefined} href="/home/orders?workflowStatus=pending" actionLabel="เปิดออเดอร์" />
+      <DetailRow
+        label="รอเริ่มงาน"
+        value={integer(operations.workflow.pending)}
+        helper={operations.unclassifiedWorkflow > 0 ? `${integer(operations.unclassifiedWorkflow)} รายการยังไม่ระบุขั้นตอน` : undefined}
+        href="/home/orders?workflowStatus=pending"
+        actionLabel="เปิดออเดอร์"
+      />
       <DetailRow label="กำลังผลิต" value={integer(operations.workflow.producing)} href="/home/orders?workflowStatus=producing" actionLabel="เปิดออเดอร์" />
       <DetailRow label="พร้อมรับงาน" value={integer(operations.workflow.ready_for_pickup)} href="/home/orders?workflowStatus=ready_for_pickup" actionLabel="เปิดออเดอร์" />
-      <DetailRow label="งานครบกำหนดวันนี้" value={integer(operations.production.dueToday)} helper="Production Job ที่ยังไม่จบ" href={buildDashboardProductionHref('dueToday')} actionLabel="เปิดงานผลิต" />
+      <DetailRow
+        label="งานครบกำหนดวันนี้"
+        value={integer(operations.production.dueToday)}
+        helper="Production Job ที่ยังไม่จบ"
+        href={buildDashboardProductionHref('dueToday')}
+        actionLabel="เปิดงานผลิต"
+      />
       <DetailRow label="งาน Rush" value={integer(operations.production.rush)} helper="งานเร่งด่วนที่ยังอยู่ระหว่างผลิต" href={buildDashboardProductionHref('rush')} actionLabel="เปิดงานผลิต" />
       <DetailRow label="ไฟล์รอตรวจ" value={integer(operations.filesWaiting)} helper={`${integer(summary.uploads.newFiles)} ไฟล์ใหม่วันนี้`} href="/home/storage" actionLabel="เปิด Storage" />
     </Stack>
@@ -466,7 +522,13 @@ export default function DashboardPage() {
   const financialMismatch = Math.abs(payment.cash + payment.transfer - payment.received) >= 0.01;
   const periodKpis: MetricCardProps[] = [
     { label: `ยอดขาย ${summary.period.label}`, value: money(summary.periodSummary.sales), helper: salesDeltaText, icon: TrendingUpRoundedIcon, color: '#6C4DFF' },
-    { label: `เงินรับจริง ${summary.period.label}`, value: money(summary.periodSummary.collections), helper: 'เงินตั้งต้นตามวันที่สร้างออเดอร์ + payments/financial adjustments ตามวันที่เกิดรายการ', icon: PaidRoundedIcon, color: '#059669' },
+    {
+      label: `เงินรับจริง ${summary.period.label}`,
+      value: money(summary.periodSummary.collections),
+      helper: 'เงินตั้งต้นตามวันที่สร้างออเดอร์ + payments/financial adjustments ตามวันที่เกิดรายการ',
+      icon: PaidRoundedIcon,
+      color: '#059669',
+    },
     { label: `ออเดอร์ ${summary.period.label}`, value: integer(summary.periodSummary.orders), helper: 'ออเดอร์ที่ไม่ถูกยกเลิก', icon: ReceiptLongRoundedIcon, color: '#2563EB' },
     {
       label: 'ยอดค้างชำระทั้งหมด',
@@ -485,7 +547,7 @@ export default function DashboardPage() {
   return (
     <AdminPageContainer>
       <AdminHeroHeader
-        title="ภาพรวมร้าน"
+        title="Dashboard"
         description="ขายเป็นอย่างไร · รับเงินแล้วเท่าไร · มีอะไรต้องตามต่อ"
         lastSyncedAt={new Date(summary.generatedAt)}
         utilityActions={
@@ -530,7 +592,9 @@ export default function DashboardPage() {
       </Box>
       <Stack spacing={1.25} sx={{ mb: 2.5 }} aria-live="polite">
         {financialMismatch ? <Alert severity="warning">ยอดรวมตามช่องทางรับเงินไม่ตรงกับเงินรับจริงสุทธิ กรุณาตรวจสอบรายการชำระเงินและ financial adjustments</Alert> : null}
-        {operations.unclassifiedWorkflow > 0 ? <Alert severity="warning">มี {integer(operations.unclassifiedWorkflow)} ออเดอร์จากข้อมูลเดิมที่ยังไม่ระบุขั้นตอนงาน ระบบรวมไว้ใน “รอเริ่มงาน” เพื่อไม่ให้รายการตกหล่น</Alert> : null}
+        {operations.unclassifiedWorkflow > 0 ? (
+          <Alert severity="warning">มี {integer(operations.unclassifiedWorkflow)} ออเดอร์จากข้อมูลเดิมที่ยังไม่ระบุขั้นตอนงาน ระบบรวมไว้ใน “รอเริ่มงาน” เพื่อไม่ให้รายการตกหล่น</Alert>
+        ) : null}
       </Stack>
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2fr) minmax(300px, 1fr)' }, gap: 2.5, mb: 2.5 }}>
         <SalesTrend data={summary.salesTrend} periodLabel={summary.period.label} isToday={period === 'today'} />

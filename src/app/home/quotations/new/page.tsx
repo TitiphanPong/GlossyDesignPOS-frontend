@@ -13,7 +13,7 @@ export default function NewQuotationPage() {
     <AdminPageContainer>
       <Stack spacing={2}>
         <AdminHeroHeader
-          title="สร้างใบเสนอราคา"
+          title="Create Quotation"
           description="สร้างเอกสารได้โดยไม่ต้องมี Order ก่อน ระบบหลังบ้านจะยืนยันราคา ส่วนลด VAT และยอดรวมทุกครั้งที่บันทึก ร่างจะได้รับเลขใบเสนอราคาเมื่อส่งครั้งแรก"
           lastSyncedAt={null}
           mb={0}

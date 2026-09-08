@@ -237,7 +237,7 @@ export default function CustomersPage() {
   return (
     <AdminPageContainer>
       <AdminHeroHeader
-        title="ฐานลูกค้า"
+        title="Customers"
         description="จัดการข้อมูลลูกค้า ประวัติการสั่งซื้อ ยอดค้าง และข้อมูลสำหรับออกเอกสาร"
         lastSyncedAt={lastSyncedAt}
         primaryAction={

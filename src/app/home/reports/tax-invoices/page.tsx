@@ -261,7 +261,7 @@ export default function TaxInvoiceMonthlyReportPage() {
   return (
     <AdminPageContainer>
       <AdminHeroHeader
-        title="ใบกำกับภาษีรายเดือน"
+        title="Monthly Tax Invoices"
         description="ตรวจความครบถ้วนของใบกำกับภาษีและรวบรวมเอกสารทั้งเดือนเพื่อส่งสำนักงานบัญชี"
         lastSyncedAt={report?.generatedAt}
         utilityActions={

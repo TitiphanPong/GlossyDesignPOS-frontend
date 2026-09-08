@@ -266,7 +266,7 @@ export default function QuickMenuSettingsPage() {
     <AdminPageContainer>
       <Stack spacing={2.25} sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2 }, '& .MuiButton-root': { textTransform: 'none' } }}>
         <AdminHeroHeader
-          title="จัดการเมนู Quick Seller"
+          title="Quick Seller Menu"
           description="ตั้งค่าสินค้า ราคา สถานะ และลำดับการแสดงผลสำหรับหน้าขายด่วนจากจุดเดียว"
           lastSyncedAt={lastSyncedAt}
           mb={0}
