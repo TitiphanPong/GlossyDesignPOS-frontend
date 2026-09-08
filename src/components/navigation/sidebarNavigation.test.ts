@@ -6,18 +6,19 @@ import type { SidebarMenuGroup, SidebarNavItem } from './sidebarTypes';
 
 const icon = undefined as unknown as SidebarNavItem['icon'];
 
-test('Quick Seller V1 stays primary while V2 remains a separate pilot entry', () => {
-  const salesGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'sales');
+test('Quick Seller V1 stays the primary quick-sale entry without exposing the retired V2 pilot', () => {
+  const allMenuHrefs = SIDEBAR_MENU_GROUPS.flatMap(group => group.items.map(item => item.href));
 
   assert.equal(SIDEBAR_PRIMARY_ACTION.href, '/home/quick-sale');
-  assert.equal(salesGroup?.items[0]?.href, '/home/quick-sale-v2');
+  assert.equal(allMenuHrefs.includes('/home/quick-sale-v2'), false);
+  assert.equal(allMenuHrefs.includes('/home/settings/quick-sale-v2'), false);
 });
 
-test('sales keeps V2, POS, orders, and quotations without moving customers back into sales', () => {
+test('sales keeps POS, orders, and quotations without the retired V2 pilot entry', () => {
   const salesGroup = SIDEBAR_MENU_GROUPS.find(group => group.id === 'sales');
   assert.deepEqual(
     salesGroup?.items.map(item => item.href),
-    ['/home/quick-sale-v2', '/home/posseller', '/home/orders', '/home/quotations']
+    ['/home/posseller', '/home/orders', '/home/quotations']
   );
 });
 
