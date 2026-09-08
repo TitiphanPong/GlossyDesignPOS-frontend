@@ -8,6 +8,13 @@ import {
   Card,
   CardContent,
   Chip,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  FormControlLabel,
+  Radio,
+  RadioGroup,
   Stack,
   Tooltip,
   Typography,
@@ -24,6 +31,7 @@ import AdminHeroHeader, { heroPrimaryButtonSx, heroSecondaryButtonSx, heroUtilit
 import DataTable, { type DataTableColumn } from '../../components/DataTable';
 import ReportFilterPanel from '../../components/ReportFilterPanel';
 import { uiCardSx } from '../../components/adminUi';
+import { downloadLegacyTaxInvoiceMonthlyPdf } from '@/lib/legacy-tax-invoice-pdf';
 import {
   CrossPeriodCancellation,
   TaxInvoiceExportError,
@@ -38,6 +46,9 @@ import {
   formatTaxReportMoney,
   getPreviousBangkokPeriod,
 } from '@/lib/tax-invoice-reports';
+
+type MonthlyInvoiceFormat = 'new' | 'legacy';
+type MonthlyDownloadKind = TaxInvoiceExportKind | 'legacy-invoices-pdf';
 
 const MONTHS = [
   'มกราคม',
@@ -180,9 +191,11 @@ export default function TaxInvoiceMonthlyReportPage() {
   const [query, setQuery] = React.useState('');
   const [page, setPage] = React.useState(0);
   const [rowsPerPage, setRowsPerPage] = React.useState(25);
-  const [downloading, setDownloading] = React.useState<TaxInvoiceExportKind | null>(null);
+  const [downloading, setDownloading] = React.useState<MonthlyDownloadKind | null>(null);
   const [downloadError, setDownloadError] = React.useState<string | null>(null);
   const [downloadNotice, setDownloadNotice] = React.useState<string | null>(null);
+  const [invoiceFormatDialogOpen, setInvoiceFormatDialogOpen] = React.useState(false);
+  const [invoiceFormat, setInvoiceFormat] = React.useState<MonthlyInvoiceFormat>('new');
 
   const selectedYear = Number(period.slice(0, 4));
   const selectedMonth = Number(period.slice(4, 6));
@@ -255,6 +268,29 @@ export default function TaxInvoiceMonthlyReportPage() {
     }
   };
 
+  const handleMonthlyInvoiceDownload = async () => {
+    if (!report) return;
+
+    if (invoiceFormat === 'new') {
+      setInvoiceFormatDialogOpen(false);
+      await handleDownload('invoices-pdf');
+      return;
+    }
+
+    setDownloading('legacy-invoices-pdf');
+    setDownloadError(null);
+    setDownloadNotice(null);
+    try {
+      const result = await downloadLegacyTaxInvoiceMonthlyPdf(period, report.documents);
+      setInvoiceFormatDialogOpen(false);
+      setDownloadNotice(`ดาวน์โหลด ${result.filename} แล้ว · ใบกำกับแบบเก่ารวมทั้งเดือน ${report.periodLabel}`);
+    } catch (error) {
+      setDownloadError(error instanceof Error ? error.message : 'สร้างใบกำกับภาษีแบบเก่าไม่สำเร็จ');
+    } finally {
+      setDownloading(null);
+    }
+  };
+
   const summary = report?.summary;
   const canDownload = Boolean(report) && !loading && !loadError && !downloading;
 
@@ -300,11 +336,84 @@ export default function TaxInvoiceMonthlyReportPage() {
             startIcon={<DownloadRoundedIcon />}
             sx={heroPrimaryButtonSx}
             disabled={!canDownload}
-            onClick={() => void handleDownload('invoices-pdf')}>
-            {downloading === 'invoices-pdf' ? 'กำลังสร้าง…' : 'ดาวน์โหลดใบกำกับทั้งเดือน'}
+            onClick={() => setInvoiceFormatDialogOpen(true)}>
+            {downloading === 'invoices-pdf' || downloading === 'legacy-invoices-pdf' ? 'กำลังสร้าง…' : 'ดาวน์โหลดใบกำกับทั้งเดือน'}
           </Button>
         }
       />
+
+      <Dialog
+        open={invoiceFormatDialogOpen}
+        onClose={() => {
+          if (!downloading) setInvoiceFormatDialogOpen(false);
+        }}
+        fullWidth
+        maxWidth="sm"
+        aria-labelledby="monthly-invoice-format-title">
+        <DialogTitle id="monthly-invoice-format-title" sx={{ pb: 1 }}>
+          เลือกรูปแบบใบกำกับภาษี
+        </DialogTitle>
+        <DialogContent>
+          <Typography sx={{ mb: 2, fontSize: 13.5, color: '#667085' }}>
+            ดาวน์โหลดใบกำกับภาษีทั้งหมดของงวด {report?.periodLabel ?? period} เป็น PDF ไฟล์เดียว
+          </Typography>
+          <RadioGroup
+            value={invoiceFormat}
+            onChange={event => setInvoiceFormat(event.target.value as MonthlyInvoiceFormat)}
+            sx={{ gap: 1.25 }}>
+            <FormControlLabel
+              value="new"
+              control={<Radio />}
+              sx={{
+                m: 0,
+                alignItems: 'flex-start',
+                p: 1.5,
+                border: '1px solid',
+                borderColor: invoiceFormat === 'new' ? '#84ADFF' : '#E4E7EC',
+                borderRadius: 2,
+                bgcolor: invoiceFormat === 'new' ? '#F5F8FF' : '#FFFFFF',
+              }}
+              label={
+                <Box sx={{ pt: 0.5 }}>
+                  <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#101828' }}>แบบใหม่ — A4 เต็มหน้า</Typography>
+                  <Typography sx={{ mt: 0.35, fontSize: 12.5, color: '#667085' }}>ใช้ PDF รายเดือนแบบปัจจุบัน ใบกำกับภาษี 1 ฉบับต่อหน้า</Typography>
+                </Box>
+              }
+            />
+            <FormControlLabel
+              value="legacy"
+              control={<Radio />}
+              sx={{
+                m: 0,
+                alignItems: 'flex-start',
+                p: 1.5,
+                border: '1px solid',
+                borderColor: invoiceFormat === 'legacy' ? '#84ADFF' : '#E4E7EC',
+                borderRadius: 2,
+                bgcolor: invoiceFormat === 'legacy' ? '#F5F8FF' : '#FFFFFF',
+              }}
+              label={
+                <Box sx={{ pt: 0.5 }}>
+                  <Typography sx={{ fontSize: 14, fontWeight: 800, color: '#101828' }}>แบบเก่า — สำเนา / ต้นฉบับ</Typography>
+                  <Typography sx={{ mt: 0.35, fontSize: 12.5, color: '#667085' }}>ใช้หน้าตาเดียวกับหน้า Print ปัจจุบัน แล้วต่อทุกใบเป็น PDF ไฟล์เดียว</Typography>
+                </Box>
+              }
+            />
+          </RadioGroup>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button onClick={() => setInvoiceFormatDialogOpen(false)} disabled={Boolean(downloading)}>
+            ยกเลิก
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<DownloadRoundedIcon />}
+            onClick={() => void handleMonthlyInvoiceDownload()}
+            disabled={!report || Boolean(downloading)}>
+            {downloading === 'invoices-pdf' || downloading === 'legacy-invoices-pdf' ? 'กำลังสร้าง PDF…' : 'ดาวน์โหลดทั้งเดือน'}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Stack spacing={2.2}>
         <ReportFilterPanel

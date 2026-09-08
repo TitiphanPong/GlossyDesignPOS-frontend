@@ -45,10 +45,25 @@ test('defaults to previous Bangkok month, changes period, and downloads the whol
   const summary = await summaryDownload;
   expect(summary.suggestedFilename()).toContain('202609');
 
-  const invoicesDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'ดาวน์โหลดใบกำกับทั้งเดือน' }).click();
+  const invoiceFormatDialog = page.getByRole('dialog', { name: 'เลือกรูปแบบใบกำกับภาษี' });
+  await expect(invoiceFormatDialog).toBeVisible();
+  await expect(invoiceFormatDialog.getByRole('radio', { name: /แบบใหม่ — A4 เต็มหน้า/ })).toBeChecked();
+
+  const invoicesDownload = page.waitForEvent('download');
+  await invoiceFormatDialog.getByRole('button', { name: 'ดาวน์โหลดทั้งเดือน' }).click();
   const invoices = await invoicesDownload;
   expect(invoices.suggestedFilename()).toContain('202609');
+
+  await page.getByRole('button', { name: 'ดาวน์โหลดใบกำกับทั้งเดือน' }).click();
+  await expect(invoiceFormatDialog).toBeVisible();
+  await invoiceFormatDialog.getByRole('radio', { name: /แบบเก่า — สำเนา \/ ต้นฉบับ/ }).check();
+
+  const legacyInvoicesDownload = page.waitForEvent('download');
+  await invoiceFormatDialog.getByRole('button', { name: 'ดาวน์โหลดทั้งเดือน' }).click();
+  const legacyInvoices = await legacyInvoicesDownload;
+  expect(legacyInvoices.suggestedFilename()).toContain('2026-09');
+  expect(legacyInvoices.suggestedFilename()).toContain('legacy');
 });
 
 for (const width of [360, 1024, 1600]) {
