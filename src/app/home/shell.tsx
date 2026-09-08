@@ -1,18 +1,20 @@
 'use client';
 
 import * as React from 'react';
-import { Box, Button, CircularProgress, Stack, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Button, CircularProgress, IconButton, Stack, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
+import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
+import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import { usePathname, useSearchParams } from 'next/navigation';
 import axios from 'axios';
 import AppSidebar from '@/components/navigation/AppSidebar';
-import { sidebarDimensions } from '@/components/navigation/sidebarTheme';
+import { sidebarDimensions, sidebarMotion, sidebarTokens } from '@/components/navigation/sidebarTheme';
 import PageTransition from '@/components/transitions/PageTransition';
 import { destroyAdminBrowserSession } from '@/lib/admin-auth';
 import { GlobalNotificationHeader } from '@/components/notifications/GlobalNotificationHeader';
 import { MobileHeader } from '@/components/notifications/MobileHeader';
 
-const SIDEBAR_STORAGE_KEY = 'glossy-admin-sidemenu-collapsed';
 const MOBILE_SIDEBAR_ID = 'app-mobile-sidebar';
+const SIDEBAR_STORAGE_KEY = 'glossy-admin-sidemenu-collapsed';
 
 type AdminSessionUser = {
   username?: string;
@@ -108,6 +110,10 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
   }, [redirectToLogin]);
 
   React.useEffect(() => {
+    setMobileMenuOpen(false);
+  }, [isMobile, pathname]);
+
+  React.useEffect(() => {
     try {
       const saved = globalThis.localStorage.getItem(SIDEBAR_STORAGE_KEY);
       setDesktopCollapsed(saved === 'true');
@@ -118,13 +124,9 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
     }
   }, []);
 
-  React.useEffect(() => {
-    setMobileMenuOpen(false);
-  }, [isMobile, pathname]);
-
   const handleToggleDesktopMenu = React.useCallback(() => {
-    setDesktopCollapsed(prev => {
-      const next = !prev;
+    setDesktopCollapsed(previous => {
+      const next = !previous;
       try {
         globalThis.localStorage.setItem(SIDEBAR_STORAGE_KEY, String(next));
       } catch {
@@ -176,15 +178,46 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
           currentPath={currentNavigationPath}
         />
       ) : (
-        <AppSidebar
-          role={sessionUser?.role}
-          username={sessionUser?.username}
-          width={sidebarDimensions.expanded}
-          collapsedWidth={sidebarDimensions.collapsed}
-          currentPath={currentNavigationPath}
-          collapsed={desktopCollapsed}
-          onToggleCollapsed={handleToggleDesktopMenu}
-        />
+        <Box
+          sx={{
+            position: 'relative',
+            flexShrink: 0,
+            width: desktopCollapsed ? sidebarDimensions.collapsed : sidebarDimensions.expanded,
+            height: '100dvh',
+            transition: `width ${sidebarMotion.drawer}`,
+          }}>
+          <AppSidebar
+            role={sessionUser?.role}
+            username={sessionUser?.username}
+            width={sidebarDimensions.expanded}
+            collapsedWidth={sidebarDimensions.collapsed}
+            currentPath={currentNavigationPath}
+            collapsed={desktopCollapsed}
+          />
+          <Tooltip title={desktopCollapsed ? 'ขยายเมนูด้านข้าง' : 'ยุบเมนูด้านข้าง'} placement="right" enterDelay={250}>
+            <IconButton
+              onClick={handleToggleDesktopMenu}
+              aria-label={desktopCollapsed ? 'ขยายเมนูด้านข้าง' : 'ยุบเมนูด้านข้าง'}
+              size="small"
+              sx={{
+                position: 'absolute',
+                top: 22,
+                right: -10,
+                zIndex: theme.zIndex.drawer + 1,
+                width: 20,
+                height: 20,
+                p: 0,
+                border: `1px solid ${sidebarTokens.borderStrong}`,
+                color: sidebarTokens.textSoft,
+                bgcolor: sidebarTokens.background,
+                boxShadow: '0 3px 10px rgba(15,23,42,.18)',
+                '&:hover': { bgcolor: sidebarTokens.hoverBackground },
+                '&.Mui-focusVisible': { outline: `2px solid ${sidebarTokens.focusRing}`, outlineOffset: 2 },
+              }}>
+              {desktopCollapsed ? <ChevronRightRoundedIcon sx={{ fontSize: 13 }} /> : <ChevronLeftRoundedIcon sx={{ fontSize: 13 }} />}
+            </IconButton>
+          </Tooltip>
+        </Box>
       )}
 
       <Box

@@ -4,9 +4,9 @@ import Link from 'next/link';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
 import ChevronRightRoundedIcon from '@mui/icons-material/ChevronRightRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
-import { Box, ButtonBase, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import GlossyBrandMark from './GlossyBrandMark';
-import { sidebarMotion, sidebarTokens } from './sidebarTheme';
+import { sidebarTokens } from './sidebarTheme';
 
 type SidebarHeaderProps = {
   collapsed: boolean;
@@ -35,12 +35,12 @@ export default function SidebarHeader({ collapsed, mobile, onToggleCollapsed, on
       sx={{
         position: 'relative',
         flexShrink: 0,
-        px: 1.5,
+        px: collapsed ? 0.5 : 1.5,
         pt: mobile ? 'calc(11.2px + env(safe-area-inset-top))' : 1.4,
         pb: 1.4,
         borderBottom: `1px solid ${sidebarTokens.border}`,
       }}>
-      <Stack direction={mobile ? 'row' : 'column'} alignItems={mobile ? 'center' : 'flex-start'} justifyContent={mobile ? 'space-between' : 'flex-start'} spacing={mobile ? 1 : 0.8}>
+      <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={mobile ? 1 : 0.5}>
         <Tooltip title={collapsed ? 'GlossyDesign — แดชบอร์ด' : ''} placement="right" enterDelay={250}>
           <Box
             component={Link}
@@ -49,12 +49,13 @@ export default function SidebarHeader({ collapsed, mobile, onToggleCollapsed, on
             onClick={onNavigate}
             sx={{
               minWidth: 0,
+              flex: 1,
               display: 'flex',
-              width: mobile ? 'auto' : '100%',
+              width: 'auto',
               alignItems: 'center',
-              justifyContent: 'flex-start',
+              justifyContent: collapsed ? 'center' : 'flex-start',
               gap: 1.15,
-              pl: mobile ? 0 : 0.6,
+              pl: mobile || collapsed ? 0 : 0.6,
               color: sidebarTokens.text,
               textDecoration: 'none',
               borderRadius: '12px',
@@ -108,35 +109,23 @@ export default function SidebarHeader({ collapsed, mobile, onToggleCollapsed, on
           </IconButton>
         ) : onToggleCollapsed ? (
           <Tooltip title={collapsed ? collapseLabel : ''} placement="right" enterDelay={250}>
-            <ButtonBase
+            <IconButton
               onClick={onToggleCollapsed}
               aria-label={collapseLabel}
+              size="small"
               sx={{
-                width: '100%',
-                height: 40,
-                ml: 0,
-                px: collapsed ? 0 : 1.2,
+                width: 20,
+                height: 20,
+                p: 0,
                 flexShrink: 0,
-                justifyContent: collapsed ? 'center' : 'flex-start',
-                gap: 0.7,
-                overflow: 'hidden',
                 border: `1px solid ${sidebarTokens.border}`,
-                borderRadius: '11px',
                 color: sidebarTokens.textSoft,
                 bgcolor: sidebarTokens.backgroundElevated,
-                transition: `width ${sidebarMotion.drawer}, background-color ${sidebarMotion.interaction}, color ${sidebarMotion.interaction}`,
                 '&:hover': { bgcolor: sidebarTokens.hoverBackground },
                 '&.Mui-focusVisible': { outline: `2px solid ${sidebarTokens.focusRing}`, outlineOffset: 2 },
               }}>
-              <Box sx={{ width: 26, height: 20, flexShrink: 0, display: 'grid', placeItems: 'center' }}>
-                {collapsed ? <ChevronRightRoundedIcon aria-hidden="true" sx={{ fontSize: 20 }} /> : <ChevronLeftRoundedIcon aria-hidden="true" sx={{ fontSize: 20 }} />}
-              </Box>
-              {!collapsed ? (
-                <Typography noWrap sx={{ fontFamily: 'inherit', fontSize: 12.75, fontWeight: 600, lineHeight: 1.2 }}>
-                  ยุบเมนู
-                </Typography>
-              ) : null}
-            </ButtonBase>
+              {collapsed ? <ChevronRightRoundedIcon aria-hidden="true" sx={{ fontSize: 14 }} /> : <ChevronLeftRoundedIcon aria-hidden="true" sx={{ fontSize: 14 }} />}
+            </IconButton>
           </Tooltip>
         ) : null}
       </Stack>

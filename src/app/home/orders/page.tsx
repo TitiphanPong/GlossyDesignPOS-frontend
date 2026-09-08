@@ -477,7 +477,7 @@ export default function OrderManagementPage() {
     outstandingPaymentFilter !== 'all' ||
     paymentMethodFilter !== 'all' ||
     taxInvoiceFilter !== 'all' ||
-    sort !== 'newest';
+    sort !== 'order_number_desc';
   const resetFilters = () => {
     setSearch('');
     setMonthFilter('all');
@@ -488,7 +488,7 @@ export default function OrderManagementPage() {
     setOutstandingPaymentFilter('all');
     setPaymentMethodFilter('all');
     setTaxInvoiceFilter('all');
-    setSort('newest');
+    setSort('order_number_desc');
   };
 
   const orderTableColumns: DataTableColumn<OrderRow>[] = [
@@ -628,9 +628,11 @@ export default function OrderManagementPage() {
             </IconButton>
           </Tooltip>
           <Tooltip title="ใบกำกับภาษี">
-            <IconButton size="small" disabled={row.taxInvoice !== 'yes'} onClick={() => printDocument(row, 'invoice')}>
-              <ReceiptRoundedIcon fontSize="small" />
-            </IconButton>
+            <span>
+              <IconButton size="small" disabled={row.taxInvoice !== 'yes'} onClick={() => printDocument(row, 'invoice')}>
+                <ReceiptRoundedIcon fontSize="small" />
+              </IconButton>
+            </span>
           </Tooltip>
           <Tooltip title="จัดการ">
             <IconButton size="small" onClick={event => openRowMenu(event, row.id)}>
@@ -786,6 +788,7 @@ export default function OrderManagementPage() {
               icon: <SortRoundedIcon sx={{ fontSize: 18, color: '#64748B' }} />,
               onChange: value => setSort(value as SortOrder),
               options: [
+                { value: 'order_number_desc', label: SORT_ORDER_LABELS.order_number_desc },
                 { value: 'newest', label: SORT_ORDER_LABELS.newest },
                 { value: 'oldest', label: SORT_ORDER_LABELS.oldest },
                 { value: 'high', label: SORT_ORDER_LABELS.high },
@@ -839,8 +842,8 @@ export default function OrderManagementPage() {
                   sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }}
                 />
               ) : null}
-              {sort !== 'newest' ? (
-                <Chip size="small" label={`เรียง: ${SORT_ORDER_LABELS[sort]}`} onDelete={() => setSort('newest')} sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }} />
+              {sort !== 'order_number_desc' ? (
+                <Chip size="small" label={`เรียง: ${SORT_ORDER_LABELS[sort]}`} onDelete={() => setSort('order_number_desc')} sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }} />
               ) : null}
             </Stack>
           ) : null}
