@@ -26,6 +26,7 @@ import {
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { heroPrimaryButtonSx } from '../components/AdminHeroHeader';
 import DataTable, { DataTableSectionHeader, type DataTableColumn } from '../components/DataTable';
+import { uiCardSx } from '../components/adminUi';
 import { fetchCurrentAdminRole, type AdminRole } from '@/lib/admin-capabilities';
 import { fetchApiJson } from '@/lib/api';
 import {
@@ -276,10 +277,12 @@ export default function StockPage() {
               id={`stock-item-${item._id}`}
               variant="outlined"
               sx={{
-                borderRadius: 3,
+                ...uiCardSx,
                 opacity: item.active ? 1 : 0.65,
-                borderColor: focusedItemId === item._id ? 'warning.main' : undefined,
-                boxShadow: focusedItemId === item._id ? '0 0 0 3px rgba(237, 108, 2, 0.12)' : undefined,
+                ...(focusedItemId === item._id && {
+                  borderColor: 'warning.main',
+                  boxShadow: '0 0 0 3px rgba(237, 108, 2, 0.12)',
+                }),
               }}
             >
               <CardContent>
@@ -312,7 +315,7 @@ export default function StockPage() {
         </Box>
         {!loading && items.length === 0 && <Typography color="text.secondary" textAlign="center" sx={{ py: 6 }}>ไม่พบรายการสต็อก</Typography>}
 
-        <Card variant="outlined" sx={{ borderRadius: 3 }}>
+        <Card sx={uiCardSx}>
           <CardContent>
             <Typography variant="h6" fontWeight={800}>วัสดุที่เคลื่อนไหวล่าสุด</Typography>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>ดูว่าวัสดุใดมีการรับเข้า เบิกใช้ หรือปรับยอดล่าสุด</Typography>
@@ -329,7 +332,7 @@ export default function StockPage() {
           </CardContent>
         </Card>
 
-        <Card variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+        <Card sx={{ ...uiCardSx, overflow: 'hidden' }}>
           <DataTableSectionHeader
             title="ประวัติการเคลื่อนไหวสต็อกทั้งหมด"
             subtitle={`${movementTotal.toLocaleString('th-TH')} รายการตามตัวกรองล่าสุด`}

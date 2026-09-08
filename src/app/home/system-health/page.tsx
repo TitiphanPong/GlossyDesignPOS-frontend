@@ -20,6 +20,7 @@ import AdminHeroHeader, {
   heroUtilityButtonSx,
 } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
+import { uiCardSx } from '../components/adminUi';
 import { fetchApiJson } from '@/lib/api';
 import {
   mapSystemHealthState,
@@ -196,7 +197,7 @@ export default function SystemHealthPage() {
             <Card
               key={item.key}
               variant="outlined"
-              sx={{ borderRadius: 4, borderColor: '#E5E7EB' }}>
+              sx={uiCardSx}>
               <CardContent sx={{ p: '22px !important' }}>
                 <Stack direction="row" justifyContent="space-between" alignItems="center" spacing={2}>
                   <Stack direction="row" spacing={1.5} alignItems="center">

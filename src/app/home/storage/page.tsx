@@ -47,6 +47,7 @@ import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import axios from 'axios';
 import JobTimelineCard, { type JobTimelineCardItem } from '../components/JobTimelineCard';
 import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
+import AdminPageContainer from '../components/AdminPageContainer';
 import { commonButtonSx } from '../components/adminUi';
 import { getApiBaseUrl, isMissingApiBaseError } from '../../../lib/api';
 import { normalizeRecord, type StorageRow, type StorageStatus, type UploadApiRecord } from './normalizers';
@@ -672,14 +673,7 @@ export default function StoragePage() {
   const drawerBusy = Boolean(activeRecord && (drawerSaving || activeRecord.sourceIds.some(sourceId => persistingIds.includes(sourceId))));
 
   return (
-    <Box
-      sx={{
-        px: { xs: 2, md: 3.2, lg: 4.3 },
-        py: { xs: 2.5, md: 3.5 },
-        minHeight: '100vh',
-        background: 'radial-gradient(circle at 10% 6%, #EEF4FF 0%, #F7FAFF 40%, #FBFCFF 100%)',
-        fontFamily: 'var(--font-ui)',
-      }}>
+    <AdminPageContainer>
       <Stack spacing={2.5}>
         <StorageOverview
           stats={stats}
@@ -1205,6 +1199,6 @@ export default function StoragePage() {
           </Stack>
         ) : null}
       </GlossyDetailDrawer>
-    </Box>
+    </AdminPageContainer>
   );
 }

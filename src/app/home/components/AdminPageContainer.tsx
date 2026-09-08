@@ -40,7 +40,7 @@ export default function AdminPageContainer({ title, subtitle, headerActions, chi
                 fontWeight: 700,
                 fontSize: { xs: '2rem', md: '2.35rem' },
                 lineHeight: 1.2,
-                color: '#000',
+                color: 'text.primary',
               }}>
               {title}
             </Typography>
@@ -51,7 +51,7 @@ export default function AdminPageContainer({ title, subtitle, headerActions, chi
                   mt: 0.7,
                   fontSize: { xs: '1.05rem', md: '1.18rem' },
                   lineHeight: 1.45,
-                  color: '#000',
+                  color: 'text.secondary',
                 }}>
                 {subtitle}
               </Typography>

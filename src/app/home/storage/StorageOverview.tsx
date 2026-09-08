@@ -7,6 +7,7 @@ import PendingActionsRoundedIcon from '@mui/icons-material/PendingActionsRounded
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
 import AdminHeroHeader, { heroSecondaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
+import { uiCardSx } from '../components/adminUi';
 import { MissingApiConfigState } from '../components/dashboardUi';
 
 export type StorageStats = {
@@ -31,10 +32,8 @@ function StatCard({ title, value, subtitle, icon, tone }: Readonly<{ title: stri
   return (
     <Card
       sx={{
-        borderRadius: 4.5,
-        border: '1px solid #E8EDF5',
-        boxShadow: '0 12px 30px rgba(13, 30, 64, 0.07)',
-        background: `linear-gradient(140deg, ${alpha(tone, 0.1)} 0%, #FFFFFF 46%, #FFFFFF 100%)`,
+        ...uiCardSx,
+        background: `linear-gradient(140deg, ${alpha(tone, 0.08)} 0%, #FFFFFF 46%, #FFFFFF 100%)`,
       }}>
       <CardContent sx={{ p: 2.35 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">

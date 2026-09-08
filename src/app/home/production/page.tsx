@@ -43,6 +43,7 @@ import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import AdminHeroHeader, { heroPrimaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
+import { uiCardSx } from '../components/adminUi';
 import DataTable, { type DataTableColumn } from '../components/DataTable';
 import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
 import {
@@ -120,7 +121,7 @@ function ProductionCard({
   const next = nextProductionStage(job.stage);
 
   return (
-    <Card variant="outlined" sx={{ borderRadius: 3, borderColor: job.isOverdue ? 'error.light' : 'divider', overflow: 'hidden' }}>
+    <Card sx={{ ...uiCardSx, borderColor: job.isOverdue ? 'error.light' : 'divider', overflow: 'hidden' }}>
       <CardActionArea onClick={() => onOpen(job)} sx={{ textAlign: 'left' }}>
         <CardContent>
           <Stack spacing={1.2}>
@@ -291,7 +292,7 @@ function JobTicketDrawer({
       )}>
       <Stack spacing={2}>
             {error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : null}
-            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+            <Card sx={uiCardSx}>
               <CardContent>
                 <Stack spacing={1}>
                   <Typography fontWeight={800}>สเปกงานผลิต</Typography>
@@ -306,7 +307,7 @@ function JobTicketDrawer({
               </CardContent>
             </Card>
 
-            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+            <Card sx={uiCardSx}>
               <CardContent>
                 <Stack spacing={1.25}>
                   <Typography fontWeight={800}>ผู้รับผิดชอบ</Typography>
@@ -330,7 +331,7 @@ function JobTicketDrawer({
               </CardContent>
             </Card>
 
-            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+            <Card sx={uiCardSx}>
               <CardContent>
                 <Stack spacing={1.25}>
                   <Typography fontWeight={800}>ไฟล์ลูกค้า</Typography>
@@ -352,7 +353,7 @@ function JobTicketDrawer({
               </CardContent>
             </Card>
 
-            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+            <Card sx={uiCardSx}>
               <CardContent>
                 <Stack spacing={1.25}>
                   <Typography fontWeight={800}>โน้ตภายใน</Typography>
@@ -364,7 +365,7 @@ function JobTicketDrawer({
               </CardContent>
             </Card>
 
-            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+            <Card sx={uiCardSx}>
               <CardContent>
                 <Typography fontWeight={800} sx={{ mb: 1.25 }}>ประวัติขั้นตอน</Typography>
                 <Stack spacing={1} divider={<Divider flexItem />}>
@@ -378,7 +379,7 @@ function JobTicketDrawer({
               </CardContent>
             </Card>
 
-            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+            <Card sx={uiCardSx}>
               <CardContent>
                 <Stack spacing={1}>
                   <Typography fontWeight={800}>วัสดุ / BOM</Typography>
@@ -830,7 +831,7 @@ export default function ProductionPage() {
 
         {error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : null}
 
-        <Card variant="outlined" sx={{ borderRadius: 3 }}>
+        <Card sx={uiCardSx}>
           <CardContent>
             <Stack spacing={1.5}>
               <TextField
@@ -916,7 +917,7 @@ export default function ProductionPage() {
         ) : null}
 
         {jobs.length > 0 && view === 'list' ? (
-          <Card variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+          <Card sx={{ ...uiCardSx, overflow: 'hidden' }}>
             <DataTable
               sectionHeader={{
                 title: 'รายการงานผลิตทั้งหมด',

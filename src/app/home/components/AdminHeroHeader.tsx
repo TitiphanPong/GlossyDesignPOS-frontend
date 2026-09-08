@@ -2,7 +2,7 @@
 
 import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
-import { commonButtonSx } from './adminUi';
+import { adminSurface, commonButtonSx } from './adminUi';
 import type { ReactNode } from 'react';
 import { formatAdminHeaderDate, type AdminHeaderDate } from '@/lib/admin-header-date';
 
@@ -74,10 +74,11 @@ export default function AdminHeroHeader({
   return (
     <Card
       sx={{
-        borderRadius: 5.6,
-        border: '1px solid #E6EDF8',
-        boxShadow: '0 20px 45px rgba(18, 45, 82, 0.08)',
-        background: 'linear-gradient(145deg, #FFFFFF 0%, #F7FAFF 100%)',
+        borderRadius: adminSurface.heroRadius,
+        border: '1px solid',
+        borderColor: 'divider',
+        boxShadow: adminSurface.cardShadow,
+        background: 'linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)',
         mb,
       }}>
       <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
@@ -85,8 +86,8 @@ export default function AdminHeroHeader({
 
         <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" spacing={2.2} alignItems={{ xs: 'stretch', md: 'flex-start' }}>
           <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
-            <Typography sx={{ color: '#101828', fontWeight: 700, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>{title}</Typography>
-            <Typography sx={{ mt: 1, color: '#475467', fontSize: { xs: 14, md: 16 } }}>{description}</Typography>
+            <Typography sx={{ color: 'text.primary', fontWeight: 700, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>{title}</Typography>
+            <Typography sx={{ mt: 1, color: 'text.secondary', fontSize: { xs: 14, md: 16 } }}>{description}</Typography>
             <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>อัปเดตล่าสุด {lastSynced}</Typography>
             <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{thaiDate}</Typography>
           </Box>
