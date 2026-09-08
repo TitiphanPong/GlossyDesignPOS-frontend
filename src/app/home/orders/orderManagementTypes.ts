@@ -36,6 +36,7 @@ export type OrderRow = {
   phoneNumber: string;
   taxId: string;
   address: string;
+  note: string;
   date: string;
   createdAt: string;
   month: string;

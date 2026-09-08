@@ -29,6 +29,7 @@ import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import CancelRoundedIcon from '@mui/icons-material/CancelRounded';
 import ReceiptLongRoundedIcon from '@mui/icons-material/ReceiptLongRounded';
+import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import PhoneRoundedIcon from '@mui/icons-material/PhoneRounded';
 import AttachMoneyRoundedIcon from '@mui/icons-material/AttachMoneyRounded';
@@ -46,7 +47,7 @@ import { commonButtonSx, statusChipSx } from '../components/adminUi';
 import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
 import type { ProductionWorkflowStatus } from '../../../lib/contracts';
 import type { ExportMenuProps, OrderDetailDrawerProps, OrderRow, RowActionsMenuProps, StatCardProps } from './orderManagementTypes';
-import { buildOrderTimelineItems, formatMoney, PAYMENT_METHOD_LABELS_TH, statusChip } from './orderManagementUtils';
+import { buildOrderTimelineItems, formatMoney, getOrderBillNote, PAYMENT_METHOD_LABELS_TH, statusChip } from './orderManagementUtils';
 
 export function StatCard({ title, value, subtitle, tone, icon }: Readonly<StatCardProps>) {
   return (
@@ -253,6 +254,37 @@ function OrderInfoCard({ order, isEditing }: Readonly<{ order: OrderRow; isEditi
             sx={{ alignSelf: 'flex-start', mt: 0.4, borderRadius: 2.5, textTransform: 'none', fontWeight: 700 }}>
             ดูไฟล์ลูกค้าที่เชื่อมกับ Order
           </Button>
+        </Stack>
+      </CardContent>
+    </Card>
+  );
+}
+
+function BillNoteCard({ order }: Readonly<{ order: OrderRow }>) {
+  const billNote = getOrderBillNote(order.note);
+  if (!billNote) return null;
+
+  return (
+    <Card sx={{ borderRadius: 3.8, border: '1px solid #DCE5F1', boxShadow: 'none', bgcolor: '#F8FAFC' }}>
+      <CardContent sx={{ p: 2 }}>
+        <Stack spacing={1.1}>
+          <Stack direction="row" alignItems="center" spacing={1}>
+            <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#52657C', 0.12), color: '#52657C' }}>
+              <DescriptionRoundedIcon sx={{ fontSize: 18 }} />
+            </Avatar>
+            <Typography sx={{ fontWeight: 700 }}>หมายเหตุของบิล</Typography>
+          </Stack>
+          <Typography
+            sx={{
+              color: '#334155',
+              fontSize: 13.5,
+              lineHeight: 1.7,
+              whiteSpace: 'pre-wrap',
+              overflowWrap: 'anywhere',
+              wordBreak: 'break-word',
+            }}>
+            {billNote}
+          </Typography>
         </Stack>
       </CardContent>
     </Card>
@@ -803,6 +835,7 @@ export function OrderDetailDrawer({
           <Stack spacing={isCompactDrawer ? 1.25 : 1.5}>
               <PaymentNotice order={selectedOrder} />
               <OrderInfoCard order={selectedOrder} isEditing={isEditing} />
+              <BillNoteCard order={selectedOrder} />
 
               {/*
                 <>

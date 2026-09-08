@@ -64,9 +64,11 @@ import {
   fetchOrderRows,
   formatMoney,
   formatMonthFilterLabel,
+  formatOrderNotePreview,
   formatOrderRowTime,
   formatTableCurrency,
   getCustomerInitial,
+  getOrderBillNote,
   getLoadOrdersErrorMessage,
   getPrintDocumentPath,
   mapApiOrderToRow,
@@ -495,13 +497,39 @@ export default function OrderManagementPage() {
     {
       key: 'orderNumber',
       header: 'เลขที่งาน',
-      render: row => (
-        <>
-          <Typography sx={{ display: 'inline-block', fontWeight: 700, color: '#6C4DFF', fontVariantNumeric: 'tabular-nums' }}>{row.orderNumber}</Typography>
-          <OrderKindBadge row={row} compact marginLeft={0.7} />
-          <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.vat > 0 ? 'ใบกำกับภาษี' : 'ใบเสร็จทั่วไป'}</Typography>
-        </>
-      ),
+      render: row => {
+        const billNote = getOrderBillNote(row.note);
+        const notePreview = billNote ? formatOrderNotePreview(billNote) : '';
+        return (
+          <>
+            <Stack direction="row" alignItems="center" gap={0.55} sx={{ whiteSpace: 'nowrap' }}>
+              <Typography sx={{ display: 'inline-block', fontWeight: 700, color: '#6C4DFF', fontVariantNumeric: 'tabular-nums' }}>{row.orderNumber}</Typography>
+              {billNote ? (
+                <Tooltip title={`หมายเหตุของบิล: ${notePreview}`} arrow>
+                  <Box
+                    component="span"
+                    aria-label={`มีหมายเหตุของบิล: ${notePreview}`}
+                    sx={{
+                      width: 22,
+                      height: 22,
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderRadius: 1.5,
+                      color: '#52657C',
+                      bgcolor: '#F1F5F9',
+                      flexShrink: 0,
+                    }}>
+                    <DescriptionRoundedIcon sx={{ fontSize: 14 }} />
+                  </Box>
+                </Tooltip>
+              ) : null}
+              <OrderKindBadge row={row} compact />
+            </Stack>
+            <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#9CA3AF', whiteSpace: 'nowrap' }}>{row.vat > 0 ? 'ใบกำกับภาษี' : 'ใบเสร็จทั่วไป'}</Typography>
+          </>
+        );
+      },
     },
     {
       key: 'customer',

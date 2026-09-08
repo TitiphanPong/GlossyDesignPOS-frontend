@@ -48,6 +48,17 @@ export const ORDER_TABLE_PAYMENT_LABEL: Record<PaymentMethod, string> = {
   promptpay: PAYMENT_METHOD_LABELS_TH.promptpay,
 };
 
+export function getOrderBillNote(note: string): string | null {
+  const normalized = note.trim();
+  return normalized && normalized !== '-' ? normalized : null;
+}
+
+export function formatOrderNotePreview(note: string, maxLength = 120): string {
+  const normalized = getOrderBillNote(note)?.replace(/\s+/g, ' ') ?? '';
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, Math.max(0, maxLength - 1)).trimEnd()}…`;
+}
+
 export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
   const createdAt = order.createdAt || dayjs().toISOString();
   const saleDate = order.saleDate || createdAt;
@@ -99,6 +110,7 @@ export function mapApiOrderToRow(order: NormalizedOrder): OrderRow {
     phoneNumber: order.phoneNumber || '-',
     taxId: order.taxId || '-',
     address: order.address || '-',
+    note: order.note,
     date: saleDate,
     createdAt,
     month: dayjs(saleDate).format('YYYY-MM'),
