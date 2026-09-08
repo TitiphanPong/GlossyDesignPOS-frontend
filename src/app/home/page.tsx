@@ -496,8 +496,7 @@ export default function DashboardPage() {
   ];
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: '#F8FAFC' }}>
-      <AdminPageContainer>
+    <AdminPageContainer>
         <AdminHeroHeader
           title="Dashboard"
           description="ดูงานที่ต้องจัดการตอนนี้ และภาพรวมยอดขายตามช่วงเวลาที่เลือก"
@@ -555,7 +554,6 @@ export default function DashboardPage() {
         <Box sx={{ maxWidth: { lg: '50%' } }}>
           <OutstandingCard summary={summary} />
         </Box>
-      </AdminPageContainer>
-    </Box>
+    </AdminPageContainer>
   );
 }

@@ -4,6 +4,9 @@ export const adminSurface = {
   pageMaxWidth: '1600px',
   sectionGap: 2.5,
   cardRadius: 3,
+  panelRadius: 3,
+  filterRadius: 4,
+  heroRadius: 4,
   cardPadding: { xs: 1.75, md: 2.25 },
   cardBorder: '1px solid',
   cardBorderColor: 'divider',
@@ -36,6 +39,14 @@ export const interactiveCardSx: SxProps<Theme> = {
 export const topActionBarSx: SxProps<Theme> = {
   ...uiCardSx,
   p: adminSurface.cardPadding,
+};
+
+export const outlinedPanelSx: SxProps<Theme> = {
+  borderRadius: adminSurface.panelRadius,
+  border: '1px solid',
+  borderColor: 'divider',
+  boxShadow: 'none',
+  bgcolor: 'background.paper',
 };
 
 export const sectionTitleSx: SxProps<Theme> = {

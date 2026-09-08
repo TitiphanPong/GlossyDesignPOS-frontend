@@ -104,10 +104,8 @@ function PosStatCard({ title, value, subtitle, tone, icon }: Readonly<PosStatCar
   return (
     <Card
       sx={{
-        borderRadius: 4,
-        border: '1px solid #E8EDF5',
-        boxShadow: '0 12px 28px rgba(13, 30, 64, 0.07)',
-        background: `linear-gradient(140deg, ${alpha(tone, 0.1)} 0%, #FFFFFF 45%, #FFFFFF 100%)`,
+        ...uiCardSx,
+        background: `linear-gradient(140deg, ${alpha(tone, 0.08)} 0%, #FFFFFF 45%, #FFFFFF 100%)`,
       }}>
       <CardContent sx={{ p: 2.25 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">

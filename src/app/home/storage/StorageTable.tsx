@@ -8,6 +8,7 @@ import MoreHorizRoundedIcon from '@mui/icons-material/MoreHorizRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import DataTable, { type DataTableColumn } from '../components/DataTable';
+import { uiCardSx } from '../components/adminUi';
 import type { StorageRow, StorageStatus } from './normalizers';
 
 type StorageTableProps = {
@@ -116,7 +117,7 @@ export default function StorageTable(props: Readonly<StorageTableProps>) {
   ];
 
   return (
-    <Card sx={{ borderRadius: 4.5, border: '1px solid #E7EDF8', boxShadow: '0 12px 30px rgba(15, 37, 74, 0.08)', overflow: 'hidden', background: '#FFFFFF' }}>
+    <Card sx={{ ...uiCardSx, overflow: 'hidden' }}>
       <DataTable
         sectionHeader={{
           title: 'รายการไฟล์ทั้งหมด',

@@ -9,6 +9,7 @@ import ClearRoundedIcon from '@mui/icons-material/ClearRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import { adminSurface, uiCardSx } from './adminUi';
 
 export type DatePreset = 'all' | 'today' | 'last7' | 'last30' | 'month' | 'custom';
 export type DatePresetOption = Exclude<DatePreset, 'custom'>;
@@ -240,10 +241,9 @@ export default function ReportFilterPanel({
   return (
     <Card
       sx={{
-        borderRadius: 5,
-        border: '1px solid #E2E8F0',
+        ...uiCardSx,
+        borderRadius: adminSurface.filterRadius,
         boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
-        background: '#FFFFFF',
       }}>
       <CardContent sx={{ p: { xs: 1.5, md: 2.25 } }}>
         <Stack spacing={1.5}>

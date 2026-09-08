@@ -43,6 +43,7 @@ import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { heroPrimaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
+import { uiCardSx } from '../components/adminUi';
 import { fetchApiJson } from '@/lib/api';
 import { normalizeStaffUsers, type StaffRole as Role, type StaffUser } from './staffUsers';
 
@@ -58,7 +59,7 @@ type AuditEvent = {
 
 const roleLabels: Record<Role, string> = { staff: 'พนักงาน', manager: 'ผู้จัดการ', admin: 'ผู้ดูแลระบบ' };
 const roleColors: Record<Role, 'default' | 'primary' | 'secondary'> = { staff: 'default', manager: 'secondary', admin: 'primary' };
-const cardSx = { borderRadius: '22px', border: '1px solid #E5E7EB', boxShadow: '0 12px 32px rgba(15, 23, 42, 0.06)' };
+const cardSx = uiCardSx;
 
 const actionPresentation: Record<string, { title: string; description: string; color: string }> = {
   'auth.login.success': { title: 'เข้าสู่ระบบสำเร็จ', description: 'ยืนยันตัวตนและเริ่มใช้งานระบบ', color: '#10B981' },

@@ -22,6 +22,7 @@ import PublishRoundedIcon from '@mui/icons-material/PublishRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import AdminPageContainer from '@/app/home/components/AdminPageContainer';
 import AdminHeroHeader from '@/app/home/components/AdminHeroHeader';
+import { uiCardSx } from '@/app/home/components/adminUi';
 import DocumentServiceConfigurator from '../../quick-sale-v2/DocumentServiceConfigurator';
 import { fetchQuickProductsForAdmin } from '@/lib/products';
 import type { Product } from '@/lib/contracts';
@@ -186,7 +187,7 @@ export default function QuickSaleV2SettingsPage() {
         {notice ? <Alert severity="success">{notice}</Alert> : null}
         {error ? <Alert severity="error">{error}</Alert> : null}
 
-        <Paper variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+        <Paper sx={{ ...uiCardSx, overflow: 'hidden' }}>
           <Box sx={{ p: 2 }}>
             <Stack direction={{ xs: 'column', md: 'row' }} justifyContent="space-between" gap={1.5} alignItems={{ md: 'center' }}>
               <Box>
@@ -218,7 +219,7 @@ export default function QuickSaleV2SettingsPage() {
         </Paper>
 
         {loading ? (
-          <Paper variant="outlined" sx={{ borderRadius: 3 }}>
+          <Paper sx={uiCardSx}>
             <Stack alignItems="center" sx={{ py: 7 }}><CircularProgress /></Stack>
           </Paper>
         ) : null}
@@ -229,7 +230,7 @@ export default function QuickSaleV2SettingsPage() {
             <Typography variant="body2" color="text.secondary">
               Pilot นี้มี Service Family เดียว จึงล็อกลำดับไว้ที่ 1 ก่อน เมื่อเพิ่มหลาย Family ค่อยเปิด drag/drop โดยไม่เปลี่ยน contract ของ V1
             </Typography>
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+            <Paper sx={{ ...uiCardSx, p: 2 }}>
               <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1.5} alignItems={{ sm: 'center' }}>
                 <Stack direction="row" gap={1.5} alignItems="center">
                   <Box sx={{ width: 38, height: 38, borderRadius: 2, bgcolor: 'action.hover', display: 'grid', placeItems: 'center', fontWeight: 900 }}>1</Box>
@@ -247,7 +248,7 @@ export default function QuickSaleV2SettingsPage() {
                 </Stack>
               </Stack>
             </Paper>
-            <Paper variant="outlined" sx={{ p: 2, borderRadius: 3 }}>
+            <Paper sx={{ ...uiCardSx, p: 2 }}>
               <Stack spacing={1.5}>
                 <Box>
                   <Typography fontWeight={800}>ค่าเริ่มต้นเมื่อเปิดงานเอกสาร</Typography>
@@ -297,7 +298,7 @@ export default function QuickSaleV2SettingsPage() {
               </Typography>
             </Box>
             {WORK_TYPES.map(workType => (
-              <Paper key={workType.value} variant="outlined" sx={{ borderRadius: 3, overflow: 'hidden' }}>
+              <Paper key={workType.value} sx={{ ...uiCardSx, overflow: 'hidden' }}>
                 <Box sx={{ px: 2, py: 1.5, bgcolor: 'action.hover' }}>
                   <Typography fontWeight={800}>{workType.label}</Typography>
                 </Box>

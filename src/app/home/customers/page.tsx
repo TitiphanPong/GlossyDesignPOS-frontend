@@ -24,6 +24,7 @@ import {
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { heroPrimaryButtonSx } from '../components/AdminHeroHeader';
 import DataTable, { type DataTableColumn } from '../components/DataTable';
+import { uiCardSx } from '../components/adminUi';
 import { fetchCustomerDetail, fetchCustomersPage, getCustomerPhoneNumbers, type CustomerDetail, type CustomerProfile } from '@/lib/customers';
 import CustomerCreateDialog from '@/components/customers/CustomerCreateDialog';
 import CustomerDetailDrawer from '@/components/customers/CustomerDetailDrawer';
@@ -252,7 +253,7 @@ export default function CustomersPage() {
         </Alert>
       ) : null}
 
-      <Card variant="outlined" sx={{ mb: 1.5, borderRadius: 3.5, borderColor: '#E5EAF2', boxShadow: 'none' }}>
+      <Card sx={{ ...uiCardSx, mb: 1.5 }}>
         <CardContent sx={{ p: { xs: 1.5, sm: 1.75 }, '&:last-child': { pb: { xs: 1.5, sm: 1.75 } } }}>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.1} alignItems={{ xs: 'stretch', md: 'center' }}>
             <TextField
@@ -277,7 +278,7 @@ export default function CustomersPage() {
         </CardContent>
       </Card>
 
-      <Card variant="outlined" sx={{ display: { xs: 'none', lg: 'block' }, borderRadius: 3.5, borderColor: '#E5EAF2', boxShadow: 'none' }}>
+      <Card sx={{ ...uiCardSx, display: { xs: 'none', lg: 'block' } }}>
         <DataTable
           sectionHeader={{
             title: 'รายการลูกค้าทั้งหมด',
@@ -299,7 +300,7 @@ export default function CustomersPage() {
           const phones = getCustomerPhoneNumbers(customer);
           const branch = branchLabel(customer);
           return (
-            <Card key={customer._id} variant="outlined" sx={{ borderRadius: 3.25, borderColor: '#E5EAF2', boxShadow: 'none' }}>
+            <Card key={customer._id} sx={uiCardSx}>
               <CardContent sx={{ p: 1.65, '&:last-child': { pb: 1.65 } }}>
                 <Stack spacing={1.15}>
                   <Stack direction="row" justifyContent="space-between" gap={1.2} alignItems="flex-start">
