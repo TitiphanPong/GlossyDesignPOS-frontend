@@ -8,6 +8,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import TvRoundedIcon from '@mui/icons-material/TvRounded';
 import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Stack, Typography } from '@mui/material';
 import { QRCodeSVG } from 'qrcode.react';
+import { heroSecondaryButtonSx } from '@/app/home/components/AdminHeroHeader';
 import {
   ensureCustomerDisplaySession,
   getCustomerDisplayPairingUrl,
@@ -86,7 +87,7 @@ export default function CustomerDisplayPairingButton() {
 
   return (
     <>
-      <Button variant="outlined" startIcon={<TvRoundedIcon />} onClick={() => void preparePairing()}>
+      <Button variant="outlined" startIcon={<TvRoundedIcon />} onClick={() => void preparePairing()} sx={heroSecondaryButtonSx}>
         จอลูกค้า
       </Button>
       <Dialog open={open} onClose={() => setOpen(false)} fullWidth maxWidth="sm">

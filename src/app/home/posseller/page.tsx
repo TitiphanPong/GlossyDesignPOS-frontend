@@ -18,7 +18,7 @@ import SuccessModal from './components/successModal';
 import CustomerInfoModal from './components/customerInfoModal';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
-import AdminHeroHeader, { heroOutlineButtonSx } from '../components/AdminHeroHeader';
+import AdminHeroHeader, { heroSecondaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
 import { MissingApiConfigState } from '../components/dashboardUi';
 import { isMissingApiBaseError } from '../../../lib/api';
 import { buildPendingOrderDraft, PENDING_ORDER_KEY, persistPendingOrderDraft } from '../../../lib/pending-order';
@@ -267,12 +267,14 @@ export default function SellPage() {
         title="Cashier"
         description="หน้าขายหน้าร้านสำหรับแคชเชียร์ ใช้งานเร็ว และจัดการคำสั่งซื้ออย่างเป็นระบบ"
         lastSyncedAt={lastSyncedAt}
-        actions={
+        utilityActions={
+          <Button onClick={() => void loadProducts(true)} startIcon={<RefreshRoundedIcon />} variant="text" disabled={loading} sx={heroUtilityButtonSx}>
+            {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
+          </Button>
+        }
+        secondaryActions={
           <>
-            <Button onClick={() => void loadProducts(true)} startIcon={<RefreshRoundedIcon />} variant="outlined" disabled={loading} sx={heroOutlineButtonSx}>
-              {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
-            </Button>
-            <Button component={Link} href="/home/orders" startIcon={<ReceiptLongRoundedIcon />} variant="outlined" sx={heroOutlineButtonSx}>
+            <Button component={Link} href="/home/orders" startIcon={<ReceiptLongRoundedIcon />} variant="outlined" sx={heroSecondaryButtonSx}>
               ดูรายการงาน
             </Button>
             <CustomerDisplayPairingButton />

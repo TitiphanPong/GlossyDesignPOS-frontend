@@ -204,6 +204,8 @@ export type ReportFilterPanelProps = {
   onSearchChange: (value: string) => void;
   searchPlaceholder?: string;
   filters?: ReadonlyArray<ReportFilterSelectConfig>;
+  /** Keeps search and filters on the same desktop row when no date panel is present. */
+  inlineFilters?: boolean;
   /** Extra controls rendered at the end of the filter row (e.g. a free-text filter). */
   extraFilters?: React.ReactNode;
   dateRange?: ReportDateRangeConfig;
@@ -223,6 +225,7 @@ export default function ReportFilterPanel({
   onSearchChange,
   searchPlaceholder = 'ค้นหา',
   filters = [],
+  inlineFilters = false,
   extraFilters,
   dateRange,
   dateSlot,
@@ -232,6 +235,7 @@ export default function ReportFilterPanel({
   children,
 }: Readonly<ReportFilterPanelProps>) {
   const hasDateColumn = Boolean(dateRange || dateSlot);
+  const useInlineFilters = inlineFilters && !hasDateColumn;
 
   return (
     <Card
@@ -266,10 +270,13 @@ export default function ReportFilterPanel({
           <Box
             sx={{
               display: 'grid',
-              gridTemplateColumns: { xs: '1fr', lg: hasDateColumn ? 'minmax(0, 1.7fr) minmax(360px, 1fr)' : '1fr' },
-              gridTemplateRows: { xs: 'auto', lg: 'auto auto' },
+              gridTemplateColumns: {
+                xs: '1fr',
+                lg: useInlineFilters ? 'minmax(0, 1fr) auto' : hasDateColumn ? 'minmax(0, 1.7fr) minmax(360px, 1fr)' : '1fr',
+              },
+              gridTemplateRows: { xs: 'auto', lg: useInlineFilters ? 'auto' : 'auto auto' },
               gap: { xs: 1.5, lg: 2 },
-              alignItems: 'stretch',
+              alignItems: useInlineFilters ? 'end' : 'stretch',
             }}>
             <TextField
               size="small"
@@ -316,8 +323,8 @@ export default function ReportFilterPanel({
                   flexWrap: 'wrap',
                   gap: 1,
                   justifyContent: { xs: 'stretch', sm: 'flex-end' },
-                  gridColumn: { xs: 'auto', lg: 1 },
-                  gridRow: { xs: 'auto', lg: 2 },
+                  gridColumn: { xs: 'auto', lg: useInlineFilters ? 2 : 1 },
+                  gridRow: { xs: 'auto', lg: useInlineFilters ? 1 : 2 },
                 }}>
                 {filters.map(filter => (
                   <FormControl key={filter.id} size="small" sx={{ minWidth: { xs: '100%', sm: filter.minWidth ?? 190 } }}>

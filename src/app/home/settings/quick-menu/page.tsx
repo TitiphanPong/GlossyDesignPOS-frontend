@@ -6,7 +6,7 @@ import type { DragEndEvent } from '@dnd-kit/core';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import AdminPageContainer from '../../components/AdminPageContainer';
-import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../../components/AdminHeroHeader';
+import AdminHeroHeader, { heroPrimaryButtonSx, heroUtilityButtonSx } from '../../components/AdminHeroHeader';
 import type { Product } from '@/lib/contracts';
 import {
   createQuickProduct,
@@ -270,15 +270,15 @@ export default function QuickMenuSettingsPage() {
           description="ตั้งค่าสินค้า ราคา สถานะ และลำดับการแสดงผลสำหรับหน้าขายด่วนจากจุดเดียว"
           lastSyncedAt={lastSyncedAt}
           mb={0}
-          actions={
-            <>
-              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroOutlineButtonSx}>
-                {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
-              </Button>
-              <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => openEditor(null)} sx={heroPrimaryButtonSx}>
-                เพิ่มรายการใหม่
-              </Button>
-            </>
+          utilityActions={
+            <Button variant="text" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroUtilityButtonSx}>
+              {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
+            </Button>
+          }
+          primaryAction={
+            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => openEditor(null)} sx={heroPrimaryButtonSx}>
+              เพิ่มรายการใหม่
+            </Button>
           }
         />
         <Alert

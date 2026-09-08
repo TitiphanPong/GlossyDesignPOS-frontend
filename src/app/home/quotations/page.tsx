@@ -27,8 +27,8 @@ import {
 } from '@mui/material';
 import Link from 'next/link';
 import AdminHeroHeader, {
-  heroOutlineButtonSx,
   heroPrimaryButtonSx,
+  heroUtilityButtonSx,
 } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { EmptyState } from '../components/dashboardUi';
@@ -258,11 +258,11 @@ export default function QuotationsPage() {
           lastSyncedAt={lastSynced}
           mb={0}
           notice={error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : undefined}
-          actions={
-            <>
-              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroOutlineButtonSx}>รีเฟรช</Button>
-              <Button component={Link} href="/home/quotations/new" variant="contained" startIcon={<AddRoundedIcon />} sx={heroPrimaryButtonSx}>สร้างใบเสนอราคา</Button>
-            </>
+          utilityActions={
+            <Button variant="text" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroUtilityButtonSx}>รีเฟรช</Button>
+          }
+          primaryAction={
+            <Button component={Link} href="/home/quotations/new" variant="contained" startIcon={<AddRoundedIcon />} sx={heroPrimaryButtonSx}>สร้างใบเสนอราคา</Button>
           }
         />
 

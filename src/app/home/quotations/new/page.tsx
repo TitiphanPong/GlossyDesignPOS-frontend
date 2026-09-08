@@ -4,7 +4,7 @@ import * as React from 'react';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { Button, Stack } from '@mui/material';
 import Link from 'next/link';
-import AdminHeroHeader, { heroOutlineButtonSx } from '../../components/AdminHeroHeader';
+import AdminHeroHeader, { heroSecondaryButtonSx } from '../../components/AdminHeroHeader';
 import AdminPageContainer from '../../components/AdminPageContainer';
 import QuotationBuilder from '../QuotationBuilder';
 
@@ -17,8 +17,8 @@ export default function NewQuotationPage() {
           description="สร้างเอกสารได้โดยไม่ต้องมี Order ก่อน ระบบหลังบ้านจะยืนยันราคา ส่วนลด VAT และยอดรวมทุกครั้งที่บันทึก ร่างจะได้รับเลขใบเสนอราคาเมื่อส่งครั้งแรก"
           lastSyncedAt={null}
           mb={0}
-          actions={
-            <Button component={Link} href="/home/quotations" variant="outlined" startIcon={<ArrowBackRoundedIcon />} sx={heroOutlineButtonSx}>
+          secondaryActions={
+            <Button component={Link} href="/home/quotations" variant="outlined" startIcon={<ArrowBackRoundedIcon />} sx={heroSecondaryButtonSx}>
               กลับรายการใบเสนอราคา
             </Button>
           }

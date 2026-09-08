@@ -41,7 +41,7 @@ import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import ReceiptRoundedIcon from '@mui/icons-material/ReceiptRounded';
 
 import AdminPageContainer from '../components/AdminPageContainer';
-import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
+import AdminHeroHeader, { heroPrimaryButtonSx, heroSecondaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
 import ReportFilterPanel, { DATE_PRESET_LABELS, bangkokDateParam, resolveDatePreset, type DatePreset } from '../components/ReportFilterPanel';
 import { commonButtonSx, uiCardSx } from '../components/adminUi';
 import { EmptyState, MissingApiConfigState } from '../components/dashboardUi';
@@ -658,25 +658,27 @@ export default function OrderManagementPage() {
                 </Stack>
               ) : undefined
             }
-            actions={
-              <>
-                <Button
-                  onClick={() => {
-                    void loadOrders();
-                  }}
-                  startIcon={<RefreshRoundedIcon />}
-                  variant="outlined"
-                  disabled={isLoading}
-                  sx={heroOutlineButtonSx}>
-                  {isLoading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
-                </Button>
-                <Button onClick={event => setExportAnchor(event.currentTarget)} startIcon={<FileDownloadRoundedIcon />} variant="outlined" disabled={Boolean(exporting)} sx={heroOutlineButtonSx}>
-                  {exporting ? 'กำลังสร้างรายงาน...' : 'ส่งออกรายงาน'}
-                </Button>
-                <Button component={Link} href="/home/posseller" startIcon={<AddShoppingCartRoundedIcon />} variant="contained" sx={heroPrimaryButtonSx}>
-                  สร้างรายการงานใหม่
-                </Button>
-              </>
+            utilityActions={
+              <Button
+                onClick={() => {
+                  void loadOrders();
+                }}
+                startIcon={<RefreshRoundedIcon />}
+                variant="text"
+                disabled={isLoading}
+                sx={heroUtilityButtonSx}>
+                {isLoading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
+              </Button>
+            }
+            secondaryActions={
+              <Button onClick={event => setExportAnchor(event.currentTarget)} startIcon={<FileDownloadRoundedIcon />} variant="outlined" disabled={Boolean(exporting)} sx={heroSecondaryButtonSx}>
+                {exporting ? 'กำลังสร้างรายงาน...' : 'ส่งออกรายงาน'}
+              </Button>
+            }
+            primaryAction={
+              <Button component={Link} href="/home/posseller" startIcon={<AddShoppingCartRoundedIcon />} variant="contained" sx={heroPrimaryButtonSx}>
+                สร้างรายการงานใหม่
+              </Button>
             }
             mb={0}
           />

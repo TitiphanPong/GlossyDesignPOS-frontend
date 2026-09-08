@@ -6,7 +6,7 @@ import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import PendingActionsRoundedIcon from '@mui/icons-material/PendingActionsRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import TaskAltRoundedIcon from '@mui/icons-material/TaskAltRounded';
-import AdminHeroHeader, { heroOutlineButtonSx } from '../components/AdminHeroHeader';
+import AdminHeroHeader, { heroSecondaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
 import { MissingApiConfigState } from '../components/dashboardUi';
 
 export type StorageStats = {
@@ -69,23 +69,23 @@ export default function StorageOverview(props: Readonly<StorageOverviewProps>) {
             </Stack>
           ) : undefined
         }
-        actions={
-          <>
-              <Button
-                onClick={onRefresh}
-                startIcon={<RefreshRoundedIcon />}
-                variant="outlined"
-                sx={heroOutlineButtonSx}>
-                รีเฟรช
-              </Button>
-              <Button
-                onClick={onExport}
-                startIcon={<FileDownloadDoneRoundedIcon />}
-                variant="outlined"
-                sx={heroOutlineButtonSx}>
-                ส่งออก
-              </Button>
-          </>
+        utilityActions={
+          <Button
+            onClick={onRefresh}
+            startIcon={<RefreshRoundedIcon />}
+            variant="text"
+            sx={heroUtilityButtonSx}>
+            รีเฟรช
+          </Button>
+        }
+        secondaryActions={
+          <Button
+            onClick={onExport}
+            startIcon={<FileDownloadDoneRoundedIcon />}
+            variant="outlined"
+            sx={heroSecondaryButtonSx}>
+            ส่งออก
+          </Button>
         }
       />
       <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(5, minmax(0, 1fr))' }, gap: 1.5 }}>

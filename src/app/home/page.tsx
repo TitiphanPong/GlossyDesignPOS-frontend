@@ -21,7 +21,7 @@ import { Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YA
 import { isMissingApiBaseError } from '../../lib/api';
 import { buildDashboardOrdersHref, buildDashboardProductionHref, fetchDashboardSummary, type DashboardProduct, type DashboardSummary } from '../../lib/dashboard';
 import AdminPageContainer from './components/AdminPageContainer';
-import AdminHeroHeader, { heroOutlineButtonSx } from './components/AdminHeroHeader';
+import AdminHeroHeader, { heroUtilityButtonSx } from './components/AdminHeroHeader';
 
 const cardSx = { border: '1px solid #E2E8F0', borderRadius: 3, boxShadow: '0 8px 28px rgba(15,23,42,.05)', bgcolor: '#fff' };
 const money = (value: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
@@ -502,8 +502,8 @@ export default function DashboardPage() {
           title="Dashboard"
           description="ดูงานที่ต้องจัดการตอนนี้ และภาพรวมยอดขายตามช่วงเวลาที่เลือก"
           lastSyncedAt={new Date(summary.generatedAt)}
-          actions={
-            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroOutlineButtonSx}>
+          utilityActions={
+            <Button variant="text" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroUtilityButtonSx}>
               {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
             </Button>
           }

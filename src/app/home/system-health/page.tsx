@@ -17,7 +17,7 @@ import {
   Typography,
 } from '@mui/material';
 import AdminHeroHeader, {
-  heroOutlineButtonSx,
+  heroUtilityButtonSx,
 } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { fetchApiJson } from '@/lib/api';
@@ -168,13 +168,13 @@ export default function SystemHealthPage() {
         title="System Health"
         description="ตรวจสอบการเชื่อมต่อ Frontend → Backend และ dependency ที่จำเป็น โดยไม่แสดงค่าเชื่อมต่อหรือข้อมูลลับ"
         lastSyncedAt={lastCheckedAt}
-        actions={
+        utilityActions={
           <Button
-            variant="outlined"
+            variant="text"
             startIcon={loading ? <CircularProgress size={16} /> : <RefreshRoundedIcon />}
             onClick={() => void load()}
             disabled={loading}
-            sx={heroOutlineButtonSx}>
+            sx={heroUtilityButtonSx}>
             {loading ? 'กำลังตรวจสอบ...' : 'ตรวจสอบอีกครั้ง'}
           </Button>
         }

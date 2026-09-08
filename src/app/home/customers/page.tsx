@@ -239,7 +239,7 @@ export default function CustomersPage() {
         title="ฐานลูกค้า"
         description="จัดการข้อมูลลูกค้า ประวัติการสั่งซื้อ ยอดค้าง และข้อมูลสำหรับออกเอกสาร"
         lastSyncedAt={lastSyncedAt}
-        actions={
+        primaryAction={
           <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} sx={heroPrimaryButtonSx}>
             เพิ่มลูกค้า
           </Button>

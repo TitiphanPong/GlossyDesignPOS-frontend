@@ -42,7 +42,7 @@ import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import AdminPageContainer from '../components/AdminPageContainer';
-import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../components/AdminHeroHeader';
+import AdminHeroHeader, { heroPrimaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
 import { fetchApiJson } from '@/lib/api';
 import { normalizeStaffUsers, type StaffRole as Role, type StaffUser } from './staffUsers';
 
@@ -218,15 +218,15 @@ export default function StaffManagementPage() {
           title="Management Accounts"
           description="จัดการบัญชี สิทธิ์การใช้งาน และตรวจสอบกิจกรรมสำคัญในระบบ"
           lastSyncedAt={lastSyncedAt}
-          actions={
-            <>
-              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroOutlineButtonSx}>
-                {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
-              </Button>
-              <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} sx={heroPrimaryButtonSx}>
-                เพิ่มพนักงาน
-              </Button>
-            </>
+          utilityActions={
+            <Button variant="text" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroUtilityButtonSx}>
+              {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
+            </Button>
+          }
+          primaryAction={
+            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} sx={heroPrimaryButtonSx}>
+              เพิ่มพนักงาน
+            </Button>
           }
         />
 

@@ -43,7 +43,7 @@ import {
   type Quotation,
   type QuotationConversionConflict,
 } from '@/lib/quotations';
-import AdminHeroHeader, { heroOutlineButtonSx } from '../../components/AdminHeroHeader';
+import AdminHeroHeader, { heroSecondaryButtonSx, heroUtilityButtonSx } from '../../components/AdminHeroHeader';
 import AdminPageContainer from '../../components/AdminPageContainer';
 import { uiCardSx } from '../../components/adminUi';
 import DataTable, { type DataTableColumn } from '../../components/DataTable';
@@ -198,7 +198,7 @@ export default function QuotationDetailPage() {
             description={`Revision ${quotation.revision} · Draft แก้ไขได้จนกว่าจะส่ง`}
             lastSyncedAt={quotation.updatedAt}
             mb={0}
-            actions={<Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} onClick={() => router.replace(`/home/quotations/${encodeURIComponent(quotation._id)}`)} sx={heroOutlineButtonSx}>กลับรายละเอียด</Button>}
+            secondaryActions={<Button variant="outlined" startIcon={<ArrowBackRoundedIcon />} onClick={() => router.replace(`/home/quotations/${encodeURIComponent(quotation._id)}`)} sx={heroSecondaryButtonSx}>กลับรายละเอียด</Button>}
           />
           <QuotationBuilder
             quotation={quotation}
@@ -258,11 +258,13 @@ export default function QuotationDetailPage() {
           lastSyncedAt={quotation.updatedAt}
           mb={0}
           notice={error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : undefined}
-          actions={
+          utilityActions={
+            <Button variant="text" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={acting} sx={heroUtilityButtonSx}>รีเฟรช</Button>
+          }
+          secondaryActions={
             <>
-              <Button component={Link} href="/home/quotations" variant="outlined" startIcon={<ArrowBackRoundedIcon />} sx={heroOutlineButtonSx}>กลับรายการ</Button>
-              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={acting} sx={heroOutlineButtonSx}>รีเฟรช</Button>
-              <Button component={Link} href={`/print/quotation/${encodeURIComponent(quotation._id)}`} target="_blank" variant="outlined" startIcon={<PrintRoundedIcon />} sx={heroOutlineButtonSx}>พิมพ์ / PDF</Button>
+              <Button component={Link} href="/home/quotations" variant="outlined" startIcon={<ArrowBackRoundedIcon />} sx={heroSecondaryButtonSx}>กลับรายการ</Button>
+              <Button component={Link} href={`/print/quotation/${encodeURIComponent(quotation._id)}`} target="_blank" variant="outlined" startIcon={<PrintRoundedIcon />} sx={heroSecondaryButtonSx}>พิมพ์ / PDF</Button>
             </>
           }
         />

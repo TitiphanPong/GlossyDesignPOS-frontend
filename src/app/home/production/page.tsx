@@ -41,7 +41,7 @@ import {
 } from '@mui/material';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
-import AdminHeroHeader from '../components/AdminHeroHeader';
+import AdminHeroHeader, { heroPrimaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
 import DataTable, { type DataTableColumn } from '../components/DataTable';
 import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
@@ -820,12 +820,12 @@ export default function ProductionPage() {
           title="Production Board"
           description="คุมคิวงานผลิตจากไฟล์เข้า → ผลิต → QC → พร้อมส่งมอบ โดยแยกจากสถานะการชำระเงิน"
           lastSyncedAt={lastSyncedAt}
-          actions={(
-            <Stack direction="row" spacing={1}>
-              <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)}>สร้าง Production Job</Button>
-              <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading}>รีเฟรช</Button>
-            </Stack>
-          )}
+          utilityActions={
+            <Button variant="text" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroUtilityButtonSx}>รีเฟรช</Button>
+          }
+          primaryAction={
+            <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} sx={heroPrimaryButtonSx}>สร้าง Production Job</Button>
+          }
         />
 
         {error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : null}

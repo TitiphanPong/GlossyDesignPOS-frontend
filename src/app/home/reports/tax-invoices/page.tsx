@@ -20,7 +20,7 @@ import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import WarningAmberRoundedIcon from '@mui/icons-material/WarningAmberRounded';
 import AdminPageContainer from '../../components/AdminPageContainer';
-import AdminHeroHeader, { heroOutlineButtonSx, heroPrimaryButtonSx } from '../../components/AdminHeroHeader';
+import AdminHeroHeader, { heroPrimaryButtonSx, heroSecondaryButtonSx, heroUtilityButtonSx } from '../../components/AdminHeroHeader';
 import DataTable, { type DataTableColumn } from '../../components/DataTable';
 import ReportFilterPanel from '../../components/ReportFilterPanel';
 import { uiCardSx } from '../../components/adminUi';
@@ -264,12 +264,22 @@ export default function TaxInvoiceMonthlyReportPage() {
         title="ใบกำกับภาษีรายเดือน"
         description="ตรวจความครบถ้วนของใบกำกับภาษีและรวบรวมเอกสารทั้งเดือนเพื่อส่งสำนักงานบัญชี"
         lastSyncedAt={report?.generatedAt}
-        actions={
-          <Stack direction={{ xs: 'column', sm: 'row', md: 'column', xl: 'row' }} spacing={1.1} useFlexGap sx={{ flexWrap: 'wrap', width: { xs: '100%', md: 280, xl: 'auto' } }}>
+        utilityActions={
+          <Button
+            variant="text"
+            startIcon={<RefreshRoundedIcon />}
+            sx={heroUtilityButtonSx}
+            disabled={loading}
+            onClick={() => setReloadKey(value => value + 1)}>
+            {loading ? 'กำลังรีเฟรช...' : 'รีเฟรช'}
+          </Button>
+        }
+        secondaryActions={
+          <>
             <Button
               variant="outlined"
               startIcon={<DescriptionRoundedIcon />}
-              sx={heroOutlineButtonSx}
+              sx={heroSecondaryButtonSx}
               disabled={!canDownload}
               onClick={() => void handleDownload('excel')}>
               {downloading === 'excel' ? 'กำลังสร้าง…' : 'ดาวน์โหลด Excel'}
@@ -277,20 +287,22 @@ export default function TaxInvoiceMonthlyReportPage() {
             <Button
               variant="outlined"
               startIcon={<PictureAsPdfRoundedIcon />}
-              sx={heroOutlineButtonSx}
+              sx={heroSecondaryButtonSx}
               disabled={!canDownload}
               onClick={() => void handleDownload('summary-pdf')}>
               {downloading === 'summary-pdf' ? 'กำลังสร้าง…' : 'ดาวน์โหลด PDF สรุป'}
             </Button>
-            <Button
-              variant="contained"
-              startIcon={<DownloadRoundedIcon />}
-              sx={heroPrimaryButtonSx}
-              disabled={!canDownload}
-              onClick={() => void handleDownload('invoices-pdf')}>
-              {downloading === 'invoices-pdf' ? 'กำลังสร้าง…' : 'ดาวน์โหลดใบกำกับทั้งเดือน'}
-            </Button>
-          </Stack>
+          </>
+        }
+        primaryAction={
+          <Button
+            variant="contained"
+            startIcon={<DownloadRoundedIcon />}
+            sx={heroPrimaryButtonSx}
+            disabled={!canDownload}
+            onClick={() => void handleDownload('invoices-pdf')}>
+            {downloading === 'invoices-pdf' ? 'กำลังสร้าง…' : 'ดาวน์โหลดใบกำกับทั้งเดือน'}
+          </Button>
         }
       />
 
@@ -300,6 +312,7 @@ export default function TaxInvoiceMonthlyReportPage() {
           searchValue={query}
           onSearchChange={setQuery}
           searchPlaceholder="ค้นหาเลขใบกำกับ เลขที่งาน ลูกค้า หรือเลขผู้เสียภาษี"
+          inlineFilters
           onReset={() => setQuery('')}
           resetDisabled={!query}
           resetLabel="ล้างคำค้น"
@@ -320,12 +333,7 @@ export default function TaxInvoiceMonthlyReportPage() {
               onChange: value => setPeriod(createTaxInvoicePeriod(Number(value), selectedMonth)),
               minWidth: 145,
             },
-          ]}
-          extraFilters={
-            <Button variant="outlined" startIcon={<RefreshRoundedIcon />} onClick={() => setReloadKey(value => value + 1)} disabled={loading} sx={{ alignSelf: 'flex-end', minHeight: 48, width: { xs: '100%', sm: 'auto' } }}>
-              โหลดใหม่
-            </Button>
-          }>
+          ]}>
           <Alert severity="info">
             ปุ่มดาวน์โหลดทุกปุ่มส่งออก <strong>ทั้งเดือนที่เลือก</strong> เสมอ ไม่จำกัดตามหน้าตาราง คำค้น หรือจำนวนแถวที่กำลังแสดง
           </Alert>
