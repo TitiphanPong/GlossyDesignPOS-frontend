@@ -10,7 +10,6 @@ import {
   Card,
   CardContent,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -44,6 +43,7 @@ import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { heroPrimaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
 import { adminSurface, outlinedPanelSx, uiCardSx } from '../components/adminUi';
+import { SectionLoadingState } from '../components/dashboardUi';
 import { fetchApiJson } from '@/lib/api';
 import { normalizeStaffUsers, type StaffRole as Role, type StaffUser } from './staffUsers';
 
@@ -280,10 +280,8 @@ export default function StaffManagementPage() {
             <Tab icon={<HistoryRoundedIcon />} iconPosition="start" label={`Audit log (${events.length})`} />
           </Tabs>
 
-          {loading ? (
-            <Box sx={{ minHeight: 320, display: 'grid', placeItems: 'center' }}>
-              <CircularProgress />
-            </Box>
+          {loading && users.length === 0 && events.length === 0 ? (
+            <SectionLoadingState minHeight={320} label="กำลังโหลดข้อมูลพนักงาน..." />
           ) : tab === 0 ? (
             <Stack spacing={1.5} sx={{ p: { xs: 1.5, md: 2.5 }, bgcolor: 'background.default' }}>
               {users.map(user => {

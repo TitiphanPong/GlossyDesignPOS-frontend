@@ -21,7 +21,6 @@ import {
   CardContent,
   Checkbox,
   Chip,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -44,6 +43,7 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import AdminHeroHeader, { heroPrimaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
 import AdminPageContainer from '../components/AdminPageContainer';
 import { uiCardSx } from '../components/adminUi';
+import { SectionLoadingState } from '../components/dashboardUi';
 import DataTable, { type DataTableColumn } from '../components/DataTable';
 import GlossyDetailDrawer from '@/components/drawers/GlossyDetailDrawer';
 import {
@@ -822,7 +822,7 @@ export default function ProductionPage() {
           description="คุมคิวงานผลิตจากไฟล์เข้า → ผลิต → QC → พร้อมส่งมอบ โดยแยกจากสถานะการชำระเงิน"
           lastSyncedAt={lastSyncedAt}
           utilityActions={
-            <Button variant="text" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroUtilityButtonSx}>รีเฟรช</Button>
+            <Button variant="text" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={loading} sx={heroUtilityButtonSx}>{loading && jobs.length > 0 ? 'กำลังอัปเดต...' : 'รีเฟรช'}</Button>
           }
           primaryAction={
             <Button variant="contained" startIcon={<AddRoundedIcon />} onClick={() => setCreateOpen(true)} sx={heroPrimaryButtonSx}>สร้าง Production Job</Button>
@@ -891,7 +891,7 @@ export default function ProductionPage() {
           แสดง {jobs.length.toLocaleString('th-TH')} จาก {total.toLocaleString('th-TH')} งานที่ตรงตัวกรอง
         </Typography>
 
-        {loading && jobs.length === 0 ? <Box sx={{ py: 8, display: 'grid', placeItems: 'center' }}><CircularProgress /></Box> : null}
+        {loading && jobs.length === 0 ? <SectionLoadingState minHeight={320} label="กำลังโหลด Production Board..." /> : null}
 
         {!loading && jobs.length === 0 ? (
           <Box sx={{ py: 8, textAlign: 'center' }}>

@@ -18,7 +18,6 @@ import {
   Button,
   Card,
   CardContent,
-  CircularProgress,
   Dialog,
   DialogActions,
   DialogContent,
@@ -46,6 +45,7 @@ import {
 import AdminHeroHeader, { heroSecondaryButtonSx, heroUtilityButtonSx } from '../../components/AdminHeroHeader';
 import AdminPageContainer from '../../components/AdminPageContainer';
 import { uiCardSx } from '../../components/adminUi';
+import { SectionLoadingState } from '../../components/dashboardUi';
 import DataTable, { type DataTableColumn } from '../../components/DataTable';
 import QuotationBuilder from '../QuotationBuilder';
 import {
@@ -178,7 +178,11 @@ export default function QuotationDetailPage() {
   };
 
   if (loading && !quotation) {
-    return <Box sx={{ minHeight: '70vh', display: 'grid', placeItems: 'center' }}><CircularProgress /></Box>;
+    return (
+      <AdminPageContainer>
+        <SectionLoadingState minHeight={420} label="กำลังโหลดใบเสนอราคา..." rows={5} />
+      </AdminPageContainer>
+    );
   }
 
   if (!quotation) {
@@ -259,7 +263,7 @@ export default function QuotationDetailPage() {
           mb={0}
           notice={error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : undefined}
           utilityActions={
-            <Button variant="text" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={acting} sx={heroUtilityButtonSx}>รีเฟรช</Button>
+            <Button variant="text" startIcon={<RefreshRoundedIcon />} onClick={() => void load()} disabled={acting || loading} sx={heroUtilityButtonSx}>{loading ? 'กำลังอัปเดต...' : 'รีเฟรช'}</Button>
           }
           secondaryActions={
             <>
