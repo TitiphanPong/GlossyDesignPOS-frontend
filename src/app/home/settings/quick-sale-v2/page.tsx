@@ -6,7 +6,6 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Divider,
   FormControl,
   InputLabel,
@@ -23,6 +22,7 @@ import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
 import AdminPageContainer from '@/app/home/components/AdminPageContainer';
 import AdminHeroHeader from '@/app/home/components/AdminHeroHeader';
 import { uiCardSx } from '@/app/home/components/adminUi';
+import { SectionLoadingState } from '@/app/home/components/dashboardUi';
 import DocumentServiceConfigurator from '../../quick-sale-v2/DocumentServiceConfigurator';
 import { fetchQuickProductsForAdmin } from '@/lib/products';
 import type { Product } from '@/lib/contracts';
@@ -95,7 +95,8 @@ export default function QuickSaleV2SettingsPage() {
   const [updatedAt, setUpdatedAt] = React.useState<Date | null>(null);
   const [tab, setTab] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
-  const [saving, setSaving] = React.useState(false);
+  const [savingAction, setSavingAction] = React.useState<'draft' | 'publish' | null>(null);
+  const saving = savingAction !== null;
   const [notice, setNotice] = React.useState<string | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -134,7 +135,7 @@ export default function QuickSaleV2SettingsPage() {
   };
 
   const saveDraft = async () => {
-    setSaving(true);
+    setSavingAction('draft');
     setNotice(null);
     setError(null);
     try {
@@ -147,12 +148,12 @@ export default function QuickSaleV2SettingsPage() {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'บันทึก Draft ไม่สำเร็จ');
     } finally {
-      setSaving(false);
+      setSavingAction(null);
     }
   };
 
   const publish = async () => {
-    setSaving(true);
+    setSavingAction('publish');
     setNotice(null);
     setError(null);
     try {
@@ -165,7 +166,7 @@ export default function QuickSaleV2SettingsPage() {
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Publish ไม่สำเร็จ');
     } finally {
-      setSaving(false);
+      setSavingAction(null);
     }
   };
 
@@ -202,10 +203,10 @@ export default function QuickSaleV2SettingsPage() {
               </Box>
               <Stack direction="row" gap={1} flexWrap="wrap">
                 <Button startIcon={<SaveRoundedIcon />} variant="outlined" disabled={saving || loading} onClick={() => void saveDraft()}>
-                  Save Draft
+                  {savingAction === 'draft' ? 'กำลังบันทึก...' : 'Save Draft'}
                 </Button>
                 <Button startIcon={<PublishRoundedIcon />} variant="contained" disabled={saving || loading} onClick={() => void publish()}>
-                  Publish
+                  {savingAction === 'publish' ? 'กำลัง Publish...' : 'Publish'}
                 </Button>
               </Stack>
             </Stack>
@@ -220,7 +221,7 @@ export default function QuickSaleV2SettingsPage() {
 
         {loading ? (
           <Paper sx={uiCardSx}>
-            <Stack alignItems="center" sx={{ py: 7 }}><CircularProgress /></Stack>
+            <SectionLoadingState minHeight={300} label="กำลังโหลดการตั้งค่า Quick Seller V2..." rows={4} />
           </Paper>
         ) : null}
 

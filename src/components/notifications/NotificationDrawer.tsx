@@ -7,8 +7,8 @@ import {
   Box,
   Button,
   Chip,
-  CircularProgress,
   Drawer,
+  Skeleton,
   IconButton,
   Menu,
   MenuItem,
@@ -202,6 +202,26 @@ function CompactActionRow({ row, busy, onOpen, onAcknowledge, onSnooze, onUnackn
   );
 }
 
+function NotificationLoadingState() {
+  return (
+    <Stack role="status" aria-live="polite" aria-label="กำลังตรวจสอบงาน" spacing={0.75} sx={{ flex: 1, minHeight: 0, px: 1.25, pt: 0.4, pb: 1.5 }}>
+      {Array.from({ length: 5 }, (_, index) => (
+        <Box key={`notification-loading-${index}`} sx={{ p: 1.15, borderRadius: 2.6, border: '1px solid #E2E8F0', bgcolor: '#FFFFFF' }}>
+          <Stack direction="row" gap={1} alignItems="flex-start">
+            <Skeleton variant="rounded" width={34} height={34} sx={{ flexShrink: 0 }} />
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Skeleton variant="text" width={index % 2 === 0 ? '68%' : '54%'} height={22} />
+              <Skeleton variant="text" width="88%" height={17} />
+              <Skeleton variant="text" width="38%" height={16} />
+            </Box>
+          </Stack>
+        </Box>
+      ))}
+      <Typography fontSize={11.5} color="#64748B" textAlign="center" sx={{ pt: 0.4 }}>กำลังตรวจสอบงาน...</Typography>
+    </Stack>
+  );
+}
+
 type NotificationDrawerProps = {
   open: boolean;
   onClose: () => void;
@@ -296,8 +316,8 @@ export function NotificationDrawer({
 
         {mutationError ? <Alert severity="error" sx={{ mx: 1.25, mb: 0.75, borderRadius: 2.5, py: 0 }}>{mutationError}</Alert> : null}
 
-        {isLoading ? (
-          <Stack flex={1} alignItems="center" justifyContent="center" gap={1}><CircularProgress size={26} /><Typography fontSize={12.5} color="#64748B">กำลังตรวจสอบงาน...</Typography></Stack>
+        {isLoading && notifications.length === 0 ? (
+          <NotificationLoadingState />
         ) : visible.length === 0 ? (
           <Stack flex={1} alignItems="center" justifyContent="center" textAlign="center" gap={0.8} sx={{ px: 4 }}>
             <Box sx={{ width: 52, height: 52, borderRadius: 2.75, display: 'grid', placeItems: 'center', bgcolor: '#ECFDF5', color: '#059669' }}><CheckCircleRoundedIcon sx={{ fontSize: 30 }} /></Box>

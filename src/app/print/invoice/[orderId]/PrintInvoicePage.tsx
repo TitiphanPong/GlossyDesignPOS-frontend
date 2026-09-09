@@ -2,7 +2,7 @@
 
 import { use, useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { Alert, Box, Button, CircularProgress, Drawer, Snackbar, Stack, TextField, Typography } from '@mui/material';
+import { Alert, Box, Button, Drawer, Skeleton, Snackbar, Stack, TextField, Typography } from '@mui/material';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
 import PersonOutlineRoundedIcon from '@mui/icons-material/PersonOutlineRounded';
 import SaveRoundedIcon from '@mui/icons-material/SaveRounded';
@@ -26,10 +26,28 @@ type CustomerFormValues = {
 
 function LoadingState({ documentTitle }: Readonly<{ documentTitle: string }>) {
   return (
-    <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', bgcolor: '#F8FAFC', px: 2 }}>
-      <Stack spacing={2} alignItems="center">
-        <CircularProgress size={30} sx={{ color: '#0F172A' }} />
-        <Typography sx={{ fontSize: 14, color: '#475569' }}>กำลังโหลดเอกสาร{documentTitle}...</Typography>
+    <Box role="status" aria-live="polite" aria-label={`กำลังโหลดเอกสาร${documentTitle}`} sx={{ minHeight: '100vh', bgcolor: '#EEF2F6', py: { xs: 0, sm: 2.5 }, px: { xs: 0, sm: 2 } }}>
+      <Stack spacing={2} sx={{ maxWidth: 1040, mx: 'auto' }}>
+        <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1.5} sx={{ px: { xs: 2, sm: 0 }, py: { xs: 2, sm: 0 } }}>
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width={260} height={36} />
+            <Skeleton variant="text" width={320} height={22} />
+          </Box>
+          <Stack direction="row" spacing={1}>
+            <Skeleton variant="rounded" width={112} height={38} />
+            <Skeleton variant="rounded" width={132} height={38} />
+          </Stack>
+        </Stack>
+        <Box sx={{ bgcolor: '#FFFFFF', borderRadius: { xs: 0, sm: 1.5 }, p: { xs: 2, sm: 4 }, boxShadow: { sm: '0 12px 32px rgba(15, 23, 42, 0.08)' } }}>
+          <Stack spacing={2}>
+            <Skeleton variant="text" width="36%" height={42} />
+            <Skeleton variant="text" width="54%" />
+            <Skeleton variant="rounded" height={130} />
+            <Skeleton variant="rounded" height={340} />
+            <Skeleton variant="text" width="44%" />
+          </Stack>
+        </Box>
+        <Typography sx={{ fontSize: 12, color: '#64748B', textAlign: 'center' }}>กำลังโหลดเอกสาร{documentTitle}...</Typography>
       </Stack>
     </Box>
   );

@@ -166,8 +166,6 @@ export default function QuotationsPage() {
       setLastSynced(new Date());
     } catch (loadError) {
       if (request !== requestRef.current) return;
-      setRows([]);
-      setTotal(0);
       setError(loadError instanceof Error ? loadError.message : 'โหลดรายการใบเสนอราคาไม่สำเร็จ');
     } finally {
       if (request === requestRef.current) setLoading(false);
@@ -259,7 +257,7 @@ export default function QuotationsPage() {
           mb={0}
           notice={error ? <Alert severity="error" onClose={() => setError(null)}>{error}</Alert> : undefined}
           utilityActions={
-            <Button variant="text" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroUtilityButtonSx}>รีเฟรช</Button>
+            <Button variant="text" startIcon={<RefreshRoundedIcon />} disabled={loading} onClick={() => void load()} sx={heroUtilityButtonSx}>{loading && rows.length > 0 ? 'กำลังอัปเดต...' : 'รีเฟรช'}</Button>
           }
           primaryAction={
             <Button component={Link} href="/home/quotations/new" variant="contained" startIcon={<AddRoundedIcon />} sx={heroPrimaryButtonSx}>สร้างใบเสนอราคา</Button>

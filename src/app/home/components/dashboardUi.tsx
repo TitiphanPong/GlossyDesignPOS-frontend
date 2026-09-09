@@ -169,6 +169,45 @@ export function LoadingState() {
   );
 }
 
+export function SectionLoadingState({
+  label = 'กำลังโหลดข้อมูล...',
+  rows = 4,
+  minHeight = 260,
+}: Readonly<{
+  label?: string;
+  rows?: number;
+  minHeight?: number;
+}>) {
+  return (
+    <Box
+      role="status"
+      aria-live="polite"
+      aria-label={label}
+      sx={{
+        minHeight,
+        p: { xs: 2, sm: 2.5 },
+        display: 'flex',
+        alignItems: 'stretch',
+      }}>
+      <Stack spacing={1.4} sx={{ width: '100%' }}>
+        <Stack direction="row" justifyContent="space-between" alignItems="center" gap={2}>
+          <Box sx={{ flex: 1 }}>
+            <Skeleton variant="text" width="34%" height={28} />
+            <Skeleton variant="text" width="52%" height={18} />
+          </Box>
+          <Skeleton variant="rounded" width={96} height={34} />
+        </Stack>
+        {Array.from({ length: rows }, (_, index) => (
+          <Skeleton key={`section-loading-${index}`} variant="rounded" height={52} />
+        ))}
+        <Typography variant="caption" color="text.secondary" sx={{ textAlign: 'center', pt: 0.25 }}>
+          {label}
+        </Typography>
+      </Stack>
+    </Box>
+  );
+}
+
 export function ProductGridLoadingState({ count = 8 }: Readonly<{ count?: number }>) {
   return (
     <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: 'repeat(2, minmax(140px, 1fr))', sm: 'repeat(3, minmax(180px, 1fr))', xl: 'repeat(4, minmax(180px, 1fr))' } }}>

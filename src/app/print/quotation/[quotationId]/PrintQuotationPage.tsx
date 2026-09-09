@@ -3,7 +3,7 @@
 import { use, useEffect, useState } from 'react';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import PrintRoundedIcon from '@mui/icons-material/PrintRounded';
-import { Alert, Box, Button, CircularProgress, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, Skeleton, Stack, Typography } from '@mui/material';
 import { useRouter } from 'next/navigation';
 import { fetchQuotation, type Quotation } from '@/lib/quotations';
 import { quotationMoney } from '@/app/home/quotations/quotationUi';
@@ -42,10 +42,28 @@ export function PrintQuotationPage({ params }: PrintQuotationPageProps) {
 
   if (loading) {
     return (
-      <Box sx={{ minHeight: '100vh', display: 'grid', placeItems: 'center', bgcolor: '#F4F6F8' }}>
-        <Stack spacing={1.5} alignItems="center">
-          <CircularProgress size={30} />
-          <Typography color="text.secondary">กำลังเตรียมใบเสนอราคา...</Typography>
+      <Box role="status" aria-live="polite" aria-label="กำลังเตรียมใบเสนอราคา" sx={{ minHeight: '100vh', bgcolor: '#EEF2F6', py: { xs: 0, sm: 2.5 }, px: { xs: 0, sm: 2 } }}>
+        <Stack spacing={2} sx={{ maxWidth: 1040, mx: 'auto' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} justifyContent="space-between" gap={1.5} sx={{ px: { xs: 2, sm: 0 }, py: { xs: 2, sm: 0 } }}>
+            <Box sx={{ flex: 1 }}>
+              <Skeleton variant="text" width={250} height={36} />
+              <Skeleton variant="text" width={340} height={22} />
+            </Box>
+            <Stack direction="row" spacing={1}>
+              <Skeleton variant="rounded" width={92} height={38} />
+              <Skeleton variant="rounded" width={132} height={38} />
+            </Stack>
+          </Stack>
+          <Box sx={{ bgcolor: '#FFFFFF', borderRadius: { xs: 0, sm: 1.5 }, p: { xs: 2, sm: 4 }, boxShadow: { sm: '0 12px 32px rgba(15, 23, 42, 0.08)' } }}>
+            <Stack spacing={2}>
+              <Skeleton variant="text" width="34%" height={42} />
+              <Skeleton variant="text" width="56%" />
+              <Skeleton variant="rounded" height={120} />
+              <Skeleton variant="rounded" height={340} />
+              <Skeleton variant="text" width="42%" />
+            </Stack>
+          </Box>
+          <Typography variant="caption" color="text.secondary" textAlign="center">กำลังเตรียมใบเสนอราคา...</Typography>
         </Stack>
       </Box>
     );
