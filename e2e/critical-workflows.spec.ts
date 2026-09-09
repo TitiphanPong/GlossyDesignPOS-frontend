@@ -405,10 +405,37 @@ test('keeps Quick Sale V2 backdated checkout on the shared sale-date audit contr
 });
 
 test('completes a cashier quick-sale checkout against controlled test data', async ({ page }) => {
+  test.setTimeout(60_000);
   await loginAsCashier(page);
 
   await expect(page.getByRole('button', { name: /E2E A4 Print/ })).toBeVisible();
   await page.getByRole('button', { name: /E2E A4 Print/ }).click();
+  const noteInput = page.getByRole('textbox', { name: 'หมายเหตุของบิล', exact: true });
+  await page.getByRole('button', { name: 'เพิ่มหมายเหตุของบิล' }).click();
+  await noteInput.fill('โน้ตบิลที่ล้าง');
+  await page.getByRole('button', { name: 'ล้างรายการทั้งหมด' }).click();
+  await page.getByRole('button', { name: /E2E A4 Print/ }).click();
+  await page.getByRole('button', { name: 'เพิ่มหมายเหตุของบิล' }).click();
+  await expect(noteInput).toHaveValue('');
+  await noteInput.fill('  แยกใส่ถุง 2 ชุด\nให้คุณเอมมารับแทน  ');
+  await noteInput.press('Escape');
+  await expect(noteInput).toBeHidden();
+  await expect(page.getByRole('button', { name: 'หมายเหตุของบิล', exact: true })).toBeFocused();
+
+  await page.setViewportSize({ width: 320, height: 720 });
+  await page.getByRole('button', { name: 'ดูตะกร้า' }).click();
+  await page.getByRole('button', { name: 'หมายเหตุของบิล', exact: true }).click();
+  await expect(noteInput).toHaveValue('  แยกใส่ถุง 2 ชุด\nให้คุณเอมมารับแทน  ');
+  await expect(page.getByText('บันทึกพร้อมการขาย และแสดงบนเอกสารพิมพ์ให้ลูกค้าเห็น')).toBeVisible();
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= innerWidth)).toBe(true);
+  await page.screenshot({ path: '../output/playwright/bill-note-mobile.png' });
+  await page.getByRole('button', { name: 'เสร็จ', exact: true }).click();
+  await page.getByRole('button', { name: 'ปิดตะกร้า' }).click();
+  await page.setViewportSize({ width: 1440, height: 1000 });
+  await page.getByRole('button', { name: 'หมายเหตุของบิล', exact: true }).click();
+  await expect(noteInput).toHaveValue('  แยกใส่ถุง 2 ชุด\nให้คุณเอมมารับแทน  ');
+  await page.screenshot({ path: '../output/playwright/bill-note-desktop.png' });
+  await page.getByRole('button', { name: 'เสร็จ', exact: true }).click();
   await page.getByRole('button', { name: /ชำระเงิน/ }).click();
 
   const paymentDialog = page.getByRole('dialog').filter({ hasText: 'ดำเนินการรับชำระรายการขายหน้าร้าน' });
@@ -422,6 +449,13 @@ test('completes a cashier quick-sale checkout against controlled test data', asy
 
   await expect(page.getByRole('heading', { name: 'ขายสำเร็จ' })).toBeVisible();
   await expect(page.getByText('ORD-E2E-0001', { exact: true })).toBeVisible();
+  const orderResponse = await page.request.get('/api/backend/e2e/last-order');
+  expect(orderResponse.ok()).toBe(true);
+  expect(await orderResponse.json()).toMatchObject({ note: 'แยกใส่ถุง 2 ชุด\nให้คุณเอมมารับแทน' });
+  await page.getByRole('button', { name: 'ขายรายการใหม่' }).click();
+  await page.getByRole('button', { name: /E2E A4 Print/ }).click();
+  await page.getByRole('button', { name: 'เพิ่มหมายเหตุของบิล' }).click();
+  await expect(noteInput).toHaveValue('');
 });
 
 test('keeps a historical Quick Sale Order readable with its existing QuickProduct identity', async ({ page }) => {

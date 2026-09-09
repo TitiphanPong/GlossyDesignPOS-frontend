@@ -48,6 +48,17 @@ test('receipt data uses the order number and does not synthesize VAT', () => {
   assert.equal(receiptData.issuedTime, '17:00');
 });
 
+test('bill notes are included as escaped text on receipts and tax invoices', () => {
+  const order = { ...sampleOrder, note: 'แยกใส่ถุง 2 ชุด <script>alert(1)</script>' };
+  for (const documentType of ['receipt', 'tax-invoice'] as const) {
+    assert.equal(buildInvoiceDataFromOrder(order, documentType).notes, order.note);
+    const html = renderToStaticMarkup(InvoiceDocument({ documentType, order }));
+    assert.match(html, /แยกใส่ถุง 2 ชุด/);
+    assert.match(html, /&lt;script&gt;alert\(1\)&lt;\/script&gt;/);
+    assert.doesNotMatch(html, /<script>alert\(1\)<\/script>/);
+  }
+});
+
 test('thermal delivery note hides company contact details and uses the requested document title', () => {
   const receiptData = buildInvoiceDataFromOrder(sampleOrder, 'receipt');
   const html = renderToStaticMarkup(

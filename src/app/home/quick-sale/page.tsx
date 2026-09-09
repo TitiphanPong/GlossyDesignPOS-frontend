@@ -111,6 +111,7 @@ export default function QuickSalePage() {
   const [query, setQuery] = React.useState('');
   const [category, setCategory] = React.useState('ทั้งหมด');
   const [items, setItems] = React.useState<QuickItem[]>([]);
+  const [billNote, setBillNote] = React.useState('');
   const [discountValue, setDiscountValue] = React.useState(0);
   const [discountMode, setDiscountMode] = React.useState<DiscountMode>('amount');
   const [customOpen, setCustomOpen] = React.useState(false);
@@ -373,6 +374,7 @@ export default function QuickSalePage() {
   };
   const startNew = () => {
     setItems([]);
+    setBillNote('');
     setDiscountValue(0);
     setCompleted(null);
     setReceivedAmount(0);
@@ -409,6 +411,7 @@ export default function QuickSalePage() {
         ...(entryMode === 'backdated' ? { entryMode, saleDate: new Date(`${saleDateTime}:00`).toISOString(), backdatedReason } : {}),
         salesChannel: 'quick_sale',
         ...checkoutCustomer,
+        ...(billNote.trim() ? { note: billNote.trim() } : {}),
         cart: items.map(item => ({
           ...(item.quickProductId ? { quickProductId: item.quickProductId } : {}),
           ...(item.productId ? { productId: item.productId } : {}),
@@ -484,6 +487,7 @@ export default function QuickSalePage() {
       setCheckoutOpen(false);
       setCartOpen(false);
       setItems([]);
+      setBillNote('');
       setDiscountValue(0);
     } catch (caught) {
       const message = caught instanceof Error ? caught.message : 'บันทึกการขายไม่สำเร็จ';
@@ -500,7 +504,10 @@ export default function QuickSalePage() {
 
   const cart = (
     <QuickSellerCart
+      onClose={compact ? () => setCartOpen(false) : undefined}
       items={items}
+      billNote={billNote}
+      onBillNoteChange={setBillNote}
       setItems={setItems}
       totals={totals}
       discountValue={discountValue}
