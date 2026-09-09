@@ -44,7 +44,7 @@ import {
   filterTaxInvoiceDocuments,
   formatTaxReportDate,
   formatTaxReportMoney,
-  getPreviousBangkokPeriod,
+  getCurrentBangkokPeriod,
 } from '@/lib/tax-invoice-reports';
 
 type MonthlyInvoiceFormat = 'new' | 'legacy';
@@ -249,7 +249,7 @@ const crossPeriodColumns: DataTableColumn<CrossPeriodCancellation>[] = [
 ];
 
 export default function TaxInvoiceMonthlyReportPage() {
-  const [period, setPeriod] = React.useState(() => getPreviousBangkokPeriod());
+  const [period, setPeriod] = React.useState(() => getCurrentBangkokPeriod());
   const [report, setReport] = React.useState<TaxInvoiceMonthlyReport | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [loadError, setLoadError] = React.useState<string | null>(null);

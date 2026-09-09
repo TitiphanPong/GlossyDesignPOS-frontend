@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   createTaxInvoicePeriod,
   filterTaxInvoiceDocuments,
+  getCurrentBangkokPeriod,
   getPreviousBangkokPeriod,
   type TaxInvoiceReportItem,
 } from './tax-invoice-reports';
@@ -36,6 +37,11 @@ function item(overrides: Partial<TaxInvoiceReportItem> = {}): TaxInvoiceReportIt
     ...overrides,
   };
 }
+
+test('current report period follows Asia/Bangkok', () => {
+  assert.equal(getCurrentBangkokPeriod(new Date('2026-08-31T17:30:00.000Z')), '202609');
+  assert.equal(getCurrentBangkokPeriod(new Date('2026-01-01T00:00:00.000Z')), '202601');
+});
 
 test('previous report period follows Asia/Bangkok and crosses year safely', () => {
   assert.equal(getPreviousBangkokPeriod(new Date('2026-09-01T16:30:00.000Z')), '202608');
