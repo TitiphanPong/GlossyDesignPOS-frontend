@@ -9,7 +9,7 @@ import {
   getProxyBodyLimit,
 } from './proxyPolicy';
 
-test('public upload proxy keeps the backend aggregate limit while normal commands use a smaller ingress bound', () => {
+test('public upload proxy allows the 20 MB file plus multipart metadata while normal commands use a smaller ingress bound', () => {
   assert.equal(getProxyBodyLimit(['uploads']), PUBLIC_UPLOAD_PROXY_BODY_LIMIT_BYTES);
   assert.equal(getProxyBodyLimit(['upload']), PUBLIC_UPLOAD_PROXY_BODY_LIMIT_BYTES);
   assert.equal(getProxyBodyLimit(['orders']), DEFAULT_PROXY_BODY_LIMIT_BYTES);

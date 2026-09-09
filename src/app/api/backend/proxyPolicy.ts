@@ -1,3 +1,4 @@
+// A 20 MB file needs a small envelope allowance for multipart field metadata.
 export const PUBLIC_UPLOAD_PROXY_BODY_LIMIT_BYTES = 25_000_000;
 export const DEFAULT_PROXY_BODY_LIMIT_BYTES = 5_000_000;
 export const BACKEND_PROXY_TIMEOUT_MS = 120_000;

@@ -4,7 +4,9 @@ import test from 'node:test';
 import { createUploadQueueItems, openUploadedSignedUrl, uploadPendingFiles, type UploadQueueItem } from './upload-flow';
 
 function createFile(name: string, size: number, type = 'application/pdf'): File {
-  return new File(['x'.repeat(Math.min(size, 8))], name, { type, lastModified: 1 });
+  const file = new File(['x'.repeat(Math.min(size, 8))], name, { type, lastModified: 1 });
+  Object.defineProperty(file, 'size', { value: size });
+  return file;
 }
 
 test('createUploadQueueItems validates files, skips duplicates, and advances to upload step when valid files exist', () => {
@@ -24,6 +26,35 @@ test('createUploadQueueItems validates files, skips duplicates, and advances to 
   assert.equal(result.items[0]?.file.name, 'poster.pdf');
   assert.deepEqual(result.validationMessages, ['ไฟล์ script.exe ไม่รองรับนามสกุลนี้']);
   assert.equal(result.shouldMoveToUploadStep, true);
+});
+
+test('createUploadQueueItems enforces the total batch size across existing and incoming files', () => {
+  const result = createUploadQueueItems({
+    incomingFiles: [createFile('fits.pdf', 40_000_000), createFile('over.pdf', 20_000_000)],
+    existingIds: new Set<string>(),
+    existingTotalBytes: 150_000_000,
+    maxTotalBytes: 200_000_000,
+    totalSizeValidationMessage: 'ขนาดไฟล์รวมต่อการส่งต้องไม่เกิน 200 MB',
+    buildFileId: file => `${file.name}-${file.size}-${file.lastModified}`,
+    getValidationError: () => null,
+  });
+
+  assert.deepEqual(result.items.map(item => item.file.name), ['fits.pdf']);
+  assert.deepEqual(result.validationMessages, ['ขนาดไฟล์รวมต่อการส่งต้องไม่เกิน 200 MB']);
+});
+
+test('createUploadQueueItems accepts a batch exactly at the total size limit', () => {
+  const result = createUploadQueueItems({
+    incomingFiles: [createFile('boundary.pdf', 20_000_000)],
+    existingIds: new Set<string>(),
+    existingTotalBytes: 180_000_000,
+    maxTotalBytes: 200_000_000,
+    buildFileId: file => `${file.name}-${file.size}-${file.lastModified}`,
+    getValidationError: () => null,
+  });
+
+  assert.equal(result.items.length, 1);
+  assert.deepEqual(result.validationMessages, []);
 });
 
 test('uploadPendingFiles uploads waiting and error items, preserving partial failures for retry', async () => {
