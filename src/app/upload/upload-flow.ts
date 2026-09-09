@@ -28,11 +28,17 @@ function normalizeUploadErrorMessage(error: unknown): string {
 export function createUploadQueueItems<TFile extends File>({
   incomingFiles,
   existingIds,
+  existingTotalBytes = 0,
+  maxTotalBytes = Number.POSITIVE_INFINITY,
+  totalSizeValidationMessage = 'Selected files exceed the maximum total upload size',
   buildFileId,
   getValidationError,
 }: Readonly<{
   incomingFiles: readonly TFile[];
   existingIds: ReadonlySet<string>;
+  existingTotalBytes?: number;
+  maxTotalBytes?: number;
+  totalSizeValidationMessage?: string;
   buildFileId: (file: TFile) => string;
   getValidationError: (file: TFile) => string | null;
 }>): {
@@ -43,6 +49,8 @@ export function createUploadQueueItems<TFile extends File>({
   const nextItems: UploadQueueItem<TFile>[] = [];
   const validationMessages: string[] = [];
   const seenIds = new Set(existingIds);
+  let totalBytes = existingTotalBytes;
+  let hasTotalSizeError = false;
 
   for (const file of incomingFiles) {
     const error = getValidationError(file);
@@ -56,7 +64,16 @@ export function createUploadQueueItems<TFile extends File>({
       continue;
     }
 
+    if (totalBytes + file.size > maxTotalBytes) {
+      if (!hasTotalSizeError) {
+        validationMessages.push(totalSizeValidationMessage);
+        hasTotalSizeError = true;
+      }
+      continue;
+    }
+
     seenIds.add(id);
+    totalBytes += file.size;
     nextItems.push({
       id,
       file,

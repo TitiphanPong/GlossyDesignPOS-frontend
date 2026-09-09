@@ -22,7 +22,16 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { usePathname } from 'next/navigation';
 import { closeLineLiffWindow, initializeLineUploadSession, type LineUploadSession } from '@/lib/line-liff';
 import { uploadFile, type UploadPayload } from '@/lib/upload-api';
-import { ACCEPTED_EXTENSIONS, buildAcceptAttribute, formatFileSize, getFileExtension, MAX_FILE_SIZE_LABEL, validateUploadFile } from './helpers';
+import {
+  ACCEPTED_EXTENSIONS,
+  buildAcceptAttribute,
+  formatFileSize,
+  getFileExtension,
+  MAX_FILE_SIZE_LABEL,
+  MAX_UPLOAD_BATCH_SIZE_BYTES,
+  MAX_UPLOAD_BATCH_SIZE_LABEL,
+  validateUploadFile,
+} from './helpers';
 import { createUploadQueueItems, openUploadedSignedUrl, uploadPendingFiles, type UploadQueueItem, type UploadStatus } from './upload-flow';
 
 type Step = 1 | 2 | 3;
@@ -359,6 +368,9 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
       const queueState = createUploadQueueItems({
         incomingFiles,
         existingIds: new Set(prev.map(item => item.id)),
+        existingTotalBytes: prev.reduce((sum, item) => (item.status === 'uploaded' ? sum : sum + item.file.size), 0),
+        maxTotalBytes: MAX_UPLOAD_BATCH_SIZE_BYTES,
+        totalSizeValidationMessage: `ขนาดไฟล์รวมต่อการส่งต้องไม่เกิน ${MAX_UPLOAD_BATCH_SIZE_LABEL}`,
         buildFileId,
         getValidationError,
       });
@@ -458,6 +470,12 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
       return;
     }
 
+    const pendingTotalBytes = pendingFiles.reduce((sum, item) => sum + item.file.size, 0);
+    if (pendingTotalBytes > MAX_UPLOAD_BATCH_SIZE_BYTES) {
+      openErrorModal(`ขนาดไฟล์รวมต่อการส่งต้องไม่เกิน ${MAX_UPLOAD_BATCH_SIZE_LABEL}`);
+      return;
+    }
+
     clearFeedback();
     setIsUploading(true);
 
@@ -540,8 +558,8 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
               <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-[15px]">อัปโหลดงานพิมพ์ได้เร็วขึ้น เหมาะกับทั้งงานด่วน งานเอกสาร และไฟล์พร้อมพิมพ์</p>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">รองรับไฟล์สูงสุด {MAX_FILE_SIZE_LABEL}</span>
-                <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700">อัปโหลดได้หลายไฟล์</span>
+                <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">ไฟล์ละไม่เกิน {MAX_FILE_SIZE_LABEL}</span>
+                <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700">รวมต่อครั้งไม่เกิน {MAX_UPLOAD_BATCH_SIZE_LABEL}</span>
               </div>
 
               {lineMode ? (
@@ -681,7 +699,9 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                 <p className="text-base font-semibold text-slate-800">ลากไฟล์มาวางที่นี่</p>
                 <p className="mt-1 text-sm text-slate-500">หรือกดเลือกไฟล์จากอุปกรณ์ของคุณ</p>
                 <p className="mt-3 text-xs text-slate-500">รองรับไฟล์: {ACCEPTED_EXTENSIONS.map(extension => extension.toUpperCase()).join(', ')}</p>
-                <p className="text-xs text-slate-500">ขนาดไฟล์สูงสุด {MAX_FILE_SIZE_LABEL} / ไฟล์</p>
+                <p className="text-xs text-slate-500">
+                  ขนาดสูงสุด {MAX_FILE_SIZE_LABEL} / ไฟล์ • รวมไม่เกิน {MAX_UPLOAD_BATCH_SIZE_LABEL} / ครั้ง
+                </p>
               </button>
 
               <div className="mt-4 space-y-2.5">
