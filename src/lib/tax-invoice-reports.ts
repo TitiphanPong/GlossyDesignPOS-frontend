@@ -115,6 +115,17 @@ function assertPeriod(period: string): void {
   if (month < 1 || month > 12) throw new TypeError('period contains an invalid month');
 }
 
+export function getCurrentBangkokPeriod(now = new Date()): string {
+  const parts = new Intl.DateTimeFormat('en-US', {
+    timeZone: BANGKOK_TIMEZONE,
+    year: 'numeric',
+    month: '2-digit',
+  }).formatToParts(now);
+  const year = Number(parts.find(part => part.type === 'year')?.value ?? 0);
+  const month = Number(parts.find(part => part.type === 'month')?.value ?? 0);
+  return `${String(year).padStart(4, '0')}${String(month).padStart(2, '0')}`;
+}
+
 export function getPreviousBangkokPeriod(now = new Date()): string {
   const parts = new Intl.DateTimeFormat('en-US', {
     timeZone: BANGKOK_TIMEZONE,
