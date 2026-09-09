@@ -30,19 +30,15 @@ type StorageOverviewProps = {
 
 function StatCard({ title, value, subtitle, icon, tone }: Readonly<{ title: string; value: string; subtitle: string; icon: React.ReactNode; tone: string }>) {
   return (
-    <Card
-      sx={{
-        ...uiCardSx,
-        background: `linear-gradient(140deg, ${alpha(tone, 0.08)} 0%, #FFFFFF 46%, #FFFFFF 100%)`,
-      }}>
+    <Card sx={uiCardSx}>
       <CardContent sx={{ p: 2.35 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
           <Box>
-            <Typography sx={{ color: '#64748B', fontSize: 13, fontWeight: 600 }}>{title}</Typography>
-            <Typography sx={{ mt: 0.8, fontSize: 31, lineHeight: 1.1, fontWeight: 800, color: '#0B1325' }}>{value}</Typography>
-            <Typography sx={{ mt: 0.6, color: '#8A95A7', fontSize: 11.8 }}>{subtitle}</Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 13, fontWeight: 600 }}>{title}</Typography>
+            <Typography sx={{ mt: 0.8, fontSize: 31, lineHeight: 1.1, fontWeight: 800, color: 'text.primary' }}>{value}</Typography>
+            <Typography sx={{ mt: 0.6, color: 'text.secondary', fontSize: 11.8 }}>{subtitle}</Typography>
           </Box>
-          <Box sx={{ width: 48, height: 48, borderRadius: 2.6, display: 'grid', placeItems: 'center', color: tone, bgcolor: alpha(tone, 0.14), boxShadow: `0 10px 20px ${alpha(tone, 0.2)}` }}>
+          <Box sx={{ width: 48, height: 48, borderRadius: 2.6, display: 'grid', placeItems: 'center', color: tone, bgcolor: alpha(tone, 0.14) }}>
             {icon}
           </Box>
         </Stack>
@@ -87,7 +83,7 @@ export default function StorageOverview(props: Readonly<StorageOverviewProps>) {
           </Button>
         }
       />
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(5, minmax(0, 1fr))' }, gap: 1.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', xl: 'repeat(5, minmax(0, 1fr))' }, gap: 1.5 }}>
         <StatCard title="ไฟล์ทั้งหมด" value={String(stats.totalFiles)} subtitle="จำนวนไฟล์ทั้งหมด" icon={<Inventory2RoundedIcon />} tone="#1E5EFF" />
         <StatCard title="รอดาวน์โหลด" value={String(stats.waiting)} subtitle="ไฟล์ที่รอดาวน์โหลด" icon={<PendingActionsRoundedIcon />} tone="#8993A4" />
         <StatCard title="รอดำเนินการ" value={String(stats.pending)} subtitle="รายการที่รับงานแล้ว" icon={<AutorenewRoundedIcon />} tone="#F08C00" />

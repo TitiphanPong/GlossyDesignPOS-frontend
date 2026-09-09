@@ -102,17 +102,13 @@ type PosStatCardProps = {
 
 function PosStatCard({ title, value, subtitle, tone, icon }: Readonly<PosStatCardProps>) {
   return (
-    <Card
-      sx={{
-        ...uiCardSx,
-        background: `linear-gradient(140deg, ${alpha(tone, 0.08)} 0%, #FFFFFF 45%, #FFFFFF 100%)`,
-      }}>
+    <Card sx={uiCardSx}>
       <CardContent sx={{ p: 2.25 }}>
         <Stack direction="row" justifyContent="space-between" alignItems="flex-start">
           <Box>
-            <Typography sx={{ color: '#64748B', fontSize: 12.5, fontWeight: 700 }}>{title}</Typography>
-            <Typography sx={{ mt: 0.8, color: '#0B1325', fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>{value}</Typography>
-            <Typography sx={{ mt: 0.6, color: '#8A95A7', fontSize: 11.5 }}>{subtitle}</Typography>
+            <Typography sx={{ color: 'text.secondary', fontSize: 12.5, fontWeight: 700 }}>{title}</Typography>
+            <Typography sx={{ mt: 0.8, color: 'text.primary', fontSize: 28, fontWeight: 800, lineHeight: 1.1 }}>{value}</Typography>
+            <Typography sx={{ mt: 0.6, color: 'text.secondary', fontSize: 11.5 }}>{subtitle}</Typography>
           </Box>
           <Box
             sx={{
@@ -123,7 +119,6 @@ function PosStatCard({ title, value, subtitle, tone, icon }: Readonly<PosStatCar
               placeItems: 'center',
               color: tone,
               bgcolor: alpha(tone, 0.15),
-              boxShadow: `0 10px 20px ${alpha(tone, 0.22)}`,
             }}>
             {icon}
           </Box>

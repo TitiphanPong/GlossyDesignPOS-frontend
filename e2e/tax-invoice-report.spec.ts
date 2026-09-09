@@ -18,14 +18,14 @@ test('defaults to previous Bangkok month, changes period, and downloads the whol
   await expect(page.getByText('งวดรายงาน สิงหาคม 2569')).toBeVisible();
   await expect(page.getByText('อัปเดตล่าสุด 06/09/2026 23:00', { exact: true })).toBeVisible();
   await expect(page.getByText('วันอาทิตย์ที่ 6 กันยายน พ.ศ. 2569', { exact: true })).toBeVisible();
-  await expect(page.getByText('INV-202608-001-001')).toBeVisible();
-  await expect(page.getByText('INV-202607-001-099')).toBeVisible();
+  await expect(page.getByText('INV-202608-001-001').filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByText('INV-202607-001-099').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'สาขา', exact: true })).toHaveCount(0);
   await expect(page.getByText(/ปุ่มดาวน์โหลดทุกปุ่มส่งออก/)).toContainText('ทั้งเดือนที่เลือก');
 
   const search = page.getByPlaceholder('ค้นหาเลขใบกำกับ เลขที่งาน ลูกค้า หรือเลขผู้เสียภาษี');
   await search.fill('ไม่มีรายการนี้');
-  await expect(page.getByText('ไม่พบเอกสารที่ตรงกับคำค้น')).toBeVisible();
+  await expect(page.getByText('ไม่พบเอกสารที่ตรงกับคำค้น').filter({ visible: true }).first()).toBeVisible();
 
   const excelDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'ดาวน์โหลด Excel' }).click();
@@ -37,8 +37,8 @@ test('defaults to previous Bangkok month, changes period, and downloads the whol
   await page.getByRole('combobox', { name: 'เดือน', exact: true }).click();
   await page.getByRole('option', { name: 'กันยายน' }).click();
   await expect(page.getByText('งวดรายงาน กันยายน 2569')).toBeVisible();
-  await expect(page.getByText('INV-202609-001-001')).toBeVisible();
-  await expect(page.getByText('ไม่พบการยกเลิกใบกำกับจากงวดก่อน')).toBeVisible();
+  await expect(page.getByText('INV-202609-001-001').filter({ visible: true }).first()).toBeVisible();
+  await expect(page.getByText('ไม่พบการยกเลิกใบกำกับจากงวดก่อน').filter({ visible: true }).first()).toBeVisible();
 
   const summaryDownload = page.waitForEvent('download');
   await page.getByRole('button', { name: 'ดาวน์โหลด PDF สรุป' }).click();
@@ -71,7 +71,7 @@ for (const width of [360, 1024, 1600]) {
     await page.setViewportSize({ width, height: 900 });
     await page.clock.setFixedTime(new Date('2026-09-06T10:00:00.000Z'));
     await loginForReport(page);
-    await expect(page.getByText('INV-202608-001-001')).toBeVisible();
+    await expect(page.getByText('INV-202608-001-001').filter({ visible: true }).first()).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'เดือน', exact: true })).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'ปี พ.ศ.', exact: true })).toBeVisible();
     await expect(page.getByRole('textbox', { name: 'ค้นหาเลขใบกำกับ เลขที่งาน ลูกค้า หรือเลขผู้เสียภาษี' })).toBeVisible();

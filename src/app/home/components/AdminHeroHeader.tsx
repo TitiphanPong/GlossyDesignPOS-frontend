@@ -25,24 +25,25 @@ type AdminHeroHeaderProps = {
 export const heroUtilityButtonSx = {
   ...commonButtonSx,
   borderRadius: 3,
-  bgcolor: '#F4F7FB',
-  color: '#475467',
+  bgcolor: 'background.default',
+  color: 'text.secondary',
   textTransform: 'none',
   '&:hover': {
-    bgcolor: '#EAF0F7',
+    bgcolor: 'primary.light',
+    color: 'primary.dark',
   },
 } satisfies SxProps<Theme>;
 
 export const heroSecondaryButtonSx = {
   ...commonButtonSx,
   borderRadius: 3,
-  borderColor: '#D7E3F4',
-  bgcolor: '#FFFFFF',
-  color: '#2A4365',
+  borderColor: 'divider',
+  bgcolor: 'background.paper',
+  color: 'text.primary',
   textTransform: 'none',
   '&:hover': {
-    borderColor: '#B9CBE5',
-    bgcolor: '#F8FAFD',
+    borderColor: 'primary.light',
+    bgcolor: 'background.default',
   },
 } satisfies SxProps<Theme>;
 
@@ -53,8 +54,9 @@ export const heroPrimaryButtonSx = {
   ...commonButtonSx,
   borderRadius: 3,
   textTransform: 'none',
-  bgcolor: '#2B62EE',
-  boxShadow: '0 14px 28px rgba(43, 98, 238, 0.34)',
+  bgcolor: 'primary.main',
+  boxShadow: '0 14px 28px rgba(43, 98, 238, 0.28)',
+  '&:hover': { bgcolor: 'primary.dark' },
 } satisfies SxProps<Theme>;
 
 export default function AdminHeroHeader({

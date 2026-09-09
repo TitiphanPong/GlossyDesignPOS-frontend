@@ -257,8 +257,7 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
         width: '100%',
         maxWidth: '100vw',
         overflowX: 'hidden',
-        bgcolor: '#EEF2F7',
-        backgroundImage: 'linear-gradient(135deg, rgba(255,255,255,0.9), rgba(226,232,240,0.55))',
+        bgcolor: '#F8FAFC',
       }}>
       <Box
         className="print-toolbar"
@@ -270,9 +269,7 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
           minWidth: 0,
           px: { xs: 0, sm: 2, md: 3 },
           py: { xs: 0, sm: 1.5 },
-          borderBottom: { xs: '1px solid #E5E7EB', sm: 'none' },
-          bgcolor: { xs: '#FFFFFF', sm: 'rgba(248,250,252,0.78)' },
-          backdropFilter: { xs: 'none', sm: 'blur(16px)' },
+          bgcolor: '#F8FAFC',
         }}>
         <Box
           className="print-toolbar-card"

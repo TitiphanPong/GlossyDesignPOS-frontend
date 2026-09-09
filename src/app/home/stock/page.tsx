@@ -367,6 +367,33 @@ export default function StockPage() {
                   title: 'ไม่พบประวัติที่ตรงกับตัวกรอง',
                   subtitle: 'ลองเปลี่ยนคำค้นหา วัสดุ ประเภท หรือช่วงวันที่',
                 }}
+                mobileRenderRow={movement => (
+                  <Box sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2.5, bgcolor: 'background.paper' }}>
+                    <Stack spacing={0.9}>
+                      <Stack direction="row" justifyContent="space-between" gap={1}>
+                        <Box sx={{ minWidth: 0 }}>
+                          <Typography sx={{ fontSize: 14, fontWeight: 800 }}>{movement.stockItem?.name ?? 'วัสดุที่ถูกลบ/ไม่พบ'}</Typography>
+                          <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>{movement.stockItem?.code ?? movement.stockItemId} · {formatMovementDate(movement.occurredAt)}</Typography>
+                        </Box>
+                        <Typography color={movement.delta >= 0 ? 'success.main' : 'error.main'} fontWeight={800} sx={{ flexShrink: 0 }}>
+                          {movement.delta >= 0 ? '+' : ''}{movement.delta} {movement.stockItem?.unit ?? ''}
+                        </Typography>
+                      </Stack>
+                      <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.75 }}>
+                        <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'background.default' }}>
+                          <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>ประเภท</Typography>
+                          <Typography sx={{ mt: 0.2, fontSize: 12.5, fontWeight: 700 }}>{movementTypeLabel(movement.type)}</Typography>
+                        </Box>
+                        <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'background.default' }}>
+                          <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>คงเหลือ</Typography>
+                          <Typography sx={{ mt: 0.2, fontSize: 12.5, fontWeight: 700 }}>{movement.balanceAfter} {movement.stockItem?.unit ?? ''}</Typography>
+                        </Box>
+                      </Box>
+                      <Typography sx={{ fontSize: 12.5, color: 'text.secondary', overflowWrap: 'anywhere' }}>เหตุผล: {movement.reason}</Typography>
+                      <Typography sx={{ fontSize: 11.5, color: 'text.secondary' }}>โดย {movement.actorUsername}{movement.referenceType && movement.referenceId ? ` · ${movement.referenceType}: ${movement.referenceId}` : ''}</Typography>
+                    </Stack>
+                  </Box>
+                )}
                 pagination={movementTotal > 0 ? {
                   count: movementTotal,
                   page: Math.max(movementPage - 1, 0),

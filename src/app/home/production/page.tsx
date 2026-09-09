@@ -841,7 +841,7 @@ export default function ProductionPage() {
                 placeholder="ค้นหาเลข Job, Order, ชื่อลูกค้า หรืองาน"
                 slotProps={{ input: { startAdornment: <InputAdornment position="start"><SearchRoundedIcon /></InputAdornment> } }}
               />
-              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr 1fr', md: 'repeat(4,minmax(0,1fr))' }, gap: 1 }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2,minmax(0,1fr))', md: 'repeat(4,minmax(0,1fr))' }, gap: 1 }}>
                 <TextField select size="small" label="กำหนดส่ง" value={due} onChange={event => setDue(event.target.value as ProductionDueFilter)}>
                   <MenuItem value="all">ทั้งหมด</MenuItem>
                   <MenuItem value="today">ครบกำหนดวันนี้</MenuItem>

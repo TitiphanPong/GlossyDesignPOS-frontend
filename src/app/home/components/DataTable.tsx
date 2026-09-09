@@ -98,6 +98,8 @@ export type DataTableProps<T> = {
   renderRow?: (args: DataTableRowRenderArgs<T>) => React.ReactNode;
   wrapRows?: (rows: React.ReactNode) => React.ReactNode;
   sectionHeader?: DataTableSectionHeaderProps;
+  /** Optional card/list renderer used below md so wide admin tables stay usable on phones. */
+  mobileRenderRow?: (row: T, index: number) => React.ReactNode;
 };
 
 const defaultLabelDisplayedRows = ({ from, to, count }: { from: number; to: number; count: number }) =>
@@ -119,6 +121,7 @@ export default function DataTable<T>({
   renderRow,
   wrapRows,
   sectionHeader,
+  mobileRenderRow,
 }: Readonly<DataTableProps<T>>) {
   const renderedRows = !loading
     ? rows.map((row, index) => {
@@ -147,7 +150,20 @@ export default function DataTable<T>({
   return (
     <>
       {sectionHeader ? <DataTableSectionHeader {...sectionHeader} /> : null}
-      <Box sx={{ width: '100%', maxHeight, overflow: 'auto' }}>
+      {mobileRenderRow ? (
+        <Box sx={{ display: { xs: 'grid', md: 'none' }, gap: 1, p: 1.25 }}>
+          {loading
+            ? Array.from({ length: Math.min(skeletonRowCount, 4) }, (_, index) => <Skeleton key={`mobile-skeleton-${index}`} variant="rounded" height={148} sx={{ borderRadius: 2.5 }} />)
+            : null}
+          {!loading && rows.length === 0 && emptyState ? (
+            <EmptyState compact icon={emptyState.icon} eyebrow={emptyState.eyebrow} title={emptyState.title} subtitle={emptyState.subtitle} />
+          ) : null}
+          {!loading
+            ? rows.map((row, index) => <React.Fragment key={getRowKey(row, index)}>{mobileRenderRow(row, index)}</React.Fragment>)
+            : null}
+        </Box>
+      ) : null}
+      <Box sx={{ width: '100%', maxHeight, overflow: 'auto', display: mobileRenderRow ? { xs: 'none', md: 'block' } : 'block' }}>
         <Table stickyHeader={stickyHeader} size={size} sx={{ minWidth }}>
           <TableHead>
             <TableRow sx={dataTableHeaderRowSx}>
@@ -195,6 +211,17 @@ export default function DataTable<T>({
           rowsPerPageOptions={pagination.rowsPerPageOptions ?? [10, 25, 50, 100]}
           labelRowsPerPage="จำนวนรายการต่อหน้า"
           labelDisplayedRows={pagination.labelDisplayedRows ?? defaultLabelDisplayedRows}
+          sx={{
+            '& .MuiTablePagination-toolbar': {
+              minHeight: 56,
+              flexWrap: { xs: 'wrap', sm: 'nowrap' },
+              justifyContent: { xs: 'center', sm: 'flex-end' },
+              rowGap: 0.5,
+              px: { xs: 1, sm: 2 },
+            },
+            '& .MuiTablePagination-spacer': { display: { xs: 'none', sm: 'block' } },
+            '& .MuiTablePagination-selectLabel, & .MuiTablePagination-displayedRows': { fontSize: 12.5 },
+          }}
         />
       ) : null}
     </>
