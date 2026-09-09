@@ -52,7 +52,7 @@ export default function QuickMenuCardList({
   onMove,
 }: Props) {
   return (
-    <Card sx={{ ...uiCardSx, overflow: 'hidden', borderColor: '#DDE5EF', display: { xs: 'block', md: 'none' } }}>
+    <Card sx={{ ...uiCardSx, overflow: 'hidden', display: { xs: 'block', md: 'none' } }}>
       <Tabs
         value={category}
         onChange={(_, value: string) => onCategoryChange(value)}

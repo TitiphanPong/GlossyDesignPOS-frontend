@@ -1,5 +1,5 @@
 import type { MouseEvent } from 'react';
-import { Avatar, Box, Card, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
+import { Avatar, Box, Button, Card, Chip, IconButton, Stack, Tooltip, Typography } from '@mui/material';
 import DescriptionRoundedIcon from '@mui/icons-material/DescriptionRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import ImageRoundedIcon from '@mui/icons-material/ImageRounded';
@@ -132,6 +132,38 @@ export default function StorageTable(props: Readonly<StorageTableProps>) {
         maxHeight="68vh"
         loading={loading}
         emptyState={{ eyebrow: 'Storage', title: 'ไม่พบไฟล์งานที่อัปโหลด', subtitle: 'ลองเปลี่ยนคำค้นหาหรือตัวกรอง แล้วโหลดข้อมูลอีกครั้ง' }}
+        mobileRenderRow={row => {
+          const status = statusChip(row.status);
+          return (
+            <Box sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2.5, bgcolor: 'background.paper' }}>
+              <Stack spacing={1.15}>
+                <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
+                  <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
+                    <Avatar src={row.linePictureUrl} sx={{ width: 38, height: 38, flexShrink: 0, bgcolor: '#F1F5F9', color: '#64748B' }}>
+                      {row.lineDisplayName === '-' ? <PersonRoundedIcon sx={{ fontSize: 20 }} /> : (Array.from(row.lineDisplayName)[0] ?? '?')}
+                    </Avatar>
+                    <Box sx={{ minWidth: 0 }}>
+                      <Typography noWrap sx={{ fontWeight: 800, fontSize: 14 }}>{row.customerName}</Typography>
+                      <Typography sx={{ color: 'text.secondary', fontSize: 11.5 }}>{formatDate(row.uploadDate)}</Typography>
+                    </Box>
+                  </Stack>
+                  <Chip size="small" label={status.label} sx={{ flexShrink: 0, borderRadius: 2, fontWeight: 800, ...status.sx }} />
+                </Stack>
+                <Stack direction="row" gap={0.75} useFlexGap flexWrap="wrap">
+                  <Chip size="small" label={row.jobType} variant="outlined" sx={{ borderRadius: 2, fontWeight: 700, ...jobTypeChipSx(row.jobType) }} />
+                  <Chip size="small" label={`${row.files.length} ไฟล์`} variant="outlined" />
+                </Stack>
+                {row.files[0] ? <Typography noWrap sx={{ color: 'text.secondary', fontSize: 12.5 }}>ไฟล์: {row.files[0].name}{row.files.length > 1 ? ` +${row.files.length - 1}` : ''}</Typography> : null}
+                {row.notes ? <Typography sx={{ color: 'text.secondary', fontSize: 12.5, overflowWrap: 'anywhere' }}>หมายเหตุ: {row.notes}</Typography> : null}
+                <Stack direction="row" spacing={0.75}>
+                  <Button fullWidth size="small" variant="outlined" startIcon={<VisibilityRoundedIcon />} onClick={() => onOpenRow(row)}>ดู</Button>
+                  <Button fullWidth size="small" variant="outlined" startIcon={<DownloadRoundedIcon />} onClick={() => onDownloadRow(row)}>ดาวน์โหลด</Button>
+                  <Button fullWidth size="small" variant="text" startIcon={<MoreHorizRoundedIcon />} onClick={event => onOpenRowMenu(event, row.id)}>จัดการ</Button>
+                </Stack>
+              </Stack>
+            </Box>
+          );
+        }}
         pagination={{ count: totalRows, page, rowsPerPage, onPageChange, onRowsPerPageChange, rowsPerPageOptions: [10, 25, 50, 100] }}
       />
     </Card>

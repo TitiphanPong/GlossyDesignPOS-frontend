@@ -117,7 +117,7 @@ export default function QuickMenuTable({
     : undefined;
 
   return (
-    <Card sx={{ ...uiCardSx, overflow: 'hidden', borderColor: '#DDE5EF', boxShadow: '0 8px 26px rgba(29,52,84,.06)', display: { xs: 'none', md: 'block' } }}>
+    <Card sx={{ ...uiCardSx, overflow: 'hidden', display: { xs: 'none', md: 'block' } }}>
       <Tabs
         value={category}
         onChange={(_, value: string) => onCategoryChange(value)}

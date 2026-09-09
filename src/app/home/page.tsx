@@ -19,8 +19,9 @@ import { isMissingApiBaseError } from '../../lib/api';
 import { buildDashboardOrdersHref, buildDashboardProductionHref, fetchDashboardSummary, type DashboardProduct, type DashboardSummary } from '../../lib/dashboard';
 import AdminPageContainer from './components/AdminPageContainer';
 import AdminHeroHeader, { heroUtilityButtonSx } from './components/AdminHeroHeader';
+import { uiCardSx } from './components/adminUi';
 
-const cardSx = { border: '1px solid #E2E8F0', borderRadius: 3, boxShadow: '0 8px 28px rgba(15,23,42,.05)', bgcolor: '#fff' };
+const cardSx = uiCardSx;
 const money = (value: number) => new Intl.NumberFormat('th-TH', { style: 'currency', currency: 'THB', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
 const integer = (value: number) => new Intl.NumberFormat('th-TH').format(value);
 const percentChange = (current: number, previous: number) => (previous > 0 ? ((current - previous) / previous) * 100 : null);
@@ -447,7 +448,7 @@ function DashboardSkeleton() {
       <Stack spacing={2.5}>
         <Skeleton variant="rounded" height={112} />
         <Skeleton variant="rounded" height={82} />
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5 }}>
           {Array.from({ length: 4 }).map((_, index) => (
             <Skeleton key={index} variant="rounded" height={142} />
           ))}
@@ -585,7 +586,7 @@ export default function DashboardPage() {
           </Button>
         }
       />
-      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5, mb: 2.5 }}>
+      <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(4, minmax(0, 1fr))' }, gap: 1.5, mb: 2.5 }}>
         {periodKpis.map(item => (
           <MetricCard key={item.label} {...item} />
         ))}

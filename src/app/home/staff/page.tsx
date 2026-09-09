@@ -43,7 +43,7 @@ import VisibilityOffRoundedIcon from '@mui/icons-material/VisibilityOffRounded';
 import VisibilityRoundedIcon from '@mui/icons-material/VisibilityRounded';
 import AdminPageContainer from '../components/AdminPageContainer';
 import AdminHeroHeader, { heroPrimaryButtonSx, heroUtilityButtonSx } from '../components/AdminHeroHeader';
-import { uiCardSx } from '../components/adminUi';
+import { adminSurface, outlinedPanelSx, uiCardSx } from '../components/adminUi';
 import { fetchApiJson } from '@/lib/api';
 import { normalizeStaffUsers, type StaffRole as Role, type StaffUser } from './staffUsers';
 
@@ -242,7 +242,7 @@ export default function StaffManagementPage() {
           </Alert>
         )}
 
-        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(3, 1fr)' }, gap: 2 }}>
+        <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, minmax(0, 1fr))', md: 'repeat(3, minmax(0, 1fr))' }, gap: 2 }}>
           {[
             { label: 'บัญชีทั้งหมด', value: users.length, icon: ManageAccountsRoundedIcon, color: '#2563EB' },
             { label: 'กำลังใช้งาน', value: activeUsers, icon: CheckCircleRoundedIcon, color: '#10B981' },
@@ -269,7 +269,13 @@ export default function StaffManagementPage() {
         </Box>
 
         <Card sx={{ ...cardSx, overflow: 'hidden' }}>
-          <Tabs value={tab} onChange={(_, value: number) => setTab(value)} sx={{ px: { xs: 1, md: 2 }, borderBottom: '1px solid #E5E7EB' }}>
+          <Tabs
+            value={tab}
+            onChange={(_, value: number) => setTab(value)}
+            variant="scrollable"
+            scrollButtons="auto"
+            allowScrollButtonsMobile
+            sx={{ px: { xs: 0.5, md: 2 }, borderBottom: '1px solid', borderColor: 'divider' }}>
             <Tab icon={<BadgeRoundedIcon />} iconPosition="start" label={`บัญชีพนักงาน (${users.length})`} />
             <Tab icon={<HistoryRoundedIcon />} iconPosition="start" label={`Audit log (${events.length})`} />
           </Tabs>
@@ -279,7 +285,7 @@ export default function StaffManagementPage() {
               <CircularProgress />
             </Box>
           ) : tab === 0 ? (
-            <Stack spacing={1.5} sx={{ p: { xs: 1.5, md: 2.5 }, bgcolor: '#F8FAFC' }}>
+            <Stack spacing={1.5} sx={{ p: { xs: 1.5, md: 2.5 }, bgcolor: 'background.default' }}>
               {users.map(user => {
                 const isUpdating = updatingUserId === user.id;
                 return (
@@ -287,14 +293,13 @@ export default function StaffManagementPage() {
                     key={user.id}
                     variant="outlined"
                     sx={{
+                      ...outlinedPanelSx,
                       position: 'relative',
                       overflow: 'hidden',
-                      borderRadius: 3.5,
-                      borderColor: user.active ? '#D9E4F5' : '#E2E8F0',
-                      bgcolor: '#FFFFFF',
-                      boxShadow: '0 7px 20px rgba(15, 23, 42, 0.035)',
+                      borderRadius: adminSurface.panelRadius,
+                      borderColor: user.active ? 'primary.light' : 'divider',
                       opacity: user.active ? 1 : 0.76,
-                      '&::before': { content: '""', position: 'absolute', inset: '0 auto 0 0', width: 4, bgcolor: user.active ? '#2563EB' : '#CBD5E1' },
+                      '&::before': { content: '""', position: 'absolute', inset: '0 auto 0 0', width: 4, bgcolor: user.active ? 'primary.main' : 'divider' },
                     }}>
                     <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(260px, 1fr) auto' }, alignItems: 'stretch' }}>
                       <Stack direction="row" spacing={1.6} alignItems="center" sx={{ px: { xs: 2, md: 2.5 }, py: 2 }}>
@@ -313,7 +318,7 @@ export default function StaffManagementPage() {
                         </Avatar>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                           <Stack direction="row" spacing={1} alignItems="center" useFlexGap flexWrap="wrap">
-                            <Typography sx={{ color: '#0F172A', fontSize: 15.5, fontWeight: 900 }} noWrap>
+                            <Typography sx={{ color: 'text.primary', fontSize: 15.5, fontWeight: 900 }} noWrap>
                               {user.username}
                             </Typography>
                             <Chip size="small" label={roleLabels[user.role]} color={roleColors[user.role]} variant="outlined" sx={{ height: 23, fontSize: 11.5, fontWeight: 750 }} />

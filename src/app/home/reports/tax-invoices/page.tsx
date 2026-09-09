@@ -80,7 +80,7 @@ function summaryCard(label: string, value: React.ReactNode, helper: string, tone
     danger: { bgcolor: '#FFF8F8', borderColor: '#FECDCA', valueColor: '#B42318' },
   }[tone];
   return (
-    <Card sx={{ ...uiCardSx, bgcolor: toneStyles.bgcolor, borderColor: toneStyles.borderColor, boxShadow: 'none' }}>
+    <Card sx={{ ...uiCardSx, bgcolor: toneStyles.bgcolor, borderColor: toneStyles.borderColor }}>
       <CardContent sx={{ p: 2.1, '&:last-child': { pb: 2.1 } }}>
         <Typography sx={{ fontSize: 12, color: '#667085', fontWeight: 700 }}>{label}</Typography>
         <Typography sx={{ mt: 0.7, fontSize: 24, lineHeight: 1.15, fontWeight: 800, color: toneStyles.valueColor }}>{value}</Typography>
@@ -98,6 +98,72 @@ function reportStatusChip(row: TaxInvoiceReportItem) {
     return <Chip size="small" color="warning" variant="outlined" label="ต้องตรวจสอบ" />;
   }
   return <Chip size="small" color="success" variant="outlined" label="ออกเอกสารแล้ว" />;
+}
+
+function TaxInvoiceMobileCard({ row, onOpen }: Readonly<{ row: TaxInvoiceReportItem; onOpen: (row: TaxInvoiceReportItem) => void }>) {
+  return (
+    <Box sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2.5, bgcolor: 'background.paper' }}>
+      <Stack spacing={1.15}>
+        <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontSize: 14, fontWeight: 800, color: 'text.primary', overflowWrap: 'anywhere' }}>{row.invoiceNumber || '-'}</Typography>
+            <Typography sx={{ mt: 0.25, fontSize: 12, color: 'text.secondary' }}>{formatTaxReportDate(row.documentDate)} · {row.orderNumber || '-'}</Typography>
+          </Box>
+          <Box sx={{ flexShrink: 0 }}>{reportStatusChip(row)}</Box>
+        </Stack>
+        <Box>
+          <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{row.customerName || '-'}</Typography>
+          {row.taxId ? <Typography sx={{ mt: 0.2, fontSize: 11.5, color: 'text.secondary' }}>Tax ID {row.taxId}</Typography> : null}
+        </Box>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.75 }}>
+          <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'background.default' }}>
+            <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>ก่อน VAT หลังส่วนลด</Typography>
+            <Typography sx={{ mt: 0.25, fontSize: 13, fontWeight: 800 }}>{formatTaxReportMoney(row.taxableBase)}</Typography>
+          </Box>
+          <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'background.default' }}>
+            <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>VAT</Typography>
+            <Typography sx={{ mt: 0.25, fontSize: 13, fontWeight: 800 }}>{formatTaxReportMoney(row.vatAmount)}</Typography>
+          </Box>
+          <Box sx={{ gridColumn: '1 / -1', p: 1, borderRadius: 2, bgcolor: 'primary.light' }}>
+            <Typography sx={{ fontSize: 10.5, color: 'primary.dark' }}>ยอดรวม</Typography>
+            <Typography sx={{ mt: 0.25, fontSize: 16, fontWeight: 900, color: 'primary.dark' }}>{formatTaxReportMoney(row.grandTotal)}</Typography>
+          </Box>
+        </Box>
+        <Button fullWidth variant="outlined" startIcon={<VisibilityRoundedIcon />} onClick={() => onOpen(row)}>
+          เปิดใบกำกับภาษี
+        </Button>
+      </Stack>
+    </Box>
+  );
+}
+
+function CrossPeriodCancellationMobileCard({ row }: Readonly<{ row: CrossPeriodCancellation }>) {
+  return (
+    <Box sx={{ p: 1.5, border: '1px solid', borderColor: 'divider', borderRadius: 2.5, bgcolor: 'background.paper' }}>
+      <Stack spacing={0.9}>
+        <Stack direction="row" justifyContent="space-between" gap={1}>
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontSize: 14, fontWeight: 800, overflowWrap: 'anywhere' }}>{row.invoiceNumber || '-'}</Typography>
+            <Typography sx={{ mt: 0.2, fontSize: 11.5, color: 'text.secondary' }}>งวด {row.invoicePeriod} · ยกเลิก {formatTaxReportDate(row.cancellation.cancelledAt)}</Typography>
+          </Box>
+          <Chip size="small" color="warning" variant="outlined" label="ข้ามงวด" sx={{ flexShrink: 0 }} />
+        </Stack>
+        <Typography sx={{ fontSize: 13, fontWeight: 700 }}>{row.customerName || '-'}</Typography>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary' }}>Order {row.orderNumber}</Typography>
+        <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 0.75 }}>
+          <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'background.default' }}>
+            <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>VAT เดิม</Typography>
+            <Typography sx={{ mt: 0.25, fontWeight: 800 }}>{formatTaxReportMoney(row.vatAmount)}</Typography>
+          </Box>
+          <Box sx={{ p: 1, borderRadius: 2, bgcolor: 'background.default' }}>
+            <Typography sx={{ fontSize: 10.5, color: 'text.secondary' }}>ยอดรวมเดิม</Typography>
+            <Typography sx={{ mt: 0.25, fontWeight: 800 }}>{formatTaxReportMoney(row.grandTotal)}</Typography>
+          </Box>
+        </Box>
+        <Typography sx={{ fontSize: 12, color: 'text.secondary', overflowWrap: 'anywhere' }}>เหตุผล: {row.cancellation.reason || '-'}</Typography>
+      </Stack>
+    </Box>
+  );
 }
 
 function reportColumns(onOpen: (row: TaxInvoiceReportItem) => void): DataTableColumn<TaxInvoiceReportItem>[] {
@@ -492,6 +558,7 @@ export default function TaxInvoiceMonthlyReportPage() {
               title: query ? 'ไม่พบเอกสารที่ตรงกับคำค้น' : 'ไม่พบใบกำกับภาษีในเดือนนี้',
               subtitle: query ? 'ลองค้นหาด้วยเลขใบกำกับ เลขที่งาน ชื่อลูกค้า หรือเลขผู้เสียภาษี' : 'ยังสามารถดาวน์โหลด Excel หรือ PDF สรุปสำหรับงวดว่างได้',
             }}
+            mobileRenderRow={row => <TaxInvoiceMobileCard row={row} onOpen={openInvoice} />}
             pagination={{
               count: filteredDocuments.length,
               page,
@@ -521,6 +588,7 @@ export default function TaxInvoiceMonthlyReportPage() {
               title: 'ไม่พบการยกเลิกใบกำกับจากงวดก่อน',
               subtitle: 'เดือนที่เลือกไม่มีเหตุการณ์ยกเลิกข้ามงวดที่ต้องติดตาม',
             }}
+            mobileRenderRow={row => <CrossPeriodCancellationMobileCard row={row} />}
           />
         </Card>
       </Stack>
