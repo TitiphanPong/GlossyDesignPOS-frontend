@@ -2,6 +2,7 @@
 
 import { Alert, Box, Card, CardActions, CardContent, Skeleton, Stack, Typography } from '@mui/material';
 import type { ReactNode } from 'react';
+import { glossyDesignTokens } from '@/theme/glossy-design-tokens';
 import { interactiveCardSx, sectionTitleSx, topActionBarSx, uiCardSx } from './adminUi';
 
 export function DashboardCard({ children, interactive = false, sx = {} }: Readonly<{ children: ReactNode; interactive?: boolean; sx?: object }>) {
@@ -46,8 +47,8 @@ export function EmptyState({
         px: compact ? 2.5 : 3,
         textAlign: 'center',
         borderRadius: compact ? 3 : 4,
-        border: '1px dashed #D9E3F2',
-        background: 'linear-gradient(180deg, #FCFDFF 0%, #F7FAFF 100%)',
+        border: `1px dashed ${glossyDesignTokens.border.strong}`,
+        background: `linear-gradient(180deg, ${glossyDesignTokens.surface.card} 0%, ${glossyDesignTokens.surface.raised} 100%)`,
         ...sx,
       }}>
       {icon ? (
@@ -60,8 +61,8 @@ export function EmptyState({
             display: 'grid',
             placeItems: 'center',
             borderRadius: compact ? 2.5 : 3,
-            bgcolor: '#EAF1FF',
-            color: '#2957D8',
+            bgcolor: glossyDesignTokens.action.primarySoft,
+            color: glossyDesignTokens.action.primary,
           }}>
           {icon}
         </Box>
@@ -72,7 +73,7 @@ export function EmptyState({
           fontWeight: 800,
           letterSpacing: '0.18em',
           textTransform: 'uppercase',
-          color: '#5B7BE2',
+          color: glossyDesignTokens.action.primary,
         }}>
         {eyebrow}
       </Typography>
@@ -212,7 +213,7 @@ export function ProductGridLoadingState({ count = 8 }: Readonly<{ count?: number
   return (
     <Box sx={{ display: 'grid', gap: 1.5, gridTemplateColumns: { xs: 'repeat(2, minmax(140px, 1fr))', sm: 'repeat(3, minmax(180px, 1fr))', xl: 'repeat(4, minmax(180px, 1fr))' } }}>
       {Array.from({ length: count }, (_, index) => (
-        <Card key={`product-skeleton-${index}`} variant="outlined" sx={{ ...interactiveCardSx, borderRadius: 3.5, borderColor: '#E5EBF5', boxShadow: '0 10px 22px rgba(15, 23, 42, 0.06)', overflow: 'hidden' }}>
+        <Card key={`product-skeleton-${index}`} variant="outlined" sx={{ ...interactiveCardSx, borderRadius: 3.5, borderColor: glossyDesignTokens.border.default, boxShadow: '0 10px 22px rgba(17, 19, 24, 0.06)', overflow: 'hidden' }}>
           <Skeleton variant="rectangular" width="100%" height={210} />
           <CardContent sx={{ pb: 1.1, px: 1.7, pt: 1.6 }}>
             <Stack spacing={1}>

@@ -1,23 +1,23 @@
 import { createTheme } from '@mui/material/styles';
+import { glossyDesignTokens } from '@/theme/glossy-design-tokens';
 import { UI_FONT_FAMILY } from './font-tokens';
 
 export const appTheme = createTheme({
   palette: {
     mode: 'light',
     primary: {
-      main: '#2B62EE',
-      dark: '#1D4ED8',
-      light: '#EAF1FF',
+      main: glossyDesignTokens.action.primary,
+      contrastText: glossyDesignTokens.text.inverse,
     },
     background: {
-      default: '#F8FAFC',
-      paper: '#FFFFFF',
+      default: glossyDesignTokens.surface.page,
+      paper: glossyDesignTokens.surface.card,
     },
     text: {
-      primary: '#101828',
-      secondary: '#667085',
+      primary: glossyDesignTokens.text.primary,
+      secondary: glossyDesignTokens.text.secondary,
     },
-    divider: '#E6EDF8',
+    divider: glossyDesignTokens.border.default,
   },
   typography: {
     fontFamily: UI_FONT_FAMILY,

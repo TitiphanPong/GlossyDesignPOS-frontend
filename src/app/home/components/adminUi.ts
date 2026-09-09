@@ -1,4 +1,5 @@
 ﻿import type { SxProps, Theme } from '@mui/material/styles';
+import { glossyDesignTokens } from '@/theme/glossy-design-tokens';
 
 export const adminSurface = {
   pageMaxWidth: '1600px',
@@ -10,8 +11,8 @@ export const adminSurface = {
   cardPadding: { xs: 1.75, md: 2.25 },
   cardBorder: '1px solid',
   cardBorderColor: 'divider',
-  cardShadow: '0 8px 26px rgba(15, 23, 42, 0.06)',
-  cardShadowHover: '0 16px 34px rgba(15, 23, 42, 0.12)',
+  cardShadow: '0 8px 26px rgba(17, 19, 24, 0.06)',
+  cardShadowHover: '0 16px 34px rgba(17, 19, 24, 0.12)',
   transition: 'box-shadow 160ms ease, transform 100ms ease, border-color 120ms ease, background-color 120ms ease',
   rowHeight: 54,
   headerHeight: 50,
@@ -58,7 +59,7 @@ export const sectionTitleSx: SxProps<Theme> = {
 export const dataGridSx: SxProps<Theme> = {
   border: 'none',
   '& .MuiDataGrid-columnHeaders': {
-    bgcolor: 'grey.50',
+    bgcolor: glossyDesignTokens.surface.subtle,
     minHeight: `${adminSurface.headerHeight}px !important`,
     maxHeight: `${adminSurface.headerHeight}px !important`,
   },
@@ -77,7 +78,7 @@ export const dataGridSx: SxProps<Theme> = {
     transition: adminSurface.transition,
   },
   '& .MuiDataGrid-row:hover': {
-    bgcolor: 'rgba(108, 77, 255, 0.06)',
+    bgcolor: glossyDesignTokens.surface.hover,
   },
   '& .MuiDataGrid-footerContainer': {
     minHeight: `${adminSurface.headerHeight}px`,
@@ -88,7 +89,7 @@ export const dataGridSx: SxProps<Theme> = {
 
 export const tableShellSx: SxProps<Theme> = {
   '& .MuiTableCell-head': {
-    bgcolor: 'grey.50',
+    bgcolor: glossyDesignTokens.surface.subtle,
     fontWeight: 700,
     fontSize: 13,
     py: 1.25,
@@ -103,7 +104,7 @@ export const tableShellSx: SxProps<Theme> = {
     height: `${adminSurface.rowHeight}px`,
   },
   '& .MuiTableRow-hover:hover': {
-    bgcolor: 'rgba(108, 77, 255, 0.06)',
+    bgcolor: glossyDesignTokens.surface.hover,
   },
 };
 
