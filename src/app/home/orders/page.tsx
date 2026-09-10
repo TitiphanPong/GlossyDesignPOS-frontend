@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import * as React from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   Alert,
   Box,
@@ -171,6 +172,9 @@ export default function OrderManagementPage() {
   const [cancelError, setCancelError] = React.useState<string | null>(null);
   const loadRequestRef = React.useRef(0);
   const focusedOrderRef = React.useRef<string | null>(null);
+  const actionCenterParams = useSearchParams();
+  const focusedOrderId = actionCenterParams.get('focus')?.trim();
+  const focusedOrderAction = actionCenterParams.get('action');
 
   const loadOrders = React.useCallback(async () => {
     const requestId = ++loadRequestRef.current;
@@ -243,25 +247,29 @@ export default function OrderManagementPage() {
   }, [router]);
 
   React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const focusedOrderId = params.get('focus')?.trim();
-    if (!focusedOrderId || focusedOrderRef.current === focusedOrderId) return;
-    focusedOrderRef.current = focusedOrderId;
+    const focusKey = focusedOrderId + ':' + (focusedOrderAction ?? '');
+    if (!focusedOrderId) { focusedOrderRef.current = null; return; }
+    if (focusedOrderRef.current === focusKey) return;
+    focusedOrderRef.current = focusKey;
+    let cancelled = false;
 
     void fetchOrderById(focusedOrderId)
       .then(order => {
+        if (cancelled) return;
         const focusedRow = mapApiOrderToRow(order);
         setSelectedOrder(focusedRow);
         setDrawerOpen(true);
-        if (params.get('action') === 'payment' && focusedRow.total > focusedRow.paidAmount) {
+        if (focusedOrderAction === 'payment' && focusedRow.total > focusedRow.paidAmount) {
           setPayRemainingTarget(focusedRow);
         }
       })
       .catch(error => {
+        if (cancelled) return;
         focusedOrderRef.current = null;
         setLoadError(error instanceof Error && error.message ? error.message : 'ไม่สามารถเปิดรายการจากศูนย์งานได้');
       });
-  }, []);
+    return () => { cancelled = true; focusedOrderRef.current = null; };
+  }, [focusedOrderId, focusedOrderAction]);
 
   React.useEffect(() => {
     if (filtersReady) void loadOrders();

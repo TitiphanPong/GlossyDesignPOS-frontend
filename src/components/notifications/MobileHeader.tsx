@@ -1,10 +1,8 @@
 'use client';
 
-import { useState } from 'react';
 import { AppBar, Toolbar, IconButton, Badge, Tooltip, Box, Typography } from '@mui/material';
 import MenuRoundedIcon from '@mui/icons-material/MenuRounded';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
-import { NotificationDrawer } from './NotificationDrawer';
 import { useNotifications } from '@/lib/useNotifications';
 import GlossyBrandMark from '@/components/navigation/GlossyBrandMark';
 import { sidebarTokens } from '@/components/navigation/sidebarTheme';
@@ -16,16 +14,7 @@ type MobileHeaderProps = {
 };
 
 export function MobileHeader({ onMenuOpen, menuOpen, menuId }: Readonly<MobileHeaderProps>) {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const {
-    notifications,
-    summary,
-    count,
-    isLoading,
-    acknowledgeNotifications,
-    snoozeNotifications,
-    unacknowledgeNotifications,
-  } = useNotifications();
+  const { summary, openDrawer } = useNotifications();
 
   return (
     <>
@@ -95,8 +84,10 @@ export function MobileHeader({ onMenuOpen, menuOpen, menuId }: Readonly<MobileHe
 
           <Tooltip title="งานที่ต้องจัดการ" enterDelay={250}>
             <IconButton
-              onClick={() => setDrawerOpen(true)}
+              onClick={openDrawer}
               aria-label="เปิดการแจ้งเตือนงานที่ต้องจัดการ"
+              aria-description={`รายการใหม่ ${summary.attention} รายการ`}
+              data-action-center-trigger
               sx={{
                 width: 44,
                 height: 44,
@@ -108,7 +99,7 @@ export function MobileHeader({ onMenuOpen, menuOpen, menuId }: Readonly<MobileHe
                 '&:focus-visible': { outline: `2px solid ${sidebarTokens.focusRing}`, outlineOffset: 2 },
               }}>
               <Badge
-                badgeContent={count?.actionRequired ?? 0}
+                badgeContent={summary.attention}
                 color="error"
                 overlap="circular"
                 sx={{
@@ -131,16 +122,7 @@ export function MobileHeader({ onMenuOpen, menuOpen, menuId }: Readonly<MobileHe
         </Toolbar>
       </AppBar>
 
-      <NotificationDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        notifications={notifications}
-        summary={summary}
-        isLoading={isLoading}
-        onAcknowledge={acknowledgeNotifications}
-        onSnooze={snoozeNotifications}
-        onUnacknowledge={unacknowledgeNotifications}
-      />
+
     </>
   );
 }

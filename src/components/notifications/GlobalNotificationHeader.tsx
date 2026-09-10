@@ -1,23 +1,12 @@
 'use client';
 
-import { useState } from 'react';
 import { Box, Badge, IconButton, Tooltip } from '@mui/material';
 import NotificationsRoundedIcon from '@mui/icons-material/NotificationsRounded';
-import { NotificationDrawer } from '@/components/notifications/NotificationDrawer';
 import { useNotifications } from '@/lib/useNotifications';
 import { sidebarTokens } from '@/components/navigation/sidebarTheme';
 
 export function GlobalNotificationHeader() {
-  const [drawerOpen, setDrawerOpen] = useState(false);
-  const {
-    notifications,
-    summary,
-    count,
-    isLoading,
-    acknowledgeNotifications,
-    snoozeNotifications,
-    unacknowledgeNotifications,
-  } = useNotifications();
+  const { summary, openDrawer } = useNotifications();
 
   return (
     <>
@@ -32,8 +21,10 @@ export function GlobalNotificationHeader() {
             zIndex: 1000,
           }}>
           <IconButton
-            onClick={() => setDrawerOpen(true)}
+            onClick={openDrawer}
             aria-label="เปิดการแจ้งเตือนงานที่ต้องจัดการ"
+            aria-description={`รายการใหม่ ${summary.attention} รายการ`}
+            data-action-center-trigger
             sx={{
               borderRadius: '12px',
               border: `1px solid ${sidebarTokens.border}`,
@@ -48,7 +39,7 @@ export function GlobalNotificationHeader() {
               '&:focus-visible': { outline: `2px solid ${sidebarTokens.focusRing}`, outlineOffset: 2 },
             }}>
             <Badge
-              badgeContent={count?.actionRequired ?? 0}
+              badgeContent={summary.attention}
               color="error"
               overlap="circular"
               sx={{
@@ -70,16 +61,7 @@ export function GlobalNotificationHeader() {
         </Box>
       </Tooltip>
 
-      <NotificationDrawer
-        open={drawerOpen}
-        onClose={() => setDrawerOpen(false)}
-        notifications={notifications}
-        summary={summary}
-        isLoading={isLoading}
-        onAcknowledge={acknowledgeNotifications}
-        onSnooze={snoozeNotifications}
-        onUnacknowledge={unacknowledgeNotifications}
-      />
+
     </>
   );
 }

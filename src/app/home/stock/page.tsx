@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { useSearchParams } from 'next/navigation';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
 import Inventory2RoundedIcon from '@mui/icons-material/Inventory2Rounded';
 import RemoveRoundedIcon from '@mui/icons-material/RemoveRounded';
@@ -42,6 +43,7 @@ import {
 } from '@/lib/inventory';
 
 export default function StockPage() {
+  const actionCenterParams = useSearchParams();
   const [items, setItems] = React.useState<StockItem[]>([]);
   const [search, setSearch] = React.useState('');
   const [loading, setLoading] = React.useState(true);
@@ -115,9 +117,9 @@ export default function StockPage() {
   }, [loadHistory]);
 
   React.useEffect(() => {
-    const focus = new URLSearchParams(window.location.search).get('focus');
+    const focus = actionCenterParams.get('focus');
     setFocusedItemId(focus);
-  }, []);
+  }, [actionCenterParams]);
 
   React.useEffect(() => {
     if (!focusedItemId || loading) return;

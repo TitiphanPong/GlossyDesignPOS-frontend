@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useContext, useCallback, useEffect, useRef, useState } from 'react';
 import { createActionCenterPoller, type ActionCenterPoller } from './action-center-polling';
 import { fetchApiJson } from './api';
 
@@ -62,163 +62,95 @@ const EMPTY_SUMMARY: ActionCenterSummary = {
   filesWaiting: 0,
 };
 
-export function useNotifications() {
+export type PersonalAction = 'acknowledge' | 'unacknowledge' | 'snooze';
+
+/** Called only by the authenticated shell provider. Consumers use the context below. */
+export function useActionCenterStore() {
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [summary, setSummary] = useState<ActionCenterSummary>(EMPTY_SUMMARY);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [mutationErrors, setMutationErrors] = useState<ReadonlyMap<string, string>>(new Map());
+  const [lastSuccessfulAt, setLastSuccessfulAt] = useState<Date | null>(null);
+  const [pendingIds, setPendingIds] = useState<ReadonlySet<string>>(new Set());
+  const pendingRef = useRef(new Set<string>());
+  const revision = useRef(0);
   const pollerRef = useRef<ActionCenterPoller | null>(null);
 
-  const fetchActionCenter = useCallback(async (signal?: AbortSignal) => {
+  const fetchActionCenter = useCallback(async (signal: AbortSignal) => {
+    const startedRevision = revision.current;
     try {
-      setError(null);
       const data = await fetchApiJson<ActionCenterResponse>('/notifications/action-center', { signal });
-      if (signal?.aborted) return;
-      setNotifications(Array.isArray(data.items) ? data.items : []);
-      const incomingSummary = data.summary ?? EMPTY_SUMMARY;
-      setSummary({
-        ...EMPTY_SUMMARY,
-        ...incomingSummary,
-        attention:
-          typeof incomingSummary.attention === 'number'
-            ? incomingSummary.attention
-            : incomingSummary.total ?? 0,
-      });
+      if (signal.aborted || startedRevision !== revision.current) return;
+      setNotifications(data.items);
+      setSummary(data.summary);
+      setLastSuccessfulAt(new Date());
+      setError(null);
     } catch (err) {
-      if (signal?.aborted || (err instanceof Error && err.name === 'AbortError')) return;
-      setError(err instanceof Error ? err.message : 'Unknown error');
-      console.error('Failed to fetch action center:', err);
+      if (signal.aborted || startedRevision !== revision.current) return;
+      setError(err instanceof Error ? err.message : 'โหลดศูนย์งานไม่สำเร็จ');
     } finally {
-      if (!signal?.aborted) setIsLoading(false);
+      if (!signal.aborted && startedRevision === revision.current) setIsLoading(false);
     }
   }, []);
 
-  const refetchActionCenter = useCallback(async () => {
-    if (pollerRef.current) {
-      await pollerRef.current.refetch();
-      return;
-    }
-    await fetchActionCenter();
-  }, [fetchActionCenter]);
-
-  const updateActionCenterState = useCallback(
-    async (
-      notificationIds: string[],
-      action: 'acknowledge' | 'unacknowledge' | 'snooze' | 'dismiss',
-      snoozeMinutes?: number
-    ): Promise<void> => {
-      if (notificationIds.length === 0) return;
-      await fetchApiJson<{ updated: number }>('/notifications/action-center/state', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          notificationIds,
-          action,
-          ...(action === 'snooze' ? { snoozeMinutes: snoozeMinutes ?? 60 } : {}),
-        }),
-      });
-      await refetchActionCenter();
-    },
-    [refetchActionCenter]
-  );
-
-  const acknowledgeNotifications = useCallback(
-    (notificationIds: string[]) => updateActionCenterState(notificationIds, 'acknowledge'),
-    [updateActionCenterState]
-  );
-
-  const unacknowledgeNotifications = useCallback(
-    (notificationIds: string[]) => updateActionCenterState(notificationIds, 'unacknowledge'),
-    [updateActionCenterState]
-  );
-
-  const snoozeNotifications = useCallback(
-    (notificationIds: string[], minutes = 60) => updateActionCenterState(notificationIds, 'snooze', minutes),
-    [updateActionCenterState]
-  );
-
-  const resolveNotification = useCallback(
-    async (notificationId: string): Promise<void> => {
-      await fetchApiJson<Notification>(`/notifications/${notificationId}/resolve`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      await refetchActionCenter();
-    },
-    [refetchActionCenter]
-  );
-
-  const dismissNotification = useCallback(
-    async (notificationId: string): Promise<void> => {
-      await fetchApiJson<Notification>(`/notifications/${notificationId}/dismiss`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
-      });
-      await refetchActionCenter();
-    },
-    [refetchActionCenter]
-  );
-
-  const markAsRead = useCallback(async (notificationId: string): Promise<void> => {
+  const refetch = useCallback(async () => {
+    await pollerRef.current?.refetch();
+  }, []);
+  const updateState = useCallback(async (ids: string[], action: PersonalAction) => {
+    const notificationIds = [...new Set(ids)];
+    if (!notificationIds.length || notificationIds.some(id => pendingRef.current.has(id))) return;
+    notificationIds.forEach(id => pendingRef.current.add(id));
+    setPendingIds(new Set(pendingRef.current));
+    setMutationErrors(previous => {
+      const next = new Map(previous);
+      notificationIds.forEach(id => next.delete(id));
+      return next;
+    });
     try {
-      await fetchApiJson<Notification>(`/notifications/${notificationId}/read`, {
+      await fetchApiJson('/notifications/action-center/state', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isRead: true }),
+        body: JSON.stringify({ notificationIds, action, ...(action === 'snooze' ? { snoozeMinutes: 60 } : {}) }),
       });
-      setNotifications(previous => previous.map(item => (item._id === notificationId ? { ...item, isRead: true } : item)));
+      revision.current += 1;
+      await pollerRef.current?.refetchAfterCurrent();
     } catch (err) {
-      console.error('Failed to mark action-center item as read:', err);
+      setMutationErrors(previous => {
+        const next = new Map(previous);
+        notificationIds.forEach(id => next.set(id, err instanceof Error ? err.message : 'บันทึกสถานะไม่สำเร็จ'));
+        return next;
+      });
+    } finally {
+      notificationIds.forEach(id => pendingRef.current.delete(id));
+      setPendingIds(new Set(pendingRef.current));
     }
   }, []);
 
   useEffect(() => {
-    setIsLoading(true);
-    const poller = createActionCenterPoller({
-      fetchActionCenter: signal => fetchActionCenter(signal),
-      documentTarget: document,
-      windowTarget: window,
-    });
+    const poller = createActionCenterPoller({ fetchActionCenter, documentTarget: document, windowTarget: window });
     pollerRef.current = poller;
     poller.start();
-
     return () => {
       pollerRef.current = null;
       poller.stop();
     };
   }, [fetchActionCenter]);
 
-  const count = useMemo(() => {
-    const byPriority = notifications.reduce(
-      (accumulator, notification) => {
-        accumulator[notification.priority] += 1;
-        return accumulator;
-      },
-      { critical: 0, high: 0, normal: 0, low: 0 } as Record<NotificationPriority, number>
-    );
+  return { notifications, summary, isLoading, error, mutationErrors, lastSuccessfulAt, pendingIds, refetch, updateState };
+}
 
-    return {
-      total: summary.total,
-      active: summary.total,
-      actionRequired: summary.attention,
-      byPriority,
-    };
-  }, [notifications, summary.attention, summary.total]);
+export const ActionCenterContext = createContext<
+  | (ReturnType<typeof useActionCenterStore> & {
+      drawerOpen: boolean;
+      openDrawer: () => void;
+      closeDrawer: () => void;
+    })
+  | null
+>(null);
 
-  return {
-    notifications,
-    summary,
-    count,
-    isLoading,
-    error,
-    refetch: refetchActionCenter,
-    acknowledgeNotifications,
-    unacknowledgeNotifications,
-    snoozeNotifications,
-    resolveNotification,
-    dismissNotification,
-    markAsRead,
-  };
+export function useNotifications() {
+  const value = useContext(ActionCenterContext);
+  if (!value) throw new Error('Action Center requires the authenticated shell provider');
+  return value;
 }

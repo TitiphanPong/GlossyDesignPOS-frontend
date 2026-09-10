@@ -24,6 +24,7 @@ export type ActionCenterPoller = {
   start(): void;
   stop(): void;
   refetch(): Promise<void>;
+  refetchAfterCurrent(): Promise<void>;
 };
 
 export function createActionCenterPoller({
@@ -104,6 +105,14 @@ export function createActionCenterPoller({
     refetch() {
       clearTimer();
       return runFetch();
+    },
+    async refetchAfterCurrent() {
+      // A mutation must never join a GET that started before it committed.
+      const previous = inFlight;
+      if (previous) await previous;
+      if (!started) return;
+      clearTimer();
+      await runFetch();
     },
   };
 }

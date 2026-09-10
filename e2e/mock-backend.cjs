@@ -475,7 +475,7 @@ const server = http.createServer(async (request, response) => {
 
   if (request.method === 'GET' && url.pathname === '/notifications/action-center') {
     return json(response, 200, {
-      summary: { total: 0, critical: 0, outstandingAmount: 0, filesWaiting: 0 },
+      summary: { total: 0, attention: 0, acknowledged: 0, snoozed: 0, critical: 0, outstandingAmount: 0, filesWaiting: 0 },
       items: [],
     });
   }

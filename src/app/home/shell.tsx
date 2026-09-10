@@ -1,5 +1,6 @@
 'use client';
 
+import { ActionCenterProvider } from '@/components/notifications/ActionCenterProvider';
 import * as React from 'react';
 import { Box, Button, CircularProgress, IconButton, Stack, Tooltip, Typography, useMediaQuery, useTheme } from '@mui/material';
 import ChevronLeftRoundedIcon from '@mui/icons-material/ChevronLeftRounded';
@@ -160,6 +161,7 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
   }
 
   return (
+    <ActionCenterProvider>
     <Box
       sx={{
         display: 'flex',
@@ -241,5 +243,6 @@ export default function AppShell({ children }: Readonly<{ children: React.ReactN
         <PageTransition routeKey={pathname ?? '/'}>{children}</PageTransition>
       </Box>
     </Box>
+    </ActionCenterProvider>
   );
 }

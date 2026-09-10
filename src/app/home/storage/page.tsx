@@ -1,6 +1,7 @@
 ﻿'use client';
 
 import * as React from 'react';
+import { useSearchParams } from 'next/navigation';
 import { createExcelCompatibleCsv, downloadCsvFile } from '@/lib/csv';
 import { buildDateRangeScope, buildExportFilename } from '@/lib/export-filename';
 import {
@@ -265,11 +266,11 @@ export default function StoragePage() {
   const [rowMenuAnchor, setRowMenuAnchor] = React.useState<null | HTMLElement>(null);
   const [rowMenuId, setRowMenuId] = React.useState<string | null>(null);
   const focusedUploadRef = React.useRef<string | null>(null);
+  const actionCenterParams = useSearchParams();
+  const focusedUploadId = actionCenterParams.get('focus')?.trim();
+  const orderReference = actionCenterParams.get('order')?.trim();
 
   React.useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const focusedUploadId = params.get('focus')?.trim();
-    const orderReference = params.get('order')?.trim();
     if (focusedUploadId) {
       focusedUploadRef.current = focusedUploadId;
       setSearch(focusedUploadId);
@@ -278,7 +279,7 @@ export default function StoragePage() {
       setOrderReferenceFilter(orderReference);
       setLinkStatusFilter('linked');
     }
-  }, []);
+  }, [focusedUploadId, orderReference]);
 
   const fetchUploads = React.useCallback(async () => {
     setLoading(true);
