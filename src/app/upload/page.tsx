@@ -100,7 +100,7 @@ function fileIconByName(name: string) {
 }
 
 function glassCard(extra = '') {
-  return `rounded-3xl border border-indigo-100/70 bg-white/85 shadow-[0_18px_45px_rgba(91,73,227,0.10)] backdrop-blur ${extra}`;
+  return `rounded-3xl border border-[var(--glossy-border-default)] bg-[var(--glossy-surface-card)] shadow-[0_18px_45px_var(--glossy-action-primary-soft)] backdrop-blur ${extra}`;
 }
 
 function getUploadStatusLabel(status: UploadStatus): string {
@@ -171,19 +171,19 @@ function UploadFileRow({ item, disableActions, onOpenFile, onRemove, statusPill 
   const Icon = fileIconByName(item.file.name);
 
   return (
-    <motion.div layout className="rounded-2xl border border-slate-200 bg-white px-3 py-3">
+    <motion.div layout className="rounded-2xl border border-[var(--glossy-border-default)] bg-[var(--glossy-surface-card)] px-3 py-3">
       <div className="flex items-start gap-3">
-        <div className="rounded-xl bg-indigo-50 p-2 text-indigo-600">
+        <div className="rounded-xl bg-[var(--glossy-action-primary-soft)] p-2 text-[var(--glossy-action-primary)]">
           <Icon className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-          <p className="truncate text-sm font-medium text-slate-800">{item.file.name}</p>
-          <p className="text-xs text-slate-500">{formatFileSize(item.file.size)}</p>
-          {item.errorMessage ? <p className="mt-1 text-xs text-rose-600">{item.errorMessage}</p> : null}
+          <p className="truncate text-sm font-medium text-[var(--glossy-text-primary)]">{item.file.name}</p>
+          <p className="text-xs text-[var(--glossy-text-secondary)]">{formatFileSize(item.file.size)}</p>
+          {item.errorMessage ? <p className="mt-1 text-xs text-[var(--glossy-status-error)]">{item.errorMessage}</p> : null}
           {item.uploaded ? (
             <>
-              <p className="mt-1 text-xs text-emerald-700">Upload ID: {item.uploaded.id}</p>
-              <p className="mt-1 text-[11px] text-slate-400">ลิงก์เปิดไฟล์ใช้ได้ประมาณ {Math.ceil(item.uploaded.expiresIn / 60)} นาทีหลังอัปโหลด</p>
+              <p className="mt-1 text-xs text-[var(--glossy-status-success)]">Upload ID: {item.uploaded.id}</p>
+              <p className="mt-1 text-[11px] text-[var(--glossy-text-secondary)]">ลิงก์เปิดไฟล์ใช้ได้ประมาณ {Math.ceil(item.uploaded.expiresIn / 60)} นาทีหลังอัปโหลด</p>
             </>
           ) : null}
         </div>
@@ -194,7 +194,7 @@ function UploadFileRow({ item, disableActions, onOpenFile, onRemove, statusPill 
               type="button"
               onClick={() => onOpenFile(item)}
               disabled={!item.uploaded || disableActions}
-              className="rounded-lg p-1.5 text-slate-400 transition enabled:hover:bg-indigo-50 enabled:hover:text-indigo-600 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg p-1.5 text-[var(--glossy-text-secondary)] transition enabled:hover:bg-[var(--glossy-action-primary-soft)] enabled:hover:text-[var(--glossy-action-primary)] disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={`เปิดไฟล์ ${item.file.name}`}>
               <OpenInNewRounded className="h-4 w-4" />
             </button>
@@ -202,7 +202,7 @@ function UploadFileRow({ item, disableActions, onOpenFile, onRemove, statusPill 
               type="button"
               onClick={() => onRemove(item.id)}
               disabled={disableActions}
-              className="rounded-lg p-1.5 text-slate-400 transition enabled:hover:bg-rose-50 enabled:hover:text-rose-500 disabled:cursor-not-allowed disabled:opacity-40"
+              className="rounded-lg p-1.5 text-[var(--glossy-text-secondary)] transition enabled:hover:bg-[var(--glossy-status-error-soft)] enabled:hover:text-[var(--glossy-status-error)] disabled:cursor-not-allowed disabled:opacity-40"
               aria-label={`ลบไฟล์ ${item.file.name}`}>
               <DeleteOutlineRounded className="h-4 w-4" />
             </button>
@@ -215,13 +215,13 @@ function UploadFileRow({ item, disableActions, onOpenFile, onRemove, statusPill 
 
 function UploadQueueEmptyState() {
   return (
-    <div className="rounded-3xl border border-dashed border-indigo-200 bg-gradient-to-br from-white to-indigo-50/80 px-4 py-6 text-center shadow-[0_16px_36px_rgba(79,70,229,0.08)]">
-      <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-indigo-100 text-indigo-600">
+    <div className="rounded-3xl border border-dashed border-[var(--glossy-action-primary-border)] bg-[var(--glossy-surface-subtle)] px-4 py-6 text-center shadow-[0_16px_36px_var(--glossy-action-primary-soft)]">
+      <div className="mx-auto mb-3 grid h-12 w-12 place-items-center rounded-2xl bg-[var(--glossy-action-primary-soft)] text-[var(--glossy-action-primary)]">
         <CloudUploadRounded className="h-6 w-6" />
       </div>
-      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-500">Upload queue</p>
-      <p className="mt-2 text-base font-semibold text-slate-800">ยังไม่มีไฟล์ในคิวอัปโหลด</p>
-      <p className="mt-1 text-sm text-slate-500">ลากไฟล์มาวาง หรือกดเลือกไฟล์จากเครื่องเพื่อเริ่มสร้างคิวงานได้ทันที</p>
+      <p className="text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--glossy-action-primary)]">Upload queue</p>
+      <p className="mt-2 text-base font-semibold text-[var(--glossy-text-primary)]">ยังไม่มีไฟล์ในคิวอัปโหลด</p>
+      <p className="mt-1 text-sm text-[var(--glossy-text-secondary)]">ลากไฟล์มาวาง หรือกดเลือกไฟล์จากเครื่องเพื่อเริ่มสร้างคิวงานได้ทันที</p>
     </div>
   );
 }
@@ -257,27 +257,27 @@ function getFooterDetail(
 
 function statusPill(status: UploadStatus) {
   if (status === 'uploaded') {
-    return <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700">อัปโหลดแล้ว</span>;
+    return <span className="rounded-full bg-[var(--glossy-status-success-soft)] px-2.5 py-1 text-xs font-medium text-[var(--glossy-status-success)]">อัปโหลดแล้ว</span>;
   }
   if (status === 'uploading') {
-    return <span className="rounded-full bg-indigo-100 px-2.5 py-1 text-xs font-medium text-indigo-700">กำลังอัปโหลด</span>;
+    return <span className="rounded-full bg-[var(--glossy-action-primary-soft)] px-2.5 py-1 text-xs font-medium text-[var(--glossy-action-primary)]">กำลังอัปโหลด</span>;
   }
   if (status === 'error') {
-    return <span className="rounded-full bg-rose-100 px-2.5 py-1 text-xs font-medium text-rose-700">ผิดพลาด</span>;
+    return <span className="rounded-full bg-[var(--glossy-status-error-soft)] px-2.5 py-1 text-xs font-medium text-[var(--glossy-status-error)]">ผิดพลาด</span>;
   }
-  return <span className="rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">รออัปโหลด</span>;
+  return <span className="rounded-full bg-[var(--glossy-surface-subtle)] px-2.5 py-1 text-xs font-medium text-[var(--glossy-text-secondary)]">รออัปโหลด</span>;
 }
 
 function getStepItemClass(active: boolean, done: boolean) {
-  if (active) return 'border-indigo-300 bg-indigo-50 text-indigo-700';
-  if (done) return 'border-emerald-200 bg-emerald-50 text-emerald-700';
-  return 'border-slate-200 bg-white text-slate-500';
+  if (active) return 'border-[var(--glossy-action-primary-border)] bg-[var(--glossy-action-primary-soft)] text-[var(--glossy-action-primary)]';
+  if (done) return 'border-[var(--glossy-status-success-border)] bg-[var(--glossy-status-success-soft)] text-[var(--glossy-status-success)]';
+  return 'border-[var(--glossy-border-default)] bg-[var(--glossy-surface-card)] text-[var(--glossy-text-secondary)]';
 }
 
 function getStepBadgeClass(active: boolean, done: boolean) {
-  if (active) return 'bg-indigo-600 text-white';
-  if (done) return 'bg-emerald-600 text-white';
-  return 'bg-slate-200 text-slate-600';
+  if (active) return 'bg-[var(--glossy-action-primary)] text-[var(--glossy-text-inverse)]';
+  if (done) return 'bg-[var(--glossy-status-success)] text-[var(--glossy-text-inverse)]';
+  return 'bg-[var(--glossy-surface-active)] text-[var(--glossy-text-secondary)]';
 }
 
 export default function UploadPage() { // NOSONAR: event orchestration remains colocated with page state.
@@ -536,37 +536,37 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
   const disableFileActions = isUploading || (lineMode && lineStatus !== 'ready');
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-white via-slate-50 to-indigo-50/40 px-4 py-5 pb-28 sm:px-6 sm:py-8 sm:pb-32 md:pb-8">
+    <main className="min-h-screen bg-[var(--glossy-surface-page)] px-4 py-5 pb-28 text-[var(--glossy-text-primary)] sm:px-6 sm:py-8 sm:pb-32 md:pb-8">
       <input ref={inputRef} type="file" accept={ACCEPT_ATTRIBUTE} multiple hidden onChange={handleInputChange} />
 
       <div className="mx-auto max-w-7xl space-y-4 sm:space-y-6">
         <header className={`${glassCard('relative overflow-hidden')} px-4 py-4 sm:px-6 sm:py-5`}>
-          <div className="pointer-events-none absolute inset-y-0 right-0 w-40 bg-[radial-gradient(circle_at_top_right,rgba(99,102,241,0.18),transparent_68%)] sm:w-56" />
-          <div className="pointer-events-none absolute -left-8 top-0 h-20 w-20 rounded-full bg-indigo-100/70 blur-2xl" />
-          <div className="pointer-events-none absolute bottom-0 left-1/3 h-16 w-32 rounded-full bg-violet-100/70 blur-2xl" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-40 bg-[radial-gradient(circle_at_top_right,var(--glossy-action-primary-soft),transparent_68%)] sm:w-56" />
+          <div className="pointer-events-none absolute -left-8 top-0 h-20 w-20 rounded-full bg-[var(--glossy-action-primary-soft)] blur-2xl" />
+          <div className="pointer-events-none absolute bottom-0 left-1/3 h-16 w-32 rounded-full bg-[color-mix(in_srgb,var(--glossy-brand-magenta)_10%,transparent)] blur-2xl" />
 
           <div className="relative flex flex-wrap items-center justify-between gap-4">
             <div className="min-w-0 max-w-3xl">
-              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-indigo-100 bg-white/80 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-indigo-600">
-                <span className="h-2 w-2 rounded-full bg-emerald-500" />
+              <div className="mb-2 inline-flex items-center gap-2 rounded-full border border-[var(--glossy-action-primary-border)] bg-[var(--glossy-surface-card)] px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.22em] text-[var(--glossy-action-primary)]">
+                <span className="h-2 w-2 rounded-full bg-[var(--glossy-brand-cyan)]" />
                 <span>Upload Status</span>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <p className="text-xl font-black tracking-[-0.02em] text-slate-900 sm:text-2xl">Glossy Design</p>
-                <span className="rounded-full bg-slate-900 px-2.5 py-1 text-[11px] font-semibold text-white/90">Fast file intake</span>
+                <p className="text-xl font-black tracking-[-0.02em] text-[var(--glossy-text-primary)] sm:text-2xl">Glossy Design</p>
+                <span className="rounded-full bg-[var(--glossy-surface-inverse)] px-2.5 py-1 text-[11px] font-semibold text-[var(--glossy-text-inverse)]">Fast file intake</span>
               </div>
-              <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-600 sm:text-[15px]">อัปโหลดงานพิมพ์ได้เร็วขึ้น เหมาะกับทั้งงานด่วน งานเอกสาร และไฟล์พร้อมพิมพ์</p>
+              <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--glossy-text-secondary)] sm:text-[15px]">อัปโหลดงานพิมพ์ได้เร็วขึ้น เหมาะกับทั้งงานด่วน งานเอกสาร และไฟล์พร้อมพิมพ์</p>
 
               <div className="mt-3 flex flex-wrap gap-2">
-                <span className="rounded-full border border-indigo-100 bg-indigo-50/80 px-3 py-1 text-xs font-medium text-indigo-700">ไฟล์ละไม่เกิน {MAX_FILE_SIZE_LABEL}</span>
-                <span className="rounded-full border border-emerald-100 bg-emerald-50/80 px-3 py-1 text-xs font-medium text-emerald-700">รวมต่อครั้งไม่เกิน {MAX_UPLOAD_BATCH_SIZE_LABEL}</span>
+                <span className="rounded-full border border-[var(--glossy-action-primary-border)] bg-[var(--glossy-action-primary-soft)] px-3 py-1 text-xs font-medium text-[var(--glossy-action-primary)]">ไฟล์ละไม่เกิน {MAX_FILE_SIZE_LABEL}</span>
+                <span className="rounded-full border border-[var(--glossy-border-default)] bg-[var(--glossy-surface-subtle)] px-3 py-1 text-xs font-medium text-[var(--glossy-text-soft)]">รวมต่อครั้งไม่เกิน {MAX_UPLOAD_BATCH_SIZE_LABEL}</span>
               </div>
 
               {lineMode ? (
-                <div className={`mt-4 rounded-2xl border px-3.5 py-3 ${lineStatus === 'error' ? 'border-rose-200 bg-rose-50' : 'border-emerald-200 bg-emerald-50'}`}>
+                <div className={`mt-4 rounded-2xl border px-3.5 py-3 ${lineStatus === 'error' ? 'border-[var(--glossy-status-error-border)] bg-[var(--glossy-status-error-soft)]' : lineStatus === 'ready' ? 'border-[var(--glossy-status-success-border)] bg-[var(--glossy-status-success-soft)]' : 'border-[var(--glossy-status-warning-border)] bg-[var(--glossy-status-warning-soft)]'}`}>
                   <div className="flex items-center gap-2">
-                    <span className={`h-2.5 w-2.5 rounded-full ${lineStatus === 'ready' ? 'bg-emerald-500' : lineStatus === 'error' ? 'bg-rose-500' : 'bg-amber-400'}`} />
-                    <p className={`text-sm font-semibold ${lineStatus === 'error' ? 'text-rose-800' : 'text-emerald-800'}`}>
+                    <span className={`h-2.5 w-2.5 rounded-full ${lineStatus === 'ready' ? 'bg-[var(--glossy-status-success)]' : lineStatus === 'error' ? 'bg-[var(--glossy-status-error)]' : 'bg-[var(--glossy-status-warning)]'}`} />
+                    <p className={`text-sm font-semibold ${lineStatus === 'error' ? 'text-[var(--glossy-status-error)]' : lineStatus === 'ready' ? 'text-[var(--glossy-status-success)]' : 'text-[var(--glossy-status-warning)]'}`}>
                       {lineStatus === 'ready' && lineSession
                         ? `เชื่อมต่อ LINE แล้ว • ${lineSession.displayName}`
                         : lineStatus === 'error'
@@ -574,30 +574,30 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                           : 'กำลังตรวจสอบบัญชี LINE...'}
                     </p>
                   </div>
-                  {lineStatus === 'error' ? <p className="mt-1.5 text-xs leading-5 text-rose-700">{lineError}</p> : null}
+                  {lineStatus === 'error' ? <p className="mt-1.5 text-xs leading-5 text-[var(--glossy-status-error)]">{lineError}</p> : null}
                 </div>
               ) : null}
             </div>
 
             <div className="flex items-center gap-4 self-start sm:self-center">
-              <div className="hidden min-w-[220px] rounded-2xl border border-white/70 bg-white/75 px-3 py-3 shadow-sm sm:block">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Ready for production</p>
-                <p className="mt-1 text-sm font-medium text-slate-600">ส่งงานง่าย ได้งานไว ไว้ใจ Glossy Design</p>
+              <div className="hidden min-w-[220px] rounded-2xl border border-[var(--glossy-border-default)] bg-[var(--glossy-surface-card)] px-3 py-3 shadow-sm sm:block">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--glossy-text-secondary)]">Ready for production</p>
+                <p className="mt-1 text-sm font-medium text-[var(--glossy-text-secondary)]">ส่งงานง่าย ได้งานไว ไว้ใจ Glossy Design</p>
                 <div className="mt-3 grid grid-cols-2 gap-2">
-                  <div className="rounded-xl bg-slate-50 px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Step</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">{currentStep}/3</p>
+                  <div className="rounded-xl bg-[var(--glossy-surface-subtle)] px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--glossy-text-secondary)]">Step</p>
+                    <p className="mt-1 text-sm font-semibold text-[var(--glossy-text-primary)]">{currentStep}/3</p>
                   </div>
-                  <div className="rounded-xl bg-slate-50 px-3 py-2">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-400">Files</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-800">{totalFiles}</p>
+                  <div className="rounded-xl bg-[var(--glossy-surface-subtle)] px-3 py-2">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[var(--glossy-text-secondary)]">Files</p>
+                    <p className="mt-1 text-sm font-semibold text-[var(--glossy-text-primary)]">{totalFiles}</p>
                   </div>
                 </div>
               </div>
               <div className="flex gap-2">
-                <span className="h-2.5 w-2.5 rounded-full bg-indigo-500/80" />
-                <span className="h-2.5 w-2.5 rounded-full bg-violet-400/80" />
-                <span className="h-2.5 w-2.5 rounded-full bg-emerald-400/80" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[var(--glossy-brand-cyan)]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[var(--glossy-brand-magenta)]" />
+                <span className="h-2.5 w-2.5 rounded-full bg-[var(--glossy-brand-yellow)]" />
               </div>
             </div>
           </div>
@@ -627,13 +627,13 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
           <div className="space-y-4 xl:col-span-8">
             <article className={`${glassCard()} p-4 sm:p-5`}>
               <div className="mb-4 flex items-center gap-2">
-                <div className="rounded-lg bg-indigo-100 p-1.5 text-indigo-700">
+                <div className="rounded-lg bg-[var(--glossy-action-primary-soft)] p-1.5 text-[var(--glossy-action-primary)]">
                   <PersonRounded className="h-4 w-4" />
                 </div>
-                <h2 className="text-base font-semibold text-slate-900">รายละเอียดงาน</h2>
+                <h2 className="text-base font-semibold text-[var(--glossy-text-primary)]">รายละเอียดงาน</h2>
               </div>
-              <p className="mb-4 text-sm text-slate-600">เลือกประเภทงานและใส่รายละเอียดเพิ่มเติมเท่าที่จำเป็น เพื่อให้ทีมตรวจสอบและเริ่มงานต่อได้ง่ายขึ้น</p>
-              <p className="mb-3 text-sm font-medium text-slate-700">ประเภทงาน *</p>
+              <p className="mb-4 text-sm text-[var(--glossy-text-secondary)]">เลือกประเภทงานและใส่รายละเอียดเพิ่มเติมเท่าที่จำเป็น เพื่อให้ทีมตรวจสอบและเริ่มงานต่อได้ง่ายขึ้น</p>
+              <p className="mb-3 text-sm font-medium text-[var(--glossy-text-soft)]">ประเภทงาน *</p>
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-2">
                 {jobOptions.map(job => {
                   const Icon = job.icon;
@@ -644,17 +644,19 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                       type="button"
                       onClick={() => setSelectedJobType(job.id)}
                       className={`rounded-2xl border p-3 text-left transition ${
-                        selected ? 'border-indigo-300 bg-indigo-50 ring-2 ring-indigo-100' : 'border-slate-200 bg-white hover:border-indigo-200 hover:bg-indigo-50/40'
+                        selected
+                          ? 'border-[var(--glossy-action-primary-border)] bg-[var(--glossy-action-primary-soft)] ring-2 ring-[var(--glossy-action-primary-border)]'
+                          : 'border-[var(--glossy-border-default)] bg-[var(--glossy-surface-card)] hover:border-[var(--glossy-action-primary-border)] hover:bg-[var(--glossy-action-primary-soft)]'
                       }`}>
-                      <Icon className={`mb-1.5 h-4 w-4 ${selected ? 'text-indigo-700' : 'text-slate-500'}`} />
-                      <p className={`text-sm font-medium ${selected ? 'text-indigo-700' : 'text-slate-700'}`}>{job.label}</p>
+                      <Icon className={`mb-1.5 h-4 w-4 ${selected ? 'text-[var(--glossy-action-primary)]' : 'text-[var(--glossy-text-secondary)]'}`} />
+                      <p className={`text-sm font-medium ${selected ? 'text-[var(--glossy-action-primary)]' : 'text-[var(--glossy-text-soft)]'}`}>{job.label}</p>
                     </button>
                   );
                 })}
               </div>
 
               <label className="mt-3 block">
-                <span className="mb-1 block text-sm font-medium text-slate-700">หมายเหตุเพิ่มเติม</span>
+                <span className="mb-1 block text-sm font-medium text-[var(--glossy-text-soft)]">หมายเหตุเพิ่มเติม</span>
                 <textarea
                   value={jobNote}
                   onChange={e => setJobNote(e.target.value)}
@@ -663,11 +665,13 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                   placeholder="กรุณาระบุหมายเหตุเพิ่มเติม"
                   maxLength={JOB_NOTE_MAX_LENGTH}
                   aria-invalid={touchedFields.jobNote && Boolean(fieldErrors.jobNote)}
-                  className={`w-full rounded-xl border bg-white px-3 py-2.5 text-sm text-black placeholder:text-grey outline-none transition focus:ring-4 ${
-                    touchedFields.jobNote && fieldErrors.jobNote ? 'border-rose-300 focus:border-rose-400 focus:ring-rose-100' : 'border-slate-200 focus:border-indigo-400 focus:ring-indigo-100'
+                  className={`w-full rounded-xl border bg-[var(--glossy-surface-card)] px-3 py-2.5 text-sm text-[var(--glossy-text-primary)] placeholder:text-[var(--glossy-text-secondary)] outline-none transition focus:ring-4 ${
+                    touchedFields.jobNote && fieldErrors.jobNote
+                      ? 'border-[var(--glossy-status-error-border)] focus:border-[var(--glossy-status-error)] focus:ring-[var(--glossy-status-error-soft)]'
+                      : 'border-[var(--glossy-border-default)] focus:border-[var(--glossy-action-primary)] focus:ring-[var(--glossy-action-primary-soft)]'
                   }`}
                 />
-                <span className={`mt-1 block text-xs ${touchedFields.jobNote && fieldErrors.jobNote ? 'text-rose-600' : 'text-slate-500'}`}>
+                <span className={`mt-1 block text-xs ${touchedFields.jobNote && fieldErrors.jobNote ? 'text-[var(--glossy-status-error)]' : 'text-[var(--glossy-text-secondary)]'}`}>
                   {touchedFields.jobNote && fieldErrors.jobNote ? fieldErrors.jobNote : `${trimmedJobNote.length}/${JOB_NOTE_MAX_LENGTH}`}
                 </span>
               </label>
@@ -675,12 +679,12 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
 
             <article className={`${glassCard()} p-4 sm:p-5`}>
               <div className="mb-3 flex items-center justify-between gap-3">
-                <h2 className="text-base font-semibold text-slate-900">อัปโหลดไฟล์</h2>
+                <h2 className="text-base font-semibold text-[var(--glossy-text-primary)]">อัปโหลดไฟล์</h2>
                 <button
                   type="button"
                   onClick={handleBrowseClick}
                   disabled={disableFileActions}
-                  className="rounded-xl border border-indigo-200 bg-indigo-50 px-3 py-2 text-sm font-semibold text-indigo-700 transition enabled:hover:bg-indigo-100 disabled:cursor-not-allowed disabled:opacity-50">
+                  className="rounded-xl border border-[var(--glossy-action-primary-border)] bg-[var(--glossy-action-primary-soft)] px-3 py-2 text-sm font-semibold text-[var(--glossy-action-primary)] transition enabled:hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50">
                   เลือกไฟล์จากเครื่อง
                 </button>
               </div>
@@ -693,13 +697,15 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                 onKeyDown={handleDropzoneKeyDown}
                 disabled={disableFileActions}
                 className={`rounded-3xl border-2 border-dashed p-6 w-full h-60 text-center transition ${
-                  isDragOver ? 'border-indigo-400 bg-indigo-50/80 shadow-md' : 'border-indigo-200 bg-gradient-to-br from-white to-indigo-50/80 hover:border-indigo-300 hover:shadow-md'
+                  isDragOver
+                    ? 'border-[var(--glossy-action-primary)] bg-[var(--glossy-action-primary-soft)] shadow-md'
+                    : 'border-[var(--glossy-action-primary-border)] bg-[var(--glossy-surface-subtle)] hover:border-[var(--glossy-action-primary)] hover:shadow-md'
                 } ${disableFileActions ? 'cursor-not-allowed opacity-70' : 'cursor-pointer'}`}>
-                <CloudUploadRounded className="mx-auto mb-2 h-10 w-10 text-indigo-600" />
-                <p className="text-base font-semibold text-slate-800">ลากไฟล์มาวางที่นี่</p>
-                <p className="mt-1 text-sm text-slate-500">หรือกดเลือกไฟล์จากอุปกรณ์ของคุณ</p>
-                <p className="mt-3 text-xs text-slate-500">รองรับไฟล์: {ACCEPTED_EXTENSIONS.map(extension => extension.toUpperCase()).join(', ')}</p>
-                <p className="text-xs text-slate-500">
+                <CloudUploadRounded className="mx-auto mb-2 h-10 w-10 text-[var(--glossy-action-primary)]" />
+                <p className="text-base font-semibold text-[var(--glossy-text-primary)]">ลากไฟล์มาวางที่นี่</p>
+                <p className="mt-1 text-sm text-[var(--glossy-text-secondary)]">หรือกดเลือกไฟล์จากอุปกรณ์ของคุณ</p>
+                <p className="mt-3 text-xs text-[var(--glossy-text-secondary)]">รองรับไฟล์: {ACCEPTED_EXTENSIONS.map(extension => extension.toUpperCase()).join(', ')}</p>
+                <p className="text-xs text-[var(--glossy-text-secondary)]">
                   ขนาดสูงสุด {MAX_FILE_SIZE_LABEL} / ไฟล์ • รวมไม่เกิน {MAX_UPLOAD_BATCH_SIZE_LABEL} / ครั้ง
                 </p>
               </button>
@@ -724,14 +730,14 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -10 }}
                 className={`${glassCard()} p-4 sm:p-5`}>
-                <h3 className="text-base font-semibold text-slate-900">{isUploading ? 'กำลังอัปโหลดไฟล์...' : 'สรุปสถานะไฟล์'}</h3>
+                <h3 className="text-base font-semibold text-[var(--glossy-text-primary)]">{isUploading ? 'กำลังอัปโหลดไฟล์...' : 'สรุปสถานะไฟล์'}</h3>
                 <div className="my-3 flex items-center gap-4">
-                  <div className="grid h-16 w-16 place-items-center rounded-full border-4 border-indigo-100 text-indigo-700">
+                  <div className="grid h-16 w-16 place-items-center rounded-full border-4 border-[var(--glossy-action-primary-border)] text-[var(--glossy-action-primary)]">
                     <span className="text-sm font-bold">{uploadProgress}%</span>
                   </div>
                   <div>
-                    <p className="text-sm text-slate-600">{getUploadProgressSummary(isUploading, totalFiles)}</p>
-                    <p className="text-xs text-slate-500">
+                    <p className="text-sm text-[var(--glossy-text-secondary)]">{getUploadProgressSummary(isUploading, totalFiles)}</p>
+                    <p className="text-xs text-[var(--glossy-text-secondary)]">
                       สำเร็จ {uploadedCount} / {totalFiles} ไฟล์
                     </p>
                   </div>
@@ -739,17 +745,17 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                 {uploadedFiles.length > 0 ? (
                   <div className="space-y-2">
                     {uploadedFiles.map(item => (
-                      <div key={`progress-${item.id}`} className="flex items-center justify-between rounded-xl bg-slate-50 px-3 py-2 text-sm">
-                        <span className="truncate text-slate-700">{item.file.name}</span>
-                        <span className="ml-2 flex items-center gap-1 text-xs text-slate-500">
-                          {item.status === 'uploading' ? <AutorenewRounded className="h-3.5 w-3.5 animate-spin" /> : null}
+                      <div key={`progress-${item.id}`} className="flex items-center justify-between rounded-xl bg-[var(--glossy-surface-subtle)] px-3 py-2 text-sm">
+                        <span className="truncate text-[var(--glossy-text-soft)]">{item.file.name}</span>
+                        <span className="ml-2 flex items-center gap-1 text-xs text-[var(--glossy-text-secondary)]">
+                          {item.status === 'uploading' ? <AutorenewRounded className="h-3.5 w-3.5 animate-spin text-[var(--glossy-action-primary)]" /> : null}
                           {getUploadStatusLabel(item.status)}
                         </span>
                       </div>
                     ))}
                   </div>
                 ) : (
-                  <div className="rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/60 px-4 py-5 text-sm text-slate-600">
+                  <div className="rounded-2xl border border-dashed border-[var(--glossy-action-primary-border)] bg-[var(--glossy-action-primary-soft)] px-4 py-5 text-sm text-[var(--glossy-text-secondary)]">
                     เลือกไฟล์เมื่อไหร่ รายการและสถานะการอัปโหลดจะแสดงที่นี่ทันที
                   </div>
                 )}
@@ -759,25 +765,25 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
           </aside>
         </section>
 
-        <footer className="sticky bottom-2 z-20 rounded-2xl border border-indigo-100 bg-white/95 p-3 shadow-xl backdrop-blur">
+        <footer className="sticky bottom-2 z-20 rounded-2xl border border-[var(--glossy-border-default)] bg-[var(--glossy-surface-card)] p-3 shadow-xl backdrop-blur">
           <div className="mb-3 flex items-start justify-between gap-3 md:hidden">
             <div className="min-w-0">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-indigo-500">ขั้นตอน {currentStep}/3</p>
-              <p className="mt-1 text-sm font-semibold text-slate-900">{steps[currentStep - 1]}</p>
-              <p className="mt-1 text-xs text-slate-500">{totalFiles > 0 ? `พร้อมส่ง ${totalFiles} ไฟล์ • สำเร็จ ${uploadedCount} ไฟล์` : 'เพิ่มไฟล์อย่างน้อย 1 ไฟล์เพื่อส่งงาน'}</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[var(--glossy-action-primary)]">ขั้นตอน {currentStep}/3</p>
+              <p className="mt-1 text-sm font-semibold text-[var(--glossy-text-primary)]">{steps[currentStep - 1]}</p>
+              <p className="mt-1 text-xs text-[var(--glossy-text-secondary)]">{totalFiles > 0 ? `พร้อมส่ง ${totalFiles} ไฟล์ • สำเร็จ ${uploadedCount} ไฟล์` : 'เพิ่มไฟล์อย่างน้อย 1 ไฟล์เพื่อส่งงาน'}</p>
             </div>
             {showUploadProgress ? (
-              <div className="rounded-2xl border border-indigo-100 bg-indigo-50 px-3 py-2 text-right">
-                <p className="text-[11px] font-medium text-indigo-600">ความคืบหน้า</p>
-                <p className="text-sm font-semibold text-indigo-800">{uploadProgress}%</p>
+              <div className="rounded-2xl border border-[var(--glossy-action-primary-border)] bg-[var(--glossy-action-primary-soft)] px-3 py-2 text-right">
+                <p className="text-[11px] font-medium text-[var(--glossy-action-primary)]">ความคืบหน้า</p>
+                <p className="text-sm font-semibold text-[var(--glossy-action-primary)]">{uploadProgress}%</p>
               </div>
             ) : null}
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="hidden min-w-0 sm:block">
-              <p className="text-sm font-semibold text-slate-900">{totalFiles > 0 ? `พร้อมส่ง ${totalFiles} ไฟล์` : 'ยังไม่มีไฟล์สำหรับส่ง'}</p>
-              <p className="mt-1 text-xs text-slate-500">
+              <p className="text-sm font-semibold text-[var(--glossy-text-primary)]">{totalFiles > 0 ? `พร้อมส่ง ${totalFiles} ไฟล์` : 'ยังไม่มีไฟล์สำหรับส่ง'}</p>
+              <p className="mt-1 text-xs text-[var(--glossy-text-secondary)]">
                 {getFooterDetail(totalFiles, selectedJobLabel, Boolean(trimmedJobNote))}
               </p>
             </div>
@@ -785,7 +791,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
               type="button"
               onClick={handleUploadAll}
               disabled={primaryActionDisabled}
-              className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-500 px-4 py-2 text-sm font-semibold text-white transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-indigo-200 disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-[220px]">
+              className="inline-flex min-h-11 items-center justify-center gap-1 rounded-xl bg-[var(--glossy-action-primary)] px-4 py-2 text-sm font-semibold text-[var(--glossy-text-inverse)] transition hover:brightness-105 focus:outline-none focus:ring-4 focus:ring-[var(--glossy-action-primary-border)] disabled:cursor-not-allowed disabled:opacity-50 sm:min-w-[220px]">
               {getPrimaryActionLabel(isUploading)}
               <ExpandMoreRounded className="h-4 w-4 -rotate-90" />
             </button>
@@ -796,7 +802,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
       <AnimatePresence>
         {feedbackModal ? (
           <motion.div
-            className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 backdrop-blur-sm"
+            className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--glossy-surface-overlay)] px-4 backdrop-blur-sm"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}>
@@ -804,26 +810,26 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
               initial={{ opacity: 0, scale: 0.96, y: 12 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.96, y: 12 }}
-              className={`w-full max-w-md rounded-[28px] border p-6 shadow-[0_24px_80px_rgba(15,23,42,0.28)] ${
-                feedbackModal.kind === 'success' ? 'border-emerald-100 bg-white' : 'border-rose-100 bg-white'
+              className={`w-full max-w-md rounded-[28px] border bg-[var(--glossy-surface-card)] p-6 shadow-[0_24px_80px_var(--glossy-surface-overlay)] ${
+                feedbackModal.kind === 'success' ? 'border-[var(--glossy-status-success-border)]' : 'border-[var(--glossy-status-error-border)]'
               }`}>
               <div className="flex justify-center text-center">
-                <div className={`inline-flex rounded-full p-3 ${feedbackModal.kind === 'success' ? 'bg-emerald-500 text-white' : 'bg-rose-500 text-white'}`}>
+                <div className={`inline-flex rounded-full p-3 text-[var(--glossy-text-inverse)] ${feedbackModal.kind === 'success' ? 'bg-[var(--glossy-status-success)]' : 'bg-[var(--glossy-status-error)]'}`}>
                   {feedbackModal.kind === 'success' ? <CheckRounded className="h-6 w-6" /> : <ErrorOutlineRounded className="h-6 w-6" />}
                 </div>
               </div>
-              <h3 className={`mt-4 text-2xl font-black tracking-[-0.02em] text-center ${feedbackModal.kind === 'success' ? 'text-emerald-800' : 'text-rose-800'}`}>
+              <h3 className={`mt-4 text-2xl font-black tracking-[-0.02em] text-center ${feedbackModal.kind === 'success' ? 'text-[var(--glossy-status-success)]' : 'text-[var(--glossy-status-error)]'}`}>
                 {feedbackModal.title}
               </h3>
-              <p className={`mt-2 text-sm leading-6 text-center ${feedbackModal.kind === 'success' ? 'text-emerald-700' : 'text-rose-700'}`}>
+              <p className={`mt-2 text-sm leading-6 text-center ${feedbackModal.kind === 'success' ? 'text-[var(--glossy-status-success)]' : 'text-[var(--glossy-status-error)]'}`}>
                 {feedbackModal.message}
               </p>
               {feedbackModal.details && feedbackModal.details.length > 0 ? (
                 <div
                   className={`mt-4 space-y-2 rounded-2xl border px-4 py-3 text-sm ${
                     feedbackModal.kind === 'success'
-                      ? 'border-emerald-100 bg-emerald-50/70 text-center text-emerald-900'
-                      : 'border-rose-100 bg-rose-50/70 text-left text-rose-900'
+                      ? 'border-[var(--glossy-status-success-border)] bg-[var(--glossy-status-success-soft)] text-center text-[var(--glossy-status-success)]'
+                      : 'border-[var(--glossy-status-error-border)] bg-[var(--glossy-status-error-soft)] text-left text-[var(--glossy-status-error)]'
                   }`}>
                   {feedbackModal.details.map(detail => (
                     <p key={detail}>{detail}</p>
@@ -836,7 +842,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                     <button
                       type="button"
                       onClick={handleUploadMore}
-                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-emerald-200 px-4 py-2 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50">
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[var(--glossy-status-success-border)] px-4 py-2 text-sm font-semibold text-[var(--glossy-status-success)] transition hover:bg-[var(--glossy-status-success-soft)]">
                       ส่งไฟล์เพิ่ม
                     </button>
                     <button
@@ -848,7 +854,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                         }
                         setFeedbackModal(null);
                       }}
-                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700">
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-[var(--glossy-status-success)] px-4 py-2 text-sm font-semibold text-[var(--glossy-text-inverse)] transition hover:brightness-95">
                       {lineSession?.isInClient ? 'ปิดหน้าต่าง' : 'รับทราบ'}
                     </button>
                   </>
@@ -857,7 +863,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                     <button
                       type="button"
                       onClick={() => setFeedbackModal(null)}
-                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-rose-200 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-50">
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl border border-[var(--glossy-status-error-border)] px-4 py-2 text-sm font-semibold text-[var(--glossy-status-error)] transition hover:bg-[var(--glossy-status-error-soft)]">
                       ปิด
                     </button>
                     <button
@@ -867,7 +873,7 @@ export default function UploadPage() { // NOSONAR: event orchestration remains c
                         void handleUploadAll();
                       }}
                       disabled={isUploading || (waitingItems.length === 0 && errorItems.length === 0)}
-                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-rose-600 px-4 py-2 text-sm font-semibold text-white transition enabled:hover:bg-rose-700 disabled:cursor-not-allowed disabled:opacity-50">
+                      className="inline-flex min-h-11 flex-1 items-center justify-center rounded-xl bg-[var(--glossy-status-error)] px-4 py-2 text-sm font-semibold text-[var(--glossy-text-inverse)] transition enabled:hover:brightness-95 disabled:cursor-not-allowed disabled:opacity-50">
                       ลองอัปโหลดอีกครั้ง
                     </button>
                   </>

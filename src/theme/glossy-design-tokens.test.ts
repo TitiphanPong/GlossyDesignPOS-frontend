@@ -16,6 +16,11 @@ test('operational primary is distinct from decorative brand cyan', () => {
 
 test('CSS variables are derived from the same canonical token source', () => {
   assert.equal(glossyCssVariables['--glossy-action-primary'], glossyDesignTokens.action.primary);
+  assert.equal(glossyCssVariables['--glossy-action-primary-soft'], glossyDesignTokens.action.primarySoft);
+  assert.equal(glossyCssVariables['--glossy-action-primary-border'], glossyDesignTokens.action.primaryBorder);
   assert.equal(glossyCssVariables['--glossy-surface-page'], glossyDesignTokens.surface.page);
+  assert.equal(glossyCssVariables['--glossy-surface-overlay'], glossyDesignTokens.surface.overlay);
   assert.equal(glossyCssVariables['--glossy-text-primary'], glossyDesignTokens.text.primary);
+  assert.equal(glossyCssVariables['--glossy-status-success'], glossyDesignTokens.status.success);
+  assert.equal(glossyCssVariables['--glossy-status-error'], glossyDesignTokens.status.error);
 });
