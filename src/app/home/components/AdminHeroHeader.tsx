@@ -1,7 +1,8 @@
 'use client';
 
-import { Box, Card, CardContent, Stack, Typography } from '@mui/material';
+import { alpha, Box, Card, CardContent, Stack, Typography } from '@mui/material';
 import type { SxProps, Theme } from '@mui/material/styles';
+import { glossyDesignTokens } from '@/theme/glossy-design-tokens';
 import { adminSurface, commonButtonSx } from './adminUi';
 import type { ReactNode } from 'react';
 import { formatAdminHeaderDate, type AdminHeaderDate } from '@/lib/admin-header-date';
@@ -55,7 +56,7 @@ export const heroPrimaryButtonSx = {
   borderRadius: 3,
   textTransform: 'none',
   bgcolor: 'primary.main',
-  boxShadow: '0 14px 28px rgba(43, 98, 238, 0.28)',
+  boxShadow: `0 14px 28px ${alpha(glossyDesignTokens.action.primary, 0.28)}`,
   '&:hover': { bgcolor: 'primary.dark' },
 } satisfies SxProps<Theme>;
 
@@ -80,7 +81,7 @@ export default function AdminHeroHeader({
         border: '1px solid',
         borderColor: 'divider',
         boxShadow: adminSurface.cardShadow,
-        background: 'linear-gradient(145deg, #FFFFFF 0%, #F8FAFC 100%)',
+        background: `linear-gradient(145deg, ${glossyDesignTokens.surface.card} 0%, ${glossyDesignTokens.surface.raised} 100%)`,
         mb,
       }}>
       <CardContent sx={{ p: { xs: 2.1, md: 2.8 } }}>
@@ -90,8 +91,8 @@ export default function AdminHeroHeader({
           <Box sx={{ flex: 1, minHeight: { md: 110 } }}>
             <Typography sx={{ color: 'text.primary', fontWeight: 700, fontSize: { xs: 30, md: 38 }, lineHeight: 1.06 }}>{title}</Typography>
             <Typography sx={{ mt: 1, color: 'text.secondary', fontSize: { xs: 14, md: 16 } }}>{description}</Typography>
-            <Typography sx={{ mt: 1, color: '#94A3B8', fontSize: 12.5 }}>อัปเดตล่าสุด {lastSynced}</Typography>
-            <Typography sx={{ mt: 0.5, color: '#94A3B8', fontSize: 12.5 }}>{thaiDate}</Typography>
+            <Typography sx={{ mt: 1, color: glossyDesignTokens.text.secondary, fontSize: 12.5 }}>อัปเดตล่าสุด {lastSynced}</Typography>
+            <Typography sx={{ mt: 0.5, color: glossyDesignTokens.text.secondary, fontSize: 12.5 }}>{thaiDate}</Typography>
           </Box>
 
           <Stack

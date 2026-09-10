@@ -1,7 +1,7 @@
 'use client';
 
 import * as React from 'react';
-import { Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
+import { alpha, Box, Button, Card, CardContent, FormControl, IconButton, InputAdornment, MenuItem, Select, Stack, TextField, Typography } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import dayjs from 'dayjs';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
@@ -9,6 +9,7 @@ import ClearRoundedIcon from '@mui/icons-material/ClearRounded';
 import RefreshRoundedIcon from '@mui/icons-material/RefreshRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
+import { glossyDesignTokens } from '@/theme/glossy-design-tokens';
 import { adminSurface, uiCardSx } from './adminUi';
 
 export type DatePreset = 'all' | 'today' | 'last7' | 'last30' | 'month' | 'custom';
@@ -39,10 +40,10 @@ const dateFieldSx = {
   '& .MuiOutlinedInput-root': {
     height: 48,
     borderRadius: 1.5,
-    bgcolor: '#FFFFFF',
-    '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
-    '&:hover fieldset': { borderColor: '#94A3B8' },
-    '&.Mui-focused fieldset': { borderColor: '#2563EB' },
+    bgcolor: glossyDesignTokens.surface.card,
+    '& fieldset': { borderColor: glossyDesignTokens.border.default, borderWidth: 1 },
+    '&:hover fieldset': { borderColor: glossyDesignTokens.border.strong },
+    '&.Mui-focused fieldset': { borderColor: glossyDesignTokens.action.primary },
   },
   '& .MuiInputBase-input': { fontSize: 13, py: 0 },
 };
@@ -50,10 +51,10 @@ const dateFieldSx = {
 const selectSx = {
   borderRadius: 2,
   height: 48,
-  bgcolor: '#FFFFFF',
-  '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
-  '&:hover fieldset': { borderColor: '#94A3B8' },
-  '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: 1 },
+  bgcolor: glossyDesignTokens.surface.card,
+  '& fieldset': { borderColor: glossyDesignTokens.border.default, borderWidth: 1 },
+  '&:hover fieldset': { borderColor: glossyDesignTokens.border.strong },
+  '&.Mui-focused fieldset': { borderColor: glossyDesignTokens.action.primary, borderWidth: 1 },
 };
 
 export type ReportDateRangeConfig = {
@@ -117,7 +118,7 @@ export function ReportDateRangePanel({
       sx={{
         gridColumn: { xs: 'auto', lg: 2 },
         gridRow: { xs: 'auto', lg: '1 / span 2' },
-        border: '1px solid #E2E8F0',
+        border: `1px solid ${glossyDesignTokens.border.default}`,
         borderRadius: 2.5,
         p: { xs: 1.5, sm: 2.25 },
         display: 'flex',
@@ -126,10 +127,10 @@ export function ReportDateRangePanel({
         minWidth: 0,
       }}>
       <Stack direction="row" alignItems="center" spacing={1} sx={{ mb: 1.5 }}>
-        <Box sx={{ width: 34, height: 34, borderRadius: 1.5, display: 'grid', placeItems: 'center', bgcolor: '#EFF6FF', color: '#2563EB' }}>
+        <Box sx={{ width: 34, height: 34, borderRadius: 1.5, display: 'grid', placeItems: 'center', bgcolor: glossyDesignTokens.action.primarySoft, color: glossyDesignTokens.action.primary }}>
           <CalendarMonthRoundedIcon sx={{ fontSize: 19 }} />
         </Box>
-        <Typography sx={{ color: '#0F172A', fontWeight: 700, fontSize: 15 }}>{title}</Typography>
+        <Typography sx={{ color: glossyDesignTokens.text.primary, fontWeight: 700, fontSize: 15 }}>{title}</Typography>
       </Stack>
       <Box
         sx={{
@@ -137,7 +138,7 @@ export function ReportDateRangePanel({
           gridTemplateColumns: `repeat(${presetOptions.length}, minmax(0, 1fr))`,
           gap: 0.5,
           p: 0.5,
-          border: '1px solid #E2E8F0',
+          border: `1px solid ${glossyDesignTokens.border.default}`,
           borderRadius: 1.75,
           mb: 2,
         }}>
@@ -153,11 +154,11 @@ export function ReportDateRangePanel({
               px: 0.5,
               borderRadius: 1.25,
               textTransform: 'none',
-              color: preset === item ? '#1D4ED8' : '#64748B',
-              bgcolor: preset === item ? '#EFF6FF' : 'transparent',
+              color: preset === item ? glossyDesignTokens.action.primary : glossyDesignTokens.text.secondary,
+              bgcolor: preset === item ? glossyDesignTokens.action.primarySoft : 'transparent',
               fontSize: 12.5,
               fontWeight: preset === item ? 700 : 600,
-              '&:hover': { bgcolor: '#F8FAFC' },
+              '&:hover': { bgcolor: glossyDesignTokens.surface.hover },
             }}>
             {DATE_PRESET_LABELS[item]}
           </Button>
@@ -172,7 +173,7 @@ export function ReportDateRangePanel({
           onChange={onStartDateChange}
           slotProps={{ textField: { size: 'small', fullWidth: true, sx: dateFieldSx } }}
         />
-        <Typography sx={{ display: { xs: 'none', sm: 'block' }, pb: 1.6, color: '#94A3B8', fontSize: 18 }}>→</Typography>
+        <Typography sx={{ display: { xs: 'none', sm: 'block' }, pb: 1.6, color: glossyDesignTokens.text.secondary, fontSize: 18 }}>→</Typography>
         <DatePicker
           label="วันที่สิ้นสุด"
           value={endDate}
@@ -183,7 +184,7 @@ export function ReportDateRangePanel({
           slotProps={{ textField: { size: 'small', fullWidth: true, sx: dateFieldSx } }}
         />
       </Box>
-      {preset === 'custom' ? <Typography sx={{ mt: 0.75, color: '#2563EB', fontSize: 12, fontWeight: 600 }}>กำหนดเอง</Typography> : null}
+      {preset === 'custom' ? <Typography sx={{ mt: 0.75, color: glossyDesignTokens.action.primary, fontSize: 12, fontWeight: 600 }}>กำหนดเอง</Typography> : null}
     </Box>
   );
 }
@@ -243,16 +244,16 @@ export default function ReportFilterPanel({
       sx={{
         ...uiCardSx,
         borderRadius: adminSurface.filterRadius,
-        boxShadow: '0 4px 16px rgba(15, 23, 42, 0.04)',
+        boxShadow: `0 4px 16px ${alpha(glossyDesignTokens.brand.ink, 0.04)}`,
       }}>
       <CardContent sx={{ p: { xs: 1.5, md: 2.25 } }}>
         <Stack spacing={1.5}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={1}>
             <Stack direction="row" alignItems="center" spacing={1}>
-              <TuneRoundedIcon sx={{ color: '#2563EB', fontSize: 19 }} />
+              <TuneRoundedIcon sx={{ color: glossyDesignTokens.action.primary, fontSize: 19 }} />
               <Box>
-                <Typography sx={{ color: '#0F172A', fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>{title}</Typography>
-                {subtitle ? <Typography sx={{ color: '#64748B', fontSize: 12, mt: 0.25 }}>{subtitle}</Typography> : null}
+                <Typography sx={{ color: glossyDesignTokens.text.primary, fontWeight: 700, fontSize: 16, lineHeight: 1.2 }}>{title}</Typography>
+                {subtitle ? <Typography sx={{ color: glossyDesignTokens.text.secondary, fontSize: 12, mt: 0.25 }}>{subtitle}</Typography> : null}
               </Box>
             </Stack>
             {onReset ? (
@@ -261,7 +262,7 @@ export default function ReportFilterPanel({
                 disabled={resetDisabled}
                 onClick={onReset}
                 startIcon={<RefreshRoundedIcon sx={{ fontSize: 16 }} />}
-                sx={{ minHeight: 32, px: 1, color: '#64748B', textTransform: 'none', fontWeight: 600, '&:hover': { bgcolor: '#F8FAFC', color: '#2563EB' } }}>
+                sx={{ minHeight: 32, px: 1, color: glossyDesignTokens.text.secondary, textTransform: 'none', fontWeight: 600, '&:hover': { bgcolor: glossyDesignTokens.surface.hover, color: glossyDesignTokens.action.primary } }}>
                 {resetLabel}
               </Button>
             ) : null}
@@ -288,7 +289,7 @@ export default function ReportFilterPanel({
                 input: {
                   startAdornment: (
                     <InputAdornment position="start">
-                      <SearchRoundedIcon sx={{ color: '#6B7A90' }} />
+                      <SearchRoundedIcon sx={{ color: glossyDesignTokens.text.secondary }} />
                     </InputAdornment>
                   ),
                   endAdornment: searchValue ? (
@@ -304,12 +305,12 @@ export default function ReportFilterPanel({
                 '& .MuiOutlinedInput-root': {
                   borderRadius: 2.5,
                   height: 64,
-                  bgcolor: '#FFFFFF',
-                  '& input': { fontSize: 15, color: '#0F172A' },
-                  '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
-                  '&:hover fieldset': { borderColor: '#94A3B8' },
-                  '&.Mui-focused': { boxShadow: '0 0 0 3px rgba(37, 99, 235, 0.12)' },
-                  '&.Mui-focused fieldset': { borderColor: '#2563EB' },
+                  bgcolor: glossyDesignTokens.surface.card,
+                  '& input': { fontSize: 15, color: glossyDesignTokens.text.primary },
+                  '& fieldset': { borderColor: glossyDesignTokens.border.default, borderWidth: 1 },
+                  '&:hover fieldset': { borderColor: glossyDesignTokens.border.strong },
+                  '&.Mui-focused': { boxShadow: `0 0 0 3px ${alpha(glossyDesignTokens.action.primary, 0.12)}` },
+                  '&.Mui-focused fieldset': { borderColor: glossyDesignTokens.action.primary },
                 },
               }}
             />
@@ -328,7 +329,7 @@ export default function ReportFilterPanel({
                 }}>
                 {filters.map(filter => (
                   <FormControl key={filter.id} size="small" sx={{ minWidth: { xs: '100%', sm: filter.minWidth ?? 190 } }}>
-                    <Typography id={`${filter.id}-label`} sx={{ mb: 0.4, color: '#475569', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>{filter.label}</Typography>
+                    <Typography id={`${filter.id}-label`} sx={{ mb: 0.4, color: glossyDesignTokens.text.soft, fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>{filter.label}</Typography>
                     <Select<string>
                       labelId={`${filter.id}-label`}
                       value={filter.value}

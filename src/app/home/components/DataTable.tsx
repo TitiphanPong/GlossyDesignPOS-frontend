@@ -2,17 +2,18 @@
 
 import * as React from 'react';
 import { Box, Chip, Skeleton, Table, TableBody, TableCell, TableHead, TablePagination, TableRow, Typography, type SxProps, type Theme } from '@mui/material';
+import { glossyDesignTokens } from '@/theme/glossy-design-tokens';
 import { EmptyState } from './dashboardUi';
 
 // Shared visual language for admin tables, based on the orders page table design.
 export const dataTableHeaderRowSx = {
   '& th': {
-    background: 'grey.50',
+    background: glossyDesignTokens.surface.subtle,
     color: 'text.secondary',
     fontSize: 11.5,
     fontWeight: 700,
     letterSpacing: '0.3px',
-    borderBottom: '1px solid #F3F4F6',
+    borderBottom: `1px solid ${glossyDesignTokens.border.default}`,
     py: 1.5,
     px: 2,
     whiteSpace: 'nowrap',
@@ -23,11 +24,11 @@ export const dataTableBodyRowSx = {
   '& td': {
     py: 1.6,
     px: 2,
-    borderBottom: '1px solid #F9FAFB',
+    borderBottom: `1px solid ${glossyDesignTokens.border.default}`,
     fontSize: 13,
     verticalAlign: 'top',
   },
-  '&:hover': { bgcolor: '#FBFCFF' },
+  '&:hover': { bgcolor: glossyDesignTokens.surface.hover },
 } satisfies SxProps<Theme>;
 
 export type DataTableColumn<T> = {
@@ -65,7 +66,7 @@ export type DataTableSectionHeaderProps = {
 
 export function DataTableSectionHeader({ title, subtitle, countLabel }: Readonly<DataTableSectionHeaderProps>) {
   return (
-    <Box sx={{ px: { xs: 2, md: 3 }, py: { xs: 2, md: 2.6 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, borderBottom: '1px solid #F3F4F6', bgcolor: '#FFFFFF' }}>
+    <Box sx={{ px: { xs: 2, md: 3 }, py: { xs: 2, md: 2.6 }, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1.5, borderBottom: `1px solid ${glossyDesignTokens.border.default}`, bgcolor: glossyDesignTokens.surface.card }}>
       <Box>
         <Typography sx={{ fontSize: 16, fontWeight: 700, color: 'text.primary', letterSpacing: '-0.2px' }}>{title}</Typography>
         {subtitle ? <Typography sx={{ mt: 0.35, fontSize: 12, color: 'text.secondary', fontWeight: 500 }}>{subtitle}</Typography> : null}
