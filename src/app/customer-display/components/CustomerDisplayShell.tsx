@@ -7,28 +7,29 @@ import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay } from 'swiper/modules';
 import { motion } from 'framer-motion';
 import { BANNERS, WORKFLOW_STEPS } from './customerDisplayShared';
+import { glossyDesignTokens, withAlpha } from '../../../theme/glossy-design-tokens';
 import 'swiper/css';
 
 export function AmbientBackground() {
   const orbs = [
-    { key: 'a', w: 500, h: 500, top: '-12%', left: '-8%', color: 'rgba(124,77,255,0.10)', dur: '22s', delay: '0s' },
-    { key: 'b', w: 380, h: 380, top: '55%', right: '-10%', color: 'rgba(0,229,255,0.09)', dur: '28s', delay: '6s' },
-    { key: 'c', w: 280, h: 280, top: '18%', left: '42%', color: 'rgba(41,121,255,0.07)', dur: '20s', delay: '3s' },
-    { key: 'd', w: 240, h: 240, bottom: '4%', left: '18%', color: 'rgba(0,200,120,0.06)', dur: '24s', delay: '10s' },
-    { key: 'e', w: 180, h: 180, top: '40%', left: '70%', color: 'rgba(255,64,129,0.05)', dur: '16s', delay: '7s' },
+    { key: 'a', w: 500, h: 500, top: '-12%', left: '-8%', color: glossyDesignTokens.display.violetSoft, dur: '22s', delay: '0s' },
+    { key: 'b', w: 380, h: 380, top: '55%', right: '-10%', color: glossyDesignTokens.display.cyanSoft, dur: '28s', delay: '6s' },
+    { key: 'c', w: 280, h: 280, top: '18%', left: '42%', color: glossyDesignTokens.display.cyanSoft, dur: '20s', delay: '3s' },
+    { key: 'd', w: 240, h: 240, bottom: '4%', left: '18%', color: withAlpha(glossyDesignTokens.display.success, 0.1), dur: '24s', delay: '10s' },
+    { key: 'e', w: 180, h: 180, top: '40%', left: '70%', color: glossyDesignTokens.display.violetSoft, dur: '16s', delay: '7s' },
   ];
 
   return (
     <Box sx={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
-      <Box sx={{ position: 'absolute', inset: 0, bgcolor: '#04040A' }} />
+      <Box sx={{ position: 'absolute', inset: 0, bgcolor: glossyDesignTokens.display.shellDeep }} />
       <Box
         sx={{
           position: 'absolute',
           inset: 0,
           background:
-            'radial-gradient(ellipse 80% 60% at 15% 50%, rgba(124,77,255,0.13) 0%, transparent 70%),' +
-            'radial-gradient(ellipse 70% 50% at 85% 15%, rgba(0,140,255,0.12) 0%, transparent 65%),' +
-            'radial-gradient(ellipse 60% 40% at 50% 90%, rgba(0,200,150,0.07) 0%, transparent 60%)',
+            `radial-gradient(ellipse 80% 60% at 15% 50%, ${withAlpha(glossyDesignTokens.display.violet, 0.13)} 0%, transparent 70%),` +
+            `radial-gradient(ellipse 70% 50% at 85% 15%, ${withAlpha(glossyDesignTokens.display.cyan, 0.12)} 0%, transparent 65%),` +
+            `radial-gradient(ellipse 60% 40% at 50% 90%, ${withAlpha(glossyDesignTokens.display.success, 0.08)} 0%, transparent 60%)`,
           animation: 'auroraShift 18s ease-in-out infinite',
         }}
       />
@@ -97,14 +98,14 @@ export function LiveClock() {
         sx={{
           fontSize: { xs: '1.4rem', md: '1.7rem' },
           fontWeight: 700,
-          color: '#00E5FF',
+          color: 'var(--glossy-display-cyan)',
           fontFamily: '"SF Mono","Fira Code",monospace',
           lineHeight: 1,
           letterSpacing: '0.04em',
         }}>
         {time}
       </Typography>
-      <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', mt: 0.4, letterSpacing: '0.08em' }}>{date}</Typography>
+      <Typography sx={{ fontSize: '0.72rem', color: 'var(--glossy-display-text-muted)', mt: 0.4, letterSpacing: '0.08em' }}>{date}</Typography>
     </Box>
   );
 }
@@ -113,10 +114,10 @@ export function GlassCard({ children, sx }: Readonly<{ children: ReactNode; sx?:
   return (
     <Box
       sx={{
-        background: 'rgba(255,255,255,0.045)',
+        background: 'var(--glossy-display-surface)',
         backdropFilter: 'blur(24px)',
         WebkitBackdropFilter: 'blur(24px)',
-        border: '1px solid rgba(255,255,255,0.09)',
+        border: '1px solid var(--glossy-display-border)',
         borderRadius: '20px',
         ...sx,
       }}>
@@ -147,20 +148,20 @@ export function OrderTimeline({ currentStep }: Readonly<{ currentStep: number }>
           const hasConnector = step.id !== lastStepId;
 
           let connectorBackground = 'rgba(255,255,255,0.08)';
-          if (done) connectorBackground = 'linear-gradient(90deg,#00E5B0,#00C853)';
-          else if (active) connectorBackground = 'linear-gradient(90deg,#7C4DFF,rgba(255,255,255,0.08))';
+          if (done) connectorBackground = 'linear-gradient(90deg,var(--glossy-display-success),var(--glossy-display-success))';
+          else if (active) connectorBackground = 'linear-gradient(90deg,var(--glossy-display-violet),rgba(255,255,255,0.08))';
 
           let dotBackground = 'rgba(255,255,255,0.06)';
-          if (done) dotBackground = 'linear-gradient(135deg,#00C853,#00E5B0)';
-          else if (active) dotBackground = 'linear-gradient(135deg,#7C4DFF,#2979FF)';
+          if (done) dotBackground = 'linear-gradient(135deg,var(--glossy-display-success),var(--glossy-display-success))';
+          else if (active) dotBackground = 'linear-gradient(135deg,var(--glossy-display-violet),var(--glossy-action-primary))';
 
           let dotBorder = '2px solid rgba(255,255,255,0.1)';
-          if (done) dotBorder = '2px solid rgba(0,200,120,0.5)';
-          if (active) dotBorder = '2px solid rgba(0,229,255,0.75)';
+          if (done) dotBorder = `2px solid ${withAlpha(glossyDesignTokens.display.success, 0.5)}`;
+          if (active) dotBorder = '2px solid rgba(0,169,206,0.75)';
 
           let labelColor = 'rgba(255,255,255,0.28)';
-          if (done) labelColor = '#00E5B0';
-          if (active) labelColor = '#00E5FF';
+          if (done) labelColor = 'var(--glossy-display-success)';
+          if (active) labelColor = 'var(--glossy-display-cyan)';
 
           return (
             <Box key={step.id} sx={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', position: 'relative' }}>
@@ -191,7 +192,7 @@ export function OrderTimeline({ currentStep }: Readonly<{ currentStep: number }>
                   flexShrink: 0,
                   background: dotBackground,
                   border: dotBorder,
-                  boxShadow: active ? '0 0 14px rgba(0,229,255,0.5),0 0 28px rgba(124,77,255,0.25)' : 'none',
+                  boxShadow: active ? '0 0 14px rgba(0,169,206,0.5),0 0 28px rgba(123,97,255,0.25)' : 'none',
                   animation: active ? 'statusPulse 2.5s ease-in-out infinite' : 'none',
                   transition: 'all 0.5s ease',
                 }}>
@@ -239,7 +240,7 @@ export function IdleScreen() {
   }, []);
 
   return (
-    <Box sx={{ width: '100%', height: '100vh', bgcolor: '#04040A', overflow: 'hidden', position: 'relative' }}>
+    <Box sx={{ width: '100%', height: '100vh', bgcolor: 'var(--glossy-display-shell-deep)', overflow: 'hidden', position: 'relative' }}>
       <AmbientBackground />
       <Swiper modules={[Autoplay]} autoplay={{ delay: 15000, disableOnInteraction: false }} loop style={{ width: '100%', height: '100vh' }}>
         {BANNERS.map(item => (
@@ -310,7 +311,7 @@ export function PaidScreen() {
       sx={{
         width: '100%',
         height: '100vh',
-        bgcolor: '#04040A',
+        bgcolor: 'var(--glossy-display-shell-deep)',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
@@ -325,7 +326,7 @@ export function PaidScreen() {
           width: '70vmin',
           height: '70vmin',
           borderRadius: '50%',
-          background: 'radial-gradient(circle,rgba(0,200,100,0.14) 0%,transparent 70%)',
+          background: `radial-gradient(circle,${withAlpha(glossyDesignTokens.display.success, 0.14)} 0%,transparent 70%)`,
           animation: 'auroraShift 4s ease-in-out infinite',
         }}
       />
@@ -341,13 +342,13 @@ export function PaidScreen() {
               width: { xs: 90, md: 120 },
               height: { xs: 90, md: 120 },
               borderRadius: '50%',
-              background: 'linear-gradient(135deg,#00C853 0%,#00E5B0 100%)',
+              background: 'linear-gradient(135deg,var(--glossy-display-success) 0%,var(--glossy-display-success) 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               mx: 'auto',
               mb: { xs: 3, md: 5 },
-              boxShadow: '0 0 60px rgba(0,200,100,0.45),0 0 120px rgba(0,200,100,0.18)',
+              boxShadow: `0 0 60px ${withAlpha(glossyDesignTokens.display.success, 0.45)},0 0 120px ${withAlpha(glossyDesignTokens.display.success, 0.18)}`,
             }}>
             <Typography sx={{ fontSize: { xs: '2.5rem', md: '3.5rem' }, lineHeight: 1, fontWeight: 900, color: '#fff' }}>✓</Typography>
           </Box>
@@ -364,7 +365,7 @@ export function PaidScreen() {
             }}>
             ชำระเงินเรียบร้อย
           </Typography>
-          <Typography sx={{ fontSize: { xs: '1rem', md: '1.5rem', lg: '2rem' }, fontWeight: 400, color: '#00E5B0', letterSpacing: '0.06em', mt: 1 }}>Payment Successful</Typography>
+          <Typography sx={{ fontSize: { xs: '1rem', md: '1.5rem', lg: '2rem' }, fontWeight: 400, color: 'var(--glossy-display-success)', letterSpacing: '0.06em', mt: 1 }}>Payment Successful</Typography>
         </motion.div>
 
         <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.55, duration: 0.6 }}>
@@ -380,7 +381,7 @@ export function PaidScreen() {
               width: { xs: '60%', md: '40%' },
               height: '2px',
               mx: 'auto',
-              background: 'linear-gradient(90deg,transparent,#00E5B0,transparent)',
+              background: 'linear-gradient(90deg,transparent,var(--glossy-display-success),transparent)',
               borderRadius: '2px',
             }}
           />

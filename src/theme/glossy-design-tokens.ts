@@ -35,6 +35,22 @@ export const glossyDesignTokens = {
     primaryBorder: 'rgba(0, 127, 150, 0.22)',
     focusRing: '#00A9CE',
   },
+  display: {
+    shell: '#111318',
+    shellDeep: '#080A0D',
+    surface: 'rgba(255, 255, 255, 0.06)',
+    surfaceStrong: '#1B1F24',
+    border: 'rgba(255, 255, 255, 0.12)',
+    textPrimary: '#FFFFFF',
+    textSecondary: 'rgba(255, 255, 255, 0.72)',
+    textMuted: 'rgba(255, 255, 255, 0.52)',
+    cyan: '#00A9CE',
+    cyanSoft: 'rgba(0, 169, 206, 0.16)',
+    violet: '#7B61FF',
+    violetSoft: 'rgba(123, 97, 255, 0.14)',
+    success: '#67D391',
+    grid: 'rgba(255, 255, 255, 0.035)',
+  },
   status: {
     success: '#2E8B57',
     successSoft: '#EAF7EF',
@@ -50,6 +66,19 @@ export const glossyDesignTokens = {
     infoBorder: '#CFD7FF',
   },
 } as const;
+
+export function withAlpha(hex: string, alpha: number): string {
+  const normalized = hex.replace('#', '');
+  if (!/^[0-9a-fA-F]{6}$/.test(normalized)) {
+    throw new Error(`withAlpha expects a 6-digit hex color, received: ${hex}`);
+  }
+
+  const red = Number.parseInt(normalized.slice(0, 2), 16);
+  const green = Number.parseInt(normalized.slice(2, 4), 16);
+  const blue = Number.parseInt(normalized.slice(4, 6), 16);
+  const boundedAlpha = Math.min(1, Math.max(0, alpha));
+  return `rgba(${red}, ${green}, ${blue}, ${boundedAlpha})`;
+}
 
 export const glossyCssVariables = {
   '--glossy-brand-ink': glossyDesignTokens.brand.ink,
@@ -78,6 +107,20 @@ export const glossyCssVariables = {
   '--glossy-action-primary-soft': glossyDesignTokens.action.primarySoft,
   '--glossy-action-primary-border': glossyDesignTokens.action.primaryBorder,
   '--glossy-action-focus-ring': glossyDesignTokens.action.focusRing,
+  '--glossy-display-shell': glossyDesignTokens.display.shell,
+  '--glossy-display-shell-deep': glossyDesignTokens.display.shellDeep,
+  '--glossy-display-surface': glossyDesignTokens.display.surface,
+  '--glossy-display-surface-strong': glossyDesignTokens.display.surfaceStrong,
+  '--glossy-display-border': glossyDesignTokens.display.border,
+  '--glossy-display-text-primary': glossyDesignTokens.display.textPrimary,
+  '--glossy-display-text-secondary': glossyDesignTokens.display.textSecondary,
+  '--glossy-display-text-muted': glossyDesignTokens.display.textMuted,
+  '--glossy-display-cyan': glossyDesignTokens.display.cyan,
+  '--glossy-display-cyan-soft': glossyDesignTokens.display.cyanSoft,
+  '--glossy-display-violet': glossyDesignTokens.display.violet,
+  '--glossy-display-violet-soft': glossyDesignTokens.display.violetSoft,
+  '--glossy-display-success': glossyDesignTokens.display.success,
+  '--glossy-display-grid': glossyDesignTokens.display.grid,
   '--glossy-status-success': glossyDesignTokens.status.success,
   '--glossy-status-success-soft': glossyDesignTokens.status.successSoft,
   '--glossy-status-success-border': glossyDesignTokens.status.successBorder,

@@ -193,10 +193,10 @@ export default function CustomerScreen() {
   if (!summary) return <IdleScreen />;
   if (!paymentQrProfile) {
     return (
-      <main className="grid min-h-screen place-items-center bg-slate-950 px-6 text-center text-white">
-        <div className="max-w-xl rounded-3xl border border-amber-400/30 bg-slate-900 p-8 shadow-2xl">
+      <main className="grid min-h-screen place-items-center bg-[var(--glossy-display-shell)] px-6 text-center text-[var(--glossy-display-text-primary)]">
+        <div className="max-w-xl rounded-3xl border border-[var(--glossy-status-warning-border)] bg-[var(--glossy-display-surface-strong)] p-8 shadow-2xl">
           <h1 className="text-2xl font-semibold">ยังไม่สามารถแสดง QR รับชำระเงินได้</h1>
-          <p className="mt-3 text-slate-300">กรุณาแจ้งพนักงานตรวจสอบการตั้งค่า QR รับชำระเงินก่อนดำเนินการต่อ ระบบจะไม่สร้าง QR จากข้อมูลสำรองที่ไม่ผ่านการตรวจสอบ</p>
+          <p className="mt-3 text-[var(--glossy-display-text-secondary)]">กรุณาแจ้งพนักงานตรวจสอบการตั้งค่า QR รับชำระเงินก่อนดำเนินการต่อ ระบบจะไม่สร้าง QR จากข้อมูลสำรองที่ไม่ผ่านการตรวจสอบ</p>
         </div>
       </main>
     );
