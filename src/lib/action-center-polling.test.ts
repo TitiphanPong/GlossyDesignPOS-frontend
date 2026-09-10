@@ -67,6 +67,24 @@ async function flushMicrotasks() {
   await Promise.resolve();
 }
 
+test('mutation refresh waits out an older GET and starts a new request after completion', async () => {
+  const first = deferred();
+  let calls = 0;
+  const timers = createFakeTimers();
+  const poller = createActionCenterPoller({
+    documentTarget: new FakeDocument(), windowTarget: new FakeEventTarget(),
+    fetchActionCenter: async () => { calls += 1; if (calls === 1) await first.promise; },
+    setTimeoutFn: timers.setTimeoutFn, clearTimeoutFn: timers.clearTimeoutFn,
+  });
+  poller.start();
+  const refresh = poller.refetchAfterCurrent();
+  assert.equal(calls, 1);
+  first.resolve();
+  await refresh;
+  assert.equal(calls, 2);
+  poller.stop();
+});
+
 test('polling waits for the active request and never overlaps focus or timer refreshes', async () => {
   const documentTarget = new FakeDocument();
   const windowTarget = new FakeEventTarget();

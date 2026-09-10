@@ -30,6 +30,12 @@ export const SIDEBAR_MENU_GROUPS: SidebarMenuGroup[] = [
     label: 'ภาพรวม',
     items: [
       {
+        id: 'action-center',
+        label: 'ศูนย์งาน',
+        href: '/home/action-center',
+        icon: FactCheckRoundedIcon,
+      },
+      {
         id: 'dashboard',
         label: 'Dashboard',
         href: '/home',

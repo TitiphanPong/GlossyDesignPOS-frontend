@@ -1,94 +1,61 @@
-import type { Notification } from './useNotifications';
+import type { Notification, NotificationPriority } from './useNotifications';
 
-export type ActionCenterTab = 'attention' | 'urgent' | 'files' | 'finance' | 'follow_up' | 'acknowledged';
+export const stateLabels = { new: 'ใหม่', acknowledged: 'รับทราบแล้ว', snoozed: 'พักเตือน', all: 'ค้างทั้งหมด' } as const;
+export const domainLabels = { all: 'ทั้งหมด', finance: 'การเงิน', files: 'ไฟล์', production: 'การผลิต', pickup: 'ส่งมอบ', stock: 'สต็อก' } as const;
+export const priorityLabels = { all: 'ทั้งหมด', critical: 'วิกฤต', high: 'สูง', normal: 'ปกติ', low: 'ต่ำ' } as const;
+export type ActionCenterFilters = {
+  state: keyof typeof stateLabels;
+  domain: keyof typeof domainLabels;
+  priority: 'all' | NotificationPriority;
+  q: string;
+  page: number;
+};
+export const DEFAULT_FILTERS: ActionCenterFilters = { state: 'new', domain: 'all', priority: 'all', q: '', page: 1 };
 
-export type ActionCenterDisplayRow =
-  | { kind: 'item'; key: string; notificationIds: string[]; notification: Notification }
-  | {
-      kind: 'upload_group';
-      key: string;
-      notificationIds: string[];
-      count: number;
-      latestAt: string;
-      attentionState: 'new' | 'acknowledged' | 'snoozed';
-      priority: Notification['priority'];
-    };
-
-export function actionCenterGroup(notification: Notification): 'files' | 'finance' | 'follow_up' {
-  if (notification.entityType === 'payment' || notification.type.startsWith('payment_')) return 'finance';
-  if (notification.entityType === 'upload' || notification.type.startsWith('upload_')) return 'files';
-  return 'follow_up';
+export function actionCenterGroup(item: Notification): Exclude<ActionCenterFilters['domain'], 'all'> {
+  if (item.entityType === 'payment' || item.type.startsWith('payment_')) return 'finance';
+  if (item.entityType === 'upload' || item.type.startsWith('upload_')) return 'files';
+  if (item.entityType === 'production_job' || item.type.startsWith('production_')) return 'production';
+  if (item.entityType === 'stock' || item.type.startsWith('stock_')) return 'stock';
+  return 'pickup';
 }
 
-function attentionState(notification: Notification) {
-  return notification.attentionState ?? 'new';
+export function readActionCenterFilters(params: Pick<URLSearchParams, 'get'>): ActionCenterFilters {
+  const state = params.get('state') === 'ack' ? 'acknowledged' : (params.get('state') ?? '');
+  const domain = params.get('domain') ?? '';
+  const priority = params.get('priority') ?? '';
+  const page = Number(params.get('page') ?? 1);
+  return {
+    state: Object.hasOwn(stateLabels, state) ? (state as ActionCenterFilters['state']) : 'new',
+    domain: Object.hasOwn(domainLabels, domain) ? (domain as ActionCenterFilters['domain']) : 'all',
+    priority: Object.hasOwn(priorityLabels, priority) ? (priority as ActionCenterFilters['priority']) : 'all',
+    q: params.get('q') ?? '',
+    page: Number.isSafeInteger(page) && page > 0 ? page : 1,
+  };
 }
 
-export function matchesActionCenterTab(notification: Notification, tab: ActionCenterTab): boolean {
-  const state = attentionState(notification);
-  if (tab === 'acknowledged') return state === 'acknowledged' || state === 'snoozed';
-  if (state !== 'new') return false;
-  if (tab === 'attention') return true;
-  if (tab === 'urgent') return notification.priority === 'critical';
-  return actionCenterGroup(notification) === tab;
+export function actionCenterHref(filters: ActionCenterFilters): string {
+  const params = new URLSearchParams();
+  for (const key of ['state', 'domain', 'priority', 'q', 'page'] as const) if (filters[key] !== DEFAULT_FILTERS[key]) params.set(key, String(filters[key]));
+  return '/home/action-center' + (params.size ? '?' + params.toString() : '');
 }
 
-export function buildActionCenterRows(notifications: Notification[], tab: ActionCenterTab): ActionCenterDisplayRow[] {
-  const priorityOrder = { critical: 0, high: 1, normal: 2, low: 3 } as const;
-  const visible = notifications
-    .filter(notification => matchesActionCenterTab(notification, tab))
-    .sort(
-      (a, b) =>
-        priorityOrder[a.priority] - priorityOrder[b.priority] ||
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    );
+export function selectActionCenterItems(items: Notification[], filters: ActionCenterFilters): Notification[] {
+  const query = filters.q.trim().toLocaleLowerCase();
+  const priorities = { critical: 0, high: 1, normal: 2, low: 3 };
+  return items
+    .filter(
+      item =>
+        (filters.state === 'all' || (item.attentionState ?? 'new') === filters.state) &&
+        (filters.domain === 'all' || actionCenterGroup(item) === filters.domain) &&
+        (filters.priority === 'all' || item.priority === filters.priority) &&
+        (!query || [item.title, item.message, item.orderCode, item.customerName].some(value => value?.toLocaleLowerCase().includes(query)))
+    )
+    .sort((a, b) => priorities[a.priority] - priorities[b.priority] || Date.parse(b.createdAt) - Date.parse(a.createdAt) || a._id.localeCompare(b._id));
+}
 
-  const uploadGroups = new Map<string, Notification[]>();
-  const rows: ActionCenterDisplayRow[] = [];
-
-  for (const notification of visible) {
-    if (notification.type !== 'upload_review_required') {
-      rows.push({ kind: 'item', key: notification._id, notificationIds: [notification._id], notification });
-      continue;
-    }
-    const key = attentionState(notification);
-    const group = uploadGroups.get(key) ?? [];
-    group.push(notification);
-    uploadGroups.set(key, group);
-  }
-
-  for (const [state, group] of uploadGroups) {
-    if (group.length === 1) {
-      const notification = group[0];
-      rows.push({ kind: 'item', key: notification._id, notificationIds: [notification._id], notification });
-      continue;
-    }
-    const latestAt = group.reduce(
-      (latest, item) => (new Date(item.createdAt).getTime() > new Date(latest).getTime() ? item.createdAt : latest),
-      group[0].createdAt
-    );
-    const priority = group.reduce<Notification['priority']>(
-      (current, item) => (priorityOrder[item.priority] < priorityOrder[current] ? item.priority : current),
-      group[0].priority
-    );
-    rows.push({
-      kind: 'upload_group',
-      key: `upload-review:${state}`,
-      notificationIds: group.map(item => item._id),
-      count: group.length,
-      latestAt,
-      attentionState: state as 'new' | 'acknowledged' | 'snoozed',
-      priority,
-    });
-  }
-
-  return rows.sort((a, b) => {
-    const aPriority = a.kind === 'item' ? a.notification.priority : a.priority;
-    const bPriority = b.kind === 'item' ? b.notification.priority : b.priority;
-    const priorityDiff = priorityOrder[aPriority] - priorityOrder[bPriority];
-    if (priorityDiff !== 0) return priorityDiff;
-    const aTime = a.kind === 'item' ? a.notification.createdAt : a.latestAt;
-    const bTime = b.kind === 'item' ? b.notification.createdAt : b.latestAt;
-    return new Date(bTime).getTime() - new Date(aTime).getTime();
-  });
+export function actionCenterPage(items: Notification[], requestedPage: number, size = 25) {
+  const pages = Math.max(1, Math.ceil(items.length / size));
+  const page = Math.min(Math.max(1, requestedPage), pages);
+  return { page, pages, items: items.slice((page - 1) * size, page * size) };
 }
