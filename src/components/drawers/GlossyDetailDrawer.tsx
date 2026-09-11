@@ -52,7 +52,7 @@ export default function GlossyDetailDrawer({
             borderTopRightRadius: 0,
             borderBottomLeftRadius: isMobile ? 0 : 22,
             borderBottomRightRadius: 0,
-            background: 'linear-gradient(180deg, #FBFDFF 0%, #FFFFFF 100%)',
+            background: 'linear-gradient(180deg, var(--glossy-surface-raised) 0%, var(--glossy-surface-card) 100%)',
             overflow: 'hidden',
           },
         },
@@ -63,7 +63,7 @@ export default function GlossyDetailDrawer({
             px: { xs: 2, sm: 2.5, md: 3 },
             pt: isMobile ? 'calc(12px + env(safe-area-inset-top))' : { xs: 1.8, sm: 2.2 },
             pb: { xs: 1.5, sm: 2.2 },
-            borderBottom: '1px solid #E8EFF8',
+            borderBottom: '1px solid var(--glossy-border-default)',
             bgcolor: 'rgba(255, 255, 255, 0.94)',
             backdropFilter: 'blur(10px)',
             flexShrink: 0,
@@ -76,7 +76,7 @@ export default function GlossyDetailDrawer({
                   sx={{
                     fontSize: 20,
                     fontWeight: 700,
-                    color: '#0F172A',
+                    color: 'var(--glossy-text-primary)',
                     lineHeight: 1.25,
                     overflowWrap: 'anywhere',
                     wordBreak: 'break-word',
@@ -88,7 +88,7 @@ export default function GlossyDetailDrawer({
                     component="div"
                     sx={{
                       mt: 0.4,
-                      color: '#64748B',
+                      color: 'var(--glossy-text-secondary)',
                       overflowWrap: 'anywhere',
                       wordBreak: 'break-word',
                       maxWidth: '100%',
@@ -107,10 +107,10 @@ export default function GlossyDetailDrawer({
                   sx={{
                     width: 38,
                     height: 38,
-                    border: '1px solid #E2E8F0',
-                    bgcolor: '#FFFFFF',
-                    color: '#475569',
-                    '&:hover': { bgcolor: '#F8FAFC' },
+                    border: '1px solid var(--glossy-border-default)',
+                    bgcolor: 'var(--glossy-surface-card)',
+                    color: 'var(--glossy-text-soft)',
+                    '&:hover': { bgcolor: 'var(--glossy-surface-hover-warm)' },
                   }}>
                   <CloseRoundedIcon fontSize="small" />
                 </IconButton>
@@ -142,7 +142,7 @@ export default function GlossyDetailDrawer({
           <Box
             sx={{
               flexShrink: 0,
-              bgcolor: '#FFFFFF',
+              bgcolor: 'var(--glossy-surface-card)',
               pb: isMobile ? 'env(safe-area-inset-bottom)' : 0,
             }}>
             {footer}

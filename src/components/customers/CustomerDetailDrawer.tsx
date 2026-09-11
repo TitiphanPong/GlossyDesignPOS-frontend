@@ -80,7 +80,7 @@ function buildAddress(customer: CustomerDetail['customer']): string | null {
 function Section({ title, children }: Readonly<{ title: string; children: React.ReactNode }>) {
   return (
     <Box>
-      <Typography sx={{ mb: 1.2, fontSize: 13, fontWeight: 800, color: '#334155', letterSpacing: '0.02em' }}>{title}</Typography>
+      <Typography sx={{ mb: 1.2, fontSize: 13, fontWeight: 800, color: 'var(--glossy-text-soft)', letterSpacing: '0.02em' }}>{title}</Typography>
       {children}
     </Box>
   );
@@ -137,9 +137,9 @@ function CustomerDrawerActionBar({ onEdit, onClose }: Readonly<{ onEdit: () => v
           sx={{
             ...actionButtonSx,
             borderColor: '#CBD5E1',
-            color: '#334155',
-            bgcolor: '#FFFFFF',
-            '&:hover': { borderColor: '#94A3B8', bgcolor: '#F8FAFC' },
+            color: 'var(--glossy-text-soft)',
+            bgcolor: 'var(--glossy-surface-card)',
+            '&:hover': { borderColor: 'var(--glossy-border-strong)', bgcolor: 'var(--glossy-surface-hover-warm)' },
           }}>
           ปิดรายละเอียด
         </Button>
@@ -179,8 +179,8 @@ export default function CustomerDetailDrawer({ open, detail, loading, onClose, o
       {loading && !detail ? <DetailSkeleton /> : null}
       {detail ? (
         <Stack spacing={2.4} divider={<Divider flexItem />}>
-              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', border: '1px solid #E5EAF2', borderRadius: 3, bgcolor: '#FFFFFF', overflow: 'hidden' }}>
-                <Box sx={{ px: 1.7, py: 1.45, borderRight: '1px solid #E5EAF2' }}>
+              <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', border: '1px solid var(--glossy-border-default)', borderRadius: 3, bgcolor: 'var(--glossy-surface-card)', overflow: 'hidden' }}>
+                <Box sx={{ px: 1.7, py: 1.45, borderRight: '1px solid var(--glossy-border-default)' }}>
                   <Typography sx={{ fontSize: 11.5, color: '#7A8A9E', fontWeight: 700 }}>ออเดอร์ทั้งหมด</Typography>
                   <Typography sx={{ mt: 0.2, fontSize: 22, color: '#172033', fontWeight: 900 }}>{detail.summary.orderCount.toLocaleString('th-TH')}</Typography>
                 </Box>
@@ -240,7 +240,7 @@ export default function CustomerDetailDrawer({ open, detail, loading, onClose, o
                         component={Link}
                         href={`/home/orders?search=${encodeURIComponent(orderNumber)}`}
                         variant="outlined"
-                        sx={{ display: 'block', textAlign: 'left', borderRadius: 2.5, px: 1.5, py: 1.25, color: 'inherit', textTransform: 'none', borderColor: '#E2E8F0', bgcolor: '#FFFFFF' }}>
+                        sx={{ display: 'block', textAlign: 'left', borderRadius: 2.5, px: 1.5, py: 1.25, color: 'inherit', textTransform: 'none', borderColor: 'var(--glossy-border-default)', bgcolor: 'var(--glossy-surface-card)' }}>
                         <Stack direction="row" justifyContent="space-between" gap={1.5} alignItems="flex-start">
                           <Box sx={{ minWidth: 0 }}>
                             <Typography sx={{ fontSize: 13.5, fontWeight: 900, color: '#172033' }}>{orderNumber}</Typography>
@@ -277,11 +277,11 @@ export default function CustomerDetailDrawer({ open, detail, loading, onClose, o
               <Section title="งานผลิตที่กำลังดำเนินการ">
                 <Stack spacing={0.9}>
                   {detail.activeProductionJobs.map(job => (
-                    <Box key={job._id} sx={{ p: 1.45, border: '1px solid #E2E8F0', borderRadius: 2.5, bgcolor: '#FFFFFF' }}>
+                    <Box key={job._id} sx={{ p: 1.45, border: '1px solid var(--glossy-border-default)', borderRadius: 2.5, bgcolor: 'var(--glossy-surface-card)' }}>
                       <Stack direction="row" justifyContent="space-between" gap={1} alignItems="flex-start">
                         <Box sx={{ minWidth: 0 }}>
                           <Typography sx={{ fontSize: 13.5, fontWeight: 900, color: '#172033' }}>{job.jobNumber}</Typography>
-                          <Typography sx={{ mt: 0.35, fontSize: 12.5, color: '#475569', overflowWrap: 'anywhere' }}>{job.workSummary}</Typography>
+                          <Typography sx={{ mt: 0.35, fontSize: 12.5, color: 'var(--glossy-text-secondary)', overflowWrap: 'anywhere' }}>{job.workSummary}</Typography>
                         </Box>
                         <Chip size="small" label={labelFor(job.stage, PRODUCTION_STAGE_LABELS)} sx={{ flexShrink: 0, height: 23, fontSize: 10.5, fontWeight: 800 }} />
                       </Stack>
@@ -303,7 +303,7 @@ export default function CustomerDetailDrawer({ open, detail, loading, onClose, o
                       component={Link}
                       href={`/home/storage?order=${encodeURIComponent(upload.linkedOrderNumber || '')}`}
                       variant="outlined"
-                      sx={{ justifyContent: 'space-between', gap: 1, borderRadius: 2.5, px: 1.4, py: 1.05, textTransform: 'none', borderColor: '#E2E8F0', color: 'inherit', bgcolor: '#FFFFFF' }}>
+                      sx={{ justifyContent: 'space-between', gap: 1, borderRadius: 2.5, px: 1.4, py: 1.05, textTransform: 'none', borderColor: 'var(--glossy-border-default)', color: 'inherit', bgcolor: 'var(--glossy-surface-card)' }}>
                       <Box sx={{ textAlign: 'left', minWidth: 0 }}>
                         <Typography sx={{ fontSize: 13, fontWeight: 850, color: '#172033' }}>{upload.orderCode || upload.linkedOrderNumber || upload.uploadId}</Typography>
                         <Typography sx={{ fontSize: 11.5, color: '#718096' }}>{upload.jobType}</Typography>

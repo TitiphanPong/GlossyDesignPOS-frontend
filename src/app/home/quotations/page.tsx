@@ -106,7 +106,7 @@ function QuotationMobileCard({ quotation }: Readonly<{ quotation: Quotation }>) 
               <Typography variant="body2" fontWeight={700}>{formatQuotationDate(quotation.validUntil)}</Typography>
             </Box>
           </Stack>
-          <Typography sx={{ fontSize: 19, fontWeight: 900, color: '#1D4ED8' }}>{quotationMoney.format(quotation.grandTotal)}</Typography>
+          <Typography sx={{ fontSize: 19, fontWeight: 900, color: 'var(--glossy-action-primary)' }}>{quotationMoney.format(quotation.grandTotal)}</Typography>
           <Stack direction="row" spacing={1}>
             <Button fullWidth component={Link} href={`/home/quotations/${encodeURIComponent(quotation._id)}`} variant="outlined" startIcon={<VisibilityRoundedIcon />}>รายละเอียด</Button>
             <Button fullWidth component={Link} href={`/print/quotation/${encodeURIComponent(quotation._id)}`} target="_blank" variant="outlined" startIcon={<PrintRoundedIcon />}>พิมพ์</Button>

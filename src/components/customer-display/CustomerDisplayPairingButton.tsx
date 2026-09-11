@@ -101,10 +101,10 @@ export default function CustomerDisplayPairingButton() {
           {loading ? <Typography sx={{ py: 5, textAlign: 'center' }}>กำลังอัปเดต Session...</Typography> : null}
           {pairingUrl && !loading ? (
             <Stack alignItems="center" gap={2} sx={{ mt: 3 }}>
-              <Box sx={{ p: 1.5, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#fff' }}>
+              <Box sx={{ p: 1.5, borderRadius: 3, border: '1px solid var(--glossy-border-default)', bgcolor: 'var(--glossy-surface-card)' }}>
                 <QRCodeSVG value={pairingUrl} size={220} level="M" title="Customer display pairing QR" />
               </Box>
-              <Typography sx={{ width: '100%', p: 1.25, borderRadius: 2, bgcolor: '#F8FAFC', fontSize: 12, color: '#475569', wordBreak: 'break-all' }}>
+              <Typography sx={{ width: '100%', p: 1.25, borderRadius: 2, bgcolor: 'var(--glossy-surface-subtle)', fontSize: 12, color: 'var(--glossy-text-secondary)', wordBreak: 'break-all' }}>
                 {pairingUrl}
               </Typography>
               <Stack direction={{ xs: 'column', sm: 'row' }} gap={1} width="100%" justifyContent="center">

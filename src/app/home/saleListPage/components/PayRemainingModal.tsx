@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { Alert, alpha, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
+import { Alert, Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, InputAdornment, Stack, TextField, ToggleButton, ToggleButtonGroup, Typography } from '@mui/material';
 import AccountBalanceWalletRoundedIcon from '@mui/icons-material/AccountBalanceWalletRounded';
 import CheckCircleRoundedIcon from '@mui/icons-material/CheckCircleRounded';
 import CloseRoundedIcon from '@mui/icons-material/CloseRounded';
@@ -115,7 +115,7 @@ export default function PayRemainingModal({ open, orderId, remaining, onClose, o
       <DialogTitle sx={{ px: 3, pt: 2.75, pb: 2 }}>
         <Stack direction="row" alignItems="center" justifyContent="space-between" spacing={2}>
           <Stack direction="row" alignItems="center" spacing={1.25}>
-            <Box sx={{ width: 42, height: 42, borderRadius: 2.5, display: 'grid', placeItems: 'center', bgcolor: alpha('#2563EB', 0.11), color: '#2563EB' }}>
+            <Box sx={{ width: 42, height: 42, borderRadius: 2.5, display: 'grid', placeItems: 'center', bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)' }}>
               <AccountBalanceWalletRoundedIcon />
             </Box>
             <Box>
@@ -146,37 +146,37 @@ export default function PayRemainingModal({ open, orderId, remaining, onClose, o
             helperText={amountError || 'รับชำระได้ไม่เกินยอดคงเหลือ'}
             fullWidth
             slotProps={{
-              input: { startAdornment: <InputAdornment position="start"><Typography sx={{ color: '#334155', fontWeight: 800 }}>฿</Typography></InputAdornment> },
+              input: { startAdornment: <InputAdornment position="start"><Typography sx={{ color: 'var(--glossy-text-soft)', fontWeight: 800 }}>฿</Typography></InputAdornment> },
               htmlInput: { min: 0.01, max: remaining, step: 0.01 },
             }}
-            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2.75, bgcolor: '#FFFFFF' } }}
+            sx={{ '& .MuiOutlinedInput-root': { borderRadius: 2.75, bgcolor: 'var(--glossy-surface-card)' } }}
           />
           <Box>
-            <Typography sx={{ mb: 1, color: '#334155', fontSize: 13, fontWeight: 700 }}>ช่องทางการชำระเงิน</Typography>
+            <Typography sx={{ mb: 1, color: 'var(--glossy-text-soft)', fontSize: 13, fontWeight: 700 }}>ช่องทางการชำระเงิน</Typography>
             <ToggleButtonGroup
               exclusive
               fullWidth
               value={method}
               onChange={(_, value: PaymentMethod | null) => { if (value) setMethod(value); }}
-              sx={{ gap: 1, '& .MuiToggleButtonGroup-grouped': { m: 0, border: '1px solid #DCE5F1 !important', borderRadius: '12px !important' } }}>
+              sx={{ gap: 1, '& .MuiToggleButtonGroup-grouped': { m: 0, border: '1px solid var(--glossy-border-default) !important', borderRadius: '12px !important' } }}>
               <ToggleButton value="cash" sx={{ py: 1.25, gap: 1, color: '#475569', fontWeight: 700, textTransform: 'none', '&.Mui-selected': { color: '#166534', bgcolor: '#ECFDF3', borderColor: '#86EFAC !important' } }}>
                 <PaymentsRoundedIcon fontSize="small" /> เงินสด
               </ToggleButton>
-              <ToggleButton value="promptpay" sx={{ py: 1.25, gap: 1, color: '#475569', fontWeight: 700, textTransform: 'none', '&.Mui-selected': { color: '#1D4ED8', bgcolor: '#EFF6FF', borderColor: '#93C5FD !important' } }}>
+              <ToggleButton value="promptpay" sx={{ py: 1.25, gap: 1, color: 'var(--glossy-text-secondary)', fontWeight: 700, textTransform: 'none', '&.Mui-selected': { color: 'var(--glossy-action-primary)', bgcolor: 'var(--glossy-action-primary-soft)', borderColor: 'var(--glossy-action-primary-border) !important' } }}>
                 <QrCode2RoundedIcon fontSize="small" /> พร้อมเพย์
               </ToggleButton>
             </ToggleButtonGroup>
           </Box>
         </Stack>
       </DialogContent>
-      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid #E8EFF8', bgcolor: '#FAFCFF', gap: 1 }}>
-        <Button onClick={onClose} disabled={loading} sx={{ color: '#64748B', fontWeight: 700 }}>ยกเลิก</Button>
+      <DialogActions sx={{ px: 3, py: 2, borderTop: '1px solid var(--glossy-border-default)', bgcolor: 'var(--glossy-surface-raised)', gap: 1 }}>
+        <Button onClick={onClose} disabled={loading} sx={{ color: 'var(--glossy-text-secondary)', fontWeight: 700 }}>ยกเลิก</Button>
         <Button
           variant="contained"
           startIcon={<CheckCircleRoundedIcon />}
           onClick={handleConfirm}
           disabled={loading || Boolean(amountError)}
-          sx={{ minWidth: 170, borderRadius: 2.5, py: 1.05, fontWeight: 800, boxShadow: '0 8px 18px rgba(37, 99, 235, 0.24)' }}>
+          sx={{ minWidth: 170, borderRadius: 2.5, py: 1.05, fontWeight: 800, boxShadow: 4 }}>
           {loading ? 'กำลังบันทึก...' : 'ยืนยันรับชำระ'}
         </Button>
       </DialogActions>

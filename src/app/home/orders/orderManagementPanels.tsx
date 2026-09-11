@@ -410,7 +410,7 @@ function CustomerCard({
       <CardContent>
         <Stack spacing={1.1}>
           <Stack direction="row" alignItems="center" spacing={1}>
-            <Avatar sx={{ width: 30, height: 30, bgcolor: alpha('#4F46E5', 0.14), color: '#4F46E5' }}>
+            <Avatar sx={{ width: 30, height: 30, bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)' }}>
               <ContactPageRoundedIcon sx={{ fontSize: 18 }} />
             </Avatar>
             <Typography sx={{ fontWeight: 700 }}>ข้อมูลลูกค้า</Typography>
@@ -886,8 +886,8 @@ export function OrderDetailDrawer({
                         sx={{
                           width: 30,
                           height: 30,
-                          bgcolor: alpha('#4F46E5', 0.14),
-                          color: '#4F46E5',
+                          bgcolor: 'var(--glossy-action-primary-soft)',
+                          color: 'var(--glossy-action-primary)',
                         }}>
                         <ContactPageRoundedIcon sx={{ fontSize: 18 }} />
                       </Avatar>
@@ -897,8 +897,8 @@ export function OrderDetailDrawer({
 
                     {isEditing ? (
                       <Stack spacing={1.5}>
-                        <Box sx={{ px: 1.35, py: 1.1, borderRadius: 2.5, bgcolor: 'rgba(43, 98, 238, 0.07)', border: '1px solid rgba(43, 98, 238, 0.10)' }}>
-                          <Typography sx={{ color: '#254D8C', fontSize: 12.5, fontWeight: 700 }}>แก้ไขข้อมูลสำหรับติดต่อและออกเอกสาร</Typography>
+                        <Box sx={{ px: 1.35, py: 1.1, borderRadius: 2.5, bgcolor: 'var(--glossy-action-primary-soft)', border: '1px solid var(--glossy-action-primary-border)' }}>
+                          <Typography sx={{ color: 'var(--glossy-action-primary)', fontSize: 12.5, fontWeight: 700 }}>แก้ไขข้อมูลสำหรับติดต่อและออกเอกสาร</Typography>
                           <Typography sx={{ mt: 0.2, color: '#718096', fontSize: 11.5 }}>เมื่อตรวจสอบข้อมูลเรียบร้อยแล้ว กด “บันทึกข้อมูล” ด้านล่าง</Typography>
                         </Box>
                         <TextField

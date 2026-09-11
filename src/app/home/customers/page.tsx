@@ -62,7 +62,7 @@ function CustomerAddress({ customer }: Readonly<{ customer: CustomerProfile }>) 
   const address = customerAddressLabel(customer);
   return (
     <Tooltip title={address === '-' ? '' : address} placement="top-start">
-      <Typography sx={{ maxWidth: '100%', fontSize: 12, color: address === '-' ? '#98A2B3' : '#475569' }} noWrap>
+      <Typography sx={{ maxWidth: '100%', fontSize: 12, color: address === '-' ? '#98A2B3' : 'var(--glossy-text-secondary)' }} noWrap>
         {address}
       </Typography>
     </Tooltip>
@@ -74,7 +74,7 @@ function CustomerTax({ customer }: Readonly<{ customer: CustomerProfile }>) {
   if (!customer.taxId && !customer.companyName && !branch) return <Typography sx={{ color: '#98A2B3', fontSize: 12 }}>—</Typography>;
   return (
     <Box sx={{ minWidth: 0 }}>
-      {customer.taxId ? <Typography sx={{ fontSize: 12.5, color: '#334155', fontWeight: 700 }}>Tax ID {customer.taxId}</Typography> : null}
+      {customer.taxId ? <Typography sx={{ fontSize: 12.5, color: 'var(--glossy-text-soft)', fontWeight: 700 }}>Tax ID {customer.taxId}</Typography> : null}
       {branch ? <Typography sx={{ mt: 0.35, fontSize: 11.5, color: '#718096' }}>{branch}</Typography> : null}
     </Box>
   );
@@ -308,12 +308,12 @@ export default function CustomersPage() {
                     <CustomerStatus active={customer.active} />
                   </Stack>
                   <Box sx={{ display: 'grid', gridTemplateColumns: '1fr', gap: 0.45 }}>
-                    <Typography sx={{ fontSize: 12.5, color: '#475569' }}>
+                    <Typography sx={{ fontSize: 12.5, color: 'var(--glossy-text-secondary)' }}>
                       โทร {phones[0] || 'ไม่มีเบอร์โทร'}
                       {phones.length > 1 ? ` (+${phones.length - 1})` : ''}
                     </Typography>
-                    {customer.email ? <Typography sx={{ fontSize: 12.5, color: '#475569', overflowWrap: 'anywhere' }}>{customer.email}</Typography> : null}
-                    {customer.taxId ? <Typography sx={{ fontSize: 12.5, color: '#475569' }}>Tax ID {customer.taxId}</Typography> : null}
+                    {customer.email ? <Typography sx={{ fontSize: 12.5, color: 'var(--glossy-text-secondary)', overflowWrap: 'anywhere' }}>{customer.email}</Typography> : null}
+                    {customer.taxId ? <Typography sx={{ fontSize: 12.5, color: 'var(--glossy-text-secondary)' }}>Tax ID {customer.taxId}</Typography> : null}
                     {branch ? <Typography sx={{ fontSize: 12, color: '#718096' }}>{branch}</Typography> : null}
                   </Box>
                   <Stack direction="row" spacing={0.75}>
@@ -344,7 +344,7 @@ export default function CustomersPage() {
 
       {!loading && customers.length === 0 ? (
         <Box sx={{ py: { xs: 6, md: 8 }, px: 2, textAlign: 'center' }}>
-          <Typography sx={{ fontSize: 16, fontWeight: 850, color: '#334155' }}>{query.trim() ? `ไม่พบลูกค้าที่ตรงกับ “${query.trim()}”` : 'ยังไม่มีลูกค้าในรายการนี้'}</Typography>
+          <Typography sx={{ fontSize: 16, fontWeight: 850, color: 'var(--glossy-text-soft)' }}>{query.trim() ? `ไม่พบลูกค้าที่ตรงกับ “${query.trim()}”` : 'ยังไม่มีลูกค้าในรายการนี้'}</Typography>
           <Typography sx={{ mt: 0.6, color: '#7A8A9E', fontSize: 13 }}>ลองค้นหาด้วยชื่อ เบอร์โทร หรือรหัสลูกค้า</Typography>
         </Box>
       ) : null}

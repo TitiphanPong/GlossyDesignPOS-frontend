@@ -106,7 +106,7 @@ function PeriodFilterCard({
             gap: 1.5,
           }}>
           <Stack direction="row" alignItems="center" spacing={1}>
-            <Box sx={{ width: 36, height: 36, borderRadius: 1.75, display: 'grid', placeItems: 'center', bgcolor: '#EFF6FF', color: '#2563EB' }}>
+            <Box sx={{ width: 36, height: 36, borderRadius: 1.75, display: 'grid', placeItems: 'center', bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)' }}>
               <CalendarMonthRoundedIcon sx={{ fontSize: 19 }} />
             </Box>
             <Box>
@@ -126,8 +126,8 @@ function PeriodFilterCard({
                   minHeight: 38,
                   px: 0.5,
                   borderRadius: 1.25,
-                  color: period === item.value ? '#1D4ED8' : '#64748B',
-                  bgcolor: period === item.value ? '#EFF6FF' : 'transparent',
+                  color: period === item.value ? 'var(--glossy-action-primary)' : 'var(--glossy-text-secondary)',
+                  bgcolor: period === item.value ? 'var(--glossy-action-primary-soft)' : 'transparent',
                   fontSize: 12.5,
                   fontWeight: period === item.value ? 700 : 600,
                 }}>
@@ -143,8 +143,8 @@ function PeriodFilterCard({
                 minHeight: 38,
                 px: 0.5,
                 borderRadius: 1.25,
-                color: period === 'custom' ? '#1D4ED8' : '#64748B',
-                bgcolor: period === 'custom' ? '#EFF6FF' : 'transparent',
+                color: period === 'custom' ? 'var(--glossy-action-primary)' : 'var(--glossy-text-secondary)',
+                bgcolor: period === 'custom' ? 'var(--glossy-action-primary-soft)' : 'transparent',
                 fontSize: 12.5,
                 fontWeight: period === 'custom' ? 700 : 600,
               }}>
@@ -254,7 +254,7 @@ function FollowUpPanel({ summary }: Readonly<{ summary: DashboardSummary }>) {
       href: '/home/orders?workflowStatus=ready_for_pickup',
       actionLabel: 'เปิดออเดอร์',
     },
-    { label: 'สต็อกต่ำ', helper: 'รายการที่ต่ำกว่าระดับขั้นต่ำ', value: operations.lowStock, icon: Inventory2RoundedIcon, color: '#7C3AED', href: '/home/stock', actionLabel: 'เปิด Stock' },
+    { label: 'สต็อกต่ำ', helper: 'รายการที่ต่ำกว่าระดับขั้นต่ำ', value: operations.lowStock, icon: Inventory2RoundedIcon, color: 'var(--glossy-status-warning)', href: '/home/stock', actionLabel: 'เปิด Stock' },
   ].filter(item => item.value > 0);
 
   return (
@@ -530,7 +530,7 @@ export default function DashboardPage() {
       icon: PaidRoundedIcon,
       color: '#059669',
     },
-    { label: `ออเดอร์ ${summary.period.label}`, value: integer(summary.periodSummary.orders), helper: 'ออเดอร์ที่ไม่ถูกยกเลิก', icon: ReceiptLongRoundedIcon, color: '#2563EB' },
+    { label: `ออเดอร์ ${summary.period.label}`, value: integer(summary.periodSummary.orders), helper: 'ออเดอร์ที่ไม่ถูกยกเลิก', icon: ReceiptLongRoundedIcon, color: 'var(--glossy-action-primary)' },
     {
       label: 'ยอดค้างชำระทั้งหมด',
       value: money(operations.outstanding.amount),

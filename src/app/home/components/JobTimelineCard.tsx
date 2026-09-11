@@ -141,9 +141,9 @@ export default function JobTimelineCard({
                           py: 0.45,
                           fontSize: 11,
                           fontWeight: 800,
-                          color: isActive ? '#1D4ED8' : '#64748B',
-                          bgcolor: isActive ? '#DBEAFE' : '#F1F5F9',
-                          border: isActive ? '1px solid #BFDBFE' : '1px solid #E2E8F0',
+                          color: isActive ? 'var(--glossy-action-primary)' : 'var(--glossy-text-secondary)',
+                          bgcolor: isActive ? 'var(--glossy-action-primary-soft)' : 'var(--glossy-surface-subtle)',
+                          border: isActive ? '1px solid var(--glossy-action-primary-border)' : '1px solid var(--glossy-border-default)',
                           whiteSpace: 'nowrap',
                           flexShrink: 0,
                         }}>

@@ -99,7 +99,7 @@ function QuantityControl({ item, onChange }: Readonly<{ item: QuickSaleCartItem;
         InputProps={{ disableUnderline: true }}
         sx={{ width: 46, '& input': { textAlign: 'center', p: 0, fontWeight: 800, fontVariantNumeric: 'tabular-nums' } }}
       />
-      <IconButton aria-label={`เพิ่มจำนวน ${item.productName}`} onClick={() => onChange(item.quantity + 1)} sx={{ borderRadius: 0, width: 40, height: 40, color: '#1463E9' }}>
+      <IconButton aria-label={`เพิ่มจำนวน ${item.productName}`} onClick={() => onChange(item.quantity + 1)} sx={{ borderRadius: 0, width: 40, height: 40, color: 'var(--glossy-action-primary)' }}>
         <AddRoundedIcon fontSize="small" />
       </IconButton>
     </Stack>
@@ -202,7 +202,7 @@ function CartItemRow({ item, onUpdate, onRemove, canOverridePrice, onEdit }: Rea
             <IconButton
               aria-label={`แก้ไข ${item.productName}`}
               onClick={onEdit}
-              sx={{ position: 'absolute', top: 0, left: 0, width: 32, height: 32, color: '#64748B', '&:hover': { color: '#1463E9', bgcolor: '#EFF6FF' } }}>
+              sx={{ position: 'absolute', top: 0, left: 0, width: 32, height: 32, color: '#64748B', '&:hover': { color: 'var(--glossy-action-primary)', bgcolor: 'var(--glossy-action-primary-soft)' } }}>
               <EditRoundedIcon sx={{ fontSize: 18 }} />
             </IconButton>
           </Tooltip>
@@ -343,7 +343,7 @@ export default function QuickSellerCart({ items, setItems, totals, discountValue
         <Divider />
         <Stack direction="row" justifyContent="space-between" alignItems="baseline">
           <Typography fontWeight={800} color="#25324A">ยอดสุทธิ</Typography>
-          <Typography noWrap fontSize={{ xs: 27, md: 30 }} color={items.length ? '#1463E9' : '#94A3B8'} fontWeight={800} sx={{ fontVariantNumeric: 'tabular-nums' }}>
+          <Typography noWrap fontSize={{ xs: 27, md: 30 }} color={items.length ? 'var(--glossy-action-primary)' : '#94A3B8'} fontWeight={800} sx={{ fontVariantNumeric: 'tabular-nums' }}>
             ฿{money.format(totals.grandTotal)}
           </Typography>
         </Stack>
@@ -352,7 +352,7 @@ export default function QuickSellerCart({ items, setItems, totals, discountValue
           variant="contained"
           disabled={!items.length}
           onClick={onCheckout}
-          sx={{ minHeight: { xs: 56, sm: 62 }, borderRadius: 3, px: { xs: 1.5, sm: 2 }, bgcolor: '#1463E9', boxShadow: items.length ? '0 10px 24px rgba(20, 99, 233, 0.24)' : 'none', '&:hover': { bgcolor: '#0F56CF' } }}>
+          sx={{ minHeight: { xs: 56, sm: 62 }, borderRadius: 3, px: { xs: 1.5, sm: 2 }, bgcolor: 'var(--glossy-action-primary)', boxShadow: items.length ? '0 10px 24px color-mix(in srgb, var(--glossy-action-primary) 24%, transparent)' : 'none', '&:hover': { bgcolor: 'color-mix(in srgb, var(--glossy-action-primary) 88%, var(--glossy-brand-ink))' } }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" width="100%">
             <Stack direction="row" alignItems="center" gap={1}>
               <LocalPrintshopRoundedIcon />

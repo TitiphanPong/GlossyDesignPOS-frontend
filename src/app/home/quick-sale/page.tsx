@@ -689,7 +689,7 @@ export default function QuickSalePage() {
                       borderColor: product.isHotMenu ? '#93B4FF' : '#E2E8F0',
                       boxShadow: product.isHotMenu ? '0 5px 16px rgba(37, 99, 235, 0.08)' : 'none',
                       transition: 'border-color 140ms ease, box-shadow 140ms ease, transform 140ms ease',
-                      '&:hover': { borderColor: '#2563EB', bgcolor: '#F8FBFF', boxShadow: '0 8px 20px rgba(37, 99, 235, 0.12)', transform: 'translateY(-1px)' },
+                      '&:hover': { borderColor: 'var(--glossy-action-primary)', bgcolor: 'var(--glossy-surface-hover-warm)', boxShadow: '0 8px 20px color-mix(in srgb, var(--glossy-action-primary) 12%, transparent)', transform: 'translateY(-1px)' },
                     }}>
                     <Box
                       sx={{
@@ -809,7 +809,7 @@ export default function QuickSalePage() {
               <Typography noWrap fontSize={12} color="#64748B" fontWeight={700}>
                 {items.length} รายการในตะกร้า
               </Typography>
-              <Typography noWrap fontSize={20} lineHeight={1.15} color={items.length ? '#1463E9' : '#94A3B8'} fontWeight={900} sx={{ fontVariantNumeric: 'tabular-nums' }}>
+              <Typography noWrap fontSize={20} lineHeight={1.15} color={items.length ? 'var(--glossy-action-primary)' : '#94A3B8'} fontWeight={900} sx={{ fontVariantNumeric: 'tabular-nums' }}>
                 ฿{money.format(totals.grandTotal)}
               </Typography>
             </Box>
@@ -920,7 +920,7 @@ export default function QuickSalePage() {
                   aria-label="ลดจำนวน"
                   disabled={customQuantity <= 1}
                   onClick={() => setCustomQuantity(value => Math.max(1, value - 1))}
-                  sx={{ ...touchButton, border: '1px solid #DCE4EF', bgcolor: '#FFFFFF', '&:hover': { bgcolor: '#EFF6FF', borderColor: '#93C5FD' } }}>
+                  sx={{ ...touchButton, border: '1px solid #DCE4EF', bgcolor: '#FFFFFF', '&:hover': { bgcolor: 'var(--glossy-action-primary-soft)', borderColor: 'var(--glossy-action-primary-border)' } }}>
                   <RemoveRoundedIcon />
                 </IconButton>
                 <TextField
@@ -933,7 +933,7 @@ export default function QuickSalePage() {
                 <IconButton
                   aria-label="เพิ่มจำนวน"
                   onClick={() => setCustomQuantity(value => value + 1)}
-                  sx={{ ...touchButton, border: '1px solid #BFDBFE', bgcolor: '#EFF6FF', color: '#1769E0', '&:hover': { bgcolor: '#DBEAFE' } }}>
+                  sx={{ ...touchButton, border: '1px solid var(--glossy-action-primary-border)', bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)', '&:hover': { bgcolor: 'var(--glossy-surface-hover-warm)' } }}>
                   <AddRoundedIcon />
                 </IconButton>
               </Stack>
@@ -954,11 +954,11 @@ export default function QuickSalePage() {
               onChange={event => setCustomPrice(event.target.value)}
             />
 
-            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.5, borderRadius: 2.5, bgcolor: '#EFF6FF' }}>
+            <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ px: 2, py: 1.5, borderRadius: 2.5, bgcolor: 'var(--glossy-action-primary-soft)' }}>
               <Typography fontSize={14} fontWeight={700} color="#52657C">
                 ยอดรวม
               </Typography>
-              <Typography fontSize={20} fontWeight={900} color="#1769E0">
+              <Typography fontSize={20} fontWeight={900} color="var(--glossy-action-primary)">
                 ฿{money.format(customQuantity * (Number(customPrice) || 0))}
               </Typography>
             </Stack>
@@ -974,7 +974,7 @@ export default function QuickSalePage() {
             startIcon={<AddRoundedIcon />}
             disabled={!customName.trim() || customPrice === ''}
             onClick={addCustom}
-            sx={{ minHeight: 48, borderRadius: 2.5, fontWeight: 900, boxShadow: '0 8px 18px rgba(23, 105, 224, 0.22)' }}>
+            sx={{ minHeight: 48, borderRadius: 2.5, fontWeight: 900, boxShadow: '0 8px 18px color-mix(in srgb, var(--glossy-action-primary) 22%, transparent)' }}>
             เพิ่มรายการ
           </Button>
         </DialogActions>
@@ -1042,7 +1042,7 @@ export default function QuickSalePage() {
             <Typography fontSize={14} color="#64748B" sx={{ mt: 0.5 }}>
               บันทึกรายการขายเรียบร้อยแล้ว
             </Typography>
-            <Chip label={completed?.orderNumber} sx={{ mt: 2, height: 34, borderRadius: 2, bgcolor: '#E8F1FF', color: '#1769E0', fontSize: 15, fontWeight: 900, '& .MuiChip-label': { px: 2 } }} />
+            <Chip label={completed?.orderNumber} sx={{ mt: 2, height: 34, borderRadius: 2, bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)', fontSize: 15, fontWeight: 900, '& .MuiChip-label': { px: 2 } }} />
           </Box>
 
           <Box sx={{ px: { xs: 2.5, sm: 3.5 }, pb: 3.5 }}>
@@ -1083,7 +1083,7 @@ export default function QuickSalePage() {
                 size="large"
                 startIcon={<ReplayRoundedIcon />}
                 onClick={startNew}
-                sx={{ minHeight: 50, borderRadius: 2.5, fontWeight: 900, boxShadow: '0 8px 18px rgba(23, 105, 224, 0.22)' }}>
+                sx={{ minHeight: 50, borderRadius: 2.5, fontWeight: 900, boxShadow: '0 8px 18px color-mix(in srgb, var(--glossy-action-primary) 22%, transparent)' }}>
                 ขายรายการใหม่
               </Button>
               <Button

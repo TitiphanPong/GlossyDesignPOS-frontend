@@ -101,11 +101,11 @@ export default function CustomerPicker({ active, value, taxInvoice, onChange, on
   const taxProfileIncomplete = taxInvoice === 'yes' && value && (!value.taxId?.trim() || !value.address?.trim());
 
   return (
-    <Box sx={{ p: { xs: 1.5, sm: 1.75 }, border: '1px solid #E5EAF2', borderRadius: 3.5, bgcolor: '#FBFCFE' }}>
+    <Box sx={{ p: { xs: 1.5, sm: 1.75 }, border: '1px solid var(--glossy-border-default)', borderRadius: 3.5, bgcolor: 'var(--glossy-surface-raised)' }}>
       <Stack gap={1.4}>
         <Stack direction="row" alignItems="flex-start" justifyContent="space-between" gap={1}>
           <Box>
-            <Typography fontWeight={800} color="#172033">
+            <Typography fontWeight={800} color="var(--glossy-text-primary)">
               ลูกค้า
             </Typography>
             <Typography variant="caption" color="text.secondary">
@@ -145,7 +145,7 @@ export default function CustomerPicker({ active, value, taxInvoice, onChange, on
                 <CheckCircleRoundedIcon sx={{ fontSize: 21 }} />
               </Box>
               <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography fontWeight={900} color="#172033" noWrap>
+                <Typography fontWeight={900} color="var(--glossy-text-primary)" noWrap>
                   {value.displayName}
                 </Typography>
                 <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
@@ -168,9 +168,9 @@ export default function CustomerPicker({ active, value, taxInvoice, onChange, on
         ) : (
           <Box sx={{ px: 1.4, py: 1.15, borderRadius: 2.75, bgcolor: '#FFFFFF', border: '1px solid #E1E8F1' }}>
             <Stack direction="row" alignItems="center" gap={1.1}>
-              <StorefrontRoundedIcon sx={{ color: '#64748B' }} />
+              <StorefrontRoundedIcon sx={{ color: 'var(--glossy-text-secondary)' }} />
               <Box>
-                <Typography fontSize={13.5} fontWeight={850} color="#334155">
+                <Typography fontSize={13.5} fontWeight={850} color="var(--glossy-text-soft)">
                   ลูกค้าหน้าร้าน
                 </Typography>
                 <Typography fontSize={11.75} color="#748296">
@@ -202,7 +202,7 @@ export default function CustomerPicker({ active, value, taxInvoice, onChange, on
           renderOption={(props, option) => (
             <Box component="li" {...props} key={option._id} sx={{ py: '10px !important' }}>
               <Box sx={{ minWidth: 0 }}>
-                <Typography fontWeight={800} color="#172033" noWrap>
+                <Typography fontWeight={800} color="var(--glossy-text-primary)" noWrap>
                   {option.displayName}
                 </Typography>
                 <Typography variant="caption" color="text.secondary">
@@ -224,7 +224,7 @@ export default function CustomerPicker({ active, value, taxInvoice, onChange, on
                   startAdornment: (
                     <>
                       <InputAdornment position="start">
-                        <SearchRoundedIcon sx={{ color: '#64748B' }} />
+                        <SearchRoundedIcon sx={{ color: 'var(--glossy-text-secondary)' }} />
                       </InputAdornment>
                       {params.InputProps.startAdornment}
                     </>
@@ -243,7 +243,7 @@ export default function CustomerPicker({ active, value, taxInvoice, onChange, on
 
         {!value && query.trim().length < 2 && recentCustomers.length > 0 ? (
           <Box>
-            <Typography fontSize={11.75} fontWeight={700} color="#64748B" sx={{ mb: 0.75 }}>
+            <Typography fontSize={11.75} fontWeight={700} color="var(--glossy-text-secondary)" sx={{ mb: 0.75 }}>
               ลูกค้าล่าสุด
             </Typography>
             <Stack direction="row" gap={0.75} sx={{ overflowX: 'auto', pb: 0.25, scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' } }}>

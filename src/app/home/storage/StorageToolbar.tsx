@@ -97,7 +97,7 @@ export default function StorageToolbar(props: Readonly<StorageToolbarProps>) {
       ]}
       extraFilters={
         <FormControl size="small" sx={{ flex: { sm: 1 }, minWidth: { xs: '100%', sm: 260 } }}>
-          <Typography sx={{ mb: 0.4, color: '#475569', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>เลขที่ Order</Typography>
+          <Typography sx={{ mb: 0.4, color: 'var(--glossy-text-secondary)', fontSize: 12.5, fontWeight: 600, lineHeight: 1.2 }}>เลขที่ Order</Typography>
           <TextField
             size="small"
             value={orderReferenceFilter}
@@ -108,10 +108,10 @@ export default function StorageToolbar(props: Readonly<StorageToolbarProps>) {
               '& .MuiOutlinedInput-root': {
                 borderRadius: 2,
                 height: 48,
-                bgcolor: '#FFFFFF',
-                '& fieldset': { borderColor: '#E2E8F0', borderWidth: 1 },
-                '&:hover fieldset': { borderColor: '#94A3B8' },
-                '&.Mui-focused fieldset': { borderColor: '#2563EB', borderWidth: 1 },
+                bgcolor: 'var(--glossy-surface-card)',
+                '& fieldset': { borderColor: 'var(--glossy-border-default)', borderWidth: 1 },
+                '&:hover fieldset': { borderColor: 'var(--glossy-border-strong)' },
+                '&.Mui-focused fieldset': { borderColor: 'var(--glossy-action-focus-ring)', borderWidth: 1 },
               },
             }}
           />

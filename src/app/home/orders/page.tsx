@@ -836,7 +836,7 @@ export default function OrderManagementPage() {
             <Stack direction="row" alignItems="center" flexWrap="wrap" gap={0.75} sx={{ pt: 1.35, borderTop: '1px solid #F1F5F9' }}>
               <Typography sx={{ color: '#64748B', fontSize: 12, fontWeight: 600, mr: 0.25 }}>ตัวกรองที่ใช้:</Typography>
               {search.trim() ? (
-                <Chip size="small" label={`ค้นหา: ${search.trim()}`} onDelete={() => setSearch('')} sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5, maxWidth: '100%' }} />
+                <Chip size="small" label={`ค้นหา: ${search.trim()}`} onDelete={() => setSearch('')} sx={{ bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)', borderRadius: 1.5, maxWidth: '100%' }} />
               ) : null}
               {datePreset !== 'all' ? (
                 <Chip
@@ -848,7 +848,7 @@ export default function OrderManagementPage() {
                     setStartDate(null);
                     setEndDate(null);
                   }}
-                  sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }}
+                  sx={{ bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)', borderRadius: 1.5 }}
                 />
               ) : null}
               {workflowStatusFilter !== 'all' ? (
@@ -856,7 +856,7 @@ export default function OrderManagementPage() {
                   size="small"
                   label={`สถานะงาน: ${FILTER_WORKFLOW_STATUS_LABELS[workflowStatusFilter]}`}
                   onDelete={() => setWorkflowStatusFilter('all')}
-                  sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }}
+                  sx={{ bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)', borderRadius: 1.5 }}
                 />
               ) : null}
               {outstandingPaymentFilter === 'unpaid' ? (
@@ -867,7 +867,7 @@ export default function OrderManagementPage() {
                   size="small"
                   label={`ชำระเงิน: ${PAYMENT_METHOD_LABELS_TH[paymentMethodFilter]}`}
                   onDelete={() => setPaymentMethodFilter('all')}
-                  sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }}
+                  sx={{ bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)', borderRadius: 1.5 }}
                 />
               ) : null}
               {taxInvoiceFilter !== 'all' ? (
@@ -875,11 +875,11 @@ export default function OrderManagementPage() {
                   size="small"
                   label={`เอกสาร: ${TAX_INVOICE_FILTER_LABELS[taxInvoiceFilter]}`}
                   onDelete={() => setTaxInvoiceFilter('all')}
-                  sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }}
+                  sx={{ bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)', borderRadius: 1.5 }}
                 />
               ) : null}
               {sort !== 'order_number_desc' ? (
-                <Chip size="small" label={`เรียง: ${SORT_ORDER_LABELS[sort]}`} onDelete={() => setSort('order_number_desc')} sx={{ bgcolor: '#EFF6FF', color: '#1D4ED8', borderRadius: 1.5 }} />
+                <Chip size="small" label={`เรียง: ${SORT_ORDER_LABELS[sort]}`} onDelete={() => setSort('order_number_desc')} sx={{ bgcolor: 'var(--glossy-action-primary-soft)', color: 'var(--glossy-action-primary)', borderRadius: 1.5 }} />
               ) : null}
             </Stack>
           ) : null}
@@ -927,7 +927,7 @@ export default function OrderManagementPage() {
                       </Stack>
                       <Typography sx={{ fontWeight: 700 }}>{row.customerName}</Typography>
                       <Typography sx={{ color: '#64748B', fontSize: 13 }}>{row.phoneNumber}</Typography>
-                      <Typography sx={{ fontWeight: 800, color: '#1D4ED8' }}>฿{formatMoney(row.total)}</Typography>
+                      <Typography sx={{ fontWeight: 800, color: 'var(--glossy-action-primary)' }}>฿{formatMoney(row.total)}</Typography>
                       <Stack direction="row" spacing={1}>
                         <Button variant="outlined" size="small" onClick={() => openDrawer(row)} sx={{ ...commonButtonSx, minHeight: 34 }}>
                           ดูรายละเอียด

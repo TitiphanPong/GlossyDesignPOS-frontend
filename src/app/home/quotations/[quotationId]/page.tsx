@@ -361,7 +361,7 @@ export default function QuotationDetailPage() {
                   <Typography color="text.secondary">VAT {quotation.vatRate}%</Typography><Typography>{quotationMoney.format(quotation.vatAmount)}</Typography>
                 </Box>
                 <Divider />
-                <Stack direction="row" justifyContent="space-between" alignItems="center"><Typography fontWeight={900}>Grand Total</Typography><Typography sx={{ fontSize: 22, fontWeight: 900, color: '#1D4ED8' }}>{quotationMoney.format(quotation.grandTotal)}</Typography></Stack>
+                <Stack direction="row" justifyContent="space-between" alignItems="center"><Typography fontWeight={900}>Grand Total</Typography><Typography sx={{ fontSize: 22, fontWeight: 900, color: 'var(--glossy-action-primary)' }}>{quotationMoney.format(quotation.grandTotal)}</Typography></Stack>
                 <Alert severity={quotation.taxInvoiceRequested ? 'info' : 'success'}>{quotation.taxInvoiceRequested ? 'ลูกค้าร้องขอใบกำกับภาษี — Quotation นี้คำนวณ VAT ตามนโยบายปัจจุบัน แต่การ Convert จะยังไม่ออกเลขใบกำกับภาษี เลขเอกสารภาษีต้องออกผ่าน Order Tax Invoice flow โดยชัดเจนภายหลัง' : 'Quotation นี้ยังไม่ร้องขอใบกำกับภาษี'}</Alert>
                 {quotation.convertedOrderId ? <LabelValue label="Converted Order ID" value={quotation.convertedOrderId} /> : null}
               </Stack>

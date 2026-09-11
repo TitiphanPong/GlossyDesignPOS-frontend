@@ -305,12 +305,12 @@ export default function StaffManagementPage() {
                           sx={{
                             width: 48,
                             height: 48,
-                            bgcolor: user.active ? alpha('#2563EB', 0.11) : '#F1F5F9',
-                            color: user.active ? '#2563EB' : '#94A3B8',
+                            bgcolor: user.active ? 'var(--glossy-action-primary-soft)' : '#F1F5F9',
+                            color: user.active ? 'var(--glossy-action-primary)' : '#94A3B8',
                             fontSize: 18,
                             fontWeight: 900,
                             border: '1px solid',
-                            borderColor: user.active ? '#DBEAFE' : '#E2E8F0',
+                            borderColor: user.active ? 'var(--glossy-action-primary-border)' : '#E2E8F0',
                           }}>
                           {user.username.charAt(0).toUpperCase()}
                         </Avatar>
@@ -456,7 +456,7 @@ export default function StaffManagementPage() {
         <DialogTitle sx={{ p: 0 }}>
           <Box sx={{ p: { xs: 2.25, sm: 3 }, background: 'linear-gradient(135deg, #F7FAFF 0%, #EEF4FF 100%)', borderBottom: '1px solid #E2E8F0' }}>
             <Stack direction="row" spacing={1.5} alignItems="center">
-              <Box sx={{ width: 48, height: 48, borderRadius: 3, display: 'grid', placeItems: 'center', color: '#2563EB', bgcolor: alpha('#2563EB', 0.12), flexShrink: 0 }}>
+              <Box sx={{ width: 48, height: 48, borderRadius: 3, display: 'grid', placeItems: 'center', color: 'var(--glossy-action-primary)', bgcolor: 'var(--glossy-action-primary-soft)', flexShrink: 0 }}>
                 <AddRoundedIcon />
               </Box>
               <Box>
@@ -492,7 +492,7 @@ export default function StaffManagementPage() {
             </Box>
             <Box sx={{ p: { xs: 1.75, sm: 2 }, borderRadius: 3, border: '1px solid #E2E8F0', bgcolor: '#F8FAFC' }}>
               <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1.5 }}>
-                <KeyRoundedIcon sx={{ color: '#2563EB', fontSize: 20 }} />
+                <KeyRoundedIcon sx={{ color: 'var(--glossy-action-primary)', fontSize: 20 }} />
                 <Typography sx={{ color: '#334155', fontSize: 13, fontWeight: 850 }}>ตั้งรหัสผ่านเริ่มต้น</Typography>
               </Stack>
               <PasswordFields
