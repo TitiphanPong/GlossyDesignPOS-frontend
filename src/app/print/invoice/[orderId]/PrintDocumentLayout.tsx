@@ -8,7 +8,8 @@ import PictureAsPdfRoundedIcon from '@mui/icons-material/PictureAsPdfRounded';
 import EditRoundedIcon from '@mui/icons-material/EditRounded';
 import DownloadRoundedIcon from '@mui/icons-material/DownloadRounded';
 import IosShareRoundedIcon from '@mui/icons-material/IosShareRounded';
-import { Box, Button, ButtonBase, Stack, Typography } from '@mui/material';
+import { Alert, Box, Button, ButtonBase, Dialog, DialogActions, DialogContent, DialogTitle, Snackbar, Stack, TextField, Typography } from '@mui/material';
+import { isValidPairingToken, printThermalReceipt, THERMAL_BRIDGE_TOKEN_KEY } from '@/lib/thermal-print';
 import { buildReceiptFileName, isShareCancelled, prefersReceiptShare } from '@/lib/receipt-download';
 import ReceiptShareDialog from './ReceiptShareDialog';
 
@@ -29,12 +30,14 @@ function HeaderButton({
   icon,
   onClick,
   variant,
+  disabled,
 }: Readonly<{
   label: string;
   mobileLabel?: string;
   icon?: React.ReactNode;
   onClick: () => void;
   variant: 'contained' | 'outlined';
+  disabled?: boolean;
 }>) {
   const isContained = variant === 'contained';
 
@@ -43,6 +46,7 @@ function HeaderButton({
       variant={variant}
       startIcon={icon}
       onClick={onClick}
+      disabled={disabled}
       sx={{
         minHeight: { xs: 48, sm: 44 },
         width: '100%',
@@ -101,6 +105,11 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
   const [receiptStatusSeverity, setReceiptStatusSeverity] = useState<'info' | 'success' | 'warning' | 'error'>('info');
   const [showReceiptSaveGuide, setShowReceiptSaveGuide] = useState(false);
   const [canCopyReceiptImage, setCanCopyReceiptImage] = useState(false);
+  const [usbPrinting, setUsbPrinting] = useState(false);
+  const usbBusyRef = useRef(false);
+  const [pairingOpen, setPairingOpen] = useState(false);
+  const [pairingInput, setPairingInput] = useState('');
+  const [usbFeedback, setUsbFeedback] = useState<{ severity: 'success' | 'error'; message: string } | null>(null);
 
   useEffect(() => {
     setUseMobileShare(prefersReceiptShare(globalThis.navigator));
@@ -140,6 +149,48 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
       file: new File([blob], fileName, { type: 'image/png' }),
       dataUrl: canvas.toDataURL('image/png'),
     };
+  };
+
+  const sendReceiptToUsb = async (token: string) => {
+    if (usbBusyRef.current) return;
+    usbBusyRef.current = true;
+    setUsbPrinting(true);
+    setUsbFeedback(null);
+    try {
+      const image = await renderReceiptImage();
+      await printThermalReceipt(image.blob, token);
+      setUsbFeedback({ severity: 'success', message: 'ส่งใบเสร็จเข้าเครื่องพิมพ์ USB แล้ว' });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'ส่งใบเสร็จเข้าเครื่องพิมพ์ไม่สำเร็จ';
+      setUsbFeedback({ severity: 'error', message });
+      if (message.includes('รหัสจับคู่')) {
+        setPairingInput('');
+        setPairingOpen(true);
+      }
+    } finally {
+      usbBusyRef.current = false;
+      setUsbPrinting(false);
+    }
+  };
+
+  const handleUsbReceiptPrint = () => {
+    if (usbBusyRef.current) return;
+    const token = globalThis.localStorage.getItem(THERMAL_BRIDGE_TOKEN_KEY) ?? '';
+    if (!isValidPairingToken(token)) {
+      setPairingInput('');
+      setPairingOpen(true);
+      return;
+    }
+    void sendReceiptToUsb(token);
+  };
+
+  const handlePairingSubmit = () => {
+    const token = pairingInput.trim();
+    if (!isValidPairingToken(token)) return;
+    globalThis.localStorage.setItem(THERMAL_BRIDGE_TOKEN_KEY, token);
+    setPairingOpen(false);
+    setPairingInput('');
+    void sendReceiptToUsb(token);
   };
 
   const handleReceiptHeaderAction = async () => {
@@ -401,7 +452,7 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
         <Box
           sx={{
             display: 'grid',
-            gridTemplateColumns: { xs: 'repeat(3, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, auto))' },
+            gridTemplateColumns: isReceipt ? { xs: 'repeat(2, minmax(0, 1fr))', sm: 'repeat(4, minmax(0, auto))' } : { xs: 'repeat(3, minmax(0, 1fr))', sm: 'repeat(3, minmax(0, auto))' },
             gap: { xs: 0.75, sm: 1 },
             flexShrink: 0,
             minWidth: 0,
@@ -427,7 +478,14 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
           {!isReceipt ? (
             <HeaderButton label="ส่งออก PDF" mobileLabel="PDF" icon={<PictureAsPdfRoundedIcon />} onClick={handlePrint} variant="outlined" />
           ) : null}
-          <HeaderButton label="พิมพ์" mobileLabel="พิมพ์" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" />
+          {isReceipt ? (
+            <>
+              <HeaderButton label="พิมพ์ทั่วไป" mobileLabel="พิมพ์ทั่วไป" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="outlined" />
+              <HeaderButton label={usbPrinting ? 'กำลังส่ง USB...' : 'พิมพ์ USB 80 มม.'} mobileLabel={usbPrinting ? 'กำลังส่ง...' : 'พิมพ์ USB'} icon={<PrintRoundedIcon />} onClick={handleUsbReceiptPrint} disabled={usbPrinting} variant="contained" />
+            </>
+          ) : (
+            <HeaderButton label="พิมพ์" mobileLabel="พิมพ์" icon={<PrintRoundedIcon />} onClick={handlePrint} variant="contained" />
+          )}
         </Box>
         </Box>
       </Box>
@@ -519,6 +577,38 @@ export function PrintDocumentLayout({ titleTh, titleEn, invoiceNumber, documentT
           </Box>
         </Box>
       </Box>
+
+      {isReceipt ? (
+        <>
+          <Dialog open={pairingOpen} onClose={() => setPairingOpen(false)} fullWidth maxWidth="xs">
+            <DialogTitle>ตั้งค่าพิมพ์ USB 80 มม.</DialogTitle>
+            <DialogContent>
+              <Stack spacing={1.5} sx={{ pt: 1 }}>
+                <Typography sx={{ fontSize: 14 }}>
+                  เปิดตัวรับงานพิมพ์บน Mac mini แล้วนำรหัสจับคู่ 64 ตัวอักษรมาใส่ครั้งเดียว ระบบจะจดจำไว้ในเบราว์เซอร์เครื่องนี้
+                </Typography>
+                <Typography sx={{ fontSize: 12, color: 'text.secondary', overflowWrap: 'anywhere' }}>
+                  บน Mac mini: node scripts/thermal-print-bridge.mjs --show-token
+                </Typography>
+                <TextField label="รหัสจับคู่เครื่องพิมพ์" type="password" fullWidth value={pairingInput} autoComplete="off"
+                  error={pairingInput.length > 0 && !isValidPairingToken(pairingInput.trim())}
+                  helperText="ใช้รหัสจาก Mac mini เท่านั้น ไม่ใช่รหัสผ่านระบบ POS"
+                  onChange={event => setPairingInput(event.target.value)}
+                  onKeyDown={event => { if (event.key === 'Enter') handlePairingSubmit(); }} />
+              </Stack>
+            </DialogContent>
+            <DialogActions>
+              <Button onClick={() => setPairingOpen(false)}>ยกเลิก</Button>
+              <Button variant="contained" disabled={!isValidPairingToken(pairingInput.trim())} onClick={handlePairingSubmit}>บันทึกและพิมพ์</Button>
+            </DialogActions>
+          </Dialog>
+          <Snackbar open={usbFeedback !== null} autoHideDuration={6500} onClose={() => setUsbFeedback(null)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}>
+            <Alert variant="filled" severity={usbFeedback?.severity ?? 'success'} onClose={() => setUsbFeedback(null)} sx={{ width: '100%' }}>
+              {usbFeedback?.message ?? ''}
+            </Alert>
+          </Snackbar>
+        </>
+      ) : null}
 
       {isReceipt && useMobileShare ? (
         <ReceiptShareDialog
