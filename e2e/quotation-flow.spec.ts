@@ -53,7 +53,7 @@ test('creates, sends, approves, converts, retries idempotently, stays terminal, 
   expect(sendResponse.ok()).toBe(true);
 
   await page.goto(`/home/quotations/${quotationId}`);
-  await expect(page.getByText('QT-202609-0001', { exact: true }).first()).toBeVisible();
+  await expect(page.getByText('Quotation QT-202609-0001', { exact: true })).toBeVisible();
   await expect(page.getByText('รอตอบรับ', { exact: true }).first()).toBeVisible();
 
   await page.getByRole('button', { name: 'บันทึกการอนุมัติ' }).click();

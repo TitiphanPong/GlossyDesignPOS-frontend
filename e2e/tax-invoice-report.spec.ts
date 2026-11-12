@@ -10,14 +10,18 @@ async function loginForReport(page: Page) {
   await expect(page).toHaveURL(url => url.pathname === reportTarget);
 }
 
-test('defaults to previous Bangkok month, changes period, and downloads the whole selected month', async ({ page }) => {
+test('defaults to current Bangkok month, changes period, and downloads the whole selected month', async ({ page }) => {
   await page.clock.setFixedTime(new Date('2026-09-06T10:00:00.000Z'));
   await loginForReport(page);
 
   await expect(page.getByText('ใบกำกับภาษีรายเดือน', { exact: true }).last()).toBeVisible();
-  await expect(page.getByText('งวดรายงาน สิงหาคม 2569')).toBeVisible();
+  await expect(page.getByText('งวดรายงาน กันยายน 2569')).toBeVisible();
   await expect(page.getByText('อัปเดตล่าสุด 06/09/2026 23:00', { exact: true })).toBeVisible();
   await expect(page.getByText('วันอาทิตย์ที่ 6 กันยายน พ.ศ. 2569', { exact: true })).toBeVisible();
+  await expect(page.getByText('INV-202609-001-001').filter({ visible: true }).first()).toBeVisible();
+  await page.getByRole('combobox', { name: 'เดือน', exact: true }).click();
+  await page.getByRole('option', { name: 'สิงหาคม' }).click();
+  await expect(page.getByText('งวดรายงาน สิงหาคม 2569')).toBeVisible();
   await expect(page.getByText('INV-202608-001-001').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByText('INV-202607-001-099').filter({ visible: true }).first()).toBeVisible();
   await expect(page.getByRole('columnheader', { name: 'สาขา', exact: true })).toHaveCount(0);
@@ -71,6 +75,8 @@ for (const width of [360, 1024, 1600]) {
     await page.setViewportSize({ width, height: 900 });
     await page.clock.setFixedTime(new Date('2026-09-06T10:00:00.000Z'));
     await loginForReport(page);
+    await page.getByRole('combobox', { name: 'เดือน', exact: true }).click();
+    await page.getByRole('option', { name: 'สิงหาคม' }).click();
     await expect(page.getByText('INV-202608-001-001').filter({ visible: true }).first()).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'เดือน', exact: true })).toBeVisible();
     await expect(page.getByRole('combobox', { name: 'ปี พ.ศ.', exact: true })).toBeVisible();
